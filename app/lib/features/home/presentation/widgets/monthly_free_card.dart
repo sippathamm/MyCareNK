@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class MonthlyFreeCard extends StatelessWidget {
   const MonthlyFreeCard({super.key});
@@ -29,38 +30,38 @@ class MonthlyFreeCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'สิทธิ์รับฟรีเดือนนี้',
-            style: TextStyle(
-              fontSize: 16,
+            style: GoogleFonts.prompt(
+              fontSize: 22,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF333333),
+              color: const Color(0xFF333333),
             ),
           ),
           const SizedBox(height: 4),
           RichText(
-            text: const TextSpan(
+            text: TextSpan(
               children: [
                 TextSpan(
                   text: '15 ',
-                  style: TextStyle(
-                    fontSize: 36,
+                  style: GoogleFonts.prompt(
+                    fontSize: 48,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFF8A50),
+                    color: const Color(0xFFFF8A50),
                   ),
                 ),
                 TextSpan(
                   text: 'ชิ้น',
-                  style: TextStyle(
-                    fontSize: 20,
+                  style: GoogleFonts.prompt(
+                    fontSize: 22,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFFFF8A50),
+                    color: const Color(0xFFFF8A50),
                   ),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 4),
           // Custom Progress Bar
           Stack(
             children: [
