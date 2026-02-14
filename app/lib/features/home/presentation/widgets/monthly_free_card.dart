@@ -63,25 +63,46 @@ class MonthlyFreeCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           // Custom Progress Bar
-          Stack(
-            children: [
-              Container(
-                height: 8,
-                width: 150, // Fixed width as per design reference often seen
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-              Container(
-                height: 8,
-                width: 100, // 70% of 150 approx
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFF8A50),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-              ),
-            ],
+          // Custom Progress Bar with Animation
+          LayoutBuilder(
+            builder: (context, constraints) {
+              // Calculate width based on available space (e.g., 70% of card width)
+              // Since we are inside a Column in a Container with padding 20,
+              // constraints.maxWidth is the available width.
+              final double totalWidth = constraints.maxWidth * 0.7;
+
+              const int total = 60; // Max quota
+              const int current = 15; // Current usage (mock)
+              const double percentage = current / total;
+
+              return TweenAnimationBuilder<double>(
+                tween: Tween<double>(begin: 0, end: percentage),
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.easeOutCubic,
+                builder: (context, value, child) {
+                  return Stack(
+                    children: [
+                      Container(
+                        height: 8,
+                        width: totalWidth,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      Container(
+                        height: 8,
+                        width: totalWidth * value,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFF8A50),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  );
+                },
+              );
+            },
           ),
         ],
       ),
