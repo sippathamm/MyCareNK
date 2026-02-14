@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../home/presentation/pages/home_page.dart';
-import '../../../service/presentation/pages/service_page.dart';
+import '../../../service/presentation/pages/service_navigator.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -11,19 +11,32 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  final GlobalKey<NavigatorState> _serviceNavigatorKey =
+      GlobalKey<NavigatorState>();
 
-  final List<Widget> _pages = [
-    const HomePage(),
-    const ServicePage(),
-    const Center(child: Text('Scan Screen Placeholder')), // Placeholder
-    const Center(child: Text('Message Screen Placeholder')), // Placeholder
-    const Center(child: Text('Settings Screen Placeholder')), // Placeholder
-  ];
+  final List<Widget> _pages = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _pages.addAll([
+      const HomePage(),
+      ServiceNavigator(navigatorKey: _serviceNavigatorKey),
+      const Center(child: Text('Scan Screen Placeholder')), // Placeholder
+      const Center(child: Text('Message Screen Placeholder')), // Placeholder
+      const Center(child: Text('Settings Screen Placeholder')), // Placeholder
+    ]);
+  }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+    if (_currentIndex == index && index == 1) {
+      // If tapping on Service tab while already on it, navigate to the first route
+      _serviceNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+    } else {
+      setState(() {
+        _currentIndex = index;
+      });
+    }
   }
 
   @override
