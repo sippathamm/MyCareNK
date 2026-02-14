@@ -10,7 +10,7 @@ class CampaignBanner extends StatelessWidget {
       height: 60,
       decoration: BoxDecoration(
         color: const Color(0xFFFF8A50),
-        borderRadius: BorderRadius.circular(30),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: const Color(0xFFFF8A50).withOpacity(0.4),
@@ -29,7 +29,7 @@ class CampaignBanner extends StatelessWidget {
               ),
             );
           },
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(20),
           child: const Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

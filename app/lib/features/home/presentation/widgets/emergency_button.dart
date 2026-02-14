@@ -31,7 +31,7 @@ class EmergencyButton extends StatelessWidget {
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
-          borderRadius: BorderRadius.circular(30),
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               color: const Color(0xFFB71C1C).withOpacity(0.3),
@@ -61,7 +61,7 @@ class EmergencyButton extends StatelessWidget {
                   'เจ็บป่วยฉุกเฉิน',
                   style: GoogleFonts.prompt(
                     color: Colors.white.withOpacity(0.9),
-                    fontSize: 11,
+                    fontSize: 12,
                     height: 1.0,
                   ),
                 ),
