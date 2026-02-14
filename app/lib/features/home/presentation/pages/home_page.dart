@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../features/service/presentation/pages/service_screen.dart';
 import '../widgets/header_section.dart';
 import '../widgets/monthly_free_card.dart';
 import '../widgets/shortcut_menu.dart';
@@ -81,10 +82,21 @@ class HomePage extends StatelessWidget {
           ),
         ],
         onTap: (index) {
-          final labels = ['หน้าหลัก', 'บริการ', 'สแกน', 'ข้อความ', 'ตั้งค่า'];
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('"${labels[index]}" ถูกกด')));
+          if (index == 1) {
+            Navigator.of(context).push(
+              PageRouteBuilder(
+                pageBuilder: (context, animation, secondaryAnimation) =>
+                    const ServiceScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              ),
+            );
+          } else {
+            final labels = ['หน้าหลัก', 'บริการ', 'สแกน', 'ข้อความ', 'ตั้งค่า'];
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text('"${labels[index]}" ถูกกด')));
+          }
         },
       ),
     );
