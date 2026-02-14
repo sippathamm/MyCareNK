@@ -6,18 +6,19 @@ class ShortcutMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         _buildShortcutItem(
           context: context,
           icon: Icons.location_on,
           label: 'จุดบริการ',
         ),
+        const SizedBox(width: 16),
         _buildShortcutItem(
           context: context,
           icon: Icons.menu_book,
           label: 'คู่มือการใช้',
         ),
+        const SizedBox(width: 16),
         _buildShortcutItem(
           context: context,
           icon: Icons.receipt_long,
@@ -32,43 +33,48 @@ class ShortcutMenu extends StatelessWidget {
     required IconData icon,
     required String label,
   }) {
-    return InkWell(
-      onTap: () {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('"$label" ถูกกด')));
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Column(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
+    return Expanded(
+      child: InkWell(
+        onTap: () {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('"$label" ถูกกด')));
+        },
+        borderRadius: BorderRadius.circular(24),
+        child: AspectRatio(
+          aspectRatio: 1.0,
+          child: Container(
             decoration: BoxDecoration(
-              color: const Color(
-                0xFFFFF2E8,
-              ), // Light orange background matching card/mockup
-              shape: BoxShape.circle,
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.grey.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
                 ),
               ],
             ),
-            child: Icon(icon, color: const Color(0xFFFF8A50), size: 30),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF333333),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: const Color(0xFFFF8A50), size: 32),
+                const SizedBox(height: 8),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF333333),
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }
