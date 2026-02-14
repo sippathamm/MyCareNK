@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../widgets/service_card.dart';
+import 'condom_request_page.dart';
 
 class ServicePage extends StatelessWidget {
   const ServicePage({super.key});
@@ -16,7 +17,11 @@ class ServicePage extends StatelessWidget {
               title: 'รับถุงยางอนามัย',
               subtitle: 'ค้นหาสถานที่และรับถุงยางอนามัยฟรี',
               onTap: () {
-                // TODO: Navigate to Condom Service
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const CondomRequestPage(),
+                  ),
+                );
               },
             ),
             const SizedBox(height: 12),
