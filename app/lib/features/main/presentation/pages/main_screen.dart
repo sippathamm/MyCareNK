@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../home/presentation/pages/home_page.dart';
-import '../../../service/presentation/pages/service_screen.dart';
+import '../../../service/presentation/pages/service_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -14,7 +14,7 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = [
     const HomePage(),
-    const ServiceScreen(),
+    const ServicePage(),
     const Center(child: Text('Scan Screen Placeholder')), // Placeholder
     const Center(child: Text('Message Screen Placeholder')), // Placeholder
     const Center(child: Text('Settings Screen Placeholder')), // Placeholder
