@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'features/home/presentation/pages/home_page.dart';
+import 'features/main/presentation/pages/main_screen.dart';
 
 void main() {
   runApp(const MyCareNKApp());
@@ -29,7 +29,7 @@ class MyCareNKApp extends StatelessWidget {
               displayColor: const Color(0xFF333333),
             ),
       ),
-      home: const HomePage(),
+      home: const MainScreen(),
       debugShowCheckedModeBanner: false,
     );
   }

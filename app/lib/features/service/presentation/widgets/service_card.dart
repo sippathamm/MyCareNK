@@ -23,7 +23,7 @@ class ServiceCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05), // Match ShortcutMenu shadow
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -62,14 +62,14 @@ class ServiceCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF333333), // textDark
+                              color: const Color(0xFF333333),
                             ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF999999), // textGrey
+                          color: const Color(0xFF999999),
                         ),
                       ),
                     ],
