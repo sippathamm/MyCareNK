@@ -3,84 +3,16 @@ import 'dart:async';
 
 // Color Palette
 const Color primaryColor = Color(0xFFFF8A50);
-const Color accentColor = Color(0xFFFFB58A);
 const Color textColor = Color(0xFF333333);
 const Color textGrey = Color(0xFF777777);
-const Color dangerColor = Color(0xFFFF4D4D);
 
-class ServiceCardContainer extends StatelessWidget {
-  final String title;
-  final Widget? icon;
-  final Widget child;
-  final Widget? footer;
-
-  const ServiceCardContainer({
-    super.key,
-    required this.title,
-    this.icon,
-    required this.child,
-    this.footer,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.08),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: primaryColor,
-              width: double.infinity,
-              child: Row(
-                children: [
-                  if (icon != null) ...[icon!, const SizedBox(width: 8)],
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Body
-            Padding(padding: const EdgeInsets.all(16.0), child: child),
-            // Footer
-            if (footer != null) ...[
-              const Divider(height: 1),
-              Padding(padding: const EdgeInsets.all(12.0), child: footer!),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class StepperRow extends StatefulWidget {
+class StepperRowCondom extends StatefulWidget {
   final String label;
   final int count;
   final int max;
   final ValueChanged<int> onChanged;
 
-  const StepperRow({
+  const StepperRowCondom({
     super.key,
     required this.label,
     required this.count,
@@ -89,10 +21,10 @@ class StepperRow extends StatefulWidget {
   });
 
   @override
-  State<StepperRow> createState() => _StepperRowState();
+  State<StepperRowCondom> createState() => _StepperRowCondomState();
 }
 
-class _StepperRowState extends State<StepperRow> {
+class _StepperRowCondomState extends State<StepperRowCondom> {
   late TextEditingController _controller;
 
   // Timer for long press
@@ -105,7 +37,7 @@ class _StepperRowState extends State<StepperRow> {
   }
 
   @override
-  void didUpdateWidget(covariant StepperRow oldWidget) {
+  void didUpdateWidget(covariant StepperRowCondom oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.count != oldWidget.count) {
       final textVal = int.tryParse(_controller.text) ?? 0;
@@ -169,7 +101,7 @@ class _StepperRowState extends State<StepperRow> {
             onLongPressEnd: () => _cancelTimer(),
             isEnabled: widget.count > 0,
           ),
-          const SizedBox(width: 12), // Increased spacing
+          const SizedBox(width: 12),
           SizedBox(
             width: 50,
             child: TextField(
@@ -200,7 +132,7 @@ class _StepperRowState extends State<StepperRow> {
               },
             ),
           ),
-          const SizedBox(width: 12), // Increased spacing
+          const SizedBox(width: 12),
           _buildStepperButton(
             icon: Icons.add,
             onTap: () => widget.onChanged(widget.count + 1),
@@ -230,7 +162,7 @@ class _StepperRowState extends State<StepperRow> {
         onTap: isEnabled ? onTap : null,
         customBorder: const CircleBorder(),
         child: Container(
-          padding: const EdgeInsets.all(4), // Reduced padding
+          padding: const EdgeInsets.all(4),
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isEnabled
@@ -242,47 +174,9 @@ class _StepperRowState extends State<StepperRow> {
             color: isEnabled
                 ? (isAdd ? Colors.white : textGrey)
                 : Colors.grey[300],
-            size: 18, // Reduced icon size
+            size: 18,
           ),
         ),
-      ),
-    );
-  }
-}
-
-class CustomRadioButton<T> extends StatelessWidget {
-  final T value;
-  final T groupValue;
-  final String label;
-  final ValueChanged<T?> onChanged;
-
-  const CustomRadioButton({
-    super.key,
-    required this.value,
-    required this.groupValue,
-    required this.label,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: () => onChanged(value),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Radio<T>(
-            value: value,
-            groupValue: groupValue,
-            onChanged: onChanged,
-            activeColor: textColor,
-            visualDensity: const VisualDensity(horizontal: -4, vertical: -4),
-            materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          ),
-          const SizedBox(width: 8),
-          Text(label, style: const TextStyle(fontSize: 14, color: textColor)),
-          const SizedBox(width: 16),
-        ],
       ),
     );
   }

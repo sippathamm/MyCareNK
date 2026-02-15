@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/condom_widgets.dart';
+import '../widgets/stepper_row_condom.dart';
+import '../widgets/stepper_lubricant.dart';
 
 class CondomRequestPage extends StatefulWidget {
   const CondomRequestPage({super.key});
@@ -12,7 +13,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // State
   final Map<int, int> _quantities = {49: 0, 52: 0, 54: 0, 56: 0};
 
-  bool _receiveLubricant = false;
+  int _lubricantQuantity = 0;
   String? _selectedLocation;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
@@ -34,7 +35,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   void _resetForm() {
     setState(() {
       _quantities.updateAll((key, value) => 0);
-      _receiveLubricant = false;
+      _lubricantQuantity = 0;
       _selectedLocation = null;
       _selectedDate = null;
       _selectedTime = null;
@@ -256,7 +257,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       .clamp(0, _maxMonthlyQuota);
                   final int maxAllowed = entry.value + remainingForThisRow;
 
-                  return StepperRow(
+                  return StepperRowCondom(
                     label: '${entry.key}',
                     count: entry.value,
                     max: maxAllowed,
@@ -353,24 +354,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 4.0,
-              ),
-              child: Row(
-                children: [
-                  const Text(
-                    'สารหล่อลื่น',
-                    style: TextStyle(fontSize: 16, color: textColor),
-                  ),
-                  const Spacer(),
-                  Checkbox(
-                    value: _receiveLubricant,
-                    activeColor: const Color(0xFFFF8A50),
-                    onChanged: (val) =>
-                        setState(() => _receiveLubricant = val!),
-                  ),
-                ],
+              padding: const EdgeInsets.all(16.0),
+              child: StepperLubricant(
+                label: 'สารหล่อลื่น',
+                count: _lubricantQuantity,
+                max: 10,
+                onChanged: (val) {
+                  setState(() => _lubricantQuantity = val);
+                },
               ),
             ),
           ],
