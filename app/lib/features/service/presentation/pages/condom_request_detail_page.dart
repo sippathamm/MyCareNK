@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'condom_request_success_page.dart';
 
-class CondomRequestConfirmPage extends StatelessWidget {
+class CondomRequestDetailPage extends StatelessWidget {
   final Map<int, int> quantities;
   final int lubricantQuantity;
   final String? selectedLocation;
@@ -13,7 +12,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
   final int currentMonthlyLubricantUsed;
   final int maxMonthlyLubricantQuota;
 
-  const CondomRequestConfirmPage({
+  const CondomRequestDetailPage({
     super.key,
     required this.quantities,
     required this.lubricantQuantity,
@@ -42,7 +41,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'ยืนยันข้อมูล',
+          'ข้อมูลคำขอ',
           style: TextStyle(
             color: Color(0xFF333333),
             fontSize: 18,
@@ -50,12 +49,6 @@ class CondomRequestConfirmPage extends StatelessWidget {
           ),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined, color: Color(0xFFFF8A50)),
-            onPressed: () => Navigator.of(context).pop(),
-          ),
-        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -75,25 +68,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
                 height: 48,
                 child: FilledButton(
                   onPressed: () {
-                    // Navigate to success or pop with success
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => CondomRequestSuccessPage(
-                          quantities: quantities,
-                          lubricantQuantity: lubricantQuantity,
-                          selectedLocation: selectedLocation,
-                          selectedDate: selectedDate,
-                          selectedTime: selectedTime,
-                          message: message,
-                          currentMonthlyUsed: currentMonthlyUsed,
-                          maxMonthlyQuota: maxMonthlyQuota,
-                          currentMonthlyLubricantUsed:
-                              currentMonthlyLubricantUsed,
-                          maxMonthlyLubricantQuota: maxMonthlyLubricantQuota,
-                          referenceNumber: 'TD16HD52', // Mock reference number
-                        ),
-                      ),
-                    );
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                   },
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFFF8A50),
@@ -103,7 +78,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'ยืนยัน',
+                    'ตกลง',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
