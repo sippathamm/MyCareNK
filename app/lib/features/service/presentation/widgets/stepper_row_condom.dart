@@ -81,16 +81,19 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            widget.label,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: textColor,
+          Text.rich(
+            TextSpan(
+              text: 'ขนาด ',
+              style: const TextStyle(fontSize: 16, color: textColor),
+              children: [
+                TextSpan(
+                  text: widget.label,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const TextSpan(text: ' มม.'),
+              ],
             ),
           ),
-          const SizedBox(width: 4),
-          const Text('มม.', style: TextStyle(fontSize: 14, color: textGrey)),
           const Spacer(),
           _buildStepperButton(
             icon: Icons.remove,

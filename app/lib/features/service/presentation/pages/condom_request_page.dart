@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
+import 'condom_request_confirm_page.dart';
 
 class CondomRequestPage extends StatefulWidget {
   const CondomRequestPage({super.key});
@@ -22,6 +23,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // Constants
   static const int _maxMonthlyQuota = 60; // Example from requirements
   final int _currentMonthlyUsed = 45; // Mock data
+
+  static const int _maxMonthlyLubricantQuota = 60;
+  final int _currentMonthlyLubricantUsed = 45;
 
   int get _totalSelected =>
       _quantities.values.fold(0, (sum, count) => sum + count);
@@ -119,9 +123,43 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 height: 48,
                 child: FilledButton(
                   onPressed: () {
-                    // Handle submit
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Processing Request...')),
+                    if (_totalSelected == 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'กรุณาเลือกถุงยางอนามัยอย่างน้อย 1 ชิ้น',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    if (_selectedLocation == null ||
+                        _selectedDate == null ||
+                        _selectedTime == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('กรุณาเลือกสถานที่ วันที่ และเวลา'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => CondomRequestConfirmPage(
+                          quantities: _quantities,
+                          lubricantQuantity: _lubricantQuantity,
+                          selectedLocation: _selectedLocation,
+                          selectedDate: _selectedDate,
+                          selectedTime: _selectedTime,
+                          message: _messageController.text,
+                          currentMonthlyUsed: _currentMonthlyUsed,
+                          maxMonthlyQuota: _maxMonthlyQuota,
+                          currentMonthlyLubricantUsed:
+                              _currentMonthlyLubricantUsed,
+                          maxMonthlyLubricantQuota: _maxMonthlyLubricantQuota,
+                        ),
+                      ),
                     );
                   },
                   style: FilledButton.styleFrom(
@@ -168,6 +206,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   }
 
   Widget _buildMonthlyProgress() {
+    // ถุงยางอนามัย
     final int totalUsed = _currentMonthlyUsed + _totalSelected;
     final int remaining = (_maxMonthlyQuota - totalUsed).clamp(
       0,
@@ -175,43 +214,116 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     );
     final double progress = (totalUsed / _maxMonthlyQuota).clamp(0.0, 1.0);
 
+    // สารหล่อลื่น
+    final int totalLubricantUsed =
+        _currentMonthlyLubricantUsed + _lubricantQuantity;
+    final int remainingLubricant =
+        (_maxMonthlyLubricantQuota - totalLubricantUsed).clamp(
+          0,
+          _maxMonthlyLubricantQuota,
+        );
+    final double progressLubricant =
+        (totalLubricantUsed / _maxMonthlyLubricantQuota).clamp(0.0, 1.0);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text.rich(
-          TextSpan(
-            text: 'สิทธิ์รับฟรีเดือนนี้ ',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              fontSize: 16,
-              color: const Color(0xFF333333),
-            ),
-            children: [
-              TextSpan(
-                text: '$remaining ชิ้น',
-                style: const TextStyle(
-                  color: Color(0xFFFF8A50),
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+        Text(
+          'สิทธิ์รับฟรีเดือนนี้',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: const Color(0xFF333333),
           ),
         ),
-        const SizedBox(height: 8),
-        TweenAnimationBuilder<double>(
-          tween: Tween<double>(begin: 0, end: progress),
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOut,
-          builder: (context, value, child) {
-            return ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: value,
-                backgroundColor: Colors.grey[200],
-                color: const Color(0xFFFF8A50),
-                minHeight: 8,
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      text: 'ถุงยางอนามัย ',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        color: const Color(0xFF666666),
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '$remaining ชิ้น',
+                          style: const TextStyle(
+                            color: Color(0xFFFF8A50),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: progress),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOut,
+                    builder: (context, value, child) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: value,
+                          backgroundColor: Colors.grey[200],
+                          color: const Color(0xFFFF8A50),
+                          minHeight: 4,
+                        ),
+                      );
+                    },
+                  ),
+                ],
               ),
-            );
-          },
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      text: 'สารหล่อลื่น ',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 14,
+                        color: const Color(0xFF666666),
+                      ),
+                      children: [
+                        TextSpan(
+                          text: '$remainingLubricant ชิ้น',
+                          style: const TextStyle(
+                            color: Color(0xFF4A9FE8),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TweenAnimationBuilder<double>(
+                    tween: Tween<double>(begin: 0, end: progressLubricant),
+                    duration: const Duration(milliseconds: 500),
+                    curve: Curves.easeOut,
+                    builder: (context, value, child) {
+                      return ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: value,
+                          backgroundColor: Colors.grey[200],
+                          color: const Color(0xFF4A9FE8),
+                          minHeight: 4,
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -355,12 +467,26 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
-              child: StepperLubricant(
-                label: 'สารหล่อลื่น',
-                count: _lubricantQuantity,
-                max: 10,
-                onChanged: (val) {
-                  setState(() => _lubricantQuantity = val);
+              child: Builder(
+                builder: (context) {
+                  final int totalLubricantUsed =
+                      _currentMonthlyLubricantUsed + _lubricantQuantity;
+                  final int remainingLubricant =
+                      (_maxMonthlyLubricantQuota - totalLubricantUsed).clamp(
+                        0,
+                        _maxMonthlyLubricantQuota,
+                      );
+                  final int maxLubricantAllowed =
+                      _lubricantQuantity + remainingLubricant;
+
+                  return StepperLubricant(
+                    label: 'สารหล่อลื่น',
+                    count: _lubricantQuantity,
+                    max: maxLubricantAllowed,
+                    onChanged: (val) {
+                      setState(() => _lubricantQuantity = val);
+                    },
+                  );
                 },
               ),
             ),
