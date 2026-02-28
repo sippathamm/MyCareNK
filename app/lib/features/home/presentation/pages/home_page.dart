@@ -12,23 +12,29 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const HeaderSection(),
-              const SizedBox(height: 24),
-              const MonthlyFreeCard(),
-              const SizedBox(height: 24),
-              const ShortcutMenu(),
-              const SizedBox(height: 24),
-              const KnowledgeSection(),
-              const SizedBox(height: 24),
-              const CampaignBanner(),
-              const SizedBox(height: 24), // Extra spacing at bottom
-            ],
-          ),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: HeaderSection(),
+            ),
+            SizedBox(height: 8),
+            MonthlyFreeCard(),
+            SizedBox(height: 24),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0),
+              child: ShortcutMenu(),
+            ),
+            SizedBox(height: 24),
+            KnowledgeSection(),
+            SizedBox(height: 24),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0),
+              child: CampaignBanner(),
+            ),
+            SizedBox(height: 24),
+          ],
         ),
       ),
     );

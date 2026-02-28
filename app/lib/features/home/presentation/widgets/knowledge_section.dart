@@ -8,43 +8,51 @@ class KnowledgeSection extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'สาระน่ารู้',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF333333),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'สาระน่ารู้',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF333333),
+                ),
               ),
-            ),
-            TextButton(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('"ดูทั้งหมด" ถูกกด')),
-                );
-              },
-              child: const Row(
-                children: [
-                  Text(
-                    'ดูทั้งหมด',
-                    style: TextStyle(
-                      color: Color(0xFFFF8A50),
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
+              TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('"ดูทั้งหมด" ถูกกด')),
+                  );
+                },
+                child: const Row(
+                  children: [
+                    Text(
+                      'ดูทั้งหมด',
+                      style: TextStyle(
+                        color: Color(0xFFFF8A50),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
-                  ),
-                  Icon(Icons.chevron_right, size: 16, color: Color(0xFFFF8A50)),
-                ],
+                    Icon(
+                      Icons.chevron_right,
+                      size: 16,
+                      color: Color(0xFFFF8A50),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         SizedBox(
           height: 160,
           child: ListView.separated(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             scrollDirection: Axis.horizontal,
             itemCount: 4,
             separatorBuilder: (context, index) => const SizedBox(width: 16),
