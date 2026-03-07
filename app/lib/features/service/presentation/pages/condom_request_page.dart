@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
 import 'condom_request_confirm_page.dart';
@@ -123,6 +125,19 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 height: 48,
                 child: FilledButton(
                   onPressed: () {
+                    // Check if user is logged in
+                    final session =
+                        Supabase.instance.client.auth.currentSession;
+                    if (session == null) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const LoginPage(),
+                        ),
+                      );
+                      return;
+                    }
+
                     if (_totalSelected == 0) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
