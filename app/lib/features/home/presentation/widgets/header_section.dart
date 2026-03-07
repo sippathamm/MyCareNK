@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'emergency_button.dart';
+import '../../../auth/presentation/pages/login_page.dart';
 
 class HeaderSection extends StatelessWidget {
   const HeaderSection({super.key});
@@ -12,9 +13,10 @@ class HeaderSection extends StatelessWidget {
         const EmergencyButton(),
         InkWell(
           onTap: () {
-            ScaffoldMessenger.of(
+            Navigator.push(
               context,
-            ).showSnackBar(const SnackBar(content: Text('"โปรไฟล์" ถูกกด')));
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
           },
           borderRadius: BorderRadius.circular(24),
           child: Container(
