@@ -62,10 +62,11 @@ class _LoginPageState extends State<LoginPage> {
         );
       }
     } catch (e) {
+      debugPrint('Error during login: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
+          const SnackBar(
+            content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ'),
             backgroundColor: Colors.red,
           ),
         );

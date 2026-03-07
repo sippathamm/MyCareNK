@@ -51,6 +51,11 @@ class HeaderSection extends StatelessWidget {
               onSelected: (value) async {
                 if (value == 'logout') {
                   await Supabase.instance.client.auth.signOut();
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('ออกจากระบบแล้ว')),
+                    );
+                  }
                 }
               },
               offset: const Offset(0, 50),

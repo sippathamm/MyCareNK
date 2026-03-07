@@ -140,10 +140,11 @@ class _RegisterPageState extends State<RegisterPage> {
         );
       }
     } catch (e) {
+      debugPrint('Error during registration: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('เกิดข้อผิดพลาด: $e'),
+          const SnackBar(
+            content: Text('เกิดข้อผิดพลาดในการสร้างบัญชี'),
             backgroundColor: Colors.red,
           ),
         );

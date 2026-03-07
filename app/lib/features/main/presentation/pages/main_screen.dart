@@ -11,22 +11,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
+  int _homeVisibilityKey = 0;
   final GlobalKey<NavigatorState> _serviceNavigatorKey =
       GlobalKey<NavigatorState>();
-
-  final List<Widget> _pages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _pages.addAll([
-      const HomePage(),
-      ServiceNavigator(navigatorKey: _serviceNavigatorKey),
-      const Center(child: Text('Scan Screen Placeholder')), // Placeholder
-      const Center(child: Text('Message Screen Placeholder')), // Placeholder
-      const Center(child: Text('Settings Screen Placeholder')), // Placeholder
-    ]);
-  }
 
   void _onItemTapped(int index) {
     if (_currentIndex == index && index == 1) {
@@ -34,6 +21,10 @@ class _MainScreenState extends State<MainScreen> {
       _serviceNavigatorKey.currentState?.popUntil((route) => route.isFirst);
     } else {
       setState(() {
+        if (index == 0 && _currentIndex != 0) {
+          // Switching back to Home tab — bump key to replay animations
+          _homeVisibilityKey++;
+        }
         _currentIndex = index;
       });
     }
@@ -43,7 +34,16 @@ class _MainScreenState extends State<MainScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: IndexedStack(index: _currentIndex, children: _pages),
+      body: IndexedStack(
+        index: _currentIndex,
+        children: [
+          HomePage(visibilityKey: _homeVisibilityKey),
+          ServiceNavigator(navigatorKey: _serviceNavigatorKey),
+          const Center(child: Text('Scan Screen Placeholder')),
+          const Center(child: Text('Message Screen Placeholder')),
+          const Center(child: Text('Settings Screen Placeholder')),
+        ],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: const Color(0xFFFF8A50),

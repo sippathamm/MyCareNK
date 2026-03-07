@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class CondomRequestDetailPage extends StatelessWidget {
   final Map<int, int> quantities;
@@ -111,12 +112,13 @@ class CondomRequestDetailPage extends StatelessWidget {
       children: [
         Text(
           'สิทธิ์รับฟรีคงเหลือ',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: GoogleFonts.prompt(
             fontWeight: FontWeight.bold,
+            fontSize: 18,
             color: const Color(0xFF333333),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -126,12 +128,11 @@ class CondomRequestDetailPage extends StatelessWidget {
                 children: [
                   Text(
                     'ถุงยางอนามัย',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: GoogleFonts.prompt(
                       fontSize: 14,
                       color: const Color(0xFF666666),
                     ),
                   ),
-                  const SizedBox(height: 4),
                   TweenAnimationBuilder<int>(
                     tween: IntTween(
                       begin: (maxMonthlyQuota - currentMonthlyUsed).clamp(
@@ -143,19 +144,24 @@ class CondomRequestDetailPage extends StatelessWidget {
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOut,
                     builder: (context, value, child) {
-                      return Text.rich(
-                        TextSpan(
-                          text: '$value ',
-                          style: const TextStyle(
-                            color: Color(0xFFFF8A50),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 32,
-                            height: 1.0,
-                          ),
-                          children: const [
+                      return RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '$value ',
+                              style: GoogleFonts.prompt(
+                                color: const Color(0xFFFF8A50),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                              ),
+                            ),
                             TextSpan(
                               text: 'ชิ้น',
-                              style: TextStyle(fontSize: 20),
+                              style: GoogleFonts.prompt(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFFFF8A50),
+                              ),
                             ),
                           ],
                         ),
@@ -172,12 +178,11 @@ class CondomRequestDetailPage extends StatelessWidget {
                 children: [
                   Text(
                     'สารหล่อลื่น',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: GoogleFonts.prompt(
                       fontSize: 14,
                       color: const Color(0xFF666666),
                     ),
                   ),
-                  const SizedBox(height: 4),
                   TweenAnimationBuilder<int>(
                     tween: IntTween(
                       begin:
@@ -189,19 +194,24 @@ class CondomRequestDetailPage extends StatelessWidget {
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOut,
                     builder: (context, value, child) {
-                      return Text.rich(
-                        TextSpan(
-                          text: '$value ',
-                          style: const TextStyle(
-                            color: Color(0xFF4A9FE8),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 32,
-                            height: 1.0,
-                          ),
-                          children: const [
+                      return RichText(
+                        text: TextSpan(
+                          children: [
                             TextSpan(
-                              text: 'ชิ้น',
-                              style: TextStyle(fontSize: 20),
+                              text: '$value ',
+                              style: GoogleFonts.prompt(
+                                color: const Color(0xFF4A9FE8),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'ซอง',
+                              style: GoogleFonts.prompt(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF4A9FE8),
+                              ),
                             ),
                           ],
                         ),
@@ -349,7 +359,7 @@ class CondomRequestDetailPage extends StatelessWidget {
             style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
           Text(
-            '$lubricantQuantity ชิ้น',
+            '$lubricantQuantity ซอง',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -375,7 +385,7 @@ class CondomRequestDetailPage extends StatelessWidget {
           Icon(Icons.calendar_today_outlined, color: Colors.black),
           SizedBox(width: 8),
           Text(
-            'สถานที่ วันและเวลารับ',
+            'จุดบริการ วันและเวลารับ',
             style: TextStyle(
               color: Colors.black, // text black
               fontSize: 16,
@@ -389,7 +399,7 @@ class CondomRequestDetailPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('สถานที่', style: TextStyle(fontSize: 16)),
+              const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
               Text(
                 selectedLocation ?? '-',
                 style: const TextStyle(

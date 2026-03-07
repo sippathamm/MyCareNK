@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'condom_request_success_page.dart';
+import '../../../../features/auth/presentation/pages/login_page.dart';
 
-class CondomRequestConfirmPage extends StatelessWidget {
+class CondomRequestConfirmPage extends StatefulWidget {
   final Map<int, int> quantities;
   final int lubricantQuantity;
   final String? selectedLocation;
@@ -27,8 +30,132 @@ class CondomRequestConfirmPage extends StatelessWidget {
     required this.maxMonthlyLubricantQuota,
   });
 
+  @override
+  State<CondomRequestConfirmPage> createState() =>
+      _CondomRequestConfirmPageState();
+}
+
+class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
+  bool _isLoading = false;
+
   int get _totalSelected =>
-      quantities.values.fold(0, (sum, count) => sum + count);
+      widget.quantities.values.fold(0, (sum, count) => sum + count);
+
+  Future<void> _submitRequest() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('กรุณาเข้าสู่ระบบก่อนทำรายการ')),
+      );
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final userId = session.user.id;
+      final quantitiesJson = widget.quantities.map(
+        (key, value) => MapEntry(key.toString(), value),
+      );
+
+      String? dateString;
+      if (widget.selectedDate != null) {
+        dateString =
+            "${widget.selectedDate!.year.toString().padLeft(4, '0')}-${widget.selectedDate!.month.toString().padLeft(2, '0')}-${widget.selectedDate!.day.toString().padLeft(2, '0')}";
+      }
+
+      String? timeString;
+      if (widget.selectedTime != null) {
+        timeString =
+            "${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')}:00";
+      }
+
+      // Generate a mock reference number. In a real app, this might be simpler or generated server-side.
+      final String refNumber =
+          'TD${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+
+      await Supabase.instance.client.from('condom_requests').insert({
+        'user_id': userId,
+        'condom_quantities': quantitiesJson,
+        'lubricant_quantity': widget.lubricantQuantity,
+        'selected_location': widget.selectedLocation,
+        'selected_date': dateString,
+        'selected_time': timeString,
+        'message': widget.message,
+        'reference_number': refNumber,
+        'status': 'pending',
+      });
+
+      // Update user's monthly quota usage
+      final now = DateTime.now();
+      final monthStart = DateTime(
+        now.year,
+        now.month,
+        1,
+      ).toIso8601String().substring(0, 10);
+
+      // Fetch existing row first (to compute new totals for upsert)
+      final existingQuota = await Supabase.instance.client
+          .from('user_monthly_quotas')
+          .select('used_condoms, used_lubricants')
+          .eq('user_id', userId)
+          .eq('month', monthStart)
+          .maybeSingle();
+
+      final int newUsedCondoms =
+          ((existingQuota?['used_condoms'] as int?) ?? 0) + _totalSelected;
+      final int newUsedLubricants =
+          ((existingQuota?['used_lubricants'] as int?) ?? 0) +
+          widget.lubricantQuantity;
+
+      await Supabase.instance.client.from('user_monthly_quotas').upsert({
+        'user_id': userId,
+        'month': monthStart,
+        'used_condoms': newUsedCondoms,
+        'used_lubricants': newUsedLubricants,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }, onConflict: 'user_id, month');
+
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => CondomRequestSuccessPage(
+              quantities: widget.quantities,
+              lubricantQuantity: widget.lubricantQuantity,
+              selectedLocation: widget.selectedLocation,
+              selectedDate: widget.selectedDate,
+              selectedTime: widget.selectedTime,
+              message: widget.message,
+              currentMonthlyUsed: widget.currentMonthlyUsed,
+              maxMonthlyQuota: widget.maxMonthlyQuota,
+              currentMonthlyLubricantUsed: widget.currentMonthlyLubricantUsed,
+              maxMonthlyLubricantQuota: widget.maxMonthlyLubricantQuota,
+              referenceNumber: refNumber,
+            ),
+          ),
+        );
+      }
+    } catch (error) {
+      debugPrint('Error saving condom request: $error');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -68,33 +195,13 @@ class CondomRequestConfirmPage extends StatelessWidget {
               _buildQuantityCard(context),
               _buildLubricantCard(context),
               _buildPlaceTimeCard(context),
-              if (message.isNotEmpty) _buildMessageCard(context),
+              if (widget.message.isNotEmpty) _buildMessageCard(context),
               const SizedBox(height: 48),
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: FilledButton(
-                  onPressed: () {
-                    // Navigate to success or pop with success
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (context) => CondomRequestSuccessPage(
-                          quantities: quantities,
-                          lubricantQuantity: lubricantQuantity,
-                          selectedLocation: selectedLocation,
-                          selectedDate: selectedDate,
-                          selectedTime: selectedTime,
-                          message: message,
-                          currentMonthlyUsed: currentMonthlyUsed,
-                          maxMonthlyQuota: maxMonthlyQuota,
-                          currentMonthlyLubricantUsed:
-                              currentMonthlyLubricantUsed,
-                          maxMonthlyLubricantQuota: maxMonthlyLubricantQuota,
-                          referenceNumber: 'TD16HD52', // Mock reference number
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: _isLoading ? null : _submitRequest,
                   style: FilledButton.styleFrom(
                     backgroundColor: const Color(0xFFFF8A50),
                     foregroundColor: Colors.white,
@@ -102,10 +209,22 @@ class CondomRequestConfirmPage extends StatelessWidget {
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
-                    'ยืนยัน',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'ยืนยัน',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -117,18 +236,18 @@ class CondomRequestConfirmPage extends StatelessWidget {
   }
 
   Widget _buildMonthlyProgress(BuildContext context) {
-    final int totalUsed = currentMonthlyUsed + _totalSelected;
-    final int remaining = (maxMonthlyQuota - totalUsed).clamp(
+    final int totalUsed = widget.currentMonthlyUsed + _totalSelected;
+    final int remaining = (widget.maxMonthlyQuota - totalUsed).clamp(
       0,
-      maxMonthlyQuota,
+      widget.maxMonthlyQuota,
     );
 
     final int totalLubricantUsed =
-        currentMonthlyLubricantUsed + lubricantQuantity;
+        widget.currentMonthlyLubricantUsed + widget.lubricantQuantity;
     final int remainingLubricant =
-        (maxMonthlyLubricantQuota - totalLubricantUsed).clamp(
+        (widget.maxMonthlyLubricantQuota - totalLubricantUsed).clamp(
           0,
-          maxMonthlyLubricantQuota,
+          widget.maxMonthlyLubricantQuota,
         );
 
     return Column(
@@ -136,12 +255,13 @@ class CondomRequestConfirmPage extends StatelessWidget {
       children: [
         Text(
           'สิทธิ์รับฟรีคงเหลือ',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: GoogleFonts.prompt(
             fontWeight: FontWeight.bold,
+            fontSize: 18,
             color: const Color(0xFF333333),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -151,36 +271,39 @@ class CondomRequestConfirmPage extends StatelessWidget {
                 children: [
                   Text(
                     'ถุงยางอนามัย',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: GoogleFonts.prompt(
                       fontSize: 14,
                       color: const Color(0xFF666666),
                     ),
                   ),
-                  const SizedBox(height: 4),
                   TweenAnimationBuilder<int>(
                     tween: IntTween(
-                      begin: (maxMonthlyQuota - currentMonthlyUsed).clamp(
-                        0,
-                        maxMonthlyQuota,
-                      ),
+                      begin:
+                          (widget.maxMonthlyQuota - widget.currentMonthlyUsed)
+                              .clamp(0, widget.maxMonthlyQuota),
                       end: remaining,
                     ),
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOut,
                     builder: (context, value, child) {
-                      return Text.rich(
-                        TextSpan(
-                          text: '$value ',
-                          style: const TextStyle(
-                            color: Color(0xFFFF8A50),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 32,
-                            height: 1.0,
-                          ),
-                          children: const [
+                      return RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(
+                              text: '$value ',
+                              style: GoogleFonts.prompt(
+                                color: const Color(0xFFFF8A50),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                              ),
+                            ),
                             TextSpan(
                               text: 'ชิ้น',
-                              style: TextStyle(fontSize: 20),
+                              style: GoogleFonts.prompt(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFFFF8A50),
+                              ),
                             ),
                           ],
                         ),
@@ -197,36 +320,40 @@ class CondomRequestConfirmPage extends StatelessWidget {
                 children: [
                   Text(
                     'สารหล่อลื่น',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    style: GoogleFonts.prompt(
                       fontSize: 14,
                       color: const Color(0xFF666666),
                     ),
                   ),
-                  const SizedBox(height: 4),
                   TweenAnimationBuilder<int>(
                     tween: IntTween(
                       begin:
-                          (maxMonthlyLubricantQuota -
-                                  currentMonthlyLubricantUsed)
-                              .clamp(0, maxMonthlyLubricantQuota),
+                          (widget.maxMonthlyLubricantQuota -
+                                  widget.currentMonthlyLubricantUsed)
+                              .clamp(0, widget.maxMonthlyLubricantQuota),
                       end: remainingLubricant,
                     ),
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOut,
                     builder: (context, value, child) {
-                      return Text.rich(
-                        TextSpan(
-                          text: '$value ',
-                          style: const TextStyle(
-                            color: Color(0xFF4A9FE8),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 32,
-                            height: 1.0,
-                          ),
-                          children: const [
+                      return RichText(
+                        text: TextSpan(
+                          children: [
                             TextSpan(
-                              text: 'ชิ้น',
-                              style: TextStyle(fontSize: 20),
+                              text: '$value ',
+                              style: GoogleFonts.prompt(
+                                color: const Color(0xFF4A9FE8),
+                                fontWeight: FontWeight.bold,
+                                fontSize: 28,
+                              ),
+                            ),
+                            TextSpan(
+                              text: 'ซอง',
+                              style: GoogleFonts.prompt(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w500,
+                                color: const Color(0xFF4A9FE8),
+                              ),
                             ),
                           ],
                         ),
@@ -302,30 +429,34 @@ class CondomRequestConfirmPage extends StatelessWidget {
         ),
       ),
       content: Column(
-        children: quantities.entries.where((entry) => entry.value > 0).map((
-          entry,
-        ) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'ขนาด ${entry.key} มม.',
-                  style: const TextStyle(fontSize: 16, color: Colors.black87),
+        children: widget.quantities.entries
+            .where((entry) => entry.value > 0)
+            .map((entry) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'ขนาด ${entry.key} มม.',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      '${entry.value} ชิ้น',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFFF8A50), // user data orange
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  '${entry.value} ชิ้น',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFFFF8A50), // user data orange
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
+              );
+            })
+            .toList(),
       ),
       showDivider: true,
       footer: Row(
@@ -349,7 +480,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
   }
 
   Widget _buildLubricantCard(BuildContext context) {
-    if (lubricantQuantity == 0) return const SizedBox();
+    if (widget.lubricantQuantity == 0) return const SizedBox();
 
     return _buildCard(
       header: const Row(
@@ -374,7 +505,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
             style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
           Text(
-            '$lubricantQuantity ชิ้น',
+            '${widget.lubricantQuantity} ซอง',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -387,11 +518,11 @@ class CondomRequestConfirmPage extends StatelessWidget {
   }
 
   Widget _buildPlaceTimeCard(BuildContext context) {
-    String dateStr = selectedDate != null
-        ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year + 543}'
+    String dateStr = widget.selectedDate != null
+        ? '${widget.selectedDate!.day}/${widget.selectedDate!.month}/${widget.selectedDate!.year + 543}'
         : '-';
-    String timeStr = selectedTime != null
-        ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')} น.'
+    String timeStr = widget.selectedTime != null
+        ? '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')} น.'
         : '-';
 
     return _buildCard(
@@ -400,7 +531,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
           Icon(Icons.calendar_today_outlined, color: Colors.black),
           SizedBox(width: 8),
           Text(
-            'สถานที่ วันและเวลารับ',
+            'จุดบริการ วันและเวลารับ',
             style: TextStyle(
               color: Colors.black, // text black
               fontSize: 16,
@@ -414,9 +545,9 @@ class CondomRequestConfirmPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('สถานที่', style: TextStyle(fontSize: 16)),
+              const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
               Text(
-                selectedLocation ?? '-',
+                widget.selectedLocation ?? '-',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -479,7 +610,7 @@ class CondomRequestConfirmPage extends StatelessWidget {
       content: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          message,
+          widget.message,
           style: const TextStyle(
             fontSize: 16,
             color: Color(0xFFFF8A50), // user data orange

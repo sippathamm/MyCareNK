@@ -15,7 +15,7 @@ class ServicePage extends StatelessWidget {
             ServiceCard(
               icon: Icons.location_on,
               title: 'รับถุงยางอนามัย',
-              subtitle: 'ค้นหาสถานที่และรับถุงยางอนามัยฟรี',
+              subtitle: 'ค้นหาจุดบริการและรับถุงยางอนามัยฟรี',
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(
