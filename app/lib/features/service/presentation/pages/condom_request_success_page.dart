@@ -179,72 +179,69 @@ class CondomRequestSuccessPage extends StatelessWidget {
               const Spacer(),
 
               // Buttons
-              Row(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: FilledButton(
-                        onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).popUntil((route) => route.isFirst);
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF8A50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
+                  SizedBox(
+                    height: 48,
+                    child: FilledButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => CondomRequestDetailPage(
+                              quantities: quantities,
+                              lubricantQuantity: lubricantQuantity,
+                              selectedLocation: selectedLocation,
+                              selectedDate: selectedDate,
+                              selectedTime: selectedTime,
+                              message: message,
+                              currentMonthlyUsed: currentMonthlyUsed,
+                              maxMonthlyQuota: maxMonthlyQuota,
+                              currentMonthlyLubricantUsed:
+                                  currentMonthlyLubricantUsed,
+                              maxMonthlyLubricantQuota:
+                                  maxMonthlyLubricantQuota,
+                            ),
                           ),
+                        );
+                      },
+                      style: FilledButton.styleFrom(
+                        backgroundColor: const Color(0xFFFF8A50),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const Text(
-                          'กลับไปบริการ',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                      ),
+                      child: const Text(
+                        'ดูข้อมูล',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: FilledButton(
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => CondomRequestDetailPage(
-                                quantities: quantities,
-                                lubricantQuantity: lubricantQuantity,
-                                selectedLocation: selectedLocation,
-                                selectedDate: selectedDate,
-                                selectedTime: selectedTime,
-                                message: message,
-                                currentMonthlyUsed: currentMonthlyUsed,
-                                maxMonthlyQuota: maxMonthlyQuota,
-                                currentMonthlyLubricantUsed:
-                                    currentMonthlyLubricantUsed,
-                                maxMonthlyLubricantQuota:
-                                    maxMonthlyLubricantQuota,
-                              ),
-                            ),
-                          );
-                        },
-                        style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF8A50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFFF8A50)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const Text(
-                          'ดูข้อมูล',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                      ),
+                      child: const Text(
+                        'กลับไปบริการ',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFFF8A50),
                         ),
                       ),
                     ),
