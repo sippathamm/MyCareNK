@@ -121,8 +121,19 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (mounted) {
-        // Generate random recovery codes for demo purposes or use real ones if available
+        // Generate random recovery codes
         final recoveryCodes = List.generate(6, (_) => _generateRandomCode());
+
+        // Save recovery codes to Supabase
+        try {
+          await Supabase.instance.client.rpc(
+            'save_recovery_codes',
+            params: {'secret_codes': recoveryCodes},
+          );
+          debugPrint('บันทึกรหัสกู้คืนทั้ง 6 ชุดเรียบร้อยแล้ว');
+        } catch (e) {
+          debugPrint('เกิดข้อผิดพลาดในการบันทึกรหัสกู้คืน: $e');
+        }
 
         // Navigate to success page
         Navigator.of(context).pushReplacement(
