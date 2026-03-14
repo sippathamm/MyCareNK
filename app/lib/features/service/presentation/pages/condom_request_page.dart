@@ -678,7 +678,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         isExpanded: true,
-                        hint: const Text('เลือกจุดบริการ'),
+                        hint: const Text('จุดบริการ'),
                         value: _selectedLocation,
                         items:
                             [
