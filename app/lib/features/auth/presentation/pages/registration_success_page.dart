@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../main/presentation/pages/main_page.dart';
 
 class RegistrationSuccessPage extends StatelessWidget {
   final List<String> recoveryCodes;
@@ -140,7 +141,12 @@ class RegistrationSuccessPage extends StatelessWidget {
                   height: 48,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.of(context).pop(); // Go back to login/home
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(
+                          builder: (context) => const MainScreen(),
+                        ),
+                        (route) => false,
+                      );
                     },
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(color: colorScheme.primary),
