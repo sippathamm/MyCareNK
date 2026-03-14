@@ -233,7 +233,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                           );
                         },
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFFD35B30),
+                          backgroundColor: const Color(0xFFFF8A50),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24),
                           ),
