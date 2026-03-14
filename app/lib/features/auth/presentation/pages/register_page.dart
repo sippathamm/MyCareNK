@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'registration_success_page.dart';
+import 'dart:math';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -119,14 +121,15 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('สร้างบัญชีใหม่สำเร็จ'),
-            backgroundColor: Colors.green,
+        // Generate random recovery codes for demo purposes or use real ones if available
+        final recoveryCodes = List.generate(6, (_) => _generateRandomCode());
+
+        // Navigate to success page
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => RegistrationSuccessPage(recoveryCodes: recoveryCodes),
           ),
         );
-        // Automatically pop back to the login page passing success flag
-        Navigator.of(context).pop(true);
       }
     } on AuthException catch (e) {
       if (mounted) {
@@ -156,6 +159,32 @@ class _RegisterPageState extends State<RegisterPage> {
         });
       }
     }
+  }
+
+  Widget _buildNationalityOption(String value) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Radio<String>(
+          value: value,
+          groupValue: _nationality,
+          activeColor: Theme.of(context).colorScheme.primary,
+          onChanged: (val) {
+            setState(() {
+              _nationality = val!;
+            });
+          },
+        ),
+        Text(value),
+      ],
+    );
+  }
+
+  String _generateRandomCode() {
+    const chars = 'ABCDEF0123456789';
+    final rnd = Random();
+    return String.fromCharCodes(Iterable.generate(
+        6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
   }
 
   @override
@@ -407,59 +436,23 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 // Nationality Row
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text(
                       'สัญชาติ',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Radio<String>(
-                          value: 'ไทย',
-                          groupValue: _nationality,
-                          activeColor: colorScheme.primary,
-                          onChanged: (value) {
-                            setState(() {
-                              _nationality = value!;
-                            });
-                          },
-                        ),
-                        const Text('ไทย'),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Radio<String>(
-                          value: 'ลาว',
-                          activeColor: colorScheme.primary,
-                          groupValue: _nationality,
-                          onChanged: (value) {
-                            setState(() {
-                              _nationality = value!;
-                            });
-                          },
-                        ),
-                        const Text('ลาว'),
-                      ],
-                    ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Radio<String>(
-                          value: 'พม่า',
-                          activeColor: colorScheme.primary,
-                          groupValue: _nationality,
-                          onChanged: (value) {
-                            setState(() {
-                              _nationality = value!;
-                            });
-                          },
-                        ),
-                        const Text('พม่า'),
-                      ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 8,
+                        runSpacing: 0,
+                        children: [
+                          _buildNationalityOption('ไทย'),
+                          _buildNationalityOption('ลาว'),
+                          _buildNationalityOption('พม่า'),
+                        ],
+                      ),
                     ),
                   ],
                 ),
