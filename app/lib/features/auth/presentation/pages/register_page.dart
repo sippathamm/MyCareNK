@@ -138,7 +138,8 @@ class _RegisterPageState extends State<RegisterPage> {
         // Navigate to success page
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => RegistrationSuccessPage(recoveryCodes: recoveryCodes),
+            builder: (context) =>
+                RegistrationSuccessPage(recoveryCodes: recoveryCodes),
           ),
         );
       }
@@ -194,8 +195,9 @@ class _RegisterPageState extends State<RegisterPage> {
   String _generateRandomCode() {
     const chars = 'ABCDEF0123456789';
     final rnd = Random();
-    return String.fromCharCodes(Iterable.generate(
-        6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))));
+    return String.fromCharCodes(
+      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
+    );
   }
 
   @override
@@ -239,6 +241,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
                       hintText: 'ชื่อผู้ใช้งาน (ตัวอักษรภาษาอังกฤษหรือตัวเลข)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -274,6 +277,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -323,6 +327,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
                     decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'ยืนยันรหัสผ่าน',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -373,32 +378,40 @@ class _RegisterPageState extends State<RegisterPage> {
                           vertical: 4.0,
                         ),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<String>(
-                            value: _gender,
-                            isExpanded: true,
-                            hint: Text(
-                              'เพศ',
-                              style: TextStyle(color: Colors.grey[400]),
-                            ),
-                            icon: Icon(
-                              Icons.keyboard_arrow_down,
-                              color: Colors.grey[400],
-                            ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'ชาย',
-                                child: Text('ชาย'),
-                              ),
-                              DropdownMenuItem(
-                                value: 'หญิง',
-                                child: Text('หญิง'),
+                          child: Row(
+                            children: [
+                              Icon(Icons.wc, color: Colors.grey[400], size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: DropdownButton<String>(
+                                  value: _gender,
+                                  isExpanded: true,
+                                  hint: Text(
+                                    'เพศ',
+                                    style: TextStyle(color: Colors.grey[400]),
+                                  ),
+                                  icon: Icon(
+                                    Icons.keyboard_arrow_down,
+                                    color: Colors.grey[400],
+                                  ),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'ชาย',
+                                      child: Text('ชาย'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'หญิง',
+                                      child: Text('หญิง'),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _gender = value;
+                                    });
+                                  },
+                                ),
                               ),
                             ],
-                            onChanged: (value) {
-                              setState(() {
-                                _gender = value;
-                              });
-                            },
                           ),
                         ),
                       ),
@@ -422,14 +435,14 @@ class _RegisterPageState extends State<RegisterPage> {
                                   ? ''
                                   : '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year + 543}',
                               decoration: InputDecoration(
-                                hintText: 'วัน/เดือน/ปีเกิด',
-                                hintStyle: TextStyle(color: Colors.grey[400]),
-                                border: InputBorder.none,
-                                suffixIcon: Icon(
+                                prefixIcon: Icon(
                                   Icons.calendar_today,
                                   color: Colors.grey[400],
                                   size: 20,
                                 ),
+                                hintText: 'วัน/เดือน/ปีเกิด',
+                                hintStyle: TextStyle(color: Colors.grey[400]),
+                                border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16.0,
                                   vertical: 16.0,

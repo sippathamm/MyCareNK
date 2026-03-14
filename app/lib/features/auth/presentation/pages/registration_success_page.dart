@@ -98,7 +98,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 const Text(
-                  'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 หลักนี้',
+                  'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 12, color: Color(0xFF666666)),
                 ),

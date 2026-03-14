@@ -122,6 +122,7 @@ class _LoginPageState extends State<LoginPage> {
                   child: TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
                       hintText: 'ชื่อผู้ใช้งาน',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -156,6 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'รหัสผ่าน',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
