@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -76,9 +77,10 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             "${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')}:00";
       }
 
-      // Generate a mock reference number. In a real app, this might be simpler or generated server-side.
-      final String refNumber =
-          'TD${DateTime.now().millisecondsSinceEpoch.toString().substring(7)}';
+      // Generate an 8-character alphanumeric reference number.
+      const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      final Random random = Random();
+      final String refNumber = List.generate(8, (_) => chars[random.nextInt(chars.length)]).join();
 
       await Supabase.instance.client.from('condom_requests').insert({
         'user_id': userId,
