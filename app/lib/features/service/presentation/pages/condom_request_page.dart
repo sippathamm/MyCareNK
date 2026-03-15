@@ -716,7 +716,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                                     : '${_selectedDate!.day}/${_selectedDate!.month}/${_selectedDate!.year}',
                               ),
                               decoration: InputDecoration(
-                                labelText: 'วันที่',
+                                hintText: 'วันที่',
                                 border: OutlineInputBorder(
                                   borderRadius: BorderRadius.circular(8),
                                 ),
