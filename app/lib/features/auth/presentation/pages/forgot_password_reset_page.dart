@@ -158,6 +158,10 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     decoration: InputDecoration(
                       hintText: 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: Colors.grey[400],
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -206,6 +210,10 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     decoration: InputDecoration(
                       hintText: 'ยืนยันรหัสผ่านใหม่',
                       hintStyle: TextStyle(color: Colors.grey[400]),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: Colors.grey[400],
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
