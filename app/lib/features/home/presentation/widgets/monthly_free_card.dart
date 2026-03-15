@@ -22,6 +22,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
 
   int _usedCondoms = maxCondomQuota;
   int _usedLubricants = maxLubricantQuota;
+  int? _daysUntilReset;
   bool _isLoading = true;
 
   // Version bumped whenever new data arrives OR parent refreshKey changes.
@@ -33,6 +34,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   @override
   void initState() {
     super.initState();
+    _fetchDaysUntilReset();
     _subscribeToQuota();
   }
 
@@ -42,7 +44,31 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
     // Parent incremented refreshKey (e.g. pull-to-refresh or route return)
     if (oldWidget.refreshKey != widget.refreshKey) {
       setState(() => _animationVersion++);
+      _fetchDaysUntilReset();
       _subscribeToQuota();
+    }
+  }
+
+  Future<void> _fetchDaysUntilReset() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      if (mounted) {
+        setState(() => _daysUntilReset = null);
+      }
+      return;
+    }
+
+    try {
+      final response = await Supabase.instance.client.rpc(
+        'get_days_until_reset',
+      );
+      if (mounted) {
+        setState(() {
+          _daysUntilReset = response as int?;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching days until reset: $e');
     }
   }
 
@@ -127,7 +153,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
     return Column(
       children: [
         SizedBox(
-          height: 180,
+          height: 200,
           child: PageView(
             controller: _pageController,
             onPageChanged: (index) => setState(() => _currentPage = index),
@@ -237,6 +263,17 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             current: remaining,
             total: maxCondomQuota,
           ),
+          const SizedBox(height: 12),
+          Text(
+            _daysUntilReset != null
+                ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
+                : 'จะรีเซ็ตในอีก -- วัน',
+            style: GoogleFonts.prompt(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF666666).withOpacity(0.8),
+            ),
+          ),
         ],
       ),
     );
@@ -317,6 +354,17 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             color: const Color(0xFF4A9FE8),
             current: remaining,
             total: maxLubricantQuota,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _daysUntilReset != null
+                ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
+                : 'จะรีเซ็ตในอีก -- วัน',
+            style: GoogleFonts.prompt(
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: const Color(0xFF666666).withOpacity(0.8),
+            ),
           ),
         ],
       ),
