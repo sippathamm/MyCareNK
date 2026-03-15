@@ -1,17 +1,31 @@
 import 'package:flutter/material.dart';
+import '../../data/recovery_service.dart';
+import 'recovery_codes_display_page.dart';
 
 class ForgotPasswordResetPage extends StatefulWidget {
-  const ForgotPasswordResetPage({super.key});
+  final String username;
+  final String recoveryCode;
+
+  const ForgotPasswordResetPage({
+    super.key,
+    required this.username,
+    required this.recoveryCode,
+  });
 
   @override
-  State<ForgotPasswordResetPage> createState() => _ForgotPasswordResetPageState();
+  State<ForgotPasswordResetPage> createState() =>
+      _ForgotPasswordResetPageState();
 }
 
 class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
+  final _formKey = GlobalKey<FormState>();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  bool _isLoading = false;
+
+  final RecoveryService _recoveryService = RecoveryService();
 
   @override
   void dispose() {
@@ -20,24 +34,63 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
     super.dispose();
   }
 
-  void _onConfirm() {
-    // Show success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('เปลี่ยนรหัสผ่านใหม่สำเร็จ'),
-        backgroundColor: Colors.green,
-      ),
-    );
+  Future<void> _onConfirm() async {
+    if (!_formKey.currentState!.validate()) return;
 
-    // TODO: Call backend to update password and log in with new credentials.
-    // For now, return to the main page (simulate logging in).
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final result = await _recoveryService.resetPassword(
+        username: widget.username,
+        recoveryCode: widget.recoveryCode,
+        newPassword: _passwordController.text,
+      );
+
+      if (!mounted) return;
+
+      if (result.success && result.newRecoveryCodes != null) {
+        // Navigate to recovery codes display page
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(
+            builder: (context) => RecoveryCodesDisplayPage(
+              recoveryCodes: result.newRecoveryCodes!,
+            ),
+          ),
+          (route) => route.isFirst,
+        );
+      } else {
+        // Show error
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -61,125 +114,163 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-              // Icon Box
-              Container(
-                width: 72,
-                height: 72,
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!, width: 2),
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Icon(
-                  Icons.lock_reset,
-                  color: colorScheme.primary,
-                  size: 40,
-                ),
-              ),
-              const SizedBox(height: 24.0),
-              // Title Text
-              const Text(
-                'กรอกรหัสผ่านใหม่',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF333333),
-                ),
-              ),
-              const SizedBox(height: 32.0),
-              
-              // Password Field
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: TextField(
-                  controller: _passwordController,
-                  obscureText: _obscurePassword,
-                  decoration: InputDecoration(
-                    hintText: 'รหัสผ่าน',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 16.0,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey[400],
-                      ),
-                      onPressed: () {
-                        setState(() {
-                          _obscurePassword = !_obscurePassword;
-                        });
-                      },
-                    ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                // Icon Box
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey[300]!, width: 2),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(
+                    Icons.lock_reset,
+                    color: colorScheme.primary,
+                    size: 40,
                   ),
                 ),
-              ),
-              const SizedBox(height: 16.0),
+                const SizedBox(height: 24.0),
+                // Title Text
+                const Text(
+                  'กรอกรหัสผ่านใหม่',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF333333),
+                  ),
+                ),
+                const SizedBox(height: 32.0),
 
-              // Confirm Password Field
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-                child: TextField(
-                  controller: _confirmPasswordController,
-                  obscureText: _obscureConfirmPassword,
-                  decoration: InputDecoration(
-                    hintText: 'ยืนยันรหัสผ่าน',
-                    hintStyle: TextStyle(color: Colors.grey[400]),
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 16.0,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                        color: Colors.grey[400],
+                // Password Field
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                  child: TextFormField(
+                    controller: _passwordController,
+                    obscureText: _obscurePassword,
+                    decoration: InputDecoration(
+                      hintText: 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
                       ),
-                      onPressed: () {
-                        setState(() {
-                          _obscureConfirmPassword = !_obscureConfirmPassword;
-                        });
-                      },
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey[400],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'กรุณากรอกรหัสผ่านใหม่';
+                      }
+                      if (value.length < 8) {
+                        return 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร';
+                      }
+                      if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$')
+                          .hasMatch(value)) {
+                        return 'รหัสผ่านต้องมีทั้งตัวอักษรและตัวเลข';
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
+                const SizedBox(height: 16.0),
 
-              const SizedBox(height: 48.0),
-              // Confirm Button
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed: _onConfirm,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
+                // Confirm Password Field
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(8.0),
                   ),
-                  child: const Text(
-                    'ตกลง',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.bold,
+                  child: TextFormField(
+                    controller: _confirmPasswordController,
+                    obscureText: _obscureConfirmPassword,
+                    decoration: InputDecoration(
+                      hintText: 'ยืนยันรหัสผ่านใหม่',
+                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 16.0,
+                      ),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
+                          color: Colors.grey[400],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscureConfirmPassword = !_obscureConfirmPassword;
+                          });
+                        },
+                      ),
                     ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'กรุณายืนยันรหัสผ่านใหม่';
+                      }
+                      if (value != _passwordController.text) {
+                        return 'รหัสผ่านไม่ตรงกัน';
+                      }
+                      return null;
+                    },
                   ),
                 ),
-              ),
-            ],
+
+                const SizedBox(height: 48.0),
+                // Confirm Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: FilledButton(
+                    onPressed: _isLoading ? null : _onConfirm,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: colorScheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'ตกลง',
+                            style: TextStyle(
+                              fontSize: 16.0,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

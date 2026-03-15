@@ -1,17 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../data/recovery_service.dart';
 import 'forgot_password_reset_page.dart';
 
 class ForgotPasswordRecoveryCodePage extends StatefulWidget {
-  const ForgotPasswordRecoveryCodePage({super.key});
+  final String username;
+
+  const ForgotPasswordRecoveryCodePage({super.key, required this.username});
 
   @override
-  State<ForgotPasswordRecoveryCodePage> createState() => _ForgotPasswordRecoveryCodePageState();
+  State<ForgotPasswordRecoveryCodePage> createState() =>
+      _ForgotPasswordRecoveryCodePageState();
 }
 
-class _ForgotPasswordRecoveryCodePageState extends State<ForgotPasswordRecoveryCodePage> {
-  final List<TextEditingController> _controllers = List.generate(6, (index) => TextEditingController());
+class _ForgotPasswordRecoveryCodePageState
+    extends State<ForgotPasswordRecoveryCodePage> {
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+  bool _isLoading = false;
+
+  final RecoveryService _recoveryService = RecoveryService();
 
   @override
   void dispose() {
@@ -32,10 +43,73 @@ class _ForgotPasswordRecoveryCodePageState extends State<ForgotPasswordRecoveryC
     }
   }
 
+  Future<void> _onNext() async {
+    final recoveryCode = _controllers
+        .map((c) => c.text.trim().toUpperCase())
+        .join();
+
+    if (recoveryCode.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('กรุณากรอกรหัสกู้คืนให้ครบ 6 หลัก'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final result = await _recoveryService.verifyCode(
+        username: widget.username,
+        recoveryCode: recoveryCode,
+      );
+
+      if (!mounted) return;
+
+      if (result.success) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ForgotPasswordResetPage(
+              username: widget.username,
+              recoveryCode: recoveryCode,
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+                result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -104,10 +178,19 @@ class _ForgotPasswordRecoveryCodePageState extends State<ForgotPasswordRecoveryC
                         controller: _controllers[index],
                         focusNode: _focusNodes[index],
                         textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        textCapitalization: TextCapitalization.characters,
+                        keyboardType: TextInputType.text,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'[a-fA-F0-9]'),
+                          ),
+                          LengthLimitingTextInputFormatter(1),
+                        ],
                         maxLength: 1,
-                        style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
                         decoration: const InputDecoration(
                           counterText: '',
                           border: InputBorder.none,
@@ -124,14 +207,7 @@ class _ForgotPasswordRecoveryCodePageState extends State<ForgotPasswordRecoveryC
                 width: double.infinity,
                 height: 48,
                 child: FilledButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ForgotPasswordResetPage(),
-                      ),
-                    );
-                  },
+                  onPressed: _isLoading ? null : _onNext,
                   style: FilledButton.styleFrom(
                     backgroundColor: colorScheme.primary,
                     foregroundColor: Colors.white,
@@ -139,13 +215,22 @@ class _ForgotPasswordRecoveryCodePageState extends State<ForgotPasswordRecoveryC
                       borderRadius: BorderRadius.circular(24),
                     ),
                   ),
-                  child: const Text(
-                    'ถัดไป',
-                    style: TextStyle(
-                      fontSize: 16.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+                  child: _isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          'ถัดไป',
+                          style: TextStyle(
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 16.0),
@@ -154,9 +239,7 @@ class _ForgotPasswordRecoveryCodePageState extends State<ForgotPasswordRecoveryC
                 onPressed: () {},
                 child: Text(
                   'ต้องการความช่วยเหลือ?',
-                  style: TextStyle(
-                    color: colorScheme.primary,
-                  ),
+                  style: TextStyle(color: colorScheme.primary),
                 ),
               ),
             ],

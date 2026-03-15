@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/recovery_service.dart';
 import 'registration_success_page.dart';
-import 'dart:math';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -104,15 +104,7 @@ class _RegisterPageState extends State<RegisterPage> {
         data: userData,
       );
 
-      print('-----------------------------------------');
-      print('[User Registration Success]');
-      print('Username: $username');
-      print('Proxy Email: $proxyEmail');
-      print('Gender: $_gender');
-      print('DOB: $_selectedDateOfBirth');
-      print('Nationality: $_nationality');
-      print('User ID: ${response.user?.id}');
-      print('-----------------------------------------');
+      debugPrint('[Registration] User: $username, ID: ${response.user?.id}');
 
       // Auto-login after successful registration
       await Supabase.instance.client.auth.signInWithPassword(
@@ -121,15 +113,11 @@ class _RegisterPageState extends State<RegisterPage> {
       );
 
       if (mounted) {
-        // Generate random recovery codes
-        final recoveryCodes = List.generate(6, (_) => _generateRandomCode());
+        final recoveryService = RecoveryService();
+        final recoveryCodes = RecoveryService.generateRecoveryCodes();
 
-        // Save recovery codes to Supabase
         try {
-          await Supabase.instance.client.rpc(
-            'save_recovery_codes',
-            params: {'secret_codes': recoveryCodes},
-          );
+          await recoveryService.saveRecoveryCodes(recoveryCodes);
           debugPrint('บันทึกรหัสกู้คืนทั้ง 6 ชุดเรียบร้อยแล้ว');
         } catch (e) {
           debugPrint('เกิดข้อผิดพลาดในการบันทึกรหัสกู้คืน: $e');
@@ -192,18 +180,9 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  String _generateRandomCode() {
-    const chars = 'ABCDEF0123456789';
-    final rnd = Random();
-    return String.fromCharCodes(
-      Iterable.generate(6, (_) => chars.codeUnitAt(rnd.nextInt(chars.length))),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
       backgroundColor: Colors.white,

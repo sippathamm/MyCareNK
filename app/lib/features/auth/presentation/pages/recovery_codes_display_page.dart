@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import '../../../main/presentation/pages/main_page.dart';
 import '../widgets/recovery_codes_grid.dart';
+import 'login_page.dart';
 
-class RegistrationSuccessPage extends StatelessWidget {
+/// Displays the new recovery codes after a successful password reset.
+class RecoveryCodesDisplayPage extends StatelessWidget {
   final List<String> recoveryCodes;
 
-  const RegistrationSuccessPage({super.key, required this.recoveryCodes});
+  const RecoveryCodesDisplayPage({super.key, required this.recoveryCodes});
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +34,7 @@ class RegistrationSuccessPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  'สร้างบัญชีใหม่สำเร็จ!',
+                  'เปลี่ยนรหัสผ่านสำเร็จ!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 28,
@@ -41,36 +42,30 @@ class RegistrationSuccessPage extends StatelessWidget {
                     color: Color(0xFFFF8A50),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 16),
 
-                Image.asset(
-                  'assets/images/rocket.png',
-                  width: 175,
-                  height: 175,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 175,
-                      height: 175,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    );
-                  },
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3E0),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: const Color(0xFFFFCC80),
+                      width: 2,
+                    ),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle_outline,
+                    color: Color(0xFFFF8A50),
+                    size: 48,
+                  ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
                 const Text(
-                  'กรุณาเก็บรหัสกู้คืนทั้ง 6 ตัวนี้\nไว้ในที่ปลอดภัย หากคุณลืมรหัสผ่าน',
+                  'กรุณาเก็บรหัสกู้คืนใหม่ทั้ง 6 ตัวนี้\nไว้ในที่ปลอดภัย หากคุณลืมรหัสผ่าน',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -83,7 +78,8 @@ class RegistrationSuccessPage extends StatelessWidget {
 
                 RecoveryCodesGrid(
                   recoveryCodes: recoveryCodes,
-                  footerText: 'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
+                  footerText:
+                      'รหัสกู้คืนชุดเก่าใช้ไม่ได้แล้ว\nหากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัสชุดใหม่นี้',
                 ),
 
                 const SizedBox(height: 12),
@@ -94,9 +90,9 @@ class RegistrationSuccessPage extends StatelessWidget {
                     onPressed: () {
                       Navigator.of(context).pushAndRemoveUntil(
                         MaterialPageRoute(
-                          builder: (context) => const MainScreen(),
+                          builder: (context) => const LoginPage(),
                         ),
-                        (route) => false,
+                        (route) => route.isFirst,
                       );
                     },
                     style: OutlinedButton.styleFrom(
@@ -107,7 +103,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                       ),
                     ),
                     child: const Text(
-                      'ตกลง',
+                      'กลับไปเข้าสู่ระบบ',
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
