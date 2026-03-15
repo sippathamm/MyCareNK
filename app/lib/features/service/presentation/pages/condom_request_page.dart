@@ -740,7 +740,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                           child: DropdownButtonHideUnderline(
                             child: DropdownButton<TimeOfDay>(
                               isExpanded: true,
-                              hint: const Text('เลือกเวลา'),
+                              hint: const Text('เวลา'),
                               value: _selectedTime,
                               items: const [
                                 DropdownMenuItem(
