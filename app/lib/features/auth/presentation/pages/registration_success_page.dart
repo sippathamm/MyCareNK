@@ -17,10 +17,7 @@ class RegistrationSuccessPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFFF7E6),
-              Color(0xFFFFFFFF),
-            ],
+            colors: [Color(0xFFFFF7E6), Color(0xFFFFFFFF)],
           ),
         ),
         child: SafeArea(
@@ -83,7 +80,8 @@ class RegistrationSuccessPage extends StatelessWidget {
 
                 RecoveryCodesGrid(
                   recoveryCodes: recoveryCodes,
-                  footerText: 'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
+                  footerText:
+                      'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
                 ),
 
                 const SizedBox(height: 12),
@@ -92,7 +90,10 @@ class RegistrationSuccessPage extends StatelessWidget {
                   height: 48,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.of(context).pushAndRemoveUntil(
+                      Navigator.of(
+                        context,
+                        rootNavigator: true,
+                      ).pushAndRemoveUntil(
                         MaterialPageRoute(
                           builder: (context) => const MainScreen(),
                         ),

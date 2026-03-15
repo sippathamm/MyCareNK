@@ -189,8 +189,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('กรุณาเข้าสู่ระบบ')),
                       );
-                      Navigator.push(
-                        context,
+                      Navigator.of(context, rootNavigator: true).push(
                         MaterialPageRoute(
                           builder: (context) => const LoginPage(),
                         ),

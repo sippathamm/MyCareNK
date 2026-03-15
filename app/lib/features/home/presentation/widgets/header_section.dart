@@ -21,8 +21,7 @@ class HeaderSection extends StatelessWidget {
             if (session == null) {
               return InkWell(
                 onTap: () {
-                  Navigator.push(
-                    context,
+                  Navigator.of(context, rootNavigator: true).push(
                     MaterialPageRoute(builder: (context) => const LoginPage()),
                   );
                 },

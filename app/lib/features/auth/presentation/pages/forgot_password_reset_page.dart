@@ -52,7 +52,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
 
       if (result.success && result.newRecoveryCodes != null) {
         // Navigate to recovery codes display page
-        Navigator.of(context).pushAndRemoveUntil(
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => RecoveryCodesDisplayPage(
               recoveryCodes: result.newRecoveryCodes!,
