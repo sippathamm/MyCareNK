@@ -91,6 +91,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         'message': widget.message,
         'reference_number': refNumber,
         'status': 'pending',
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
 
       // Update user's monthly quota usage
@@ -384,7 +385,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         border: Border.all(color: Colors.grey[300]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withAlpha(10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

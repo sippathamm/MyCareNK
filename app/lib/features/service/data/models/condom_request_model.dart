@@ -18,6 +18,7 @@ class CondomRequestModel {
   final String referenceNumber;
   final RequestStatus status;
   final DateTime createdAt;
+  final DateTime updatedAt;
 
   CondomRequestModel({
     required this.id,
@@ -31,6 +32,7 @@ class CondomRequestModel {
     required this.referenceNumber,
     required this.status,
     required this.createdAt,
+    required this.updatedAt,
   });
 
   factory CondomRequestModel.fromJson(Map<String, dynamic> json) {
@@ -57,6 +59,9 @@ class CondomRequestModel {
       createdAt: json['created_at'] != null 
           ? DateTime.parse(json['created_at']) 
           : DateTime.now(),
+      updatedAt: json['updated_at'] != null 
+          ? DateTime.parse(json['updated_at']) 
+          : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
     );
   }
 

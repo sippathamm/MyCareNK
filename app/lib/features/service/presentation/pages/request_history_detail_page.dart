@@ -91,7 +91,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     }
 
     // Format Date 
-    final formattedDate = widget.data.createdAt.toUtc().add(const Duration(hours: 7));
+    final formattedDate = widget.data.updatedAt.toUtc().add(const Duration(hours: 7));
     String dateStr = '${formattedDate.day} ${formatMonthTH(formattedDate.month)} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} น.';
 
     return Row(
@@ -578,7 +578,10 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 try {
                   await Supabase.instance.client
                       .from('condom_requests')
-                      .update({'status': 'cancelled'})
+                      .update({
+                        'status': 'cancelled',
+                        'updated_at': DateTime.now().toUtc().toIso8601String(),
+                      })
                       .eq('id', widget.data.id);
                   
                   // Refund quota string to user_monthly_quotas
