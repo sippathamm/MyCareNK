@@ -3,21 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 
 import 'request_history_detail_page.dart';
 
-enum RequestStatus { submitted, preparing, completed, cancelled }
-
-class RequestMockData {
-  final String refNumber;
-  final RequestStatus status;
-  final DateTime date;
-  final String location;
-
-  RequestMockData({
-    required this.refNumber,
-    required this.status,
-    required this.date,
-    required this.location,
-  });
-}
+import '../../data/models/condom_request_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class RequestHistoryPage extends StatefulWidget {
   const RequestHistoryPage({super.key});
@@ -30,50 +17,61 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
   RequestStatus? _selectedFilter;
   String _searchQuery = '';
 
-  // Mock states for demonstration
+  List<CondomRequestModel> _requests = [];
+  bool _isLoading = true;
   bool _isLoggedIn = true;
 
-  final List<RequestMockData> _mockRequests = [
-    RequestMockData(
-      refNumber: 'TD16HD52',
-      status: RequestStatus.submitted,
-      date: DateTime(2026, 3, 15, 10, 0),
-      location: 'สสจ.หนองคาย',
-    ),
-    RequestMockData(
-      refNumber: 'TD16HD53',
-      status: RequestStatus.preparing,
-      date: DateTime(2026, 3, 15, 12, 0),
-      location: 'สสจ.หนองคาย',
-    ),
-    RequestMockData(
-      refNumber: 'TD16HD52',
-      status: RequestStatus.completed,
-      date: DateTime(2026, 3, 15, 10, 0),
-      location: 'สสจ.หนองคาย',
-    ),
-    RequestMockData(
-      refNumber: 'TD16HD52',
-      status: RequestStatus.cancelled,
-      date: DateTime(2026, 3, 15, 10, 0),
-      location: 'สสจ.หนองคาย',
-    ),
-    RequestMockData(
-      refNumber: 'TD16HD52',
-      status: RequestStatus.completed,
-      date: DateTime(2026, 3, 15, 10, 0),
-      location: 'สสจ.หนองคาย',
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchHistory();
+  }
+
+  Future<void> _fetchHistory() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      setState(() {
+        _isLoggedIn = false;
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      final response = await Supabase.instance.client
+          .from('condom_requests')
+          .select()
+          .eq('user_id', session.user.id)
+          .order('created_at', ascending: false);
+
+      final List<CondomRequestModel> loadedRequests = (response as List)
+          .map((item) => CondomRequestModel.fromJson(item))
+          .toList();
+
+      if (mounted) {
+        setState(() {
+          _requests = loadedRequests;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching history: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final filteredRequests = _mockRequests.where((req) {
+    final filteredRequests = _requests.where((req) {
       if (_selectedFilter != null && req.status != _selectedFilter) {
         return false;
       }
       if (_searchQuery.isNotEmpty &&
-          !req.refNumber.toLowerCase().contains(_searchQuery.toLowerCase())) {
+          !req.referenceNumber.toLowerCase().contains(_searchQuery.toLowerCase())) {
         return false;
       }
       return true;
@@ -109,7 +107,9 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
             _buildFilterRow(),
             const SizedBox(height: 16),
             Expanded(
-              child: !_isLoggedIn
+              child: _isLoading 
+                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A50)))
+                  : !_isLoggedIn
                   ? Center(
                       child: Text(
                         'กรุณาเข้าสู่ระบบ',
@@ -243,7 +243,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     );
   }
 
-  Widget _buildRequestCard(RequestMockData data) {
+  Widget _buildRequestCard(CondomRequestModel data) {
     Color iconBgColor;
     Color iconColor;
     Color statusBgColor;
@@ -286,6 +286,26 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
         break;
     }
 
+    // Format selectedDate and selectedTime
+    String outputDate = data.selectedDate ?? '-';
+    if (data.selectedDate != null && data.selectedDate!.contains('-')) {
+      try {
+        DateTime parsedDate = DateTime.parse(data.selectedDate!);
+        outputDate = '${parsedDate.day} ${formatMonthTH(parsedDate.month)} ${parsedDate.year + 543}';
+      } catch (e) {
+        outputDate = data.selectedDate!;
+      }
+    }
+
+    String outputTime = data.selectedTime ?? '-';
+    if (data.selectedTime != null && data.selectedTime!.contains(':')) {
+       final splitted = data.selectedTime!.split(':');
+       if(splitted.length >= 2) {
+          outputTime = '${splitted[0]}:${splitted[1]} น.';
+       }
+    }
+    String dateStr = '$outputDate, $outputTime';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -294,7 +314,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
         border: Border.all(color: Colors.grey[200]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withAlpha(8),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -328,7 +348,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                         ),
                       ),
                       Text(
-                        data.refNumber,
+                        data.referenceNumber,
                         style: GoogleFonts.prompt(
                           color: const Color(0xFF333333),
                           fontSize: 18,
@@ -371,7 +391,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  '15 มีนาคม 2569, 10:00 น.',
+                  dateStr,
                   style: GoogleFonts.prompt(
                     color: Colors.grey[500],
                     fontSize: 14,
@@ -385,7 +405,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                 Icon(Icons.location_on, size: 16, color: Colors.grey[400]),
                 const SizedBox(width: 8),
                 Text(
-                  data.location,
+                  data.selectedLocation ?? '-',
                   style: GoogleFonts.prompt(
                     color: Colors.grey[500],
                     fontSize: 14,
@@ -400,12 +420,14 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
+                onPressed: () async {
+                  await Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => RequestHistoryDetailPage(data: data),
                     ),
                   );
+                  // Refresh history after return to get updated statuses (like cancelled)
+                  _fetchHistory();
                 },
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
@@ -431,5 +453,23 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
         ),
       ),
     );
+  }
+
+  String formatMonthTH(int month) {
+    switch (month) {
+      case 1: return 'มกราคม';
+      case 2: return 'กุมภาพันธ์';
+      case 3: return 'มีนาคม';
+      case 4: return 'เมษายน';
+      case 5: return 'พฤษภาคม';
+      case 6: return 'มิถุนายน';
+      case 7: return 'กรกฎาคม';
+      case 8: return 'สิงหาคม';
+      case 9: return 'กันยายน';
+      case 10: return 'ตุลาคม';
+      case 11: return 'พฤศจิกายน';
+      case 12: return 'ธันวาคม';
+      default: return '';
+    }
   }
 }

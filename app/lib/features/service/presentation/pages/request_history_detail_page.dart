@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'request_history_page.dart';
 
-class RequestHistoryDetailPage extends StatelessWidget {
-  final RequestMockData data;
+import '../../data/models/condom_request_model.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class RequestHistoryDetailPage extends StatefulWidget {
+  final CondomRequestModel data;
 
   const RequestHistoryDetailPage({super.key, required this.data});
+
+  @override
+  State<RequestHistoryDetailPage> createState() => _RequestHistoryDetailPageState();
+}
+
+class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
+  bool _isCancelling = false;
 
   @override
   Widget build(BuildContext context) {
@@ -58,7 +67,7 @@ class RequestHistoryDetailPage extends StatelessWidget {
     Color iconColor;
     Color iconBgColor;
 
-    switch (data.status) {
+    switch (widget.data.status) {
       case RequestStatus.submitted:
         icon = Icons.assignment_outlined;
         iconColor = const Color(0xFFFF8A50);
@@ -81,9 +90,9 @@ class RequestHistoryDetailPage extends StatelessWidget {
         break;
     }
 
-    // Example formatted date "22 มีนาคม 2569 16:32 น."
-    String dateStr =
-        '${data.date.day} มีนาคม ${data.date.year + 543} ${data.date.hour.toString().padLeft(2, '0')}:${data.date.minute.toString().padLeft(2, '0')} น.';
+    // Format Date 
+    final formattedDate = widget.data.createdAt.toUtc().add(const Duration(hours: 7));
+    String dateStr = '${formattedDate.day} ${formatMonthTH(formattedDate.month)} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} น.';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -99,7 +108,7 @@ class RequestHistoryDetailPage extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  data.refNumber,
+                  widget.data.referenceNumber,
                   style: GoogleFonts.prompt(
                     color: const Color(0xFF333333),
                     fontSize: 18,
@@ -112,7 +121,7 @@ class RequestHistoryDetailPage extends StatelessWidget {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: data.refNumber));
+                    Clipboard.setData(ClipboardData(text: widget.data.referenceNumber));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -152,7 +161,7 @@ class RequestHistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildStatusTracker() {
-    bool isCancelled = data.status == RequestStatus.cancelled;
+    bool isCancelled = widget.data.status == RequestStatus.cancelled;
 
     if (isCancelled) {
       return Column(
@@ -191,9 +200,9 @@ class RequestHistoryDetailPage extends StatelessWidget {
     Color compColor = const Color(0xFF26A69A);
 
     bool isPrepDone =
-        data.status == RequestStatus.preparing ||
-        data.status == RequestStatus.completed;
-    bool isFinalDone = data.status == RequestStatus.completed;
+        widget.data.status == RequestStatus.preparing ||
+        widget.data.status == RequestStatus.completed;
+    bool isFinalDone = widget.data.status == RequestStatus.completed;
 
     Color line1Color = isPrepDone ? subColor : Colors.grey[300]!;
     Color line2Color = isFinalDone ? prepColor : Colors.grey[300]!;
@@ -216,11 +225,11 @@ class RequestHistoryDetailPage extends StatelessWidget {
             Text(
               'ส่งคำขอ',
               style: GoogleFonts.prompt(
-                color: data.status == RequestStatus.submitted
+                color: widget.data.status == RequestStatus.submitted
                     ? subColor
                     : Colors.black87,
                 fontSize: 12,
-                fontWeight: data.status == RequestStatus.submitted
+                fontWeight: widget.data.status == RequestStatus.submitted
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -228,11 +237,11 @@ class RequestHistoryDetailPage extends StatelessWidget {
             Text(
               'กำลังเตรียม',
               style: GoogleFonts.prompt(
-                color: data.status == RequestStatus.preparing
+                color: widget.data.status == RequestStatus.preparing
                     ? prepColor
                     : Colors.black87,
                 fontSize: 12,
-                fontWeight: data.status == RequestStatus.preparing
+                fontWeight: widget.data.status == RequestStatus.preparing
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -240,11 +249,11 @@ class RequestHistoryDetailPage extends StatelessWidget {
             Text(
               'เสร็จสิ้น',
               style: GoogleFonts.prompt(
-                color: data.status == RequestStatus.completed
+                color: widget.data.status == RequestStatus.completed
                     ? compColor
                     : Colors.black87,
                 fontSize: 12,
-                fontWeight: data.status == RequestStatus.completed
+                fontWeight: widget.data.status == RequestStatus.completed
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -319,6 +328,9 @@ class RequestHistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildQuantityCard() {
+    int totalCondoms = widget.data.condomQuantities.values.fold(0, (sum, val) => sum + val);
+    if (totalCondoms == 0) return const SizedBox();
+
     return _buildCard(
       header: const Text(
         'จำนวนถุงยางอนามัย',
@@ -329,12 +341,10 @@ class RequestHistoryDetailPage extends StatelessWidget {
         ),
       ),
       content: Column(
-        children: [
-          _buildSizeRow('49', 0),
-          _buildSizeRow('52', 5),
-          _buildSizeRow('54', 5),
-          _buildSizeRow('56', 99),
-        ],
+        children: widget.data.condomQuantities.entries
+            .where((e) => e.value > 0)
+            .map((e) => _buildSizeRow('${e.key}', e.value))
+            .toList(),
       ),
       showDivider: true,
       footer: Row(
@@ -344,9 +354,9 @@ class RequestHistoryDetailPage extends StatelessWidget {
             'รวม',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
-          const Text(
-            '109 ชิ้น',
-            style: TextStyle(
+          Text(
+            '$totalCondoms ชิ้น',
+            style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
               color: Color(0xFFFF8A50),
@@ -381,6 +391,8 @@ class RequestHistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildLubricantCard() {
+    if (widget.data.lubricantQuantity == 0) return const SizedBox();
+
     return _buildCard(
       header: const Row(
         children: [
@@ -396,16 +408,16 @@ class RequestHistoryDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      content: const Row(
+      content: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
+          const Text(
             'สารหล่อลื่น',
             style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
           Text(
-            '99 ซอง',
-            style: TextStyle(
+            '${widget.data.lubricantQuantity} ซอง',
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
               color: Color(0xFFFF8A50),
@@ -417,6 +429,25 @@ class RequestHistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildLocationCard() {
+    String outputDate = widget.data.selectedDate ?? '-';
+    // Optionally format selectedDate properly if it follows YYYY-MM-DD
+    if (widget.data.selectedDate != null && widget.data.selectedDate!.contains('-')) {
+      try {
+        DateTime parsedDate = DateTime.parse(widget.data.selectedDate!);
+        outputDate = '${parsedDate.day} ${formatMonthTH(parsedDate.month)} ${parsedDate.year + 543}';
+      } catch (e) {
+        outputDate = widget.data.selectedDate!;
+      }
+    }
+
+    String outputTime = widget.data.selectedTime ?? '-';
+    if (widget.data.selectedTime != null && widget.data.selectedTime!.contains(':')) {
+       final splitted = widget.data.selectedTime!.split(':');
+       if(splitted.length >= 2) {
+          outputTime = '${splitted[0]}:${splitted[1]} น.';
+       }
+    }
+
     return _buildCard(
       header: const Row(
         children: [
@@ -439,7 +470,7 @@ class RequestHistoryDetailPage extends StatelessWidget {
             children: [
               const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
               Text(
-                data.location,
+                widget.data.selectedLocation ?? '-',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -453,9 +484,9 @@ class RequestHistoryDetailPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('วันที่', style: TextStyle(fontSize: 16)),
-              const Text(
-                '31 มกราคม 2569',
-                style: TextStyle(
+              Text(
+                outputDate,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFFFF8A50),
@@ -468,9 +499,9 @@ class RequestHistoryDetailPage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text('เวลา', style: TextStyle(fontSize: 16)),
-              const Text(
-                '14:00 น.',
-                style: TextStyle(
+              Text(
+                outputTime,
+                style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFFFF8A50),
@@ -484,6 +515,8 @@ class RequestHistoryDetailPage extends StatelessWidget {
   }
 
   Widget _buildMessageCard() {
+    if (widget.data.message.isEmpty) return const SizedBox();
+
     return _buildCard(
       header: const Row(
         children: [
@@ -499,18 +532,18 @@ class RequestHistoryDetailPage extends StatelessWidget {
           ),
         ],
       ),
-      content: const Align(
+      content: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          'ข้อความ',
-          style: TextStyle(fontSize: 16, color: Color(0xFFFF8A50)),
+          widget.data.message,
+          style: const TextStyle(fontSize: 16, color: Color(0xFFFF8A50)),
         ),
       ),
     );
   }
 
   Widget _buildBottomButtons(BuildContext context) {
-    bool canCancel = data.status == RequestStatus.submitted;
+    bool canCancel = widget.data.status == RequestStatus.submitted;
 
     return Column(
       children: [
@@ -538,9 +571,70 @@ class RequestHistoryDetailPage extends StatelessWidget {
             width: double.infinity,
             height: 48,
             child: OutlinedButton(
-              onPressed: () {
-                // handle cancel
-                Navigator.of(context).pop();
+              onPressed: _isCancelling ? null : () async {
+                setState(() {
+                  _isCancelling = true;
+                });
+                try {
+                  await Supabase.instance.client
+                      .from('condom_requests')
+                      .update({'status': 'cancelled'})
+                      .eq('id', widget.data.id);
+                  
+                  // Refund quota string to user_monthly_quotas
+                  final session = Supabase.instance.client.auth.currentSession;
+                  if (session != null) {
+                    final userId = session.user.id;
+                    final createdAt = widget.data.createdAt.toLocal();
+                    final monthStart = DateTime(createdAt.year, createdAt.month, 1)
+                        .toIso8601String()
+                        .substring(0, 10);
+
+                    final existingQuota = await Supabase.instance.client
+                        .from('user_monthly_quotas')
+                        .select('used_condoms, used_lubricants')
+                        .eq('user_id', userId)
+                        .eq('month', monthStart)
+                        .maybeSingle();
+
+                    if (existingQuota != null) {
+                      int totalCondomsToRefund = widget.data.condomQuantities.values
+                          .fold(0, (sum, val) => sum + val);
+                      int lubricantToRefund = widget.data.lubricantQuantity;
+
+                      int currentUsedCondoms = (existingQuota['used_condoms'] as int?) ?? 0;
+                      int currentUsedLubricants = (existingQuota['used_lubricants'] as int?) ?? 0;
+
+                      int newUsedCondoms = (currentUsedCondoms - totalCondomsToRefund).clamp(0, 9999);
+                      int newUsedLubricants = (currentUsedLubricants - lubricantToRefund).clamp(0, 9999);
+
+                      await Supabase.instance.client.from('user_monthly_quotas').upsert({
+                        'user_id': userId,
+                        'month': monthStart,
+                        'used_condoms': newUsedCondoms,
+                        'used_lubricants': newUsedLubricants,
+                        'updated_at': DateTime.now().toUtc().toIso8601String(),
+                      }, onConflict: 'user_id, month');
+                    }
+                  }
+
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('ยกเลิกคำขอเรียบร้อยแล้ว')),
+                  );
+                  Navigator.of(context).pop();
+                } catch (e) {
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('เกิดข้อผิดพลาดในการยกเลิกคำขอ')),
+                  );
+                } finally {
+                  if (mounted) {
+                    setState(() {
+                      _isCancelling = false;
+                    });
+                  }
+                }
               },
               style: OutlinedButton.styleFrom(
                 foregroundColor: const Color(0xFFFF5252),
@@ -549,14 +643,38 @@ class RequestHistoryDetailPage extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: const Text(
-                'ยกเลิกคำขอ',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              child: _isCancelling
+                  ? const SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFF5252)),
+                    )
+                  : const Text(
+                      'ยกเลิกคำขอ',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ],
       ],
     );
+  }
+
+  String formatMonthTH(int month) {
+    switch (month) {
+      case 1: return 'มกราคม';
+      case 2: return 'กุมภาพันธ์';
+      case 3: return 'มีนาคม';
+      case 4: return 'เมษายน';
+      case 5: return 'พฤษภาคม';
+      case 6: return 'มิถุนายน';
+      case 7: return 'กรกฎาคม';
+      case 8: return 'สิงหาคม';
+      case 9: return 'กันยายน';
+      case 10: return 'ตุลาคม';
+      case 11: return 'พฤศจิกายน';
+      case 12: return 'ธันวาคม';
+      default: return '';
+    }
   }
 }
