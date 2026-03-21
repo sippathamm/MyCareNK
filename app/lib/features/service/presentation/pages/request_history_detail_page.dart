@@ -580,7 +580,6 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                       .from('condom_requests')
                       .update({
                         'status': 'cancelled',
-                        'updated_at': DateTime.now().toUtc().toIso8601String(),
                       })
                       .eq('id', widget.data.id);
                   
@@ -616,7 +615,6 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                         'month': monthStart,
                         'used_condoms': newUsedCondoms,
                         'used_lubricants': newUsedLubricants,
-                        'updated_at': DateTime.now().toUtc().toIso8601String(),
                       }, onConflict: 'user_id, month');
                     }
                   }

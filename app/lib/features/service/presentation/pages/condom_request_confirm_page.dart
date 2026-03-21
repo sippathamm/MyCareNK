@@ -91,7 +91,6 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         'message': widget.message,
         'reference_number': refNumber,
         'status': 'pending',
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
       });
 
       // Update user's monthly quota usage
@@ -121,7 +120,6 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         'month': monthStart,
         'used_condoms': newUsedCondoms,
         'used_lubricants': newUsedLubricants,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'user_id, month');
 
       if (mounted) {

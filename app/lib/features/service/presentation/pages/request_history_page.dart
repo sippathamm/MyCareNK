@@ -119,10 +119,20 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                         ),
                       ),
                     )
-                  : filteredRequests.isEmpty
+                  : _requests.isEmpty
                   ? Center(
                       child: Text(
                         'ยังไม่มีรายการ',
+                        style: GoogleFonts.prompt(
+                          fontSize: 18,
+                          color: Colors.grey[400],
+                        ),
+                      ),
+                    )
+                  : filteredRequests.isEmpty
+                  ? Center(
+                      child: Text(
+                        'ไม่พบรายการ',
                         style: GoogleFonts.prompt(
                           fontSize: 18,
                           color: Colors.grey[400],
