@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../features/service/presentation/pages/request_history_page.dart';
 
 class ShortcutMenu extends StatelessWidget {
   const ShortcutMenu({super.key});
@@ -53,9 +54,17 @@ class ShortcutMenu extends StatelessWidget {
             borderRadius: BorderRadius.circular(20),
             child: InkWell(
               onTap: () {
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text('"$label" ถูกกด')));
+                if (label == 'ประวัติการขอ') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => const RequestHistoryPage(),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(
+                    context,
+                  ).showSnackBar(SnackBar(content: Text('"$label" ถูกกด')));
+                }
               },
               borderRadius: BorderRadius.circular(20),
               child: Column(
