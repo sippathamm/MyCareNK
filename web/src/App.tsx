@@ -1,6 +1,6 @@
-import React from 'react';
-import { Box, Typography, Button, Container } from '@mui/material';
+import { Box, Typography, Button, Container, Divider } from '@mui/material';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import SupabaseConnectionTest from './components/SupabaseConnectionTest';
 
 function App() {
   return (
@@ -14,6 +14,11 @@ function App() {
           Hello World! This is the basic empty setup for the dashboard interface.
           Material-UI and Supabase are properly initialized.
         </Typography>
+        
+        <SupabaseConnectionTest />
+
+        <Divider sx={{ my: 4, width: '100%' }} />
+
         <Button variant="contained" color="primary" size="large">
           Get Started
         </Button>
