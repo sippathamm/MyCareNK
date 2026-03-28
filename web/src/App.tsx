@@ -19,9 +19,15 @@ function App() {
 
         <Divider sx={{ my: 4, width: '100%' }} />
 
-        <Button variant="contained" color="primary" size="large">
+        <Button variant="contained" color="primary" size="large" sx={{ py: 1.5, px: 4, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
           Get Started
         </Button>
+
+        <Box sx={{ mt: 6, opacity: 0.6 }}>
+          <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+            v0.1.0-dev.1
+          </Typography>
+        </Box>
       </Box>
     </Container>
   );
