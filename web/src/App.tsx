@@ -1,0 +1,36 @@
+import { Box, Typography, Button, Container, Divider } from '@mui/material';
+import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
+import SupabaseConnectionTest from './components/SupabaseConnectionTest';
+
+function App() {
+  return (
+    <Container maxWidth="sm">
+      <Box sx={{ mt: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+        <LocalHospitalIcon color="primary" sx={{ fontSize: 60, mb: 2 }} />
+        <Typography variant="h4" component="h1" gutterBottom fontWeight="bold" color="primary">
+          Condom & Lubricant Delivery
+        </Typography>
+        <Typography variant="body1" color="text.secondary" paragraph sx={{ mb: 4 }}>
+          Hello World! This is the basic empty setup for the dashboard interface.
+          Material-UI and Supabase are properly initialized.
+        </Typography>
+        
+        <SupabaseConnectionTest />
+
+        <Divider sx={{ my: 4, width: '100%' }} />
+
+        <Button variant="contained" color="primary" size="large" sx={{ py: 1.5, px: 4, borderRadius: 2, textTransform: 'none', fontWeight: 600 }}>
+          Get Started
+        </Button>
+
+        <Box sx={{ mt: 6, opacity: 0.6 }}>
+          <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+            v0.1.0-dev.1
+          </Typography>
+        </Box>
+      </Box>
+    </Container>
+  );
+}
+
+export default App;
