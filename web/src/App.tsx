@@ -1,16 +1,23 @@
 import { useState, useEffect } from 'react';
-import { Box, Typography, Button, Container, TextField, Paper, Link, Alert, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Container, TextField, Paper, Link, Alert, CircularProgress, IconButton, InputAdornment } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Avatar from '@mui/material/Avatar';
 import { supabase } from './lib/supabase';
 import type { Session } from '@supabase/supabase-js';
+import packageInfo from '../package.json';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
+
+  const handleClickShowPassword = () => setShowPassword((show) => !show);
+  const handleMouseDownPassword = (e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault();
 
   // ตรวจสอบสถานะการเข้าสู่ระบบปัจจุบันเมื่อโหลดแอป
   useEffect(() => {
@@ -32,6 +39,13 @@ function App() {
     e.preventDefault();
     if (!email || !password) return;
     
+    // ตรวจสอบรูปแบบของอีเมลอย่างเข้มงวด
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setErrorMsg('รูปแบบอีเมลไม่ถูกต้อง กรุณาตรวจสอบและลองใหม่อีกครั้ง');
+      return;
+    }
+
     setLoading(true);
     setErrorMsg('');
     const { error } = await supabase.auth.signInWithPassword({
@@ -111,12 +125,26 @@ function App() {
               fullWidth
               name="password"
               label="รหัสผ่าน"
-              type="password"
+              type={showPassword ? 'text' : 'password'}
               id="password"
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      aria-label="toggle password visibility"
+                      onClick={handleClickShowPassword}
+                      onMouseDown={handleMouseDownPassword}
+                      edge="end"
+                    >
+                      {showPassword ? <VisibilityOff /> : <Visibility />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
             />
             <Button
               type="submit"
@@ -135,6 +163,11 @@ function App() {
           </Box>
         </Paper>
       </Container>
+      <Box sx={{ mt: 4, opacity: 0.7 }}>
+        <Typography variant="caption" color="text.secondary">
+          v{packageInfo.version}
+        </Typography>
+      </Box>
     </Box>
   );
 }
