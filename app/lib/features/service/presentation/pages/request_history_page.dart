@@ -20,11 +20,43 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
   List<CondomRequestModel> _requests = [];
   bool _isLoading = true;
   bool _isLoggedIn = true;
+  RealtimeChannel? _subscription;
 
   @override
   void initState() {
     super.initState();
     _fetchHistory();
+    _setupRealtime();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.unsubscribe();
+    super.dispose();
+  }
+
+  void _setupRealtime() {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) return;
+
+    _subscription = Supabase.instance.client
+        .channel('public:condom_requests:user_id=eq.${session.user.id}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          table: 'condom_requests',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: session.user.id,
+          ),
+          callback: (payload) {
+            if (mounted) {
+              _fetchHistory();
+            }
+          },
+        )
+        .subscribe();
   }
 
   Future<void> _fetchHistory() async {
@@ -107,43 +139,40 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
             _buildFilterRow(),
             const SizedBox(height: 16),
             Expanded(
-              child: _isLoading 
+              child: _isLoading && _requests.isEmpty
                   ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A50)))
-                  : !_isLoggedIn
-                  ? Center(
-                      child: Text(
-                        'กรุณาเข้าสู่ระบบ',
-                        style: GoogleFonts.prompt(
-                          fontSize: 18,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    )
-                  : _requests.isEmpty
-                  ? Center(
-                      child: Text(
-                        'ยังไม่มีรายการ',
-                        style: GoogleFonts.prompt(
-                          fontSize: 18,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    )
-                  : filteredRequests.isEmpty
-                  ? Center(
-                      child: Text(
-                        'ไม่พบรายการ',
-                        style: GoogleFonts.prompt(
-                          fontSize: 18,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    )
-                  : Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                  : RefreshIndicator(
+                      color: const Color(0xFFFF8A50),
+                      onRefresh: _fetchHistory,
                       child: ListView.builder(
-                        itemCount: filteredRequests.length,
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                        itemCount: (!_isLoggedIn || _requests.isEmpty || filteredRequests.isEmpty) ? 1 : filteredRequests.length,
                         itemBuilder: (context, index) {
+                          if (!_isLoggedIn) {
+                            return SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              child: Center(
+                                child: Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.prompt(fontSize: 18, color: Colors.grey[400])),
+                              ),
+                            );
+                          }
+                          if (_requests.isEmpty) {
+                            return SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              child: Center(
+                                child: Text('ยังไม่มีรายการ', style: GoogleFonts.prompt(fontSize: 18, color: Colors.grey[400])),
+                              ),
+                            );
+                          }
+                          if (filteredRequests.isEmpty) {
+                            return SizedBox(
+                              height: MediaQuery.of(context).size.height * 0.5,
+                              child: Center(
+                                child: Text('ไม่พบรายการ', style: GoogleFonts.prompt(fontSize: 18, color: Colors.grey[400])),
+                              ),
+                            );
+                          }
                           return _buildRequestCard(filteredRequests[index]);
                         },
                       ),

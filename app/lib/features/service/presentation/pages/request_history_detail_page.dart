@@ -16,6 +16,60 @@ class RequestHistoryDetailPage extends StatefulWidget {
 
 class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   bool _isCancelling = false;
+  late CondomRequestModel _currentData;
+  RealtimeChannel? _subscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentData = widget.data;
+    _setupRealtime();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.unsubscribe();
+    super.dispose();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final response = await Supabase.instance.client
+          .from('condom_requests')
+          .select()
+          .eq('id', _currentData.id)
+          .maybeSingle();
+
+      if (response != null && mounted) {
+        setState(() {
+          _currentData = CondomRequestModel.fromJson(response);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error fetching data: $e');
+    }
+  }
+
+  void _setupRealtime() {
+    _subscription = Supabase.instance.client
+        .channel('public:condom_requests:${_currentData.id}')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.update,
+          schema: 'public',
+          table: 'condom_requests',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: _currentData.id,
+          ),
+          callback: (payload) {
+            if (mounted) {
+              _fetchData();
+            }
+          },
+        )
+        .subscribe();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,23 +93,28 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeaderId(context),
-              const SizedBox(height: 24),
-              _buildStatusTracker(),
-              const SizedBox(height: 32),
-              _buildQuantityCard(),
-              _buildLubricantCard(),
-              _buildLocationCard(),
-              _buildMessageCard(),
-              const SizedBox(height: 48),
-              _buildBottomButtons(context),
-              const SizedBox(height: 40),
-            ],
+        child: RefreshIndicator(
+          color: const Color(0xFFFF8A50),
+          onRefresh: _fetchData,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeaderId(context),
+                const SizedBox(height: 24),
+                _buildStatusTracker(),
+                const SizedBox(height: 32),
+                _buildQuantityCard(),
+                _buildLubricantCard(),
+                _buildLocationCard(),
+                _buildMessageCard(),
+                const SizedBox(height: 48),
+                _buildBottomButtons(context),
+                const SizedBox(height: 40),
+              ],
+            ),
           ),
         ),
       ),
@@ -67,7 +126,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     Color iconColor;
     Color iconBgColor;
 
-    switch (widget.data.status) {
+    switch (_currentData.status) {
       case RequestStatus.submitted:
         icon = Icons.assignment_outlined;
         iconColor = const Color(0xFFFF8A50);
@@ -91,7 +150,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     }
 
     // Format Date 
-    final formattedDate = widget.data.updatedAt.toUtc().add(const Duration(hours: 7));
+    final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
     String dateStr = '${formattedDate.day} ${formatMonthTH(formattedDate.month)} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} น.';
 
     return Row(
@@ -108,7 +167,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             Row(
               children: [
                 Text(
-                  widget.data.referenceNumber,
+                  _currentData.referenceNumber,
                   style: GoogleFonts.prompt(
                     color: const Color(0xFF333333),
                     fontSize: 18,
@@ -121,7 +180,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    Clipboard.setData(ClipboardData(text: widget.data.referenceNumber));
+                    Clipboard.setData(ClipboardData(text: _currentData.referenceNumber));
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
@@ -161,7 +220,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildStatusTracker() {
-    bool isCancelled = widget.data.status == RequestStatus.cancelled;
+    bool isCancelled = _currentData.status == RequestStatus.cancelled;
 
     if (isCancelled) {
       return Column(
@@ -200,9 +259,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     Color compColor = const Color(0xFF26A69A);
 
     bool isPrepDone =
-        widget.data.status == RequestStatus.preparing ||
-        widget.data.status == RequestStatus.completed;
-    bool isFinalDone = widget.data.status == RequestStatus.completed;
+        _currentData.status == RequestStatus.preparing ||
+        _currentData.status == RequestStatus.completed;
+    bool isFinalDone = _currentData.status == RequestStatus.completed;
 
     Color line1Color = isPrepDone ? subColor : Colors.grey[300]!;
     Color line2Color = isFinalDone ? prepColor : Colors.grey[300]!;
@@ -225,11 +284,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             Text(
               'ส่งคำขอ',
               style: GoogleFonts.prompt(
-                color: widget.data.status == RequestStatus.submitted
+                color: _currentData.status == RequestStatus.submitted
                     ? subColor
                     : Colors.black87,
                 fontSize: 12,
-                fontWeight: widget.data.status == RequestStatus.submitted
+                fontWeight: _currentData.status == RequestStatus.submitted
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -237,11 +296,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             Text(
               'กำลังเตรียม',
               style: GoogleFonts.prompt(
-                color: widget.data.status == RequestStatus.preparing
+                color: _currentData.status == RequestStatus.preparing
                     ? prepColor
                     : Colors.black87,
                 fontSize: 12,
-                fontWeight: widget.data.status == RequestStatus.preparing
+                fontWeight: _currentData.status == RequestStatus.preparing
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -249,11 +308,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             Text(
               'เสร็จสิ้น',
               style: GoogleFonts.prompt(
-                color: widget.data.status == RequestStatus.completed
+                color: _currentData.status == RequestStatus.completed
                     ? compColor
                     : Colors.black87,
                 fontSize: 12,
-                fontWeight: widget.data.status == RequestStatus.completed
+                fontWeight: _currentData.status == RequestStatus.completed
                     ? FontWeight.bold
                     : FontWeight.normal,
               ),
@@ -328,7 +387,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildQuantityCard() {
-    int totalCondoms = widget.data.condomQuantities.values.fold(0, (sum, val) => sum + val);
+    int totalCondoms = _currentData.condomQuantities.values.fold(0, (sum, val) => sum + val);
     if (totalCondoms == 0) return const SizedBox();
 
     return _buildCard(
@@ -341,7 +400,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         ),
       ),
       content: Column(
-        children: widget.data.condomQuantities.entries
+        children: _currentData.condomQuantities.entries
             .where((e) => e.value > 0)
             .map((e) => _buildSizeRow('${e.key}', e.value))
             .toList(),
@@ -391,7 +450,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildLubricantCard() {
-    if (widget.data.lubricantQuantity == 0) return const SizedBox();
+    if (_currentData.lubricantQuantity == 0) return const SizedBox();
 
     return _buildCard(
       header: const Row(
@@ -416,7 +475,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
           Text(
-            '${widget.data.lubricantQuantity} ซอง',
+            '${_currentData.lubricantQuantity} ซอง',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -429,20 +488,20 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildLocationCard() {
-    String outputDate = widget.data.selectedDate ?? '-';
+    String outputDate = _currentData.selectedDate ?? '-';
     // Optionally format selectedDate properly if it follows YYYY-MM-DD
-    if (widget.data.selectedDate != null && widget.data.selectedDate!.contains('-')) {
+    if (_currentData.selectedDate != null && _currentData.selectedDate!.contains('-')) {
       try {
-        DateTime parsedDate = DateTime.parse(widget.data.selectedDate!);
+        DateTime parsedDate = DateTime.parse(_currentData.selectedDate!);
         outputDate = '${parsedDate.day} ${formatMonthTH(parsedDate.month)} ${parsedDate.year + 543}';
       } catch (e) {
-        outputDate = widget.data.selectedDate!;
+        outputDate = _currentData.selectedDate!;
       }
     }
 
-    String outputTime = widget.data.selectedTime ?? '-';
-    if (widget.data.selectedTime != null && widget.data.selectedTime!.contains(':')) {
-       final splitted = widget.data.selectedTime!.split(':');
+    String outputTime = _currentData.selectedTime ?? '-';
+    if (_currentData.selectedTime != null && _currentData.selectedTime!.contains(':')) {
+       final splitted = _currentData.selectedTime!.split(':');
        if(splitted.length >= 2) {
           outputTime = '${splitted[0]}:${splitted[1]} น.';
        }
@@ -470,7 +529,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             children: [
               const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
               Text(
-                widget.data.selectedLocation ?? '-',
+                _currentData.selectedLocation ?? '-',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -515,7 +574,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildMessageCard() {
-    if (widget.data.message.isEmpty) return const SizedBox();
+    if (_currentData.message.isEmpty) return const SizedBox();
 
     return _buildCard(
       header: const Row(
@@ -535,7 +594,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       content: Align(
         alignment: Alignment.centerLeft,
         child: Text(
-          widget.data.message,
+          _currentData.message,
           style: const TextStyle(fontSize: 16, color: Color(0xFFFF8A50)),
         ),
       ),
@@ -543,7 +602,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildBottomButtons(BuildContext context) {
-    bool canCancel = widget.data.status == RequestStatus.submitted;
+    bool canCancel = _currentData.status == RequestStatus.submitted;
 
     return Column(
       children: [
@@ -581,13 +640,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                       .update({
                         'status': 'cancelled',
                       })
-                      .eq('id', widget.data.id);
+                      .eq('id', _currentData.id);
                   
                   // Refund quota string to user_monthly_quotas
                   final session = Supabase.instance.client.auth.currentSession;
                   if (session != null) {
                     final userId = session.user.id;
-                    final createdAt = widget.data.createdAt.toLocal();
+                    final createdAt = _currentData.createdAt.toLocal();
                     final monthStart = DateTime(createdAt.year, createdAt.month, 1)
                         .toIso8601String()
                         .substring(0, 10);
@@ -600,9 +659,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                         .maybeSingle();
 
                     if (existingQuota != null) {
-                      int totalCondomsToRefund = widget.data.condomQuantities.values
+                      int totalCondomsToRefund = _currentData.condomQuantities.values
                           .fold(0, (sum, val) => sum + val);
-                      int lubricantToRefund = widget.data.lubricantQuantity;
+                      int lubricantToRefund = _currentData.lubricantQuantity;
 
                       int currentUsedCondoms = (existingQuota['used_condoms'] as int?) ?? 0;
                       int currentUsedLubricants = (existingQuota['used_lubricants'] as int?) ?? 0;
