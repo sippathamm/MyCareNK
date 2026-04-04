@@ -19,17 +19,59 @@ function App() {
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const handleMouseDownPassword = (e: React.MouseEvent<HTMLButtonElement>) => e.preventDefault();
 
+  // ฟังก์ชันตรวจสอบสิทธิ์เจ้าหน้าที่
+  const verifyStaffRole = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('staff_roles')
+        .select('user_id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (error) {
+        console.error('Error verifying staff role:', error.message);
+        return false;
+      }
+      
+      return !!data;
+    } catch (err) {
+      console.error('Unexpected error verifying staff role:', err);
+      return false;
+    }
+  };
+
   // ตรวจสอบสถานะการเข้าสู่ระบบปัจจุบันเมื่อโหลดแอป
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const isStaff = await verifyStaffRole(session.user.id);
+        if (isStaff) {
+          setSession(session);
+        } else {
+          await supabase.auth.signOut();
+          setSession(null);
+        }
+      }
+    };
+    
+    checkSession();
 
     // อัปเดตสถานะอัตโนมัติเมื่อมีการล็อกอินหรือออกจากระบบ
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session) {
+        const isStaff = await verifyStaffRole(session.user.id);
+        if (isStaff) {
+          setSession(session);
+        } else {
+          await supabase.auth.signOut();
+          setSession(null);
+        }
+      } else {
+        setSession(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -48,14 +90,25 @@ function App() {
 
     setLoading(true);
     setErrorMsg('');
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
 
     if (error) {
       setErrorMsg(error.message);
+      setLoading(false);
+      return;
     }
+
+    if (data.user) {
+      const isStaff = await verifyStaffRole(data.user.id);
+      if (!isStaff) {
+        await supabase.auth.signOut();
+        setErrorMsg('บัญชีนี้ไม่มีสิทธิ์เข้าใช้งานในส่วนของเจ้าหน้าที่');
+      }
+    }
+    
     setLoading(false);
   };
 
