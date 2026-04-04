@@ -113,6 +113,14 @@ The following issues have been identified and require resolution in upcoming ite
 
 ## 9. Changelog
 
+### v0.9.3
+#### Added
+- Display real username dynamically from `user_profiles` table on the Home Page dashboard.
+#### Fixed
+- N/A
+#### Changed
+- Migrated user demographic information logging (gender, nationality, date of birth) from Supabase auth metadata to the `user_profiles` table during the registration process.
+
 ### v0.9.2
 #### Added
 - N/A
