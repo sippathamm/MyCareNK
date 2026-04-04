@@ -91,17 +91,9 @@ class _RegisterPageState extends State<RegisterPage> {
       // Use proxy email for privacy-first signup
       final proxyEmail = '$username@mycarenk.local';
 
-      final userData = {
-        'username': username,
-        'gender': _gender,
-        'dob': _selectedDateOfBirth!.toIso8601String(),
-        'nationality': _nationality,
-      };
-
       final response = await Supabase.instance.client.auth.signUp(
         email: proxyEmail,
         password: password,
-        data: userData,
       );
 
       debugPrint('[Registration] User: $username, ID: ${response.user?.id}');
@@ -111,6 +103,19 @@ class _RegisterPageState extends State<RegisterPage> {
         email: proxyEmail,
         password: password,
       );
+
+      final userId = response.user?.id;
+      if (userId != null) {
+        await Supabase.instance.client.from('user_profiles').upsert({
+          'user_id': userId,
+          'username': username,
+          'gender': _gender,
+          'nationality': _nationality,
+          'date_of_birth': _selectedDateOfBirth!.toIso8601String().split(
+            'T',
+          )[0],
+        });
+      }
 
       if (mounted) {
         final recoveryService = RecoveryService();
@@ -220,7 +225,10 @@ class _RegisterPageState extends State<RegisterPage> {
                   child: TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
+                      prefixIcon: Icon(
+                        Icons.person_outline,
+                        color: Colors.grey[400],
+                      ),
                       hintText: 'ชื่อผู้ใช้งาน (ตัวอักษรภาษาอังกฤษหรือตัวเลข)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -256,7 +264,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: Colors.grey[400],
+                      ),
                       hintText: 'รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -306,7 +317,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
+                      prefixIcon: Icon(
+                        Icons.lock_outline,
+                        color: Colors.grey[400],
+                      ),
                       hintText: 'ยืนยันรหัสผ่าน',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,

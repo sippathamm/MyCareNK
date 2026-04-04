@@ -3,8 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'emergency_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 
-class HeaderSection extends StatelessWidget {
+class HeaderSection extends StatefulWidget {
   const HeaderSection({super.key});
+
+  @override
+  State<HeaderSection> createState() => _HeaderSectionState();
+}
+
+class _HeaderSectionState extends State<HeaderSection> {
+  Future<Map<String, dynamic>?>? _profileFuture;
+  String? _lastUserId;
 
   @override
   Widget build(BuildContext context) {
@@ -43,82 +51,99 @@ class HeaderSection extends StatelessWidget {
 
             // If logged in
             final user = session.user;
-            final metadata = user.userMetadata;
-            final username = metadata?['username'] ?? 'User';
+            
+            // Only create memory reference to future when user changes
+            if (_lastUserId != user.id || _profileFuture == null) {
+              _lastUserId = user.id;
+              _profileFuture = Supabase.instance.client
+                  .from('user_profiles')
+                  .select('username')
+                  .eq('user_id', user.id)
+                  .maybeSingle();
+            }
 
-            return PopupMenuButton<String>(
-              onSelected: (value) async {
-                if (value == 'logout') {
-                  await Supabase.instance.client.auth.signOut();
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('ออกจากระบบแล้ว')),
-                    );
-                  }
-                }
-              },
-              offset: const Offset(0, 50),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-                PopupMenuItem<String>(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.logout,
-                        color: Theme.of(context).colorScheme.error,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'ออกจากระบบ',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.error,
-                        ),
-                      ),
-                    ],
+            return FutureBuilder<Map<String, dynamic>?>(
+              future: _profileFuture,
+              builder: (context, profileSnapshot) {
+                final username = profileSnapshot.data?['username'] as String? 
+                    ?? user.userMetadata?['username'] as String? 
+                    ?? 'User';
+
+                return PopupMenuButton<String>(
+                  onSelected: (value) async {
+                    if (value == 'logout') {
+                      await Supabase.instance.client.auth.signOut();
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('ออกจากระบบแล้ว')),
+                        );
+                      }
+                    }
+                  },
+                  offset: const Offset(0, 50),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                ),
-              ],
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFE5FD),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const CircleAvatar(
-                      backgroundColor: Color(0xFFD1C4E9),
-                      radius: 14,
-                      child: Icon(
-                        Icons.person,
-                        color: Color(0xFF7C4DFF),
-                        size: 18,
+                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                    PopupMenuItem<String>(
+                      value: 'logout',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.logout,
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'ออกจากระบบ',
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      username,
-                      style: const TextStyle(
-                        color: Color(0xFF7C4DFF),
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(width: 4),
-                    const Icon(
-                      Icons.keyboard_arrow_down,
-                      color: Color(0xFF7C4DFF),
-                      size: 18,
                     ),
                   ],
-                ),
-              ),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFE5FD),
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const CircleAvatar(
+                          backgroundColor: Color(0xFFD1C4E9),
+                          radius: 14,
+                          child: Icon(
+                            Icons.person,
+                            color: Color(0xFF7C4DFF),
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          username,
+                          style: const TextStyle(
+                            color: Color(0xFF7C4DFF),
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Color(0xFF7C4DFF),
+                          size: 18,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
             );
           },
         ),

@@ -48,9 +48,10 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('กรุณาเข้าสู่ระบบก่อนทำรายการ')),
       );
-      Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
+      Navigator.of(
+        context,
+        rootNavigator: true,
+      ).push(MaterialPageRoute(builder: (context) => const LoginPage()));
       return;
     }
 
@@ -79,7 +80,10 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       // Generate an 8-character alphanumeric reference number.
       const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       final Random random = Random();
-      final String refNumber = List.generate(8, (_) => chars[random.nextInt(chars.length)]).join();
+      final String refNumber = List.generate(
+        8,
+        (_) => chars[random.nextInt(chars.length)],
+      ).join();
 
       await Supabase.instance.client.from('condom_requests').insert({
         'user_id': userId,
@@ -90,7 +94,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         'selected_time': timeString,
         'message': widget.message,
         'reference_number': refNumber,
-        'status': 'pending',
+        'status': 'submitted',
       });
 
       // Update user's monthly quota usage
@@ -120,7 +124,6 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         'month': monthStart,
         'used_condoms': newUsedCondoms,
         'used_lubricants': newUsedLubricants,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
       }, onConflict: 'user_id, month');
 
       if (mounted) {
@@ -384,7 +387,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         border: Border.all(color: Colors.grey[300]!),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withAlpha(10),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -518,9 +521,40 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     );
   }
 
+  String formatMonthTH(int month) {
+    switch (month) {
+      case 1:
+        return 'มกราคม';
+      case 2:
+        return 'กุมภาพันธ์';
+      case 3:
+        return 'มีนาคม';
+      case 4:
+        return 'เมษายน';
+      case 5:
+        return 'พฤษภาคม';
+      case 6:
+        return 'มิถุนายน';
+      case 7:
+        return 'กรกฎาคม';
+      case 8:
+        return 'สิงหาคม';
+      case 9:
+        return 'กันยายน';
+      case 10:
+        return 'ตุลาคม';
+      case 11:
+        return 'พฤศจิกายน';
+      case 12:
+        return 'ธันวาคม';
+      default:
+        return '';
+    }
+  }
+
   Widget _buildPlaceTimeCard(BuildContext context) {
     String dateStr = widget.selectedDate != null
-        ? '${widget.selectedDate!.day}/${widget.selectedDate!.month}/${widget.selectedDate!.year + 543}'
+        ? '${widget.selectedDate!.day} ${formatMonthTH(widget.selectedDate!.month)} ${widget.selectedDate!.year + 543}'
         : '-';
     String timeStr = widget.selectedTime != null
         ? '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')} น.'
