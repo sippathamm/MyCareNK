@@ -150,8 +150,10 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>ถุงยางอนามัย</Typography>
               {Object.entries(request.condom_quantities).map(([type, qty]) => (
                 <Box key={type} display="flex" justifyContent="space-between" mb={1} pl={2}>
-                  <Typography variant="body2">• ขนาด {type}</Typography>
-                  <Typography variant="body2" fontWeight="bold">{qty} ชิ้น</Typography>
+                  <Typography variant="body2">• ขนาด {type} มม.</Typography>
+                  <Typography variant="body2" fontWeight="bold" color={qty > 0 ? 'text.primary' : 'text.secondary'}>
+                    {qty > 0 ? `${qty} ชิ้น` : 'ไม่ต้องการ'}
+                  </Typography>
                 </Box>
               ))}
 

@@ -10,6 +10,12 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 const drawerWidth = 260;
 
+const ROLE_LABELS: Record<string, string> = {
+  staff: 'เจ้าหน้าที่',
+  admin: 'ผู้ดูแล',
+  superadmin: 'ผู้ดูแลสูงสุด',
+};
+
 interface MainLayoutProps {
   children: ReactNode;
 }
@@ -60,7 +66,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   {profile.first_name} {profile.last_name}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
-                  Role: {role || 'Unknown'} | {profile.service_center}
+                  {role ? ROLE_LABELS[role] ?? role : ''}{profile.service_center ? ` | ${profile.service_center}` : ''}
                 </Typography>
               </Box>
               <Avatar sx={{ bgcolor: 'primary.main' }}>

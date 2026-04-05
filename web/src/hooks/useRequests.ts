@@ -22,10 +22,13 @@ export function useRequests() {
       setError(error.message);
     } else {
       setRequests(
-        (data ?? []).map(r => ({
-          ...r,
-          selected_time: (r.selected_time as string)?.slice(0, 5) ?? '',
-        } as RequestData))
+        (data ?? []).map(r => {
+          const row = r as unknown as Record<string, unknown>;
+          return {
+            ...row,
+            selected_time: (row.selected_time as string)?.slice(0, 5) ?? '',
+          } as RequestData;
+        })
       );
     }
     setLoading(false);

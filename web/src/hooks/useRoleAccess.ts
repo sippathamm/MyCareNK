@@ -46,7 +46,7 @@ export function useRoleAccess() {
         const { data: profileData, error: profileError } = await supabase
           .from('staff_profiles')
           .select('first_name, last_name, service_center')
-          .eq('id', userId)
+          .eq('user_id', userId)
           .single();
 
         if (profileError) throw profileError;
@@ -57,14 +57,9 @@ export function useRoleAccess() {
         }
       } catch (error) {
         console.error('Error fetching role or profile:', error);
-        // Fallback for development/mock if tables don't exist yet
         if (isMounted) {
-          setRole('superadmin'); // Mock as superadmin for testing
-          setProfile({
-            first_name: 'Mock',
-            last_name: 'User',
-            service_center: 'ศูนย์บริการ A',
-          });
+          setRole(null);
+          setProfile(null);
         }
       } finally {
         if (isMounted) {
