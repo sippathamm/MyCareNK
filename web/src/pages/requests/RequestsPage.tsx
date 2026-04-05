@@ -48,7 +48,8 @@ export default function RequestsPage() {
       case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'cancelled': return <Chip label="ยกเลิก" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+      case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
       default: return <Chip label={status} size="small" />;
     }
   };
@@ -68,7 +69,9 @@ export default function RequestsPage() {
 
   const filteredRequests = requests.filter(r => {
     const matchSearch = r.reference_number.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+    const matchStatus = statusFilter === 'all'
+      || r.status === statusFilter
+      || (statusFilter === 'cancelled' && (r.status === 'cancelled_by_user' || r.status === 'cancelled_by_staff'));
     return matchSearch && matchStatus;
   });
 

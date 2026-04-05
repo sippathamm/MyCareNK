@@ -72,8 +72,10 @@ export function useDashboard() {
     days.forEach(d => { dailyMap[toLocalDateString(d)] = 0; });
 
     for (const row of rows ?? []) {
-      const status = row.status as keyof StatusCounts;
-      if (status in counts) counts[status]++;
+      const status = row.status as string;
+      const key: keyof StatusCounts =
+        status === 'cancelled_by_user' || status === 'cancelled_by_staff' ? 'cancelled' : status as keyof StatusCounts;
+      if (key in counts) counts[key]++;
 
       const createdAt = new Date(row.created_at);
       if (createdAt >= sevenDaysAgo) {

@@ -15,7 +15,7 @@ export interface RequestData {
   cancel_reason?: string;
   created_at?: string;
   updated_at?: string;
-  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
+  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled_by_user' | 'cancelled_by_staff';
 }
 
 interface RequestDetailDialogProps {
@@ -47,7 +47,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
 
   const handleCancelConfirm = () => {
     if (!rejectReason.trim()) return;
-    onStatusChange(request.id, 'cancelled', rejectReason);
+    onStatusChange(request.id, 'cancelled_by_staff', rejectReason);
     onCloseDialog();
   };
 
@@ -138,7 +138,8 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
                   case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
                   case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-                  case 'cancelled': return <Chip label="ยกเลิก" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+                  case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+                  case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
                 }
               })()}
             </Box>
@@ -187,7 +188,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               </Box>
             )}
 
-            {request.status === 'cancelled' && request.cancel_reason && (
+            {(request.status === 'cancelled_by_user' || request.status === 'cancelled_by_staff') && request.cancel_reason && (
               <Box mt={2}>
                 <Typography variant="subtitle2" color="error.main" sx={{ mb: 1 }}>เหตุผลที่ยกเลิก</Typography>
                 <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(211,47,47,0.06)', p: 1.5, borderRadius: 1, color: 'error.main' }}>

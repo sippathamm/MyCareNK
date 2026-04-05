@@ -6,7 +6,6 @@ import {
   ListItemButton,
   Divider,
   Button,
-  Chip,
 } from '@mui/material';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import { useNavigate } from 'react-router-dom';
@@ -117,20 +116,6 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                     </Typography>
                   </Box>
 
-                  {/* Status chip */}
-                  <Chip
-                    label={cfg.label}
-                    size="small"
-                    sx={{
-                      fontSize: '0.65rem',
-                      height: 20,
-                      flexShrink: 0,
-                      bgcolor: cfg.bg,
-                      color: cfg.color,
-                      fontWeight: 600,
-                      border: `1px solid ${cfg.color}30`,
-                    }}
-                  />
                 </ListItemButton>
                 {idx < notifications.length - 1 && <Divider />}
               </Box>

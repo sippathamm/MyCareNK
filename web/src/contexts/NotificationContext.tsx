@@ -261,7 +261,7 @@ export function useNotification(): NotificationContextValue {
 export const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string; bg: string }> = {
   pending:            { label: 'คำขอใหม่',              color: '#E65100', bg: '#FFF3E0' },
   preparing:          { label: 'กำลังเตรียม',           color: '#0D47A1', bg: '#E3F2FD' },
-  ready:              { label: 'พร้อมรับ',               color: '#6A1B9A', bg: '#F3E5F5' },
+  ready:              { label: 'รอรับ',               color: '#6A1B9A', bg: '#F3E5F5' },
   completed:          { label: 'เสร็จสิ้น',             color: '#1B5E20', bg: '#E8F5E9' },
   cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',       color: '#616161', bg: '#F5F5F5' },
   cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่', color: '#616161', bg: '#F5F5F5' },
