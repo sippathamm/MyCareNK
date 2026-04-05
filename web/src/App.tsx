@@ -7,10 +7,13 @@ import LoginPage from './pages/auth/LoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import UpdatePasswordPage from './pages/auth/UpdatePasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
+import RequestsPage from './pages/requests/RequestsPage';
+import StaffManagementPage from './pages/staff/StaffManagementPage';
+import MainLayout from './components/layout/MainLayout';
 
 function App() {
   const navigate = useNavigate();
-  const { session, isInitializing, loading, errorMsg, login, logout, sendPasswordReset, updatePassword } = useAuth();
+  const { session, isInitializing, loading, errorMsg, login, sendPasswordReset, updatePassword } = useAuth();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -21,6 +24,7 @@ function App() {
 
   return (
     <Routes>
+      {/* Public Routes */}
       <Route
         path="/"
         element={
@@ -41,15 +45,23 @@ function App() {
         path="/update-password"
         element={<UpdatePasswordPage loading={loading} errorMsg={errorMsg} onSubmit={updatePassword} />}
       />
+
+      {/* Protected Routes inside MainLayout */}
       <Route
-        path="/dashboard"
+        path="/*"
         element={
           <ProtectedRoute session={session} isInitializing={isInitializing}>
-            <DashboardPage session={session!} loading={loading} onLogout={logout} />
+            <MainLayout>
+              <Routes>
+                <Route path="dashboard" element={<DashboardPage session={session!} />} />
+                <Route path="requests" element={<RequestsPage />} />
+                <Route path="staff" element={<StaffManagementPage />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
+            </MainLayout>
           </ProtectedRoute>
         }
       />
-      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

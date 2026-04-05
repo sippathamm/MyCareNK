@@ -17,7 +17,7 @@ const LoginPage = ({ loading, errorMsg, onLogin }: LoginPageProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!email || !password) return;
     const success = await onLogin(email, password);
@@ -66,7 +66,7 @@ const LoginPage = ({ loading, errorMsg, onLogin }: LoginPageProps) => {
           fullWidth
           variant="contained"
           disabled={loading}
-          sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}
+          sx={{ mt: 3, mb: 2, py: 1.5 }}
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : 'เข้าสู่ระบบ'}
         </Button>

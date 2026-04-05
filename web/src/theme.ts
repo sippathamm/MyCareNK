@@ -4,31 +4,57 @@ const theme = createTheme({
   palette: {
     primary: {
       main: '#FF8A50',
+      contrastText: '#ffffff',
     },
     background: {
-      default: '#f4f6f8',
+      default: '#F4F6F8',
     },
   },
   typography: {
     fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+    },
   },
   components: {
-    MuiButtonBase: {
+    MuiButton: {
       styleOverrides: {
         root: {
-          '& .MuiTouchRipple-root .MuiTouchRipple-child': {
-            backgroundColor: 'white',
+          borderRadius: 8,
+        },
+        containedPrimary: {
+          '&:hover': {
+            backgroundColor: '#FF8A50',
           },
         },
       },
     },
-    MuiButton: {
+    MuiCard: {
       styleOverrides: {
-        containedPrimary: {
-          '&:hover': {
-            backgroundColor: '#FF8A50',
-            filter: 'brightness(1.1)',
-          },
+        root: {
+          borderRadius: 12,
+        },
+      },
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: 16,
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontWeight: 600,
+        },
+      },
+    },
+    MuiListItemButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 8,
         },
       },
     },

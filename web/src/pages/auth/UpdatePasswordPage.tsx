@@ -20,7 +20,7 @@ const UpdatePasswordPage = ({ loading, errorMsg, onSubmit }: UpdatePasswordPageP
   const [confirmPassword, setConfirmPassword] = useState('');
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const success = await onSubmit(newPassword, confirmPassword);
     if (success) setSuccessDialogOpen(true);
@@ -74,7 +74,7 @@ const UpdatePasswordPage = ({ loading, errorMsg, onSubmit }: UpdatePasswordPageP
           variant="contained"
           color="primary"
           disabled={loading}
-          sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}
+          sx={{ mt: 3, mb: 2, py: 1.5 }}
         >
           {loading ? <CircularProgress size={24} color="inherit" /> : 'บันทึกรหัสผ่านใหม่'}
         </Button>
@@ -83,7 +83,7 @@ const UpdatePasswordPage = ({ loading, errorMsg, onSubmit }: UpdatePasswordPageP
       <Dialog
         open={successDialogOpen}
         onClose={handleSuccessDialogClose}
-        PaperProps={{ sx: { borderRadius: 3, p: 1, minWidth: 300 } }}
+        slotProps={{ paper: { sx: { p: 1, minWidth: 300 } } }}
       >
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 2 }}>
@@ -101,7 +101,7 @@ const UpdatePasswordPage = ({ loading, errorMsg, onSubmit }: UpdatePasswordPageP
             variant="contained"
             color="primary"
             onClick={handleSuccessDialogClose}
-            sx={{ px: 4, borderRadius: 2, fontWeight: 'bold' }}
+            sx={{ px: 4 }}
           >
             ตกลง
           </Button>
