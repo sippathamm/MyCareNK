@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
-import { formatDate, getOverdueDays } from '../../utils/requestUtils';
+import { formatDate, formatDateTime, getOverdueDays } from '../../utils/requestUtils';
 
 export interface RequestData {
   id: string;
@@ -102,11 +102,11 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
           <Box display="flex" flexDirection="column" gap={2}>
             <Box display="flex" justifyContent="space-between">
               <Typography variant="subtitle2" color="text.secondary">ส่งคำขอเมื่อ</Typography>
-              <Typography variant="body1">{request.created_at || '-'}</Typography>
+              <Typography variant="body1">{formatDateTime(request.created_at)}</Typography>
             </Box>
             <Box display="flex" justifyContent="space-between">
               <Typography variant="subtitle2" color="text.secondary">แก้ไขล่าสุดเมื่อ</Typography>
-              <Typography variant="body1">{request.updated_at || '-'}</Typography>
+              <Typography variant="body1">{formatDateTime(request.updated_at)}</Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">วันเดือนปีรับ</Typography>
