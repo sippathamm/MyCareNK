@@ -8,11 +8,14 @@ import {
   Button,
   Chip,
 } from '@mui/material';
-import FiberNewIcon from '@mui/icons-material/FiberNew';
-import CancelIcon from '@mui/icons-material/Cancel';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import { useNavigate } from 'react-router-dom';
-import { useNotification, type NotificationItem } from '../../contexts/NotificationContext';
+import {
+  useNotification,
+  STATUS_CONFIG,
+  type NotificationItem,
+  type RequestStatus,
+} from '../../contexts/NotificationContext';
 
 function formatRelativeTime(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -22,8 +25,13 @@ function formatRelativeTime(dateStr: string): string {
   if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
-  const days = Math.floor(hours / 24);
-  return `${days} วันที่แล้ว`;
+  return `${Math.floor(hours / 24)} วันที่แล้ว`;
+}
+
+// Dot indicator matching each status color
+function StatusDot({ eventType }: { eventType: RequestStatus }) {
+  const { color } = STATUS_CONFIG[eventType] ?? { color: '#9E9E9E' };
+  return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.4 }} />;
 }
 
 interface NotificationPanelProps {
@@ -38,11 +46,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
     onClose();
-    navigate('/requests');
-  };
-
-  const handleMarkAll = () => {
-    markAllAsRead();
+    navigate('/requests', { state: { openRequestId: item.request_id } });
   };
 
   return (
@@ -58,7 +62,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
       <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider' }}>
         <Typography fontWeight="bold" fontSize="0.95rem">การแจ้งเตือน</Typography>
         {notifications.some(n => !n.is_read) && (
-          <Button size="small" onClick={handleMarkAll} sx={{ fontSize: '0.75rem', textTransform: 'none', py: 0 }}>
+          <Button size="small" onClick={markAllAsRead} sx={{ fontSize: '0.75rem', textTransform: 'none', py: 0 }}>
             อ่านทั้งหมด
           </Button>
         )}
@@ -72,62 +76,66 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
         </Box>
       ) : (
         <List disablePadding sx={{ overflowY: 'auto', maxHeight: 420 }}>
-          {notifications.map((item, idx) => (
-            <Box key={item.id}>
-              <ListItemButton
-                onClick={() => handleItemClick(item)}
-                sx={{
-                  px: 2,
-                  py: 1.5,
-                  alignItems: 'flex-start',
-                  gap: 1.5,
-                  backgroundColor: item.is_read ? 'transparent' : 'rgba(255, 138, 80, 0.06)',
-                  '&:hover': { backgroundColor: 'rgba(255, 138, 80, 0.12)' },
-                }}
-              >
-                {/* Icon */}
-                <Box sx={{ mt: 0.25, flexShrink: 0 }}>
-                  {item.event_type === 'new_request' ? (
-                    <FiberNewIcon sx={{ color: '#4CAF50', fontSize: 22 }} />
-                  ) : (
-                    <CancelIcon sx={{ color: '#9E9E9E', fontSize: 22 }} />
-                  )}
-                </Box>
-
-                {/* Content */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                    <Typography variant="body2" fontWeight={item.is_read ? 400 : 600} noWrap>
-                      {item.event_type === 'new_request' ? 'คำขอใหม่' : 'ยกเลิกคำขอ'}
-                    </Typography>
-                    {!item.is_read && (
-                      <Box sx={{ width: 7, height: 7, borderRadius: '50%', bgcolor: '#FF8A50', flexShrink: 0 }} />
-                    )}
-                  </Box>
-                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                    {item.reference_number}
-                  </Typography>
-                  <Typography variant="caption" color="text.disabled">
-                    {formatRelativeTime(item.created_at)}
-                  </Typography>
-                </Box>
-
-                {/* Type chip */}
-                <Chip
-                  label={item.event_type === 'new_request' ? 'รอดำเนินการ' : 'ยกเลิก'}
-                  size="small"
+          {notifications.map((item, idx) => {
+            const cfg = STATUS_CONFIG[item.event_type];
+            return (
+              <Box key={item.id}>
+                <ListItemButton
+                  onClick={() => handleItemClick(item)}
                   sx={{
-                    fontSize: '0.65rem',
-                    height: 20,
-                    flexShrink: 0,
-                    bgcolor: item.event_type === 'new_request' ? '#E8F5E9' : '#F5F5F5',
-                    color: item.event_type === 'new_request' ? '#2E7D32' : '#616161',
+                    px: 2,
+                    py: 1.5,
+                    alignItems: 'flex-start',
+                    gap: 1.5,
+                    backgroundColor: item.is_read ? 'transparent' : `${cfg.bg}`,
+                    '&:hover': { filter: 'brightness(0.96)' },
                   }}
-                />
-              </ListItemButton>
-              {idx < notifications.length - 1 && <Divider />}
-            </Box>
-          ))}
+                >
+                  {/* Status color dot */}
+                  <StatusDot eventType={item.event_type} />
+
+                  {/* Content */}
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant="body2"
+                        fontWeight={item.is_read ? 400 : 600}
+                        sx={{ color: item.is_read ? 'text.primary' : cfg.color }}
+                        noWrap
+                      >
+                        {cfg.label}
+                      </Typography>
+                      {!item.is_read && (
+                        <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: cfg.color, flexShrink: 0 }} />
+                      )}
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                      {item.reference_number}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled">
+                      {formatRelativeTime(item.created_at)}
+                    </Typography>
+                  </Box>
+
+                  {/* Status chip */}
+                  <Chip
+                    label={cfg.label}
+                    size="small"
+                    sx={{
+                      fontSize: '0.65rem',
+                      height: 20,
+                      flexShrink: 0,
+                      bgcolor: cfg.bg,
+                      color: cfg.color,
+                      fontWeight: 600,
+                      border: `1px solid ${cfg.color}30`,
+                    }}
+                  />
+                </ListItemButton>
+                {idx < notifications.length - 1 && <Divider />}
+              </Box>
+            );
+          })}
         </List>
       )}
     </Popover>

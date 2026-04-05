@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Chip, Button, TextField, MenuItem, Stack, Tooltip } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import { DataGrid } from '@mui/x-data-grid';
@@ -21,11 +22,25 @@ const thGridLocale = {
 };
 
 export default function RequestsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { requests, setRequests, loading } = useRequests();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Open detail dialog when navigated here from a notification
+  const openRequestId = (location.state as { openRequestId?: string } | null)?.openRequestId;
+  useEffect(() => {
+    if (loading || !openRequestId) return;
+    const req = requests.find(r => r.id === openRequestId);
+    if (req) {
+      setSelectedRequest(req);
+      setDialogOpen(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [loading, openRequestId, requests, navigate, location.pathname]);
 
   const getStatusChip = (status: string) => {
     switch (status) {

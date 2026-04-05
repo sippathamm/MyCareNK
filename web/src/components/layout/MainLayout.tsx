@@ -12,7 +12,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useNotification } from '../../contexts/NotificationContext';
+import { useNotification, STATUS_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
 import NotificationPanel from '../notifications/NotificationPanel';
 
 const drawerWidth = 260;
@@ -32,7 +32,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { role, profile, loading } = useRoleAccess();
-  const { unreadCount, toastOpen, toastMessage, closeToast } = useNotification();
+  const { unreadCount, toastOpen, toastMessage, toastEventType, closeToast } = useNotification();
+  const toastCfg = toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null;
 
   const bellRef = useRef<HTMLButtonElement>(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -193,7 +194,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
         onClose={closeToast}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
-        <Alert onClose={closeToast} severity="info" variant="filled" sx={{ width: '100%' }}>
+        <Alert
+          onClose={closeToast}
+          variant="filled"
+          icon={false}
+          sx={{
+            width: '100%',
+            bgcolor: toastCfg?.color ?? '#2196F3',
+            color: 'white',
+            '& .MuiAlert-action .MuiIconButton-root': { color: 'white' },
+          }}
+        >
           {toastMessage}
         </Alert>
       </Snackbar>
