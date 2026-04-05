@@ -60,18 +60,18 @@ export default function RequestsPage() {
   };
 
   const handleStatusChange = (id: string, newStatus: string, reason?: string) => {
-    const status = newStatus as RequestData['status'];
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status, cancel_reason: reason } : r));
+    const request_status = newStatus as RequestData['request_status'];
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, request_status, cancel_reason: reason } : r));
     if (selectedRequest?.id === id) {
-      setSelectedRequest({ ...selectedRequest, status, cancel_reason: reason });
+      setSelectedRequest({ ...selectedRequest, request_status, cancel_reason: reason });
     }
   };
 
   const filteredRequests = requests.filter(r => {
     const matchSearch = r.reference_number.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === 'all'
-      || r.status === statusFilter
-      || (statusFilter === 'cancelled' && (r.status === 'cancelled_by_user' || r.status === 'cancelled_by_staff'));
+      || r.request_status === statusFilter
+      || (statusFilter === 'cancelled' && (r.request_status === 'cancelled_by_user' || r.request_status === 'cancelled_by_staff'));
     return matchSearch && matchStatus;
   });
 
@@ -84,7 +84,7 @@ export default function RequestsPage() {
       minWidth: 150,
       renderCell: (params) => {
         const row = params.row as RequestData;
-        const days = getOverdueDays(row.selected_date, row.status);
+        const days = getOverdueDays(row.selected_date, row.request_status);
         const dateFormatted = formatDate(row.selected_date);
         if (days > 0) {
           return (
@@ -122,7 +122,7 @@ export default function RequestsPage() {
       }
     },
     {
-      field: 'status',
+      field: 'request_status',
       headerName: 'สถานะ',
       flex: 1,
       minWidth: 120,

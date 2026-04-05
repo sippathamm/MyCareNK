@@ -20,8 +20,8 @@ export function useRequests() {
     const { data, error } = await supabase
       .from('condom_requests')
       .select(
-        'id, reference_number, selected_date, selected_time, selected_location, ' +
-        'condom_quantities, lubricant_quantity, message, status, created_at, updated_at'
+        'id, reference_number, selected_date, selected_time, selected_service_center, ' +
+        'condom_quantities, lubricant_quantity, message, request_status, created_at, updated_at'
       )
       .order('created_at', { ascending: false });
 

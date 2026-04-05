@@ -58,7 +58,7 @@ export function useDashboard() {
 
     const { data: rows, error: err } = await supabase
       .from('condom_requests')
-      .select('status, created_at');
+      .select('request_status, created_at');
 
     if (err) {
       setError(err.message);
@@ -72,7 +72,7 @@ export function useDashboard() {
     days.forEach(d => { dailyMap[toLocalDateString(d)] = 0; });
 
     for (const row of rows ?? []) {
-      const status = row.status as string;
+      const status = row.request_status as string;
       const key: keyof StatusCounts =
         status === 'cancelled_by_user' || status === 'cancelled_by_staff' ? 'cancelled' : status as keyof StatusCounts;
       if (key in counts) counts[key]++;
