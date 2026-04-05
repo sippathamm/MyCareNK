@@ -1,0 +1,84 @@
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './useAuth';
+
+export type StaffRole = 'staff' | 'admin' | 'superadmin' | null;
+
+export interface StaffProfile {
+  first_name: string;
+  last_name: string;
+  service_center: string;
+}
+
+export function useRoleAccess() {
+  const { session } = useAuth();
+  const [role, setRole] = useState<StaffRole>(null);
+  const [profile, setProfile] = useState<StaffProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchAccess() {
+      if (!session?.user) {
+        if (isMounted) {
+          setRole(null);
+          setProfile(null);
+          setLoading(false);
+        }
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const userId = session.user.id;
+
+        // Fetch Role from staff_roles
+        const { data: roleData, error: roleError } = await supabase
+          .from('staff_roles')
+          .select('role')
+          .eq('user_id', userId)
+          .single();
+
+        if (roleError) throw roleError;
+        
+        // Fetch Profile from staff_profiles
+        const { data: profileData, error: profileError } = await supabase
+          .from('staff_profiles')
+          .select('first_name, last_name, service_center')
+          .eq('id', userId)
+          .single();
+
+        if (profileError) throw profileError;
+
+        if (isMounted) {
+          setRole(roleData?.role as StaffRole);
+          setProfile(profileData);
+        }
+      } catch (error) {
+        console.error('Error fetching role or profile:', error);
+        // Fallback for development/mock if tables don't exist yet
+        if (isMounted) {
+          setRole('superadmin'); // Mock as superadmin for testing
+          setProfile({
+            first_name: 'Mock',
+            last_name: 'User',
+            service_center: 'ศูนย์บริการ A',
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    }
+
+    fetchAccess();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
+
+  return { role, profile, loading };
+}

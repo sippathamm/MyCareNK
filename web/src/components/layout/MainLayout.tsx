@@ -1,0 +1,166 @@
+import type { ReactNode } from 'react';
+import { Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress } from '@mui/material';
+import { useNavigate, useLocation } from 'react-router-dom';
+import DashboardIcon from '@mui/icons-material/Dashboard';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import PeopleIcon from '@mui/icons-material/People';
+import LogoutIcon from '@mui/icons-material/Logout';
+import { useAuth } from '../../hooks/useAuth';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
+
+const drawerWidth = 260;
+
+interface MainLayoutProps {
+  children: ReactNode;
+}
+
+export default function MainLayout({ children }: MainLayoutProps) {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
+  const { role, profile, loading } = useRoleAccess();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
+  };
+
+  const navItems = [
+    { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: '/dashboard', show: true },
+    { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
+    { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
+  ];
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', minHeight: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'flex' }}>
+      {/* App Bar (Top Navbar) */}
+      <AppBar
+        position="fixed"
+        sx={{
+          width: `calc(100% - ${drawerWidth}px)`,
+          ml: `${drawerWidth}px`,
+          backgroundColor: 'white',
+          color: 'text.primary',
+          boxShadow: 1,
+        }}
+      >
+        <Toolbar sx={{ justifyContent: 'flex-end', gap: 2 }}>
+          {profile && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography variant="body2" fontWeight="bold">
+                  {profile.first_name} {profile.last_name}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Role: {role || 'Unknown'} | {profile.service_center}
+                </Typography>
+              </Box>
+              <Avatar sx={{ bgcolor: 'primary.main' }}>
+                {profile.first_name?.[0]?.toUpperCase() || 'U'}
+              </Avatar>
+            </Box>
+          )}
+        </Toolbar>
+      </AppBar>
+
+      {/* Sidebar (Drawer) */}
+      <Drawer
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          '& .MuiDrawer-paper': {
+            width: drawerWidth,
+            boxSizing: 'border-box',
+            backgroundColor: '#1E293B', // Slate 800 - nice dark blue/grey
+            color: 'white',
+          },
+        }}
+        variant="permanent"
+        anchor="left"
+      >
+        <Box sx={{ p: 3, textAlign: 'center' }}>
+          <Typography variant="h5" fontWeight="900" color="white" letterSpacing={1}>
+            <span style={{ color: '#FF8A50' }}>MyCareNK</span> Staff
+          </Typography>
+        </Box>
+        <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
+        <List sx={{ px: 2, pt: 2, gap: 1, display: 'flex', flexDirection: 'column' }}>
+          {navItems.filter(item => item.show).map((item) => {
+            const isActive = location.pathname.startsWith(item.path);
+            return (
+              <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
+                <ListItemButton
+                  onClick={() => navigate(item.path)}
+                  sx={{
+                    borderRadius: 2,
+                    backgroundColor: isActive ? 'rgba(255, 138, 80, 0.15)' : 'transparent',
+                    color: isActive ? '#FF8A50' : '#CBD5E1',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 138, 80, 0.25)',
+                      color: '#FF8A50',
+                    },
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText 
+                    primary={item.text} 
+                    primaryTypographyProps={{ 
+                      fontWeight: isActive ? 600 : 500,
+                      fontSize: '0.95rem'
+                    }} 
+                  />
+                </ListItemButton>
+              </ListItem>
+            );
+          })}
+        </List>
+        <Box sx={{ flexGrow: 1 }} />
+        <Box sx={{ p: 2 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            color="inherit"
+            startIcon={<LogoutIcon />}
+            onClick={handleLogout}
+            sx={{
+              borderColor: 'rgba(255,255,255,0.2)',
+              color: '#CBD5E1',
+              '&:hover': {
+                borderColor: 'rgba(255,255,255,0.5)',
+                backgroundColor: 'rgba(255,255,255,0.05)',
+              },
+            }}
+          >
+            ออกจากระบบ
+          </Button>
+        </Box>
+      </Drawer>
+
+      {/* Main Content Area */}
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          bgcolor: 'background.default',
+          p: 3,
+          minHeight: '100vh',
+          width: `calc(100% - ${drawerWidth}px)`,
+        }}
+      >
+        <Toolbar /> {/* Spacer for fixed AppBar */}
+        {children}
+      </Box>
+    </Box>
+  );
+}
