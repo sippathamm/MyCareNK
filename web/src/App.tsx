@@ -10,6 +10,7 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import RequestsPage from './pages/requests/RequestsPage';
 import StaffManagementPage from './pages/staff/StaffManagementPage';
 import MainLayout from './components/layout/MainLayout';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 function App() {
   const navigate = useNavigate();
@@ -51,14 +52,16 @@ function App() {
         path="/*"
         element={
           <ProtectedRoute session={session} isInitializing={isInitializing}>
-            <MainLayout>
-              <Routes>
-                <Route path="dashboard" element={<DashboardPage session={session!} />} />
-                <Route path="requests" element={<RequestsPage />} />
-                <Route path="staff" element={<StaffManagementPage />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </MainLayout>
+            <NotificationProvider>
+              <MainLayout>
+                <Routes>
+                  <Route path="dashboard" element={<DashboardPage session={session!} />} />
+                  <Route path="requests" element={<RequestsPage />} />
+                  <Route path="staff" element={<StaffManagementPage />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </MainLayout>
+            </NotificationProvider>
           </ProtectedRoute>
         }
       />

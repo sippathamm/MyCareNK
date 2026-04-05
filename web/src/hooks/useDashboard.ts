@@ -95,5 +95,22 @@ export function useDashboard() {
     fetchDashboard();
   }, [fetchDashboard]);
 
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-condom-requests')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'condom_requests' },
+        () => {
+          fetchDashboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchDashboard]);
+
   return { ...data, loading, error };
 }

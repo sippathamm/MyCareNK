@@ -1,12 +1,14 @@
 import type { ReactNode } from 'react';
-import { Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress, IconButton, Badge, Snackbar, Alert } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PeopleIcon from '@mui/icons-material/People';
 import LogoutIcon from '@mui/icons-material/Logout';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useNotification } from '../../contexts/NotificationContext';
 
 const drawerWidth = 260;
 
@@ -25,6 +27,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { role, profile, loading } = useRoleAccess();
+  const { unreadCount, toastOpen, toastMessage, clearUnread, closeToast } = useNotification();
+
+  const handleNotificationClick = () => {
+    clearUnread();
+    navigate('/requests');
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -59,6 +67,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
         }}
       >
         <Toolbar sx={{ justifyContent: 'flex-end', gap: 2 }}>
+          <IconButton onClick={handleNotificationClick} size="large" aria-label="แจ้งเตือน" color="inherit">
+            <Badge badgeContent={unreadCount > 0 ? unreadCount : undefined} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
           {profile && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box sx={{ textAlign: 'right' }}>
@@ -167,6 +180,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <Toolbar /> {/* Spacer for fixed AppBar */}
         {children}
       </Box>
+
+      {/* Toast Notification */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={closeToast}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <Alert onClose={closeToast} severity="info" variant="filled" sx={{ width: '100%' }}>
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
