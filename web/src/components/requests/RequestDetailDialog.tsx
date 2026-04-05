@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
+import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 
 export interface RequestData {
   id: string;
@@ -13,6 +14,7 @@ export interface RequestData {
   message?: string;
   cancel_reason?: string;
   created_at?: string;
+  updated_at?: string;
   status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
 }
 
@@ -27,16 +29,10 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [showQR, setShowQR] = useState(false);
-
   const [isConfirmingPrepare, setIsConfirmingPrepare] = useState(false);
   const [isConfirmingFinish, setIsConfirmingFinish] = useState(false);
 
   if (!request) return null;
-
-  const formatDate = (dateString: string) => {
-    if (!dateString.includes('-')) return dateString;
-    return new Date(dateString).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
 
   const handleConfirmPrepare = () => {
     onStatusChange(request.id, 'preparing');
@@ -49,7 +45,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
     setShowQR(true);
   };
 
-  const handCancelConfirm = () => {
+  const handleCancelConfirm = () => {
     if (!rejectReason.trim()) return;
     onStatusChange(request.id, 'cancelled', rejectReason);
     onCloseDialog();
@@ -62,19 +58,6 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
     setIsConfirmingFinish(false);
     setShowQR(false);
     onClose();
-  };
-
-  const getOverdueDays = (dateStr: string, status: string) => {
-    if (status === 'completed' || status === 'cancelled') return 0;
-    const selected = new Date(dateStr);
-    selected.setHours(0, 0, 0, 0);
-    const today = new Date('2026-04-05'); // mock current date for testing
-    today.setHours(0, 0, 0, 0);
-    const diff = today.getTime() - selected.getTime();
-    if (diff > 0) {
-      return Math.floor(diff / (1000 * 60 * 60 * 24));
-    }
-    return 0;
   };
 
   return (
@@ -121,6 +104,10 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               <Typography variant="subtitle2" color="text.secondary">ส่งคำขอเมื่อ</Typography>
               <Typography variant="body1">{request.created_at || '-'}</Typography>
             </Box>
+            <Box display="flex" justifyContent="space-between">
+              <Typography variant="subtitle2" color="text.secondary">แก้ไขล่าสุดเมื่อ</Typography>
+              <Typography variant="body1">{request.updated_at || '-'}</Typography>
+            </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">วันเดือนปีรับ</Typography>
               {(() => {
@@ -143,6 +130,18 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               <Typography variant="subtitle2" color="text.secondary">สถานที่รับ</Typography>
               <Typography variant="body1" fontWeight="medium">{request.selected_location}</Typography>
             </Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
+              {(() => {
+                switch (request.status) {
+                  case 'pending': return <Chip label="รอดำเนินการ" color="warning" size="small" sx={{ fontWeight: 'bold' }} />;
+                  case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
+                  case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
+                  case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
+                  case 'cancelled': return <Chip label="ยกเลิก" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+                }
+              })()}
+            </Box>
 
             <Divider sx={{ my: 1 }} />
 
@@ -161,7 +160,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>เพิ่มเติม</Typography>
               <Box display="flex" justifyContent="space-between" pl={2}>
                 <Typography variant="body2">• สารหล่อลื่น</Typography>
-                <Typography variant="body2" fontWeight="bold" color={request.lubricant_quantity > 0 ? "text.primary" : "text.secondary"}>
+                <Typography variant="body2" fontWeight="bold" color={request.lubricant_quantity > 0 ? 'text.primary' : 'text.secondary'}>
                   {request.lubricant_quantity > 0 ? `${request.lubricant_quantity} ซอง` : 'ไม่ต้องการ'}
                 </Typography>
               </Box>
@@ -171,7 +170,17 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               <Box mt={2}>
                 <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>ข้อความเพิ่มเติม</Typography>
                 <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(0,0,0,0.03)', p: 1.5, borderRadius: 1 }}>
-                  "{request.message}"
+                  {request.message}
+                </Typography>
+              </Box>
+            )}
+
+            {request.status === 'ready' && (
+              <Box display="flex" flexDirection="column" alignItems="center" py={2} gap={3}>
+                <Divider sx={{ width: '100%', mb: 1 }} />
+                <QRCodeSVG value={request.reference_number} size={200} />
+                <Typography variant="body2" color="error" textAlign="center" fontWeight="medium">
+                  กรุณานำ QR Code นี้ติดไว้ที่กล่อง/ซองพัสดุ
                 </Typography>
               </Box>
             )}
@@ -180,7 +189,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               <Box mt={2}>
                 <Typography variant="subtitle2" color="error.main" sx={{ mb: 1 }}>เหตุผลที่ยกเลิก</Typography>
                 <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(211,47,47,0.06)', p: 1.5, borderRadius: 1, color: 'error.main' }}>
-                  "{request.cancel_reason}"
+                  {request.cancel_reason}
                 </Typography>
               </Box>
             )}
@@ -209,12 +218,12 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         {isConfirmingPrepare ? (
           <>
             <Button onClick={() => setIsConfirmingPrepare(false)}>กลับ</Button>
-            <Button onClick={handleConfirmPrepare} variant="contained" color="warning">ยืนยัน</Button>
+            <Button onClick={handleConfirmPrepare} variant="contained" color="primary">ยืนยัน</Button>
           </>
         ) : isConfirmingFinish ? (
           <>
             <Button onClick={() => setIsConfirmingFinish(false)}>กลับ</Button>
-            <Button onClick={handleFinishPrepare} variant="contained" color="warning">ยืนยัน</Button>
+            <Button onClick={handleFinishPrepare} variant="contained" color="primary">ยืนยัน</Button>
           </>
         ) : showQR ? (
           <Button onClick={onCloseDialog} variant="contained" color="primary">ปิด</Button>
@@ -222,7 +231,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
           <>
             <Button onClick={() => setIsRejecting(false)}>กลับ</Button>
             <Button
-              onClick={handCancelConfirm}
+              onClick={handleCancelConfirm}
               color="error"
               variant="contained"
               disabled={!rejectReason.trim()}
@@ -238,13 +247,13 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                 <Button onClick={() => setIsRejecting(true)} color="error" variant="outlined">
                   ยกเลิกคำขอ
                 </Button>
-                <Button onClick={() => setIsConfirmingPrepare(true)} color="info" variant="contained">
+                <Button onClick={() => setIsConfirmingPrepare(true)} color="primary" variant="contained">
                   จัดเตรียมรายการ
                 </Button>
               </>
             )}
             {request.status === 'preparing' && (
-              <Button onClick={() => setIsConfirmingFinish(true)} color="info" variant="contained">
+              <Button onClick={() => setIsConfirmingFinish(true)} color="primary" variant="contained">
                 เตรียมการเสร็จสิ้น
               </Button>
             )}

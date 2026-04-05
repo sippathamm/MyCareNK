@@ -17,7 +17,7 @@ const ForgotPasswordPage = ({ loading, errorMsg, onSubmit }: ForgotPasswordPageP
   const [email, setEmail] = useState('');
   const [resetSuccess, setResetSuccess] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const success = await onSubmit(email);
     if (success) setResetSuccess(true);
@@ -53,7 +53,7 @@ const ForgotPasswordPage = ({ loading, errorMsg, onSubmit }: ForgotPasswordPageP
             fullWidth
             variant="outlined"
             onClick={() => navigate('/login')}
-            sx={{ py: 1.5, borderRadius: 2, fontWeight: 'bold' }}
+            sx={{ py: 1.5 }}
           >
             กลับไปหน้าเข้าสู่ระบบ
           </Button>
@@ -82,7 +82,7 @@ const ForgotPasswordPage = ({ loading, errorMsg, onSubmit }: ForgotPasswordPageP
             variant="contained"
             color="primary"
             disabled={loading}
-            sx={{ mt: 3, mb: 2, py: 1.5, borderRadius: 2, fontWeight: 'bold' }}
+            sx={{ mt: 3, mb: 2, py: 1.5 }}
           >
             {loading ? <CircularProgress size={24} color="inherit" /> : 'ส่งลิงก์เปลี่ยนรหัสผ่าน'}
           </Button>

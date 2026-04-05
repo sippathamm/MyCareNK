@@ -23,7 +23,6 @@ const statusData = [
 
 interface DashboardPageProps {
   session: Session;
-  loading?: boolean;
 }
 
 const SummaryCard = ({ title, value, color }: { title: string; value: string | number; color: string }) => (

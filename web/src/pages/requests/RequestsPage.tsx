@@ -6,6 +6,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import RequestDetailDialog from '../../components/requests/RequestDetailDialog';
 import type { RequestData } from '../../components/requests/RequestDetailDialog';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 
 // Mock Data
 const mockRequests: RequestData[] = [
@@ -62,7 +63,7 @@ const thGridLocale = {
   footerRowSelected: (count: number) => `เลือกแล้ว ${count} แถว`,
   MuiTablePagination: {
     labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: any) =>
+    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
       `${from} - ${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
   },
 };
@@ -71,7 +72,6 @@ export default function RequestsPage() {
   const [requests, setRequests] = useState<RequestData[]>(mockRequests);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -92,9 +92,10 @@ export default function RequestsPage() {
   };
 
   const handleStatusChange = (id: string, newStatus: string, reason?: string) => {
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status: newStatus as any, cancel_reason: reason } : r));
-    if (selectedRequest && selectedRequest.id === id) {
-      setSelectedRequest({ ...selectedRequest, status: newStatus as any, cancel_reason: reason });
+    const status = newStatus as RequestData['status'];
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, status, cancel_reason: reason } : r));
+    if (selectedRequest?.id === id) {
+      setSelectedRequest({ ...selectedRequest, status, cancel_reason: reason });
     }
   };
 
@@ -104,24 +105,6 @@ export default function RequestsPage() {
     return matchSearch && matchStatus;
   });
 
-  const formatDate = (dateString: string) => {
-    if (!dateString.includes('-')) return dateString;
-    return new Date(dateString).toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-  };
-
-  const getOverdueDays = (dateStr: string, status: string) => {
-    if (status === 'completed' || status === 'cancelled') return 0;
-    const selected = new Date(dateStr);
-    selected.setHours(0, 0, 0, 0);
-    const today = new Date('2026-04-05');
-    today.setHours(0, 0, 0, 0);
-    const diff = today.getTime() - selected.getTime();
-    if (diff > 0) {
-      return Math.floor(diff / (1000 * 60 * 60 * 24));
-    }
-    return 0;
-  };
-
   const columns: GridColDef[] = [
     { field: 'reference_number', headerName: 'รหัสอ้างอิง', flex: 1, minWidth: 120 },
     {
@@ -129,10 +112,8 @@ export default function RequestsPage() {
       headerName: 'วันเดือนปีรับ',
       flex: 1,
       minWidth: 150,
-      align: 'center',
-      headerAlign: 'center',
       renderCell: (params) => {
-        const row = params.row;
+        const row = params.row as RequestData;
         const days = getOverdueDays(row.selected_date, row.status);
         const dateFormatted = formatDate(row.selected_date);
         if (days > 0) {
@@ -145,7 +126,11 @@ export default function RequestsPage() {
             </Box>
           );
         }
-        return <Typography variant="body2">{dateFormatted}</Typography>;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', width: '100%' }}>
+            <Typography variant="body2">{dateFormatted}</Typography>
+          </Box>
+        );
       }
     },
     {
@@ -153,7 +138,7 @@ export default function RequestsPage() {
       headerName: 'เวลารับ',
       flex: 0.8,
       minWidth: 100,
-      valueGetter: (_, row) => `${row.selected_time} น.`
+      valueGetter: (_, row) => `${(row as RequestData).selected_time} น.`
     },
     {
       field: 'items',
@@ -161,8 +146,9 @@ export default function RequestsPage() {
       flex: 2,
       minWidth: 200,
       valueGetter: (_, row) => {
-        const totalCondoms = Object.values(row.condom_quantities).reduce((a: any, b: any) => a + b, 0);
-        return `ถุงยางอนามัย ${totalCondoms} ชิ้น / สารหล่อลื่น ${row.lubricant_quantity} ชิ้น`;
+        const r = row as RequestData;
+        const totalCondoms = Object.values(r.condom_quantities).reduce((a, b) => a + b, 0);
+        return `ถุงยางอนามัย ${totalCondoms} ชิ้น / สารหล่อลื่น ${r.lubricant_quantity} ชิ้น`;
       }
     },
     {
@@ -188,7 +174,7 @@ export default function RequestsPage() {
           color="primary"
           size="small"
           startIcon={<VisibilityIcon />}
-          onClick={() => handleOpenDialog(params.row)}
+          onClick={() => handleOpenDialog(params.row as RequestData)}
         >
           ดูรายละเอียด
         </Button>
