@@ -1,25 +1,16 @@
 import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
 import type { Session } from '@supabase/supabase-js';
+import { useDashboard } from '../../hooks/useDashboard';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
 
-// Mock Data
-const weeklyData = [
-  { date: '1 เม.ย.', requests: 12 },
-  { date: '2 เม.ย.', requests: 19 },
-  { date: '3 เม.ย.', requests: 15 },
-  { date: '4 เม.ย.', requests: 22 },
-  { date: '5 เม.ย.', requests: 30 },
-  { date: '6 เม.ย.', requests: 25 },
-  { date: '7 เม.ย.', requests: 18 },
-];
-
-const statusData = [
-  { name: 'รอดำเนินการ', value: 15, color: '#FF9800' }, // Orange
-  { name: 'กำลังเตรียม', value: 8, color: '#2196F3' }, // Blue
-  { name: 'รอรับ', value: 12, color: '#9C27B0' }, // Purple
-  { name: 'เสร็จสิ้น', value: 45, color: '#4CAF50' }, // Green
-  { name: 'ยกเลิก', value: 5, color: '#9E9E9E' }, // Grey
-];
+const STATUS_COLORS = {
+  pending: '#FF9800',
+  preparing: '#2196F3',
+  ready: '#9C27B0',
+  completed: '#4CAF50',
+  cancelled: '#9E9E9E',
+} as const;
 
 interface DashboardPageProps {
   session: Session;
@@ -39,12 +30,22 @@ const SummaryCard = ({ title, value, color }: { title: string; value: string | n
 );
 
 export default function DashboardPage({ session }: DashboardPageProps) {
-  const emailName = session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
+  const { profile } = useRoleAccess();
+  const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
+  const { statusCounts, weeklyData, loading } = useDashboard();
+
+  const statusData = [
+    { name: 'รอดำเนินการ', value: statusCounts.pending, color: STATUS_COLORS.pending },
+    { name: 'กำลังเตรียม', value: statusCounts.preparing, color: STATUS_COLORS.preparing },
+    { name: 'รอรับ', value: statusCounts.ready, color: STATUS_COLORS.ready },
+    { name: 'เสร็จสิ้น', value: statusCounts.completed, color: STATUS_COLORS.completed },
+    { name: 'ยกเลิก', value: statusCounts.cancelled, color: STATUS_COLORS.cancelled },
+  ];
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
-        ยินดีต้อนรับคุณ {emailName}
+        ยินดีต้อนรับคุณ {displayName}
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         ข้อมูลสรุป
@@ -53,19 +54,19 @@ export default function DashboardPage({ session }: DashboardPageProps) {
       {/* Summary Cards: 5 columns on desktop */}
       <Grid container spacing={2} columns={10} sx={{ mb: 4 }}>
         <Grid size={{ xs: 10, sm: 5, md: 2 }}>
-          <SummaryCard title="รอดำเนินการ" value={15} color="#FF9800" />
+          <SummaryCard title="รอดำเนินการ" value={loading ? '-' : statusCounts.pending} color={STATUS_COLORS.pending} />
         </Grid>
         <Grid size={{ xs: 10, sm: 5, md: 2 }}>
-          <SummaryCard title="กำลังเตรียม" value={8} color="#2196F3" />
+          <SummaryCard title="กำลังเตรียม" value={loading ? '-' : statusCounts.preparing} color={STATUS_COLORS.preparing} />
         </Grid>
         <Grid size={{ xs: 10, sm: 5, md: 2 }}>
-          <SummaryCard title="รอรับ" value={12} color="#9C27B0" />
+          <SummaryCard title="รอรับ" value={loading ? '-' : statusCounts.ready} color={STATUS_COLORS.ready} />
         </Grid>
         <Grid size={{ xs: 10, sm: 5, md: 2 }}>
-          <SummaryCard title="เสร็จสิ้น" value={45} color="#4CAF50" />
+          <SummaryCard title="เสร็จสิ้น" value={loading ? '-' : statusCounts.completed} color={STATUS_COLORS.completed} />
         </Grid>
         <Grid size={{ xs: 10, sm: 5, md: 2 }}>
-          <SummaryCard title="ยกเลิก" value={5} color="#9E9E9E" />
+          <SummaryCard title="ยกเลิก" value={loading ? '-' : statusCounts.cancelled} color={STATUS_COLORS.cancelled} />
         </Grid>
       </Grid>
 
@@ -82,7 +83,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                 <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                  <YAxis tickLine={false} axisLine={false} />
+                  <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
                   <Tooltip
                     cursor={{ fill: 'rgba(0,0,0,0.05)' }}
                     contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}

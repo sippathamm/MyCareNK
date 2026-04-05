@@ -7,55 +7,7 @@ import RequestDetailDialog from '../../components/requests/RequestDetailDialog';
 import type { RequestData } from '../../components/requests/RequestDetailDialog';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { formatDate, getOverdueDays } from '../../utils/requestUtils';
-
-// Mock Data
-const mockRequests: RequestData[] = [
-  {
-    id: 'req-1',
-    reference_number: 'AB12CD34',
-    selected_date: '2026-04-02',
-    selected_time: '10:00',
-    selected_location: 'ศูนย์บริการ A',
-    condom_quantities: { '52': 4, '56': 2 },
-    lubricant_quantity: 4,
-    status: 'pending',
-    message: 'รบกวนขอกล่องเปล่าไม่ระบุชื่อ',
-    created_at: '10 เม.ย. 2569 เวลา 08:30 น.',
-  },
-  {
-    id: 'req-2',
-    reference_number: 'E5F6G7H8',
-    selected_date: '2026-04-10',
-    selected_time: '13:30',
-    selected_location: 'ศูนย์บริการ A',
-    condom_quantities: { '49': 10 },
-    lubricant_quantity: 2,
-    status: 'preparing',
-    created_at: '09 เม.ย. 2569 เวลา 16:20 น.',
-  },
-  {
-    id: 'req-3',
-    reference_number: 'XY98UV76',
-    selected_date: '2026-04-09',
-    selected_time: '09:00',
-    selected_location: 'ศูนย์บริการ A',
-    condom_quantities: { '56': 6 },
-    lubricant_quantity: 3,
-    status: 'completed',
-    created_at: '08 เม.ย. 2569 เวลา 11:15 น.',
-  },
-  {
-    id: 'req-4',
-    reference_number: 'ZX12CV34',
-    selected_date: '2026-04-08',
-    selected_time: '14:00',
-    selected_location: 'ศูนย์บริการ A',
-    condom_quantities: { '52': 5 },
-    lubricant_quantity: 5,
-    status: 'cancelled',
-    created_at: '07 เม.ย. 2569 เวลา 09:45 น.',
-  },
-];
+import { useRequests } from '../../hooks/useRequests';
 
 const thGridLocale = {
   noRowsLabel: 'ไม่มีข้อมูลคำขอ',
@@ -69,7 +21,7 @@ const thGridLocale = {
 };
 
 export default function RequestsPage() {
-  const [requests, setRequests] = useState<RequestData[]>(mockRequests);
+  const { requests, setRequests, loading } = useRequests();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
@@ -222,6 +174,7 @@ export default function RequestsPage() {
           <DataGrid
             rows={filteredRequests}
             columns={columns}
+            loading={loading}
             localeText={thGridLocale}
             initialState={{
               pagination: {
