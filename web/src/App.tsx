@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Box, CircularProgress } from '@mui/material';
 import { supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/shared/ProtectedRoute';
@@ -30,7 +31,7 @@ function App() {
         path="/"
         element={
           isInitializing
-            ? null
+            ? <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
             : <Navigate to={session ? '/dashboard' : '/login'} replace />
         }
       />
