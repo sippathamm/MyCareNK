@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, CircularProgress } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, CircularProgress, Tooltip } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import { formatDate, formatDateTime, getOverdueDays } from '../../utils/requestUtils';
 
@@ -292,14 +292,18 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
           <>
             <Button onClick={onCloseDialog} color="inherit">ปิด</Button>
             {request.request_status === 'ready' && (
-              <Button
-                onClick={() => setIsConfirmingComplete(true)}
-                color="success"
-                variant="contained"
-                disabled={getOverdueDays(request.selected_date, request.request_status) <= 7}
-              >
-                เสร็จสิ้น
-              </Button>
+              <Tooltip title="เมื่อเลยกำหนดมากกว่า 7 วัน">
+                <span>
+                  <Button
+                    onClick={() => setIsConfirmingComplete(true)}
+                    color="success"
+                    variant="contained"
+                    disabled={getOverdueDays(request.selected_date, request.request_status) <= 7}
+                  >
+                    เสร็จสิ้น
+                  </Button>
+                </span>
+              </Tooltip>
             )}
             {request.request_status === 'pending' && (
               <>
