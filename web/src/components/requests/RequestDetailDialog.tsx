@@ -32,6 +32,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   const [showQR, setShowQR] = useState(false);
   const [isConfirmingPrepare, setIsConfirmingPrepare] = useState(false);
   const [isConfirmingFinish, setIsConfirmingFinish] = useState(false);
+  const [isConfirmingComplete, setIsConfirmingComplete] = useState(false);
 
   if (!request) return null;
 
@@ -51,11 +52,17 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
     if (ok) onCloseDialog();
   };
 
+  const handleConfirmComplete = async () => {
+    const ok = await onStatusChange(request.id, 'completed');
+    if (ok) onCloseDialog();
+  };
+
   const onCloseDialog = () => {
     setIsRejecting(false);
     setRejectReason('');
     setIsConfirmingPrepare(false);
     setIsConfirmingFinish(false);
+    setIsConfirmingComplete(false);
     setShowQR(false);
     onClose();
   };
@@ -67,7 +74,16 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
       </DialogTitle>
 
       <DialogContent dividers>
-        {isConfirmingPrepare ? (
+        {isConfirmingComplete ? (
+          <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
+            <Typography variant="h6" color="success.main" fontWeight="bold">
+              ยืนยันการเสร็จสิ้น
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น "เสร็จสิ้น" ใช่หรือไม่?
+            </Typography>
+          </Box>
+        ) : isConfirmingPrepare ? (
           <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
             <Typography variant="h6" color="warning.main" fontWeight="bold">
               ยืนยันการเริ่มจัดเตรียม
@@ -246,6 +262,19 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
           </>
         ) : showQR ? (
           <Button onClick={onCloseDialog} variant="contained" color="primary">ปิด</Button>
+        ) : isConfirmingComplete ? (
+          <>
+            <Button onClick={() => setIsConfirmingComplete(false)} disabled={statusUpdating}>กลับ</Button>
+            <Button
+              onClick={handleConfirmComplete}
+              variant="contained"
+              color="success"
+              disabled={statusUpdating}
+              endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              ยืนยัน
+            </Button>
+          </>
         ) : isRejecting ? (
           <>
             <Button onClick={() => setIsRejecting(false)} disabled={statusUpdating}>กลับ</Button>
@@ -262,6 +291,16 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         ) : (
           <>
             <Button onClick={onCloseDialog} color="inherit">ปิด</Button>
+            {request.request_status === 'ready' && (
+              <Button
+                onClick={() => setIsConfirmingComplete(true)}
+                color="success"
+                variant="contained"
+                disabled={getOverdueDays(request.selected_date, request.request_status) <= 7}
+              >
+                เสร็จสิ้น
+              </Button>
+            )}
             {request.request_status === 'pending' && (
               <>
                 <Button onClick={() => setIsRejecting(true)} color="error" variant="outlined">
