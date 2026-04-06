@@ -1,12 +1,19 @@
-import type { ReactNode } from 'react';
-import { Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress } from '@mui/material';
+import { useRef, useState, type ReactNode } from 'react';
+import {
+  Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton,
+  ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress,
+  IconButton, Badge, Snackbar, Alert,
+} from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PeopleIcon from '@mui/icons-material/People';
 import LogoutIcon from '@mui/icons-material/Logout';
+import NotificationsIcon from '@mui/icons-material/Notifications';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useNotification, STATUS_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
+import NotificationPanel from '../notifications/NotificationPanel';
 
 const drawerWidth = 260;
 
@@ -25,6 +32,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { role, profile, loading } = useRoleAccess();
+  const { unreadCount, toastOpen, toastMessage, toastEventType, closeToast } = useNotification();
+  const toastCfg = toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null;
+
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const [panelOpen, setPanelOpen] = useState(false);
+
+  const handleBellClick = () => setPanelOpen(true);
+  const handlePanelClose = () => setPanelOpen(false);
 
   const handleLogout = async () => {
     await logout();
@@ -47,7 +62,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <Box sx={{ display: 'flex' }}>
-      {/* App Bar (Top Navbar) */}
+      {/* App Bar */}
       <AppBar
         position="fixed"
         sx={{
@@ -59,6 +74,19 @@ export default function MainLayout({ children }: MainLayoutProps) {
         }}
       >
         <Toolbar sx={{ justifyContent: 'flex-end', gap: 2 }}>
+          {/* Notification Bell */}
+          <IconButton
+            ref={bellRef}
+            onClick={handleBellClick}
+            size="large"
+            aria-label="การแจ้งเตือน"
+            color="inherit"
+          >
+            <Badge badgeContent={unreadCount > 0 ? unreadCount : undefined} color="error">
+              <NotificationsIcon />
+            </Badge>
+          </IconButton>
+
           {profile && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box sx={{ textAlign: 'right' }}>
@@ -77,7 +105,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar (Drawer) */}
+      {/* Sidebar */}
       <Drawer
         sx={{
           width: drawerWidth,
@@ -85,7 +113,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
           '& .MuiDrawer-paper': {
             width: drawerWidth,
             boxSizing: 'border-box',
-            backgroundColor: '#1E293B', // Slate 800 - nice dark blue/grey
+            backgroundColor: '#1E293B',
             color: 'white',
           },
         }}
@@ -109,22 +137,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     borderRadius: 2,
                     backgroundColor: isActive ? 'rgba(255, 138, 80, 0.15)' : 'transparent',
                     color: isActive ? '#FF8A50' : '#CBD5E1',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 138, 80, 0.25)',
-                      color: '#FF8A50',
-                    },
+                    '&:hover': { backgroundColor: 'rgba(255, 138, 80, 0.25)', color: '#FF8A50' },
                     transition: 'all 0.2s',
                   }}
                 >
                   <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
                     {item.icon}
                   </ListItemIcon>
-                  <ListItemText 
-                    primary={item.text} 
-                    primaryTypographyProps={{ 
-                      fontWeight: isActive ? 600 : 500,
-                      fontSize: '0.95rem'
-                    }} 
+                  <ListItemText
+                    primary={item.text}
+                    slotProps={{ primary: { fontWeight: isActive ? 600 : 500, fontSize: '0.95rem' } }}
                   />
                 </ListItemButton>
               </ListItem>
@@ -142,10 +164,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             sx={{
               borderColor: 'rgba(255,255,255,0.2)',
               color: '#CBD5E1',
-              '&:hover': {
-                borderColor: 'rgba(255,255,255,0.5)',
-                backgroundColor: 'rgba(255,255,255,0.05)',
-              },
+              '&:hover': { borderColor: 'rgba(255,255,255,0.5)', backgroundColor: 'rgba(255,255,255,0.05)' },
             }}
           >
             ออกจากระบบ
@@ -153,20 +172,43 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </Box>
       </Drawer>
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <Box
         component="main"
-        sx={{
-          flexGrow: 1,
-          bgcolor: 'background.default',
-          p: 3,
-          minHeight: '100vh',
-          width: `calc(100% - ${drawerWidth}px)`,
-        }}
+        sx={{ flexGrow: 1, bgcolor: 'background.default', p: 3, minHeight: '100vh', width: `calc(100% - ${drawerWidth}px)` }}
       >
-        <Toolbar /> {/* Spacer for fixed AppBar */}
+        <Toolbar />
         {children}
       </Box>
+
+      {/* Notification Panel (Popover) */}
+      <NotificationPanel
+        anchorEl={panelOpen ? bellRef.current : null}
+        onClose={handlePanelClose}
+      />
+
+      {/* Toast */}
+      <Snackbar
+        open={toastOpen}
+        autoHideDuration={4000}
+        onClose={closeToast}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ top: '80px !important' }}
+      >
+        <Alert
+          onClose={closeToast}
+          variant="filled"
+          icon={false}
+          sx={{
+            width: '100%',
+            bgcolor: toastCfg?.color ?? '#2196F3',
+            color: 'white',
+            '& .MuiAlert-action .MuiIconButton-root': { color: 'white' },
+          }}
+        >
+          {toastMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

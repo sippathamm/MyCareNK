@@ -13,7 +13,7 @@ export const formatDateTime = (isoString?: string): string => {
 };
 
 export const getOverdueDays = (dateStr: string, status: string): number => {
-  if (status === 'completed' || status === 'cancelled') return 0;
+  if (status === 'completed' || status === 'cancelled_by_user' || status === 'cancelled_by_staff') return 0;
   const selected = new Date(dateStr);
   selected.setHours(0, 0, 0, 0);
   const today = new Date();

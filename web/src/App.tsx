@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Box, CircularProgress } from '@mui/material';
 import { supabase } from './lib/supabase';
 import { useAuth } from './hooks/useAuth';
 import ProtectedRoute from './components/shared/ProtectedRoute';
@@ -9,7 +10,9 @@ import UpdatePasswordPage from './pages/auth/UpdatePasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import RequestsPage from './pages/requests/RequestsPage';
 import StaffManagementPage from './pages/staff/StaffManagementPage';
+import NotificationsPage from './pages/notifications/NotificationsPage';
 import MainLayout from './components/layout/MainLayout';
+import { NotificationProvider } from './contexts/NotificationContext';
 
 function App() {
   const navigate = useNavigate();
@@ -29,7 +32,7 @@ function App() {
         path="/"
         element={
           isInitializing
-            ? null
+            ? <Box sx={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><CircularProgress /></Box>
             : <Navigate to={session ? '/dashboard' : '/login'} replace />
         }
       />
@@ -51,14 +54,17 @@ function App() {
         path="/*"
         element={
           <ProtectedRoute session={session} isInitializing={isInitializing}>
-            <MainLayout>
-              <Routes>
-                <Route path="dashboard" element={<DashboardPage session={session!} />} />
-                <Route path="requests" element={<RequestsPage />} />
-                <Route path="staff" element={<StaffManagementPage />} />
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
-              </Routes>
-            </MainLayout>
+            <NotificationProvider>
+              <MainLayout>
+                <Routes>
+                  <Route path="dashboard" element={<DashboardPage session={session!} />} />
+                  <Route path="requests" element={<RequestsPage />} />
+                  <Route path="staff" element={<StaffManagementPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                </Routes>
+              </MainLayout>
+            </NotificationProvider>
           </ProtectedRoute>
         }
       />

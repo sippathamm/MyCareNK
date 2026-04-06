@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Chip, Button, TextField, MenuItem, Stack, Tooltip } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import { DataGrid } from '@mui/x-data-grid';
@@ -21,11 +22,25 @@ const thGridLocale = {
 };
 
 export default function RequestsPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { requests, setRequests, loading } = useRequests();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  // Open detail dialog when navigated here from a notification
+  const openRequestId = (location.state as { openRequestId?: string } | null)?.openRequestId;
+  useEffect(() => {
+    if (loading || !openRequestId) return;
+    const req = requests.find(r => r.id === openRequestId);
+    if (req) {
+      setSelectedRequest(req);
+      setDialogOpen(true);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [loading, openRequestId, requests, navigate, location.pathname]);
 
   const getStatusChip = (status: string) => {
     switch (status) {
@@ -33,7 +48,8 @@ export default function RequestsPage() {
       case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'cancelled': return <Chip label="ยกเลิก" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+      case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
       default: return <Chip label={status} size="small" />;
     }
   };
@@ -44,16 +60,18 @@ export default function RequestsPage() {
   };
 
   const handleStatusChange = (id: string, newStatus: string, reason?: string) => {
-    const status = newStatus as RequestData['status'];
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, status, cancel_reason: reason } : r));
+    const request_status = newStatus as RequestData['request_status'];
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, request_status, cancel_reason: reason } : r));
     if (selectedRequest?.id === id) {
-      setSelectedRequest({ ...selectedRequest, status, cancel_reason: reason });
+      setSelectedRequest({ ...selectedRequest, request_status, cancel_reason: reason });
     }
   };
 
   const filteredRequests = requests.filter(r => {
     const matchSearch = r.reference_number.toLowerCase().includes(search.toLowerCase());
-    const matchStatus = statusFilter === 'all' || r.status === statusFilter;
+    const matchStatus = statusFilter === 'all'
+      || r.request_status === statusFilter
+      || (statusFilter === 'cancelled' && (r.request_status === 'cancelled_by_user' || r.request_status === 'cancelled_by_staff'));
     return matchSearch && matchStatus;
   });
 
@@ -66,7 +84,7 @@ export default function RequestsPage() {
       minWidth: 150,
       renderCell: (params) => {
         const row = params.row as RequestData;
-        const days = getOverdueDays(row.selected_date, row.status);
+        const days = getOverdueDays(row.selected_date, row.request_status);
         const dateFormatted = formatDate(row.selected_date);
         if (days > 0) {
           return (
@@ -104,7 +122,7 @@ export default function RequestsPage() {
       }
     },
     {
-      field: 'status',
+      field: 'request_status',
       headerName: 'สถานะ',
       flex: 1,
       minWidth: 120,

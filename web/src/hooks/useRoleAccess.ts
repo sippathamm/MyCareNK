@@ -33,22 +33,16 @@ export function useRoleAccess() {
       try {
         const userId = session.user.id;
 
-        // Fetch Role from staff_roles
-        const { data: roleData, error: roleError } = await supabase
-          .from('staff_roles')
-          .select('role')
-          .eq('user_id', userId)
-          .single();
+        // Fetch role and profile in parallel
+        const [
+          { data: roleData, error: roleError },
+          { data: profileData, error: profileError },
+        ] = await Promise.all([
+          supabase.from('staff_roles').select('role').eq('user_id', userId).single(),
+          supabase.from('staff_profiles').select('first_name, last_name, service_center').eq('user_id', userId).single(),
+        ]);
 
         if (roleError) throw roleError;
-        
-        // Fetch Profile from staff_profiles
-        const { data: profileData, error: profileError } = await supabase
-          .from('staff_profiles')
-          .select('first_name, last_name, service_center')
-          .eq('user_id', userId)
-          .single();
-
         if (profileError) throw profileError;
 
         if (isMounted) {
