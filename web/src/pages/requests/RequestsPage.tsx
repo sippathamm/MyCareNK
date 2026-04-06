@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Typography, Paper, Chip, Button, TextField, MenuItem, Stack, Tooltip } from '@mui/material';
+import { Box, Typography, Paper, Chip, Button, TextField, MenuItem, Stack, Tooltip, Snackbar, Alert } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -9,6 +9,7 @@ import type { RequestData } from '../../components/requests/RequestDetailDialog'
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 import { useRequests } from '../../hooks/useRequests';
+import { supabase } from '../../lib/supabase';
 
 const thGridLocale = {
   noRowsLabel: 'ไม่มีข้อมูลคำขอ',
@@ -29,6 +30,8 @@ export default function RequestsPage() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   // Open detail dialog when navigated here from a notification
   const openRequestId = (location.state as { openRequestId?: string } | null)?.openRequestId;
@@ -59,12 +62,37 @@ export default function RequestsPage() {
     setDialogOpen(true);
   };
 
-  const handleStatusChange = (id: string, newStatus: string, reason?: string) => {
+  const handleStatusChange = async (id: string, newStatus: string, reason?: string): Promise<boolean> => {
     const request_status = newStatus as RequestData['request_status'];
+
+    // Optimistic update
+    const prevRequests = requests;
+    const prevSelected = selectedRequest;
     setRequests(prev => prev.map(r => r.id === id ? { ...r, request_status, cancel_reason: reason } : r));
     if (selectedRequest?.id === id) {
       setSelectedRequest({ ...selectedRequest, request_status, cancel_reason: reason });
     }
+
+    setStatusUpdating(true);
+    setUpdateError(null);
+
+    const updatePayload: { request_status: string; cancel_reason?: string | null } = { request_status: newStatus };
+    if (reason !== undefined) {
+      updatePayload.cancel_reason = reason;
+    } else {
+      updatePayload.cancel_reason = null;
+    }
+
+    const { error } = await supabase.from('condom_requests').update(updatePayload).eq('id', id);
+    setStatusUpdating(false);
+
+    if (error) {
+      setRequests(prevRequests);
+      setSelectedRequest(prevSelected);
+      setUpdateError(error.message);
+      return false;
+    }
+    return true;
   };
 
   const filteredRequests = requests.filter(r => {
@@ -210,7 +238,19 @@ export default function RequestsPage() {
         request={selectedRequest}
         onClose={() => setDialogOpen(false)}
         onStatusChange={handleStatusChange}
+        statusUpdating={statusUpdating}
       />
+
+      <Snackbar
+        open={!!updateError}
+        autoHideDuration={5000}
+        onClose={() => setUpdateError(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" onClose={() => setUpdateError(null)} variant="filled">
+          เกิดข้อผิดพลาด: {updateError}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
