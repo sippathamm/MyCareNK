@@ -18,7 +18,7 @@ import {
   type RequestStatus,
 } from '../../contexts/NotificationContext';
 
-const PANEL_LIMIT = 2;
+const PANEL_LIMIT = 15;
 
 function formatRelativeTime(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -62,7 +62,6 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
   };
 
   const displayed = notifications.slice(0, PANEL_LIMIT);
-  const hasMore = notifications.length > PANEL_LIMIT;
 
   return (
     <Popover
@@ -148,8 +147,8 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
             })}
           </List>
 
-          {/* Footer: show "ดูทั้งหมด" when there are more than PANEL_LIMIT items */}
-          {hasMore && (
+          {/* Footer: always show "ดูทั้งหมด" when there are notifications */}
+          {(
             <Box sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
               <Button
                 fullWidth

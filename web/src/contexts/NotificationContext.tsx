@@ -85,7 +85,7 @@ async function playNotificationSound(): Promise<void> {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-const MAX_NOTIFICATIONS = 15;
+const MAX_NOTIFICATIONS = 50;
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
