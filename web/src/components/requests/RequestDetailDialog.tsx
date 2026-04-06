@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, CircularProgress, Tooltip } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import { formatDate, formatDateTime, getOverdueDays } from '../../utils/requestUtils';
 
@@ -22,33 +22,39 @@ interface RequestDetailDialogProps {
   open: boolean;
   request: RequestData | null;
   onClose: () => void;
-  onStatusChange: (id: string, newStatus: string, reason?: string) => void;
+  onStatusChange: (id: string, newStatus: string, reason?: string) => Promise<boolean>;
+  statusUpdating?: boolean;
 }
 
-export default function RequestDetailDialog({ open, request, onClose, onStatusChange }: RequestDetailDialogProps) {
+export default function RequestDetailDialog({ open, request, onClose, onStatusChange, statusUpdating = false }: RequestDetailDialogProps) {
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [isConfirmingPrepare, setIsConfirmingPrepare] = useState(false);
   const [isConfirmingFinish, setIsConfirmingFinish] = useState(false);
+  const [isConfirmingComplete, setIsConfirmingComplete] = useState(false);
 
   if (!request) return null;
 
-  const handleConfirmPrepare = () => {
-    onStatusChange(request.id, 'preparing');
-    onCloseDialog();
+  const handleConfirmPrepare = async () => {
+    const ok = await onStatusChange(request.id, 'preparing');
+    if (ok) onCloseDialog();
   };
 
-  const handleFinishPrepare = () => {
-    onStatusChange(request.id, 'ready');
-    setIsConfirmingFinish(false);
-    setShowQR(true);
+  const handleFinishPrepare = async () => {
+    const ok = await onStatusChange(request.id, 'ready');
+    if (ok) { setIsConfirmingFinish(false); setShowQR(true); }
   };
 
-  const handleCancelConfirm = () => {
+  const handleCancelConfirm = async () => {
     if (!rejectReason.trim()) return;
-    onStatusChange(request.id, 'cancelled_by_staff', rejectReason);
-    onCloseDialog();
+    const ok = await onStatusChange(request.id, 'cancelled_by_staff', rejectReason);
+    if (ok) onCloseDialog();
+  };
+
+  const handleConfirmComplete = async () => {
+    const ok = await onStatusChange(request.id, 'completed');
+    if (ok) onCloseDialog();
   };
 
   const onCloseDialog = () => {
@@ -56,6 +62,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
     setRejectReason('');
     setIsConfirmingPrepare(false);
     setIsConfirmingFinish(false);
+    setIsConfirmingComplete(false);
     setShowQR(false);
     onClose();
   };
@@ -67,7 +74,16 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
       </DialogTitle>
 
       <DialogContent dividers>
-        {isConfirmingPrepare ? (
+        {isConfirmingComplete ? (
+          <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
+            <Typography variant="h6" color="success.main" fontWeight="bold">
+              ยืนยันการเสร็จสิ้น
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น "เสร็จสิ้น" ใช่หรือไม่?
+            </Typography>
+          </Box>
+        ) : isConfirmingPrepare ? (
           <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
             <Typography variant="h6" color="warning.main" fontWeight="bold">
               ยืนยันการเริ่มจัดเตรียม
@@ -220,24 +236,54 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
       <DialogActions sx={{ p: 2 }}>
         {isConfirmingPrepare ? (
           <>
-            <Button onClick={() => setIsConfirmingPrepare(false)}>กลับ</Button>
-            <Button onClick={handleConfirmPrepare} variant="contained" color="primary">ยืนยัน</Button>
+            <Button onClick={() => setIsConfirmingPrepare(false)} disabled={statusUpdating}>กลับ</Button>
+            <Button
+              onClick={handleConfirmPrepare}
+              variant="contained"
+              color="primary"
+              disabled={statusUpdating}
+              endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              ยืนยัน
+            </Button>
           </>
         ) : isConfirmingFinish ? (
           <>
-            <Button onClick={() => setIsConfirmingFinish(false)}>กลับ</Button>
-            <Button onClick={handleFinishPrepare} variant="contained" color="primary">ยืนยัน</Button>
+            <Button onClick={() => setIsConfirmingFinish(false)} disabled={statusUpdating}>กลับ</Button>
+            <Button
+              onClick={handleFinishPrepare}
+              variant="contained"
+              color="primary"
+              disabled={statusUpdating}
+              endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              ยืนยัน
+            </Button>
           </>
         ) : showQR ? (
           <Button onClick={onCloseDialog} variant="contained" color="primary">ปิด</Button>
+        ) : isConfirmingComplete ? (
+          <>
+            <Button onClick={() => setIsConfirmingComplete(false)} disabled={statusUpdating}>กลับ</Button>
+            <Button
+              onClick={handleConfirmComplete}
+              variant="contained"
+              color="success"
+              disabled={statusUpdating}
+              endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              ยืนยัน
+            </Button>
+          </>
         ) : isRejecting ? (
           <>
-            <Button onClick={() => setIsRejecting(false)}>กลับ</Button>
+            <Button onClick={() => setIsRejecting(false)} disabled={statusUpdating}>กลับ</Button>
             <Button
               onClick={handleCancelConfirm}
               color="error"
               variant="contained"
-              disabled={!rejectReason.trim()}
+              disabled={!rejectReason.trim() || statusUpdating}
+              endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
             >
               ยืนยันการยกเลิก
             </Button>
@@ -245,6 +291,20 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         ) : (
           <>
             <Button onClick={onCloseDialog} color="inherit">ปิด</Button>
+            {request.request_status === 'ready' && (
+              <Tooltip title="เมื่อเลยกำหนดมากกว่า 7 วัน">
+                <span>
+                  <Button
+                    onClick={() => setIsConfirmingComplete(true)}
+                    color="success"
+                    variant="contained"
+                    disabled={getOverdueDays(request.selected_date, request.request_status) <= 7}
+                  >
+                    เสร็จสิ้น
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
             {request.request_status === 'pending' && (
               <>
                 <Button onClick={() => setIsRejecting(true)} color="error" variant="outlined">
