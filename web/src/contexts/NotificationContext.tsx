@@ -40,6 +40,7 @@ interface NotificationContextValue {
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
+  deleteNotification: (id: string) => void;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,7 +85,7 @@ async function playNotificationSound(): Promise<void> {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-const MAX_NOTIFICATIONS = 50;
+const MAX_NOTIFICATIONS = 15;
 
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
@@ -173,6 +174,27 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => { supabase.removeChannel(channel); };
   }, [userId]);
 
+  // Realtime: notification deleted (sync across devices)
+  useEffect(() => {
+    if (!userId) return;
+
+    const channel = supabase
+      .channel('notification-deletes')
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'notifications' },
+        (payload) => {
+          const deletedId = (payload.old as { id?: string }).id;
+          if (!deletedId) return;
+          setNotifications(prev => prev.filter(n => n.id !== deletedId));
+          setReadIds(prev => { const next = new Set(prev); next.delete(deletedId); return next; });
+        }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
+
   // Realtime: read state synced from another device
   useEffect(() => {
     if (!userId) return;
@@ -237,11 +259,19 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const closeToast = useCallback(() => setToastOpen(false), []);
 
+  const deleteNotification = useCallback(async (id: string) => {
+    // Optimistic update
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    setReadIds(prev => { const next = new Set(prev); next.delete(id); return next; });
+    // Delete from DB (cascade deletes notification_reads rows too)
+    await supabase.from('notifications').delete().eq('id', id);
+  }, []);
+
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, closeToast, markAsRead, markAllAsRead }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>

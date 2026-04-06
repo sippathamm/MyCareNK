@@ -1,0 +1,133 @@
+import { Box, Typography, Paper, List, ListItemButton, Divider, Button, IconButton } from '@mui/material';
+import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { useNavigate } from 'react-router-dom';
+import {
+  useNotification,
+  STATUS_CONFIG,
+  type NotificationItem,
+  type RequestStatus,
+} from '../../contexts/NotificationContext';
+
+function formatRelativeTime(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const seconds = Math.floor(diffMs / 1000);
+  if (seconds < 60) return 'เมื่อกี้';
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
+  return `${Math.floor(hours / 24)} วันที่แล้ว`;
+}
+
+function StatusDot({ eventType }: { eventType: RequestStatus }) {
+  const { color } = STATUS_CONFIG[eventType] ?? { color: '#9E9E9E' };
+  return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.5 }} />;
+}
+
+function NotificationRow({ item, onItemClick, onDelete }: {
+  item: NotificationItem;
+  onItemClick: (item: NotificationItem) => void;
+  onDelete: (e: React.MouseEvent, id: string) => void;
+}) {
+  const cfg = STATUS_CONFIG[item.event_type];
+  return (
+    <ListItemButton
+      onClick={() => onItemClick(item)}
+      sx={{
+        px: 3,
+        py: 1.5,
+        alignItems: 'flex-start',
+        gap: 2,
+        backgroundColor: item.is_read ? 'transparent' : cfg.bg,
+        '&:hover': { filter: 'brightness(0.97)' },
+      }}
+    >
+      <StatusDot eventType={item.event_type} />
+
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Typography
+            variant="body2"
+            fontWeight={item.is_read ? 400 : 600}
+            sx={{ color: item.is_read ? 'text.primary' : cfg.color }}
+          >
+            {cfg.label}
+          </Typography>
+          {!item.is_read && (
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: cfg.color, flexShrink: 0 }} />
+          )}
+        </Box>
+        <Typography variant="body2" color="text.secondary">
+          {item.reference_number}
+        </Typography>
+        <Typography variant="caption" color="text.disabled">
+          {formatRelativeTime(item.created_at)}
+        </Typography>
+      </Box>
+
+      <IconButton
+        size="small"
+        onClick={(e) => onDelete(e, item.id)}
+        sx={{ color: 'text.disabled', '&:hover': { color: 'error.main' }, flexShrink: 0 }}
+      >
+        <DeleteOutlineIcon fontSize="small" />
+      </IconButton>
+    </ListItemButton>
+  );
+}
+
+export default function NotificationsPage() {
+  const navigate = useNavigate();
+  const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotification();
+
+  const handleItemClick = (item: NotificationItem) => {
+    markAsRead(item.id);
+    navigate('/requests', { state: { openRequestId: item.request_id } });
+  };
+
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    deleteNotification(id);
+  };
+
+  const hasUnread = notifications.some(n => !n.is_read);
+
+  return (
+    <Box sx={{ width: '100%', maxWidth: 800, margin: '0 auto' }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>
+            การแจ้งเตือน
+          </Typography>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+            รายการแจ้งเตือนทั้งหมด ({notifications.length} รายการ)
+          </Typography>
+        </Box>
+        {hasUnread && (
+          <Button size="small" variant="outlined" onClick={markAllAsRead} sx={{ textTransform: 'none', height: 'fit-content' }}>
+            อ่านทั้งหมด
+          </Button>
+        )}
+      </Box>
+
+      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+        {notifications.length === 0 ? (
+          <Box sx={{ py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, color: 'text.secondary' }}>
+            <NotificationsNoneIcon sx={{ fontSize: 56, opacity: 0.3 }} />
+            <Typography variant="body1">ไม่มีการแจ้งเตือน</Typography>
+          </Box>
+        ) : (
+          <List disablePadding>
+            {notifications.map((item, idx) => (
+              <Box key={item.id}>
+                <NotificationRow item={item} onItemClick={handleItemClick} onDelete={handleDelete} />
+                {idx < notifications.length - 1 && <Divider />}
+              </Box>
+            ))}
+          </List>
+        )}
+      </Paper>
+    </Box>
+  );
+}

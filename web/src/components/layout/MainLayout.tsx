@@ -193,6 +193,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         autoHideDuration={4000}
         onClose={closeToast}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        sx={{ top: '80px !important' }}
       >
         <Alert
           onClose={closeToast}

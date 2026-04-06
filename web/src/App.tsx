@@ -10,6 +10,7 @@ import UpdatePasswordPage from './pages/auth/UpdatePasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import RequestsPage from './pages/requests/RequestsPage';
 import StaffManagementPage from './pages/staff/StaffManagementPage';
+import NotificationsPage from './pages/notifications/NotificationsPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -59,6 +60,7 @@ function App() {
                   <Route path="dashboard" element={<DashboardPage session={session!} />} />
                   <Route path="requests" element={<RequestsPage />} />
                   <Route path="staff" element={<StaffManagementPage />} />
+                  <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </MainLayout>
