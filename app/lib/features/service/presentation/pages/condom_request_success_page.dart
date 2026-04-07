@@ -4,7 +4,7 @@ import 'condom_request_detail_page.dart';
 class CondomRequestSuccessPage extends StatelessWidget {
   final Map<int, int> quantities;
   final int lubricantQuantity;
-  final String? selectedLocation;
+  final String? selectedServiceCenter;
   final DateTime? selectedDate;
   final TimeOfDay? selectedTime;
   final String message;
@@ -18,7 +18,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
     super.key,
     required this.quantities,
     required this.lubricantQuantity,
-    this.selectedLocation,
+    this.selectedServiceCenter,
     this.selectedDate,
     this.selectedTime,
     required this.message,
@@ -141,7 +141,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                         ),
 
                         Text(
-                          selectedLocation ?? '-',
+                          selectedServiceCenter ?? '-',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 14,
@@ -209,7 +209,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                             quantities: quantities,
                                             lubricantQuantity:
                                                 lubricantQuantity,
-                                            selectedLocation: selectedLocation,
+                                            selectedServiceCenter: selectedServiceCenter,
                                             selectedDate: selectedDate,
                                             selectedTime: selectedTime,
                                             message: message,

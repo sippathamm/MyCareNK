@@ -14,7 +14,9 @@ class RequestHistoryPage extends StatefulWidget {
 }
 
 class _RequestHistoryPageState extends State<RequestHistoryPage> {
-  RequestStatus? _selectedFilter;
+  // null = ทั้งหมด, otherwise filter by status group
+  // We use a Set<RequestStatus>? to support grouping cancelled statuses
+  Set<RequestStatus>? _selectedFilterSet;
   String _searchQuery = '';
 
   List<CondomRequestModel> _requests = [];
@@ -99,7 +101,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
   @override
   Widget build(BuildContext context) {
     final filteredRequests = _requests.where((req) {
-      if (_selectedFilter != null && req.status != _selectedFilter) {
+      if (_selectedFilterSet != null && !_selectedFilterSet!.contains(req.status)) {
         return false;
       }
       if (_searchQuery.isNotEmpty &&
@@ -218,41 +220,26 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          _buildFilterChip('ทั้งหมด', null),
+          _buildFilterChip('ทั้งหมด', null, const Color(0xFFFF8A50)),
           const SizedBox(width: 8),
-          _buildFilterChip('ส่งคำขอ', RequestStatus.submitted),
+          _buildFilterChip('รอดำเนินการ', {RequestStatus.pending}, const Color(0xFFFF8A50)),
           const SizedBox(width: 8),
-          _buildFilterChip('กำลังเตรียม', RequestStatus.preparing),
+          _buildFilterChip('กำลังเตรียม', {RequestStatus.preparing}, const Color(0xFF1F77C3)),
           const SizedBox(width: 8),
-          _buildFilterChip('เสร็จสิ้น', RequestStatus.completed),
+          _buildFilterChip('พร้อมรับ', {RequestStatus.ready}, const Color(0xFF9C27B0)),
           const SizedBox(width: 8),
-          _buildFilterChip('ยกเลิก', RequestStatus.cancelled),
+          _buildFilterChip('เสร็จสิ้น', {RequestStatus.completed}, const Color(0xFF26A69A)),
+          const SizedBox(width: 8),
+          _buildFilterChip('ยกเลิก', {RequestStatus.cancelledByUser, RequestStatus.cancelledByStaff}, Colors.grey[600]!),
         ],
       ),
     );
   }
 
-  Widget _buildFilterChip(String label, RequestStatus? status) {
-    final bool isSelected = _selectedFilter == status;
-    Color primaryColor;
-
-    switch (status) {
-      case null:
-        primaryColor = const Color(0xFFFF8A50);
-        break;
-      case RequestStatus.submitted:
-        primaryColor = const Color(0xFFFF8A50); // Orange
-        break;
-      case RequestStatus.preparing:
-        primaryColor = const Color(0xFF1F77C3); // Blue
-        break;
-      case RequestStatus.completed:
-        primaryColor = const Color(0xFF26A69A); // Green
-        break;
-      case RequestStatus.cancelled:
-        primaryColor = Colors.grey[600]!;
-        break;
-    }
+  Widget _buildFilterChip(String label, Set<RequestStatus>? filterSet, Color primaryColor) {
+    final bool isSelected = _selectedFilterSet == filterSet ||
+        (filterSet == null && _selectedFilterSet == null) ||
+        (filterSet != null && _selectedFilterSet != null && filterSet.containsAll(_selectedFilterSet!) && _selectedFilterSet!.containsAll(filterSet));
 
     return Material(
       color: isSelected ? primaryColor : Colors.white,
@@ -263,7 +250,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
       child: InkWell(
         onTap: () {
           setState(() {
-            _selectedFilter = status;
+            _selectedFilterSet = filterSet;
           });
         },
         borderRadius: BorderRadius.circular(20),
@@ -290,39 +277,55 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     String statusText;
     IconData statusIcon;
 
-    switch (data.status) {
-      case RequestStatus.submitted:
-        iconBgColor = const Color(0xFFFBE9E7); // Lighter orange
-        iconColor = const Color(0xFFFF8A50);
-        statusBgColor = const Color(0xFFFF8A50);
-        statusTextColor = Colors.white;
-        statusText = 'ส่งคำขอ';
-        statusIcon = Icons.assignment_outlined;
-        break;
-      case RequestStatus.preparing:
-        iconBgColor = const Color(0xFFE3F2FD); // Light blue
-        iconColor = const Color(0xFF4A9FE8); // Blue
-        statusBgColor = const Color(0xFF4A9FE8); // Blue
-        statusTextColor = Colors.white;
-        statusText = 'กำลังเตรียม';
-        statusIcon = Icons.inventory_2_outlined; // Preparing package
-        break;
-      case RequestStatus.completed:
-        iconBgColor = const Color(0xFFE0F2F1); // Lighter teal/green
-        iconColor = const Color(0xFF26A69A);
-        statusBgColor = const Color(0xFF64FFDA); // Bright mint green
-        statusTextColor = const Color(0xFF333333);
-        statusText = 'เสร็จสิ้น';
-        statusIcon = Icons.check_circle_outline; // Completed check
-        break;
-      case RequestStatus.cancelled:
-        iconBgColor = Colors.grey[200]!;
-        iconColor = Colors.grey[600]!;
-        statusBgColor = Colors.grey[300]!;
-        statusTextColor = const Color(0xFF333333);
-        statusText = 'ยกเลิก';
-        statusIcon = Icons.cancel_outlined; // Cancelled
-        break;
+    if (data.status.isCancelled) {
+      iconBgColor = Colors.grey[200]!;
+      iconColor = Colors.grey[600]!;
+      statusBgColor = Colors.grey[600]!;
+      statusTextColor = Colors.white;
+      statusText = data.status == RequestStatus.cancelledByStaff ? 'ยกเลิกโดยเจ้าหน้าที่' : 'ยกเลิกโดยผู้ใช้';
+      statusIcon = Icons.cancel_outlined;
+    } else {
+      switch (data.status) {
+        case RequestStatus.pending:
+          iconBgColor = const Color(0xFFFBE9E7);
+          iconColor = const Color(0xFFFF8A50);
+          statusBgColor = const Color(0xFFFF8A50);
+          statusTextColor = Colors.white;
+          statusText = 'รอดำเนินการ';
+          statusIcon = Icons.assignment_outlined;
+          break;
+        case RequestStatus.preparing:
+          iconBgColor = const Color(0xFFE3F2FD);
+          iconColor = const Color(0xFF1F77C3);
+          statusBgColor = const Color(0xFF1F77C3);
+          statusTextColor = Colors.white;
+          statusText = 'กำลังเตรียม';
+          statusIcon = Icons.inventory_2_outlined;
+          break;
+        case RequestStatus.ready:
+          iconBgColor = const Color(0xFFF3E5F5);
+          iconColor = const Color(0xFF9C27B0);
+          statusBgColor = const Color(0xFF9C27B0);
+          statusTextColor = Colors.white;
+          statusText = 'พร้อมรับ';
+          statusIcon = Icons.local_shipping_outlined;
+          break;
+        case RequestStatus.completed:
+          iconBgColor = const Color(0xFFE0F2F1);
+          iconColor = const Color(0xFF26A69A);
+          statusBgColor = const Color(0xFF26A69A);
+          statusTextColor = Colors.white;
+          statusText = 'เสร็จสิ้น';
+          statusIcon = Icons.check_circle_outline;
+          break;
+        default:
+          iconBgColor = Colors.grey[200]!;
+          iconColor = Colors.grey[600]!;
+          statusBgColor = Colors.grey[600]!;
+          statusTextColor = Colors.white;
+          statusText = '-';
+          statusIcon = Icons.help_outline;
+      }
     }
 
     // Format selectedDate and selectedTime
@@ -444,7 +447,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                 Icon(Icons.location_on, size: 16, color: Colors.grey[400]),
                 const SizedBox(width: 8),
                 Text(
-                  data.selectedLocation ?? '-',
+                  data.selectedServiceCenter ?? '-',
                   style: GoogleFonts.prompt(
                     color: Colors.grey[500],
                     fontSize: 14,
@@ -459,6 +462,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
+                style: TextButton.styleFrom(overlayColor: statusBgColor),
                 onPressed: () async {
                   await Navigator.of(context).push(
                     MaterialPageRoute(
@@ -468,13 +472,13 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                   // Refresh history after return to get updated statuses (like cancelled)
                   _fetchHistory();
                 },
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       'ดูข้อมูล',
                       style: TextStyle(
-                        color: Color(0xFFFF8A50),
+                        color: statusBgColor,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
@@ -482,7 +486,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                     Icon(
                       Icons.chevron_right,
                       size: 16,
-                      color: Color(0xFFFF8A50),
+                      color: statusBgColor,
                     ),
                   ],
                 ),

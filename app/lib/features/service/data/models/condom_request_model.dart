@@ -1,9 +1,17 @@
 
 enum RequestStatus {
-  submitted,
+  pending,
   preparing,
+  ready,
   completed,
-  cancelled,
+  cancelledByUser,
+  cancelledByStaff,
+}
+
+extension RequestStatusX on RequestStatus {
+  bool get isCancelled =>
+      this == RequestStatus.cancelledByUser ||
+      this == RequestStatus.cancelledByStaff;
 }
 
 class CondomRequestModel {
@@ -11,12 +19,13 @@ class CondomRequestModel {
   final String userId;
   final Map<int, int> condomQuantities;
   final int lubricantQuantity;
-  final String? selectedLocation;
+  final String? selectedServiceCenter;
   final String? selectedDate;
   final String? selectedTime;
   final String message;
   final String referenceNumber;
   final RequestStatus status;
+  final String? cancelReason;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -25,18 +34,18 @@ class CondomRequestModel {
     required this.userId,
     required this.condomQuantities,
     required this.lubricantQuantity,
-    this.selectedLocation,
+    this.selectedServiceCenter,
     this.selectedDate,
     this.selectedTime,
     required this.message,
     required this.referenceNumber,
     required this.status,
+    this.cancelReason,
     required this.createdAt,
     required this.updatedAt,
   });
 
   factory CondomRequestModel.fromJson(Map<String, dynamic> json) {
-    // Parse quantities
     Map<int, int> parsedQuantities = {};
     if (json['condom_quantities'] != null) {
       final q = json['condom_quantities'] as Map<String, dynamic>;
@@ -50,36 +59,40 @@ class CondomRequestModel {
       userId: json['user_id'] ?? '',
       condomQuantities: parsedQuantities,
       lubricantQuantity: json['lubricant_quantity'] ?? 0,
-      selectedLocation: json['selected_location'],
+      selectedServiceCenter: json['selected_service_center'],
       selectedDate: json['selected_date'],
       selectedTime: json['selected_time'],
       message: json['message'] ?? '',
       referenceNumber: json['reference_number'] ?? '',
-      status: _parseStatus(json['status'] as String?),
-      createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+      status: _parseStatus(json['request_status'] as String?),
+      cancelReason: json['cancel_reason'],
+      createdAt: json['created_at'] != null
+          ? DateTime.parse(json['created_at'])
           : DateTime.now(),
-      updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
-          : (json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now()),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.parse(json['updated_at'])
+          : (json['created_at'] != null
+              ? DateTime.parse(json['created_at'])
+              : DateTime.now()),
     );
   }
 
   static RequestStatus _parseStatus(String? statusStr) {
-    switch (statusStr?.toLowerCase()) {
+    switch (statusStr) {
       case 'pending':
-      case 'submitted':
-        return RequestStatus.submitted;
+        return RequestStatus.pending;
       case 'preparing':
-      case 'approved':
         return RequestStatus.preparing;
+      case 'ready':
+        return RequestStatus.ready;
       case 'completed':
-      case 'delivered':
         return RequestStatus.completed;
-      case 'cancelled':
-      case 'rejected':
+      case 'cancelled_by_user':
+        return RequestStatus.cancelledByUser;
+      case 'cancelled_by_staff':
+        return RequestStatus.cancelledByStaff;
       default:
-        return RequestStatus.cancelled;
+        return RequestStatus.pending;
     }
   }
 }

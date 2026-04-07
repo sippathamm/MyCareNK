@@ -19,7 +19,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   final Map<int, int> _quantities = {49: 0, 52: 0, 54: 0, 56: 0};
 
   int _lubricantQuantity = 0;
-  String? _selectedLocation;
+  String? _selectedServiceCenter;
   DateTime? _selectedDate;
   TimeOfDay? _selectedTime;
   final TextEditingController _messageController = TextEditingController();
@@ -99,7 +99,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     setState(() {
       _quantities.updateAll((key, value) => 0);
       _lubricantQuantity = 0;
-      _selectedLocation = null;
+      _selectedServiceCenter = null;
       _selectedDate = null;
       _selectedTime = null;
       _messageController.clear();
@@ -207,7 +207,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       );
                       return;
                     }
-                    if (_selectedLocation == null ||
+                    if (_selectedServiceCenter == null ||
                         _selectedDate == null ||
                         _selectedTime == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -223,7 +223,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                         builder: (context) => CondomRequestConfirmPage(
                           quantities: _quantities,
                           lubricantQuantity: _lubricantQuantity,
-                          selectedLocation: _selectedLocation,
+                          selectedServiceCenter: _selectedServiceCenter,
                           selectedDate: _selectedDate,
                           selectedTime: _selectedTime,
                           message: _messageController.text,
@@ -678,7 +678,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       child: DropdownButton<String>(
                         isExpanded: true,
                         hint: const Text('จุดบริการ'),
-                        value: _selectedLocation,
+                        value: _selectedServiceCenter,
                         items:
                             [
                                   'รพ.โพนพิสัย',
@@ -694,7 +694,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                                 )
                                 .toList(),
                         onChanged: (val) =>
-                            setState(() => _selectedLocation = val),
+                            setState(() => _selectedServiceCenter = val),
                       ),
                     ),
                   ),
