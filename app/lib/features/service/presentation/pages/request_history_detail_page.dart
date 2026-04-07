@@ -110,6 +110,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 _buildLubricantCard(),
                 _buildLocationCard(),
                 _buildMessageCard(),
+                _buildCancelReasonCard(),
                 const SizedBox(height: 48),
                 _buildBottomButtons(context),
                 const SizedBox(height: 40),
@@ -126,27 +127,37 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     Color iconColor;
     Color iconBgColor;
 
-    switch (_currentData.status) {
-      case RequestStatus.submitted:
-        icon = Icons.assignment_outlined;
-        iconColor = const Color(0xFFFF8A50);
-        iconBgColor = const Color(0xFFFBE9E7);
-        break;
-      case RequestStatus.preparing:
-        icon = Icons.inventory_2_outlined;
-        iconColor = const Color(0xFF4A9FE8);
-        iconBgColor = const Color(0xFFE3F2FD);
-        break;
-      case RequestStatus.completed:
-        icon = Icons.check_circle_outline;
-        iconColor = const Color(0xFF26A69A);
-        iconBgColor = const Color(0xFFE0F2F1);
-        break;
-      case RequestStatus.cancelled:
-        icon = Icons.cancel_outlined;
-        iconColor = Colors.grey[600]!;
-        iconBgColor = Colors.grey[200]!;
-        break;
+    if (_currentData.status.isCancelled) {
+      icon = Icons.cancel_outlined;
+      iconColor = Colors.grey[600]!;
+      iconBgColor = Colors.grey[200]!;
+    } else {
+      switch (_currentData.status) {
+        case RequestStatus.pending:
+          icon = Icons.assignment_outlined;
+          iconColor = const Color(0xFFFF8A50);
+          iconBgColor = const Color(0xFFFBE9E7);
+          break;
+        case RequestStatus.preparing:
+          icon = Icons.inventory_2_outlined;
+          iconColor = const Color(0xFF4A9FE8);
+          iconBgColor = const Color(0xFFE3F2FD);
+          break;
+        case RequestStatus.ready:
+          icon = Icons.local_shipping_outlined;
+          iconColor = const Color(0xFF9C27B0);
+          iconBgColor = const Color(0xFFF3E5F5);
+          break;
+        case RequestStatus.completed:
+          icon = Icons.check_circle_outline;
+          iconColor = const Color(0xFF26A69A);
+          iconBgColor = const Color(0xFFE0F2F1);
+          break;
+        default:
+          icon = Icons.assignment_outlined;
+          iconColor = const Color(0xFFFF8A50);
+          iconBgColor = const Color(0xFFFBE9E7);
+      }
     }
 
     // Format Date 
@@ -220,9 +231,12 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildStatusTracker() {
-    bool isCancelled = _currentData.status == RequestStatus.cancelled;
+    final status = _currentData.status;
 
-    if (isCancelled) {
+    if (status.isCancelled) {
+      final cancelLabel = status == RequestStatus.cancelledByStaff
+          ? 'ยกเลิกโดยเจ้าหน้าที่'
+          : 'ยกเลิก';
       return Column(
         children: [
           Row(
@@ -237,11 +251,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'ส่งคำขอ',
+                'รอดำเนินการ',
                 style: GoogleFonts.prompt(color: Colors.black87, fontSize: 12),
               ),
               Text(
-                'ยกเลิก',
+                cancelLabel,
                 style: GoogleFonts.prompt(
                   color: Colors.grey[600],
                   fontSize: 12,
@@ -254,26 +268,28 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       );
     }
 
-    Color subColor = const Color(0xFFFF8A50);
-    Color prepColor = const Color(0xFF4A9FE8);
-    Color compColor = const Color(0xFF26A69A);
+    const Color pendingColor = Color(0xFFFF8A50);
+    const Color prepColor = Color(0xFF4A9FE8);
+    const Color readyColor = Color(0xFF9C27B0);
+    const Color compColor = Color(0xFF26A69A);
 
-    bool isPrepDone =
-        _currentData.status == RequestStatus.preparing ||
-        _currentData.status == RequestStatus.completed;
-    bool isFinalDone = _currentData.status == RequestStatus.completed;
-
-    Color line1Color = isPrepDone ? subColor : Colors.grey[300]!;
-    Color line2Color = isFinalDone ? prepColor : Colors.grey[300]!;
+    final isPrepDone = status == RequestStatus.preparing ||
+        status == RequestStatus.ready ||
+        status == RequestStatus.completed;
+    final isReadyDone = status == RequestStatus.ready ||
+        status == RequestStatus.completed;
+    final isFinalDone = status == RequestStatus.completed;
 
     return Column(
       children: [
         Row(
           children: [
-            _buildDot(subColor, isFilled: true),
-            Expanded(child: _buildLine(line1Color)),
+            _buildDot(pendingColor, isFilled: true),
+            Expanded(child: _buildLine(isPrepDone ? pendingColor : Colors.grey[300]!)),
             _buildDot(prepColor, isFilled: isPrepDone),
-            Expanded(child: _buildLine(line2Color)),
+            Expanded(child: _buildLine(isReadyDone ? prepColor : Colors.grey[300]!)),
+            _buildDot(readyColor, isFilled: isReadyDone),
+            Expanded(child: _buildLine(isFinalDone ? readyColor : Colors.grey[300]!)),
             _buildDot(compColor, isFilled: isFinalDone),
           ],
         ),
@@ -282,39 +298,35 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'ส่งคำขอ',
+              'รอดำเนินการ',
               style: GoogleFonts.prompt(
-                color: _currentData.status == RequestStatus.submitted
-                    ? subColor
-                    : Colors.black87,
+                color: status == RequestStatus.pending ? pendingColor : Colors.black87,
                 fontSize: 12,
-                fontWeight: _currentData.status == RequestStatus.submitted
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: status == RequestStatus.pending ? FontWeight.bold : FontWeight.normal,
               ),
             ),
             Text(
               'กำลังเตรียม',
               style: GoogleFonts.prompt(
-                color: _currentData.status == RequestStatus.preparing
-                    ? prepColor
-                    : Colors.black87,
+                color: status == RequestStatus.preparing ? prepColor : Colors.black87,
                 fontSize: 12,
-                fontWeight: _currentData.status == RequestStatus.preparing
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: status == RequestStatus.preparing ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            Text(
+              'พร้อมรับ',
+              style: GoogleFonts.prompt(
+                color: status == RequestStatus.ready ? readyColor : Colors.black87,
+                fontSize: 12,
+                fontWeight: status == RequestStatus.ready ? FontWeight.bold : FontWeight.normal,
               ),
             ),
             Text(
               'เสร็จสิ้น',
               style: GoogleFonts.prompt(
-                color: _currentData.status == RequestStatus.completed
-                    ? compColor
-                    : Colors.black87,
+                color: status == RequestStatus.completed ? compColor : Colors.black87,
                 fontSize: 12,
-                fontWeight: _currentData.status == RequestStatus.completed
-                    ? FontWeight.bold
-                    : FontWeight.normal,
+                fontWeight: status == RequestStatus.completed ? FontWeight.bold : FontWeight.normal,
               ),
             ),
           ],
@@ -529,7 +541,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             children: [
               const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
               Text(
-                _currentData.selectedLocation ?? '-',
+                _currentData.selectedServiceCenter ?? '-',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
@@ -601,8 +613,37 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     );
   }
 
+  Widget _buildCancelReasonCard() {
+    if (_currentData.status != RequestStatus.cancelledByStaff) return const SizedBox();
+    if (_currentData.cancelReason == null || _currentData.cancelReason!.isEmpty) return const SizedBox();
+
+    return _buildCard(
+      header: const Row(
+        children: [
+          Icon(Icons.info_outline, color: Colors.black),
+          SizedBox(width: 8),
+          Text(
+            'เหตุผลที่ยกเลิก',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      content: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          _currentData.cancelReason!,
+          style: const TextStyle(fontSize: 16, color: Color(0xFFFF5252)),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomButtons(BuildContext context) {
-    bool canCancel = _currentData.status == RequestStatus.submitted;
+    bool canCancel = _currentData.status == RequestStatus.pending;
 
     return Column(
       children: [
@@ -638,7 +679,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                   await Supabase.instance.client
                       .from('condom_requests')
                       .update({
-                        'status': 'cancelled',
+                        'request_status': 'cancelled_by_user',
                       })
                       .eq('id', _currentData.id);
                   

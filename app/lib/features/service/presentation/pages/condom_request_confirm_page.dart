@@ -8,7 +8,7 @@ import '../../../../features/auth/presentation/pages/login_page.dart';
 class CondomRequestConfirmPage extends StatefulWidget {
   final Map<int, int> quantities;
   final int lubricantQuantity;
-  final String? selectedLocation;
+  final String? selectedServiceCenter;
   final DateTime? selectedDate;
   final TimeOfDay? selectedTime;
   final String message;
@@ -21,7 +21,7 @@ class CondomRequestConfirmPage extends StatefulWidget {
     super.key,
     required this.quantities,
     required this.lubricantQuantity,
-    this.selectedLocation,
+    this.selectedServiceCenter,
     this.selectedDate,
     this.selectedTime,
     required this.message,
@@ -89,12 +89,12 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         'user_id': userId,
         'condom_quantities': quantitiesJson,
         'lubricant_quantity': widget.lubricantQuantity,
-        'selected_location': widget.selectedLocation,
+        'selected_service_center': widget.selectedServiceCenter,
         'selected_date': dateString,
         'selected_time': timeString,
         'message': widget.message,
         'reference_number': refNumber,
-        'status': 'submitted',
+        'request_status': 'pending',
       });
 
       // Update user's monthly quota usage
@@ -132,7 +132,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             builder: (context) => CondomRequestSuccessPage(
               quantities: widget.quantities,
               lubricantQuantity: widget.lubricantQuantity,
-              selectedLocation: widget.selectedLocation,
+              selectedServiceCenter: widget.selectedServiceCenter,
               selectedDate: widget.selectedDate,
               selectedTime: widget.selectedTime,
               message: widget.message,
@@ -582,7 +582,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             children: [
               const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
               Text(
-                widget.selectedLocation ?? '-',
+                widget.selectedServiceCenter ?? '-',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,

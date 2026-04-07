@@ -4,7 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 class CondomRequestDetailPage extends StatelessWidget {
   final Map<int, int> quantities;
   final int lubricantQuantity;
-  final String? selectedLocation;
+  final String? selectedServiceCenter;
   final DateTime? selectedDate;
   final TimeOfDay? selectedTime;
   final String message;
@@ -17,7 +17,7 @@ class CondomRequestDetailPage extends StatelessWidget {
     super.key,
     required this.quantities,
     required this.lubricantQuantity,
-    this.selectedLocation,
+    this.selectedServiceCenter,
     this.selectedDate,
     this.selectedTime,
     required this.message,
@@ -419,7 +419,7 @@ class CondomRequestDetailPage extends StatelessWidget {
             children: [
               const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
               Text(
-                selectedLocation ?? '-',
+                selectedServiceCenter ?? '-',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
