@@ -54,11 +54,14 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   };
 
   const handleFinishPrepare = async () => {
+    // QR ต้องสร้างสำเร็จก่อนจึงจะเปลี่ยนสถานะได้
+    const signed = await sign(request.id);
+    if (!signed) return;
+
     const ok = await onStatusChange(request.id, 'ready');
     if (ok) {
       setIsConfirmingFinish(false);
       setShowQR(true);
-      sign(request.id);
     }
   };
 
@@ -117,6 +120,15 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
             <Typography variant="body1" color="text.secondary">
               คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น "รอรับ" ใช่หรือไม่?
             </Typography>
+            {signLoading && (
+              <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+                <CircularProgress size={32} />
+                <Typography variant="body2" color="text.secondary">กำลังสร้าง QR Code...</Typography>
+              </Box>
+            )}
+            {signError && !signLoading && (
+              <Typography variant="body2" color="error">{signError}</Typography>
+            )}
           </Box>
         ) : showQR ? (
           <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
@@ -136,7 +148,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
             {signError && !signLoading && (
               <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
                 <Typography variant="body2" color="error">{signError}</Typography>
-                <Button variant="outlined" color="error" size="small" onClick={() => sign(request.id)}>
+                <Button variant="outlined" color="error" onClick={() => sign(request.id)}>
                   ลองใหม่
                 </Button>
               </Box>
@@ -315,13 +327,13 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
           </>
         ) : isConfirmingFinish ? (
           <>
-            <Button onClick={() => setIsConfirmingFinish(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
+            <Button onClick={() => setIsConfirmingFinish(false)} disabled={statusUpdating || signLoading} color="inherit">กลับ</Button>
             <Button
               onClick={handleFinishPrepare}
               variant="contained"
               color="info"
-              disabled={statusUpdating}
-              endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
+              disabled={statusUpdating || signLoading}
+              endIcon={(statusUpdating || signLoading) ? <CircularProgress size={16} color="inherit" /> : null}
             >
               ยืนยัน
             </Button>
