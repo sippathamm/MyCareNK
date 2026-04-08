@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, CircularProgress, Tooltip } from '@mui/material';
+import PrintIcon from '@mui/icons-material/Print';
 import { QRCodeSVG } from 'qrcode.react';
 import { formatDate, formatDateTime, getOverdueDays } from '../../utils/requestUtils';
+import { useSignPayload } from '../../hooks/useSignPayload';
 
 export interface RequestData {
   id: string;
@@ -34,6 +36,16 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   const [isConfirmingFinish, setIsConfirmingFinish] = useState(false);
   const [isConfirmingComplete, setIsConfirmingComplete] = useState(false);
 
+  const { payload: signedPayload, loading: signLoading, error: signError, sign, reset: resetSign } = useSignPayload();
+
+  // Auto-fetch signed payload when dialog opens for a ready request
+  useEffect(() => {
+    if (open && request?.request_status === 'ready' && !signedPayload && !signLoading) {
+      sign(request.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, request?.id, request?.request_status]);
+
   if (!request) return null;
 
   const handleConfirmPrepare = async () => {
@@ -43,7 +55,11 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
 
   const handleFinishPrepare = async () => {
     const ok = await onStatusChange(request.id, 'ready');
-    if (ok) { setIsConfirmingFinish(false); setShowQR(true); }
+    if (ok) {
+      setIsConfirmingFinish(false);
+      setShowQR(true);
+      sign(request.id);
+    }
   };
 
   const handleCancelConfirm = async () => {
@@ -64,6 +80,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
     setIsConfirmingFinish(false);
     setIsConfirmingComplete(false);
     setShowQR(false);
+    resetSign();
     onClose();
   };
 
@@ -106,13 +123,38 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
             <Typography variant="h6" color="info.main" fontWeight="bold">
               เตรียมการเสร็จสิ้น
             </Typography>
-            <QRCodeSVG value={request.reference_number} size={200} />
-            <Typography variant="body2" color="text.secondary">
-              รหัสอ้างอิง: {request.reference_number}
-            </Typography>
-            <Typography variant="body2" color="error">
-              กรุณานำ QR Code นี้ติดไว้ที่กล่อง/ซองพัสดุ
-            </Typography>
+
+            {signLoading && (
+              <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+                <CircularProgress size={48} />
+                <Typography variant="body2" color="text.secondary">
+                  กำลังสร้าง QR Code...
+                </Typography>
+              </Box>
+            )}
+
+            {signError && !signLoading && (
+              <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+                <Typography variant="body2" color="error">{signError}</Typography>
+                <Button variant="outlined" color="error" size="small" onClick={() => sign(request.id)}>
+                  ลองใหม่
+                </Button>
+              </Box>
+            )}
+
+            {signedPayload && !signLoading && (
+              <>
+                <Box id="qr-print-area" display="flex" flexDirection="column" alignItems="center" gap={1}>
+                  <QRCodeSVG value={signedPayload} size={200} />
+                  <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    รหัสอ้างอิง: {request.reference_number}
+                  </Typography>
+                </Box>
+                <Typography variant="body2" color="error" textAlign="center">
+                  กรุณานำ QR Code นี้ติดไว้ที่กล่อง/ซองพัสดุ
+                </Typography>
+              </>
+            )}
           </Box>
         ) : (
           <Box display="flex" flexDirection="column" gap={2}>
@@ -195,12 +237,36 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
             )}
 
             {request.request_status === 'ready' && (
-              <Box display="flex" flexDirection="column" alignItems="center" py={2} gap={3}>
+              <Box display="flex" flexDirection="column" alignItems="center" py={2} gap={2}>
                 <Divider sx={{ width: '100%', mb: 1 }} />
-                <QRCodeSVG value={request.reference_number} size={200} />
-                <Typography variant="body2" color="error" textAlign="center" fontWeight="medium">
-                  กรุณานำ QR Code นี้ติดไว้ที่กล่อง/ซองพัสดุ
-                </Typography>
+
+                {signLoading && (
+                  <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+                    <CircularProgress size={40} />
+                    <Typography variant="body2" color="text.secondary">กำลังสร้าง QR Code...</Typography>
+                  </Box>
+                )}
+
+                {signError && !signLoading && (
+                  <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
+                    <Typography variant="body2" color="error">{signError}</Typography>
+                    <Button variant="outlined" color="error" size="small" onClick={() => sign(request.id)}>
+                      ลองใหม่
+                    </Button>
+                  </Box>
+                )}
+
+                {signedPayload && !signLoading && (
+                  <Box id="qr-print-area" display="flex" flexDirection="column" alignItems="center" gap={1}>
+                    <QRCodeSVG value={signedPayload} size={200} />
+                    <Typography variant="body2" color="text.secondary">
+                      รหัสอ้างอิง: {request.reference_number}
+                    </Typography>
+                    <Typography variant="body2" color="error" textAlign="center" fontWeight="medium">
+                      กรุณานำ QR Code นี้ติดไว้ที่กล่อง/ซองพัสดุ
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             )}
 
@@ -261,7 +327,18 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
             </Button>
           </>
         ) : showQR ? (
-          <Button onClick={onCloseDialog} variant="contained" color="info">ปิด</Button>
+          <>
+            <Button onClick={onCloseDialog} color="inherit">ปิด</Button>
+            {signedPayload && !signLoading && (
+              <Button
+                variant="outlined"
+                startIcon={<PrintIcon />}
+                onClick={() => window.print()}
+              >
+                พิมพ์ QR Code
+              </Button>
+            )}
+          </>
         ) : isConfirmingComplete ? (
           <>
             <Button onClick={() => setIsConfirmingComplete(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
@@ -291,6 +368,16 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         ) : (
           <>
             <Button onClick={onCloseDialog} color="inherit">ปิด</Button>
+            {request.request_status === 'ready' && signedPayload && !signLoading && (
+              <Button
+                variant="outlined"
+                startIcon={<PrintIcon />}
+                onClick={() => window.print()}
+                size="small"
+              >
+                พิมพ์ QR Code
+              </Button>
+            )}
             {request.request_status === 'ready' && (
               <Tooltip title="กดปุ่มนี้ได้เมื่อเลยกำหนดมากกว่า 7 วัน">
                 <span>
