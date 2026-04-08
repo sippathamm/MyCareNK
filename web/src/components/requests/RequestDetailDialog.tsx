@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, CircularProgress, Tooltip } from '@mui/material';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { formatDate, formatDateTime, getOverdueDays } from '../../utils/requestUtils';
-import { useSignPayload } from '../../hooks/useSignPayload';
 import QRCodeDialog from './QRCodeDialog';
 
 export interface RequestData {
@@ -33,6 +32,7 @@ interface QRDialogState {
   requestId: string;
   referenceNumber: string;
   initialPayload?: string;
+  onFinishPrepare?: () => Promise<boolean>;
 }
 
 export default function RequestDetailDialog({ open, request, onClose, onStatusChange, statusUpdating = false }: RequestDetailDialogProps) {
@@ -43,28 +43,23 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   const [isConfirmingComplete, setIsConfirmingComplete] = useState(false);
   const [qrDialog, setQrDialog] = useState<QRDialogState>({ open: false, requestId: '', referenceNumber: '' });
 
-  const { loading: signLoading, error: signError, sign, reset: resetSign } = useSignPayload();
-
   const handleConfirmPrepare = async () => {
     if (!request) return;
     const ok = await onStatusChange(request.id, 'preparing');
     if (ok) onCloseDialog();
   };
 
-  const handleFinishPrepare = async () => {
+  const handleFinishPrepare = () => {
     if (!request) return;
-    // Sign first — status change only happens if signing succeeds
-    const signed = await sign(request.id);
-    if (!signed) return;
-
-    const ok = await onStatusChange(request.id, 'ready');
-    if (ok) {
-      // Save QR data before closing main dialog (request prop may become null after onClose)
-      const qrData = { open: true, requestId: request.id, referenceNumber: request.reference_number, initialPayload: signed };
-      resetSign();
-      onCloseDialogInternal();
-      setQrDialog(qrData);
-    }
+    // Capture request data before closing (request prop may be stale after onClose)
+    const qrData = {
+      open: true,
+      requestId: request.id,
+      referenceNumber: request.reference_number,
+      onFinishPrepare: () => onStatusChange(request.id, 'ready'),
+    };
+    onCloseDialogInternal();
+    setQrDialog(qrData);
   };
 
   const handleCancelConfirm = async () => {
@@ -79,7 +74,6 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
     if (ok) onCloseDialog();
   };
 
-  // Reset internal state without calling onClose (used before opening QR dialog)
   const onCloseDialogInternal = () => {
     setIsRejecting(false);
     setRejectReason('');
@@ -90,7 +84,6 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   };
 
   const onCloseDialog = () => {
-    resetSign();
     onCloseDialogInternal();
   };
 
@@ -134,15 +127,6 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                 <Typography variant="body1" color="text.secondary">
                   คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น "รอรับ" ใช่หรือไม่?
                 </Typography>
-                {signLoading && (
-                  <Box display="flex" flexDirection="column" alignItems="center" gap={1}>
-                    <CircularProgress size={32} />
-                    <Typography variant="body2" color="text.secondary">กำลังสร้าง QR Code...</Typography>
-                  </Box>
-                )}
-                {signError && !signLoading && (
-                  <Typography variant="body2" color="error">{signError}</Typography>
-                )}
               </Box>
             ) : (
               <Box display="flex" flexDirection="column" gap={2}>
@@ -269,13 +253,13 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               </>
             ) : isConfirmingFinish ? (
               <>
-                <Button onClick={() => { resetSign(); setIsConfirmingFinish(false); }} disabled={statusUpdating || signLoading} color="inherit">กลับ</Button>
+                <Button onClick={() => setIsConfirmingFinish(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
                 <Button
                   onClick={handleFinishPrepare}
                   variant="contained"
                   color="info"
-                  disabled={statusUpdating || signLoading}
-                  endIcon={(statusUpdating || signLoading) ? <CircularProgress size={16} color="inherit" /> : null}
+                  disabled={statusUpdating}
+                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
                 >
                   ยืนยัน
                 </Button>
@@ -358,7 +342,8 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         requestId={qrDialog.requestId}
         referenceNumber={qrDialog.referenceNumber}
         initialPayload={qrDialog.initialPayload}
-        onClose={() => setQrDialog(s => ({ ...s, open: false, initialPayload: undefined }))}
+        onFinishPrepare={qrDialog.onFinishPrepare}
+        onClose={() => setQrDialog(s => ({ ...s, open: false, initialPayload: undefined, onFinishPrepare: undefined }))}
       />
     </>
   );
