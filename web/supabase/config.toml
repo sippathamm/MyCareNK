@@ -1,0 +1,13 @@
+project_id = "timuuxjeffzqtsqnjbnz"
+
+[api]
+enabled = true
+
+[auth]
+enabled = true
+
+[functions.sign]
+verify_jwt = false
+
+[functions.verify-receive]
+verify_jwt = false
