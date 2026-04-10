@@ -1,17 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-  });
-}
+import { CORS_HEADERS, jsonResponse } from '../_shared/response.ts';
 
 /** Constant-time string comparison to prevent timing oracle attacks */
 function timingSafeEqual(a: string, b: string): boolean {
@@ -31,12 +19,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return jsonResponse(405, 'error', 'วิธีการร้องขอไม่ถูกต้อง');
   }
 
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) {
-    return jsonResponse({ error: 'Missing authorization header' }, 401);
+    return jsonResponse(401, 'error', 'กรุณาเข้าสู่ระบบ');
   }
 
   // Verify caller is an authenticated user (from user app)
@@ -48,7 +36,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const { data: { user }, error: userError } = await userClient.auth.getUser();
   if (userError || !user) {
-    return jsonResponse({ error: 'Unauthorized' }, 401);
+    return jsonResponse(401, 'error', 'กรุณาเข้าสู่ระบบ');
   }
 
   // Parse body
@@ -56,11 +44,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+    return jsonResponse(400, 'error', 'QR Code ไม่ถูกต้อง');
   }
 
   if (!body.payload || typeof body.payload !== 'string') {
-    return jsonResponse({ error: 'payload field is required and must be a string' }, 400);
+    return jsonResponse(400, 'error', 'QR Code ไม่ถูกต้อง');
   }
 
   // Parse inner payload
@@ -68,23 +56,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     inner = JSON.parse(body.payload);
   } catch {
-    return jsonResponse({ error: 'payload is not valid JSON' }, 400);
+    return jsonResponse(400, 'error', 'QR Code ไม่ถูกต้อง');
   }
 
   const { ref, sig } = inner;
 
   // Input sanitization (#52): ref must be non-empty string, sig must be 64-char hex
   if (!ref || typeof ref !== 'string' || ref.trim() === '') {
-    return jsonResponse({ error: 'Invalid payload: ref is missing or empty' }, 400);
+    return jsonResponse(400, 'error', 'QR Code ไม่ถูกต้อง');
   }
   if (!sig || typeof sig !== 'string' || !/^[0-9a-f]{64}$/.test(sig)) {
-    return jsonResponse({ error: 'Invalid payload: sig is missing or malformed' }, 400);
+    return jsonResponse(400, 'error', 'QR Code ไม่ถูกต้อง');
   }
 
   // Recompute expected HMAC-SHA256 (#56)
   const secretKey = Deno.env.get('SIGNATURE_SECRET_KEY');
   if (!secretKey) {
-    return jsonResponse({ error: 'Server configuration error' }, 500);
+    return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
   }
 
   const keyMaterial = await crypto.subtle.importKey(
@@ -105,9 +93,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
 
-  // Timing-safe comparison (#56)
+  // Timing-safe comparison (#56) — invalid signature means fake/tampered QR
   if (!timingSafeEqual(expectedSig, sig)) {
-    return jsonResponse({ error: 'Invalid signature' }, 403);
+    return jsonResponse(400, 'error', 'QR Code ไม่ถูกต้อง');
   }
 
   // Signature verified — look up request via service-role client
@@ -123,20 +111,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .single();
 
   if (dbError || !requestRow) {
-    return jsonResponse({ error: 'Request not found' }, 404);
+    return jsonResponse(404, 'error', 'ไม่พบคำขอ');
   }
 
   // Strict ownership check (#55): request must belong to the authenticated user
   if (requestRow.user_id !== user.id) {
-    return jsonResponse({ error: 'Forbidden: request does not belong to you' }, 403);
+    return jsonResponse(403, 'error', 'QR Code นี้ไม่ใช่ของคุณ');
   }
 
   // Only allow completing a 'ready' request (prevents replay/double-completion)
   if (requestRow.request_status !== 'ready') {
-    return jsonResponse(
-      { error: `Cannot complete request with status: ${requestRow.request_status}` },
-      409
-    );
+    return jsonResponse(409, 'error', 'ไม่สามารถรับสินค้าได้ในสถานะนี้');
   }
 
   // Mark as completed (#55)
@@ -146,8 +131,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .eq('id', requestRow.id);
 
   if (updateError) {
-    return jsonResponse({ error: 'Failed to update request status' }, 500);
+    return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
   }
 
-  return jsonResponse({ success: true, reference_number: ref });
+  return jsonResponse(200, 'success', 'รับสินค้าสำเร็จ', { reference_number: ref });
 });
