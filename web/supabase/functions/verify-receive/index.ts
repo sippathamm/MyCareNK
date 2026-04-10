@@ -121,7 +121,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // Only allow completing a 'ready' request (prevents replay/double-completion)
   if (requestRow.request_status !== 'ready') {
-    return jsonResponse(409, 'error', 'ไม่สามารถรับสินค้าได้ในสถานะนี้');
+    return jsonResponse(409, 'error', 'ไม่สามารถรับถุงยางอนามัยได้ในสถานะนี้');
   }
 
   // Mark as completed (#55)
@@ -134,5 +134,5 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
   }
 
-  return jsonResponse(200, 'success', 'รับสินค้าสำเร็จ', { reference_number: ref });
+  return jsonResponse(200, 'success', 'รับถุงยางอนามัยสำเร็จ', { reference_number: ref });
 });
