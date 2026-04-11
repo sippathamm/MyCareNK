@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 class CampaignBanner extends StatelessWidget {
   const CampaignBanner({super.key});
@@ -9,13 +10,13 @@ class CampaignBanner extends StatelessWidget {
       width: double.infinity,
       height: 60,
       decoration: BoxDecoration(
-        color: const Color(0xFFFF8A50),
+        color: AppColors.primary,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0xFFFF8A50).withOpacity(0.4),
+            color: AppColors.primaryCardShadow,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -37,7 +38,7 @@ class CampaignBanner extends StatelessWidget {
                 Text(
                   'ทำแบบประเมินความเสี่ยง HIV',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -45,7 +46,7 @@ class CampaignBanner extends StatelessWidget {
                 Text(
                   'ฟรี!',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: AppColors.white,
                     fontSize: 14,
                     fontWeight: FontWeight.normal,
                   ),

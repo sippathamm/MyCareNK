@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 class KnowledgeSection extends StatelessWidget {
   const KnowledgeSection({super.key});
@@ -18,7 +19,7 @@ class KnowledgeSection extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF333333),
+                  color: AppColors.textPrimary,
                 ),
               ),
               TextButton(
@@ -32,16 +33,12 @@ class KnowledgeSection extends StatelessWidget {
                     Text(
                       'ดูทั้งหมด',
                       style: TextStyle(
-                        color: Color(0xFFFF8A50),
+                        color: AppColors.primary,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    Icon(
-                      Icons.chevron_right,
-                      size: 16,
-                      color: Color(0xFFFF8A50),
-                    ),
+                    Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
                   ],
                 ),
               ),
@@ -67,19 +64,16 @@ class KnowledgeSection extends StatelessWidget {
                 child: Container(
                   width: 200,
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100, // Placeholder color
+                    color: Colors.grey.shade100,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      gradient: LinearGradient(
+                      gradient: const LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withOpacity(0.5),
-                        ],
+                        colors: [Colors.transparent, AppColors.overlayDark],
                       ),
                     ),
                     child: Padding(
@@ -91,7 +85,7 @@ class KnowledgeSection extends StatelessWidget {
                           Text(
                             'บทความที่ ${index + 1}',
                             style: const TextStyle(
-                              color: Colors.white,
+                              color: AppColors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),

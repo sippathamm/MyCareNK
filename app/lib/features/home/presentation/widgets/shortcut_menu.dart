@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
 import '../../../../features/service/presentation/pages/request_history_page.dart';
 
 class ShortcutMenu extends StatelessWidget {
@@ -8,23 +9,11 @@ class ShortcutMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _buildShortcutItem(
-          context: context,
-          icon: Icons.location_on,
-          label: 'จุดบริการ',
-        ),
+        _buildShortcutItem(context: context, icon: Icons.location_on, label: 'จุดบริการ'),
         const SizedBox(width: 16),
-        _buildShortcutItem(
-          context: context,
-          icon: Icons.menu_book,
-          label: 'คู่มือการใช้',
-        ),
+        _buildShortcutItem(context: context, icon: Icons.menu_book, label: 'คู่มือการใช้'),
         const SizedBox(width: 16),
-        _buildShortcutItem(
-          context: context,
-          icon: Icons.receipt_long,
-          label: 'ประวัติการขอ',
-        ),
+        _buildShortcutItem(context: context, icon: Icons.receipt_long, label: 'ประวัติการขอ'),
       ],
     );
   }
@@ -39,13 +28,13 @@ class ShortcutMenu extends StatelessWidget {
         aspectRatio: 1.0,
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppColors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
+                color: AppColors.cardShadow,
                 blurRadius: 10,
-                offset: const Offset(0, 4),
+                offset: Offset(0, 4),
               ),
             ],
           ),
@@ -61,23 +50,23 @@ class ShortcutMenu extends StatelessWidget {
                     ),
                   );
                 } else {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text('"$label" ถูกกด')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('"$label" ถูกกด')),
+                  );
                 }
               },
               borderRadius: BorderRadius.circular(20),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, color: const Color(0xFFFF8A50), size: 36),
+                  Icon(icon, color: AppColors.primary, size: 36),
                   const SizedBox(height: 8),
                   Text(
                     label,
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: Color(0xFF333333),
+                      color: AppColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                     maxLines: 1,
