@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 class RequestHistoryDetailPage extends StatefulWidget {
   final CondomRequestModel data;
@@ -74,18 +75,19 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8A50)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'ดูข้อมูล',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -94,7 +96,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       ),
       body: SafeArea(
         child: RefreshIndicator(
-          color: const Color(0xFFFF8A50),
+          color: AppColors.primary,
           onRefresh: _fetchData,
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -135,32 +137,32 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       switch (_currentData.status) {
         case RequestStatus.pending:
           icon = Icons.assignment_outlined;
-          iconColor = const Color(0xFFFF8A50);
-          iconBgColor = const Color(0xFFFBE9E7);
+          iconColor = AppColors.primary;
+          iconBgColor = AppColors.statusPendingLight;
           break;
         case RequestStatus.preparing:
           icon = Icons.inventory_2_outlined;
-          iconColor = const Color(0xFF4A9FE8);
-          iconBgColor = const Color(0xFFE3F2FD);
+          iconColor = AppColors.lubricant;
+          iconBgColor = AppColors.statusPreparingLight;
           break;
         case RequestStatus.ready:
           icon = Icons.local_shipping_outlined;
-          iconColor = const Color(0xFF9C27B0);
-          iconBgColor = const Color(0xFFF3E5F5);
+          iconColor = AppColors.statusReady;
+          iconBgColor = AppColors.statusReadyLight;
           break;
         case RequestStatus.completed:
           icon = Icons.check_circle_outline;
-          iconColor = const Color(0xFF26A69A);
-          iconBgColor = const Color(0xFFE0F2F1);
+          iconColor = AppColors.statusCompleted;
+          iconBgColor = AppColors.statusCompletedLight;
           break;
         default:
           icon = Icons.assignment_outlined;
-          iconColor = const Color(0xFFFF8A50);
-          iconBgColor = const Color(0xFFFBE9E7);
+          iconColor = AppColors.primary;
+          iconBgColor = AppColors.statusPendingLight;
       }
     }
 
-    // Format Date 
+    // Format Date
     final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
     String dateStr = '${formattedDate.day} ${formatMonthTH(formattedDate.month)} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} น.';
 
@@ -180,7 +182,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 Text(
                   _currentData.referenceNumber,
                   style: GoogleFonts.prompt(
-                    color: const Color(0xFF333333),
+                    color: AppColors.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -241,8 +243,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         children: [
           Row(
             children: [
-              _buildDot(const Color(0xFFFF8A50), isFilled: true),
-              Expanded(child: _buildLine(const Color(0xFFFF8A50))),
+              _buildDot(AppColors.primary, isFilled: true),
+              Expanded(child: _buildLine(AppColors.primary)),
               _buildDot(Colors.grey[600]!, isFilled: true),
             ],
           ),
@@ -268,10 +270,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       );
     }
 
-    const Color pendingColor = Color(0xFFFF8A50);
-    const Color prepColor = Color(0xFF4A9FE8);
-    const Color readyColor = Color(0xFF9C27B0);
-    const Color compColor = Color(0xFF26A69A);
+    const Color prepColor = AppColors.lubricant;
+    const Color readyColor = AppColors.statusReady;
+    const Color compColor = AppColors.statusCompleted;
 
     final isPrepDone = status == RequestStatus.preparing ||
         status == RequestStatus.ready ||
@@ -284,8 +285,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       children: [
         Row(
           children: [
-            _buildDot(pendingColor, isFilled: true),
-            Expanded(child: _buildLine(isPrepDone ? pendingColor : Colors.grey[300]!)),
+            _buildDot(AppColors.primary, isFilled: true),
+            Expanded(child: _buildLine(isPrepDone ? AppColors.primary : Colors.grey[300]!)),
             _buildDot(prepColor, isFilled: isPrepDone),
             Expanded(child: _buildLine(isReadyDone ? prepColor : Colors.grey[300]!)),
             _buildDot(readyColor, isFilled: isReadyDone),
@@ -300,7 +301,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             Text(
               'รอดำเนินการ',
               style: GoogleFonts.prompt(
-                color: status == RequestStatus.pending ? pendingColor : Colors.black87,
+                color: status == RequestStatus.pending ? AppColors.primary : Colors.black87,
                 fontSize: 12,
                 fontWeight: status == RequestStatus.pending ? FontWeight.bold : FontWeight.normal,
               ),
@@ -341,7 +342,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       height: 24,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: isFilled ? color : Colors.white,
+        color: isFilled ? color : AppColors.white,
         border: isFilled ? null : Border.all(color: color, width: 2),
       ),
     );
@@ -360,14 +361,14 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey[300]!),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0x05000000),
+            color: Color(0x05000000),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -377,7 +378,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.white,
+              color: AppColors.white,
               width: double.infinity,
               child: header,
             ),
@@ -430,7 +431,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFF8A50),
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -453,7 +454,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: quantity > 0 ? const Color(0xFFFF8A50) : Colors.black87,
+              color: quantity > 0 ? AppColors.primary : Colors.black87,
             ),
           ),
         ],
@@ -491,7 +492,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFF8A50),
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -501,7 +502,6 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
   Widget _buildLocationCard() {
     String outputDate = _currentData.selectedDate ?? '-';
-    // Optionally format selectedDate properly if it follows YYYY-MM-DD
     if (_currentData.selectedDate != null && _currentData.selectedDate!.contains('-')) {
       try {
         DateTime parsedDate = DateTime.parse(_currentData.selectedDate!);
@@ -545,7 +545,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFF8A50),
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -560,7 +560,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFF8A50),
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -575,7 +575,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFF8A50),
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -607,7 +607,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         alignment: Alignment.centerLeft,
         child: Text(
           _currentData.message,
-          style: const TextStyle(fontSize: 16, color: Color(0xFFFF8A50)),
+          style: const TextStyle(fontSize: 16, color: AppColors.primary),
         ),
       ),
     );
@@ -636,7 +636,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         alignment: Alignment.centerLeft,
         child: Text(
           _currentData.cancelReason!,
-          style: const TextStyle(fontSize: 16, color: Color(0xFFFF5252)),
+          style: const TextStyle(fontSize: 16, color: AppColors.error),
         ),
       ),
     );
@@ -653,8 +653,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           child: FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFFF8A50),
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
@@ -682,8 +682,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                         'request_status': 'cancelled_by_user',
                       })
                       .eq('id', _currentData.id);
-                  
-                  // Refund quota string to user_monthly_quotas
+
+                  // Refund quota to user_monthly_quotas
                   final session = Supabase.instance.client.auth.currentSession;
                   if (session != null) {
                     final userId = session.user.id;
@@ -738,8 +738,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 }
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFFFF5252),
-                side: const BorderSide(color: Color(0xFFFF5252)),
+                foregroundColor: AppColors.error,
+                side: const BorderSide(color: AppColors.error),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24),
                 ),
@@ -748,7 +748,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: Color(0xFFFF5252)),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.error),
                     )
                   : const Text(
                       'ยกเลิกคำขอ',

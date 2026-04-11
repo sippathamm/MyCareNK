@@ -25,10 +25,23 @@ abstract final class AppColors {
   static const Color errorDark = Color(0xFFB71C1C);
   static const Color errorShadow = Color(0x4DB71C1C); // ~30% opacity
 
+  // Success / green
+  static const Color success = Color(0xFF5DB036);
+
+  // Request status colors
+  static const Color statusPendingLight = Color(0xFFFBE9E7);
+  static const Color statusPreparing = Color(0xFF1F77C3);
+  static const Color statusPreparingLight = Color(0xFFE3F2FD);
+  static const Color statusReady = Color(0xFF9C27B0);
+  static const Color statusReadyLight = Color(0xFFF3E5F5);
+  static const Color statusCompleted = Color(0xFF26A69A);
+  static const Color statusCompletedLight = Color(0xFFE0F2F1);
+
   // Text
   static const Color textPrimary = Color(0xFF333333);
   static const Color textSecondary = Color(0xFF666666);
   static const Color textMuted = Color(0xFF777777);
+  static const Color textHint = Color(0xFF999999);
   static const Color textBlack87 = Color(0xDD000000);
 
   // Avatar / profile

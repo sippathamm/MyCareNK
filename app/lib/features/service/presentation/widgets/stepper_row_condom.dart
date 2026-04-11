@@ -1,10 +1,6 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
-
-// Color Palette
-const Color primaryColor = Color(0xFFFF8A50);
-const Color textColor = Color(0xFF333333);
-const Color textGrey = Color(0xFF777777);
+import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 class StepperRowCondom extends StatefulWidget {
   final String label;
@@ -26,8 +22,6 @@ class StepperRowCondom extends StatefulWidget {
 
 class _StepperRowCondomState extends State<StepperRowCondom> {
   late TextEditingController _controller;
-
-  // Timer for long press
   Timer? _timer;
 
   @override
@@ -59,10 +53,8 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
 
   void _startTimer(bool isAdd) {
     _cancelTimer();
-    // Initial delay then periodic
-    _timer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
       final newCount = widget.count + (isAdd ? 1 : -1);
-      // Check limits
       if (newCount >= 0 && newCount <= widget.max) {
         widget.onChanged(newCount);
       }
@@ -84,7 +76,7 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
           Text.rich(
             TextSpan(
               text: 'ขนาด ',
-              style: const TextStyle(fontSize: 16, color: textColor),
+              style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
               children: [
                 TextSpan(
                   text: widget.label,
@@ -101,7 +93,7 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
               if (widget.count > 0) widget.onChanged(widget.count - 1);
             },
             onLongPressStart: () => _startTimer(false),
-            onLongPressEnd: () => _cancelTimer(),
+            onLongPressEnd: _cancelTimer,
             isEnabled: widget.count > 0,
           ),
           const SizedBox(width: 12),
@@ -119,7 +111,7 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: textColor,
+                color: AppColors.textPrimary,
               ),
               onChanged: (value) {
                 final newValue = int.tryParse(value);
@@ -140,7 +132,7 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
             icon: Icons.add,
             onTap: () => widget.onChanged(widget.count + 1),
             onLongPressStart: () => _startTimer(true),
-            onLongPressEnd: () => _cancelTimer(),
+            onLongPressEnd: _cancelTimer,
             isEnabled: widget.count < widget.max,
             isAdd: true,
           ),
@@ -169,13 +161,13 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: isEnabled
-                ? (isAdd ? primaryColor : Colors.grey[200])
+                ? (isAdd ? AppColors.primary : Colors.grey[200])
                 : Colors.grey[100],
           ),
           child: Icon(
             icon,
             color: isEnabled
-                ? (isAdd ? Colors.white : textGrey)
+                ? (isAdd ? AppColors.white : AppColors.textMuted)
                 : Colors.grey[300],
             size: 18,
           ),
