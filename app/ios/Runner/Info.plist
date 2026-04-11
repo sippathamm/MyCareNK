@@ -41,6 +41,10 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>แอปนี้ต้องการเข้าถึงกล้องเพื่อสแกน QR Code</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>แอปนี้ต้องการเข้าถึงรูปภาพเพื่อสแกน QR Code จากคลังรูป</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
