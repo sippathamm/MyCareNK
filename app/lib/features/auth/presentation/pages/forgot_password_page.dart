@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import 'forgot_password_recovery_code_page.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -20,14 +21,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   void _onNext() {
     if (!_formKey.currentState!.validate()) return;
-
     final username = _usernameController.text.trim();
-
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) =>
-            ForgotPasswordRecoveryCodePage(username: username),
+        builder: (context) => ForgotPasswordRecoveryCodePage(username: username),
       ),
     );
   }
@@ -37,10 +35,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colorScheme.primary),
@@ -49,7 +48,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         title: const Text(
           'ลืมรหัสผ่าน',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -64,7 +63,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                // Icon Box
                 Container(
                   width: 72,
                   height: 72,
@@ -72,24 +70,18 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     border: Border.all(color: Colors.grey[300]!, width: 2),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
-                    Icons.person_outline,
-                    color: colorScheme.primary,
-                    size: 40,
-                  ),
+                  child: Icon(Icons.person_outline, color: colorScheme.primary, size: 40),
                 ),
                 const SizedBox(height: 24.0),
-                // Title Text
                 const Text(
                   'กรอกชื่อผู้ใช้งานของคุณ',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF333333),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 24.0),
-                // Username Field
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
@@ -100,10 +92,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     decoration: InputDecoration(
                       hintText: 'ชื่อผู้ใช้งาน',
                       hintStyle: TextStyle(color: Colors.grey[400]),
-                      prefixIcon: Icon(
-                        Icons.person_outline,
-                        color: Colors.grey[400],
-                      ),
+                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -125,7 +114,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                 ),
                 const SizedBox(height: 48.0),
-                // Next Button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -133,29 +121,23 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     onPressed: _onNext,
                     style: FilledButton.styleFrom(
                       backgroundColor: colorScheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
                     child: const Text(
                       'ถัดไป',
-                      style: TextStyle(
-                        fontSize: 16.0,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16.0),
-                // Help Button
                 TextButton(
                   onPressed: () {},
                   child: Text(
                     'ต้องการความช่วยเหลือ?',
-                    style: TextStyle(
-                      color: colorScheme.primary,
-                    ),
+                    style: TextStyle(color: colorScheme.primary),
                   ),
                 ),
               ],

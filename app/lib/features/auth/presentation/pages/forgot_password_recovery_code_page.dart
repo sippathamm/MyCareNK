@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../data/recovery_service.dart';
 import 'forgot_password_reset_page.dart';
 
@@ -15,22 +16,20 @@ class ForgotPasswordRecoveryCodePage extends StatefulWidget {
 
 class _ForgotPasswordRecoveryCodePageState
     extends State<ForgotPasswordRecoveryCodePage> {
-  final List<TextEditingController> _controllers = List.generate(
-    6,
-    (index) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
   bool _isLoading = false;
 
   final RecoveryService _recoveryService = RecoveryService();
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
-      controller.dispose();
+    for (final c in _controllers) {
+      c.dispose();
     }
-    for (var node in _focusNodes) {
-      node.dispose();
+    for (final n in _focusNodes) {
+      n.dispose();
     }
     super.dispose();
   }
@@ -44,9 +43,8 @@ class _ForgotPasswordRecoveryCodePageState
   }
 
   Future<void> _onNext() async {
-    final recoveryCode = _controllers
-        .map((c) => c.text.trim().toUpperCase())
-        .join();
+    final recoveryCode =
+        _controllers.map((c) => c.text.trim().toUpperCase()).join();
 
     if (recoveryCode.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -58,9 +56,7 @@ class _ForgotPasswordRecoveryCodePageState
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final result = await _recoveryService.verifyCode(
@@ -84,26 +80,22 @@ class _ForgotPasswordRecoveryCodePageState
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง'),
+              result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -112,10 +104,11 @@ class _ForgotPasswordRecoveryCodePageState
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colorScheme.primary),
@@ -124,7 +117,7 @@ class _ForgotPasswordRecoveryCodePageState
         title: const Text(
           'ลืมรหัสผ่าน',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -137,7 +130,6 @@ class _ForgotPasswordRecoveryCodePageState
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-              // Icon Box
               Container(
                 width: 72,
                 height: 72,
@@ -145,24 +137,18 @@ class _ForgotPasswordRecoveryCodePageState
                   border: Border.all(color: Colors.grey[300]!, width: 2),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Icon(
-                  Icons.lock_outline,
-                  color: colorScheme.primary,
-                  size: 40,
-                ),
+                child: Icon(Icons.lock_outline, color: colorScheme.primary, size: 40),
               ),
               const SizedBox(height: 24.0),
-              // Title Text
               const Text(
                 'กรอกรหัสผ่านกู้คืนบัญชี',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF333333),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 32.0),
-              // Recovery Code Fields
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (index) {
@@ -181,9 +167,7 @@ class _ForgotPasswordRecoveryCodePageState
                         textCapitalization: TextCapitalization.characters,
                         keyboardType: TextInputType.text,
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'[a-fA-F0-9]'),
-                          ),
+                          FilteringTextInputFormatter.allow(RegExp(r'[a-fA-F0-9]')),
                           LengthLimitingTextInputFormatter(1),
                         ],
                         maxLength: 1,
@@ -202,7 +186,6 @@ class _ForgotPasswordRecoveryCodePageState
                 }),
               ),
               const SizedBox(height: 48.0),
-              // Next Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
@@ -210,7 +193,7 @@ class _ForgotPasswordRecoveryCodePageState
                   onPressed: _isLoading ? null : _onNext,
                   style: FilledButton.styleFrom(
                     backgroundColor: colorScheme.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -220,7 +203,7 @@ class _ForgotPasswordRecoveryCodePageState
                           height: 24,
                           width: 24,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: AppColors.white,
                             strokeWidth: 2,
                           ),
                         )
@@ -234,7 +217,6 @@ class _ForgotPasswordRecoveryCodePageState
                 ),
               ),
               const SizedBox(height: 16.0),
-              // Help Button
               TextButton(
                 onPressed: () {},
                 child: Text(

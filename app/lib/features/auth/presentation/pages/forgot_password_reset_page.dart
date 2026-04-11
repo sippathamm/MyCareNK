@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../data/recovery_service.dart';
 import 'recovery_codes_display_page.dart';
 
@@ -37,9 +38,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
   Future<void> _onConfirm() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final result = await _recoveryService.resetPassword(
@@ -51,7 +50,6 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
       if (!mounted) return;
 
       if (result.success && result.newRecoveryCodes != null) {
-        // Navigate to recovery codes display page
         Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => RecoveryCodesDisplayPage(
@@ -61,30 +59,25 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
           (route) => route.isFirst,
         );
       } else {
-        // Show error
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง'),
+              result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -93,10 +86,11 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colorScheme.primary),
@@ -105,7 +99,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
         title: const Text(
           'ลืมรหัสผ่าน',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -120,7 +114,6 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                // Icon Box
                 Container(
                   width: 72,
                   height: 72,
@@ -128,40 +121,28 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     border: Border.all(color: Colors.grey[300]!, width: 2),
                     borderRadius: BorderRadius.circular(16),
                   ),
-                  child: Icon(
-                    Icons.lock_reset,
-                    color: colorScheme.primary,
-                    size: 40,
-                  ),
+                  child: Icon(Icons.lock_reset, color: colorScheme.primary, size: 40),
                 ),
                 const SizedBox(height: 24.0),
-                // Title Text
                 const Text(
                   'กรอกรหัสผ่านใหม่',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF333333),
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 32.0),
 
-                // Password Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                // New Password Field
+                _buildInputBox(
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       hintText: 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: Colors.grey[400],
-                      ),
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -169,16 +150,11 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
                           color: Colors.grey[400],
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     validator: (value) {
@@ -188,8 +164,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                       if (value.length < 8) {
                         return 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร';
                       }
-                      if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$')
-                          .hasMatch(value)) {
+                      if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(value)) {
                         return 'รหัสผ่านต้องมีทั้งตัวอักษรและตัวเลข';
                       }
                       return null;
@@ -199,21 +174,14 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                 const SizedBox(height: 16.0),
 
                 // Confirm Password Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                _buildInputBox(
                   child: TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
                     decoration: InputDecoration(
                       hintText: 'ยืนยันรหัสผ่านใหม่',
                       hintStyle: TextStyle(color: Colors.grey[400]),
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: Colors.grey[400],
-                      ),
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -226,11 +194,9 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                               : Icons.visibility,
                           color: Colors.grey[400],
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
+                        onPressed: () => setState(
+                          () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -246,7 +212,6 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                 ),
 
                 const SizedBox(height: 48.0),
-                // Confirm Button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -254,7 +219,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     onPressed: _isLoading ? null : _onConfirm,
                     style: FilledButton.styleFrom(
                       backgroundColor: colorScheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -264,7 +229,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.white,
                               strokeWidth: 2,
                             ),
                           )
@@ -282,6 +247,16 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInputBox({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: child,
     );
   }
 }

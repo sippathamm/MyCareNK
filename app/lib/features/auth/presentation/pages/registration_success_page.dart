@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../../../main/presentation/pages/main_page.dart';
 import '../widgets/recovery_codes_grid.dart';
 
@@ -17,15 +18,12 @@ class RegistrationSuccessPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFF7E6), Color(0xFFFFFFFF)],
+            colors: [AppColors.primaryBackground, AppColors.white],
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 40.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -35,68 +33,53 @@ class RegistrationSuccessPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFF8A50),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 32),
-
-                Image.asset(
-                  'assets/images/rocket.png',
-                  width: 175,
-                  height: 175,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Container(
-                      width: 175,
-                      height: 175,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: Colors.grey,
+                Center(
+                  child: Image.asset(
+                    'assets/images/rocket.png',
+                    width: 175,
+                    height: 175,
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        width: 175,
+                        height: 175,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
-                    );
-                  },
+                        child: const Center(
+                          child: Icon(Icons.error_outline, size: 64, color: Colors.grey),
+                        ),
+                      );
+                    },
+                  ),
                 ),
-
                 const SizedBox(height: 40),
-
                 const Text(
                   'กรุณาเก็บรหัสกู้คืนทั้ง 6 ตัวนี้\nไว้ในที่ปลอดภัย หากคุณลืมรหัสผ่าน',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF333333),
+                    color: AppColors.textPrimary,
                     height: 1.4,
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
                 RecoveryCodesGrid(
                   recoveryCodes: recoveryCodes,
-                  footerText:
-                      'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
+                  footerText: 'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
                 ),
-
                 const SizedBox(height: 12),
-
                 SizedBox(
                   height: 48,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      ).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const MainScreen(),
-                        ),
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const MainScreen()),
                         (route) => false,
                       );
                     },
@@ -109,10 +92,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                     ),
                     child: const Text(
                       'ตกลง',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 /// Shared widget that displays recovery codes in a grid with a copy-all button.
 /// Used by both RegistrationSuccessPage and RecoveryCodesDisplayPage.
@@ -29,28 +30,27 @@ class RecoveryCodesGrid extends StatelessWidget {
           children: recoveryCodes.map(_buildCodeBox).toList(),
         ),
         const SizedBox(height: 24),
-        if (footerText != null)
+        if (footerText != null) ...[
           Text(
             footerText!,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF666666)),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
           ),
-        if (footerText != null) const SizedBox(height: 32),
+          const SizedBox(height: 32),
+        ],
         SizedBox(
           width: double.infinity,
           height: 48,
           child: FilledButton(
             onPressed: () {
-              Clipboard.setData(
-                ClipboardData(text: recoveryCodes.join(', ')),
-              );
+              Clipboard.setData(ClipboardData(text: recoveryCodes.join(', ')));
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(content: Text('คัดลอกรหัสทั้งหมดแล้ว')),
               );
             },
             style: FilledButton.styleFrom(
               backgroundColor: colorScheme.primary,
-              foregroundColor: Colors.white,
+              foregroundColor: AppColors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
@@ -68,9 +68,9 @@ class RecoveryCodesGrid extends StatelessWidget {
   Widget _buildCodeBox(String code) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF3E0),
+        color: AppColors.primaryCodeBox,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFFFCC80)),
+        border: Border.all(color: AppColors.primaryCodeBorder),
       ),
       child: Center(
         child: Text(
@@ -78,7 +78,7 @@ class RecoveryCodesGrid extends StatelessWidget {
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
           ),
         ),
       ),

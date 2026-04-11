@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/constants/app_colors.dart';
 import '../widgets/recovery_codes_grid.dart';
 import 'login_page.dart';
 
@@ -18,15 +19,12 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFF7E6), Color(0xFFFFFFFF)],
+            colors: [AppColors.primaryBackground, AppColors.white],
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 24.0,
-              vertical: 40.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -36,62 +34,49 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFFF8A50),
+                    color: AppColors.primary,
                   ),
                 ),
                 const SizedBox(height: 16),
-
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3E0),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFFFCC80),
-                      width: 2,
+                Center(
+                  child: Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryCodeBox,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppColors.primaryCodeBorder, width: 2),
+                    ),
+                    child: const Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.primary,
+                      size: 48,
                     ),
                   ),
-                  child: const Icon(
-                    Icons.check_circle_outline,
-                    color: Color(0xFFFF8A50),
-                    size: 48,
-                  ),
                 ),
-
                 const SizedBox(height: 32),
-
                 const Text(
                   'กรุณาเก็บรหัสกู้คืนใหม่ทั้ง 6 ตัวนี้\nไว้ในที่ปลอดภัย หากคุณลืมรหัสผ่าน',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
-                    color: Color(0xFF333333),
+                    color: AppColors.textPrimary,
                     height: 1.4,
                   ),
                 ),
-
                 const SizedBox(height: 32),
-
                 RecoveryCodesGrid(
                   recoveryCodes: recoveryCodes,
                   footerText:
                       'รหัสกู้คืนชุดเก่าใช้ไม่ได้แล้ว\nหากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัสชุดใหม่นี้',
                 ),
-
                 const SizedBox(height: 12),
-
                 SizedBox(
                   height: 48,
                   child: OutlinedButton(
                     onPressed: () {
-                      Navigator.of(
-                        context,
-                        rootNavigator: true,
-                      ).pushAndRemoveUntil(
-                        MaterialPageRoute(
-                          builder: (context) => const LoginPage(),
-                        ),
+                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const LoginPage()),
                         (route) => route.isFirst,
                       );
                     },
@@ -104,10 +89,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
                     ),
                     child: const Text(
                       'กลับไปเข้าสู่ระบบ',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ),
