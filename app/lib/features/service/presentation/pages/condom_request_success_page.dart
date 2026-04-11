@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
 import 'condom_request_detail_page.dart';
 
 class CondomRequestSuccessPage extends StatelessWidget {
@@ -31,7 +32,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
 
   String _formatDate(DateTime? date) {
     if (date == null) return '-';
-    final List<String> months = [
+    const List<String> months = [
       '',
       'มกราคม',
       'กุมภาพันธ์',
@@ -57,7 +58,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -72,25 +73,23 @@ class CondomRequestSuccessPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Spacer(),
-                        // Title
                         const Text(
                           'ขอขอบคุณ!',
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFFF8A50),
+                            color: AppColors.primary,
                           ),
                         ),
                         const SizedBox(height: 40),
 
-                        // Green Checkmark
                         Container(
                           width: 120,
                           height: 120,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             border: Border.all(
-                              color: const Color(0xFF5DB036),
+                              color: AppColors.success,
                               width: 12,
                             ),
                           ),
@@ -98,19 +97,18 @@ class CondomRequestSuccessPage extends StatelessWidget {
                             child: Icon(
                               Icons.check,
                               size: 80,
-                              color: Color(0xFF5DB036),
+                              color: AppColors.success,
                             ),
                           ),
                         ),
                         const SizedBox(height: 40),
 
-                        // Success Text
                         const Text(
                           'ส่งข้อมูลสำเร็จ',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF333333),
+                            color: AppColors.textPrimary,
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -119,11 +117,11 @@ class CondomRequestSuccessPage extends StatelessWidget {
                         const SizedBox(height: 16),
 
                         const Text(
-                          'จุดบริการกำลังเตรียมถุงยางอนามัยให้คุณ',
+                          'สถานบริการกำลังเตรียมถุงยางอนามัยให้คุณ',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF333333),
+                            color: AppColors.textPrimary,
                             height: 1.5,
                           ),
                         ),
@@ -135,7 +133,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF333333),
+                            color: AppColors.textPrimary,
                             height: 1.5,
                           ),
                         ),
@@ -146,7 +144,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFFF8A50),
+                            color: AppColors.primary,
                             height: 1.5,
                           ),
                         ),
@@ -156,7 +154,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                           text: TextSpan(
                             style: DefaultTextStyle.of(context).style.copyWith(
                               fontSize: 14,
-                              color: const Color(0xFF333333),
+                              color: AppColors.textPrimary,
                               height: 1.5,
                             ),
                             children: [
@@ -165,7 +163,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                 text: _formatDate(selectedDate),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFF8A50),
+                                  color: AppColors.primary,
                                 ),
                               ),
                               const TextSpan(text: ' เวลา '),
@@ -173,7 +171,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                 text: _formatTime(selectedTime),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFFFF8A50),
+                                  color: AppColors.primary,
                                 ),
                               ),
                               const TextSpan(text: ' น.'),
@@ -188,13 +186,12 @@ class CondomRequestSuccessPage extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontSize: 14,
-                            color: Color(0xFF999999),
+                            color: AppColors.textHint,
                           ),
                         ),
 
                         const Spacer(),
 
-                        // Buttons
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -225,7 +222,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                   );
                                 },
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFFFF8A50),
+                                  backgroundColor: AppColors.primary,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
                                   ),
@@ -235,7 +232,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                    color: AppColors.white,
                                   ),
                                 ),
                               ),
@@ -251,7 +248,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                 },
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(
-                                    color: Color(0xFFFF8A50),
+                                    color: AppColors.primary,
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(24),
@@ -262,7 +259,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                   style: TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFFFF8A50),
+                                    color: AppColors.primary,
                                   ),
                                 ),
                               ),
@@ -279,7 +276,6 @@ class CondomRequestSuccessPage extends StatelessWidget {
           },
         ),
       ),
-
     );
   }
 }

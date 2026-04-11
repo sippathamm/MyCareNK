@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 class ServiceCard extends StatelessWidget {
   final IconData icon;
@@ -19,13 +20,13 @@ class ServiceCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 12.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: AppColors.cardShadow,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -39,37 +40,32 @@ class ServiceCard extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                // Icon Background
                 Container(
                   width: 50,
                   height: 50,
                   decoration: const BoxDecoration(
-                    // Use primary orange for background to match 'Icon color: white' requirement
-                    // and 'Circle icon background (orange)' from the table.
-                    color: Color(0xFFFF8A50),
+                    color: AppColors.primary,
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(icon, color: Colors.white, size: 28),
+                  child: Icon(icon, color: AppColors.white, size: 28),
                 ),
                 const SizedBox(width: 16),
-                // Text Content
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         title,
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: const Color(0xFF333333),
-                            ),
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: const Color(0xFF999999),
+                          color: Colors.grey[600],
                         ),
                       ),
                     ],

@@ -2,6 +2,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/constants/app_colors.dart';
 import 'condom_request_success_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 
@@ -164,18 +165,19 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8A50)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'ยืนยันข้อมูล',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -183,7 +185,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.edit_outlined, color: Color(0xFFFF8A50)),
+            icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
             onPressed: () => Navigator.of(context).pop(),
           ),
         ],
@@ -207,8 +209,8 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                 child: FilledButton(
                   onPressed: _isLoading ? null : _submitRequest,
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF8A50),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -218,7 +220,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: AppColors.white,
                             strokeWidth: 2,
                           ),
                         )
@@ -262,7 +264,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           style: GoogleFonts.prompt(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: const Color(0xFF333333),
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
@@ -277,7 +279,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                     'ถุงยางอนามัย',
                     style: GoogleFonts.prompt(
                       fontSize: 14,
-                      color: const Color(0xFF666666),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   TweenAnimationBuilder<int>(
@@ -296,7 +298,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                             TextSpan(
                               text: '$value ',
                               style: GoogleFonts.prompt(
-                                color: const Color(0xFFFF8A50),
+                                color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
                               ),
@@ -306,7 +308,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                               style: GoogleFonts.prompt(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500,
-                                color: const Color(0xFFFF8A50),
+                                color: AppColors.primary,
                               ),
                             ),
                           ],
@@ -326,7 +328,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                     'สารหล่อลื่น',
                     style: GoogleFonts.prompt(
                       fontSize: 14,
-                      color: const Color(0xFF666666),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   TweenAnimationBuilder<int>(
@@ -346,7 +348,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                             TextSpan(
                               text: '$value ',
                               style: GoogleFonts.prompt(
-                                color: const Color(0xFF4A9FE8),
+                                color: AppColors.lubricant,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
                               ),
@@ -356,7 +358,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                               style: GoogleFonts.prompt(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500,
-                                color: const Color(0xFF4A9FE8),
+                                color: AppColors.lubricant,
                               ),
                             ),
                           ],
@@ -382,14 +384,14 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey[300]!),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withAlpha(10),
+            color: AppColors.cardShadow,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -399,7 +401,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: Colors.white, // header background white
+              color: AppColors.white,
               width: double.infinity,
               child: header,
             ),
@@ -427,7 +429,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       header: const Text(
         'จำนวนถุงยางอนามัย',
         style: TextStyle(
-          color: Colors.black, // text black
+          color: Colors.black,
           fontSize: 16,
           fontWeight: FontWeight.bold,
         ),
@@ -453,7 +455,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFFFF8A50), // user data orange
+                        color: AppColors.primary,
                       ),
                     ),
                   ],
@@ -475,7 +477,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFF8A50), // user data orange
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -494,7 +496,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           Text(
             'เพิ่มเติม',
             style: TextStyle(
-              color: Colors.black, // text black
+              color: Colors.black,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -513,7 +515,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFFFF8A50), // user data orange
+              color: AppColors.primary,
             ),
           ),
         ],
@@ -523,32 +525,19 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
 
   String formatMonthTH(int month) {
     switch (month) {
-      case 1:
-        return 'มกราคม';
-      case 2:
-        return 'กุมภาพันธ์';
-      case 3:
-        return 'มีนาคม';
-      case 4:
-        return 'เมษายน';
-      case 5:
-        return 'พฤษภาคม';
-      case 6:
-        return 'มิถุนายน';
-      case 7:
-        return 'กรกฎาคม';
-      case 8:
-        return 'สิงหาคม';
-      case 9:
-        return 'กันยายน';
-      case 10:
-        return 'ตุลาคม';
-      case 11:
-        return 'พฤศจิกายน';
-      case 12:
-        return 'ธันวาคม';
-      default:
-        return '';
+      case 1: return 'มกราคม';
+      case 2: return 'กุมภาพันธ์';
+      case 3: return 'มีนาคม';
+      case 4: return 'เมษายน';
+      case 5: return 'พฤษภาคม';
+      case 6: return 'มิถุนายน';
+      case 7: return 'กรกฎาคม';
+      case 8: return 'สิงหาคม';
+      case 9: return 'กันยายน';
+      case 10: return 'ตุลาคม';
+      case 11: return 'พฤศจิกายน';
+      case 12: return 'ธันวาคม';
+      default: return '';
     }
   }
 
@@ -566,9 +555,9 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           Icon(Icons.calendar_today_outlined, color: Colors.black),
           SizedBox(width: 8),
           Text(
-            'จุดบริการ วันและเวลารับ',
+            'สถานบริการ วันและเวลารับ',
             style: TextStyle(
-              color: Colors.black, // text black
+              color: Colors.black,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -580,13 +569,13 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
+              const Text('สถานบริการ', style: TextStyle(fontSize: 16)),
               Text(
                 widget.selectedServiceCenter ?? '-',
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFF8A50), // user data orange
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -601,7 +590,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFF8A50), // user data orange
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -616,7 +605,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                 style: const TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFFFF8A50), // user data orange
+                  color: AppColors.primary,
                 ),
               ),
             ],
@@ -635,7 +624,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           Text(
             'ฝากข้อความ',
             style: TextStyle(
-              color: Colors.black, // text black
+              color: Colors.black,
               fontSize: 16,
               fontWeight: FontWeight.bold,
             ),
@@ -648,7 +637,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           widget.message,
           style: const TextStyle(
             fontSize: 16,
-            color: Color(0xFFFF8A50), // user data orange
+            color: AppColors.primary,
           ),
         ),
       ),

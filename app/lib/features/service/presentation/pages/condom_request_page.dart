@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/constants/app_constants.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
@@ -15,7 +17,6 @@ class CondomRequestPage extends StatefulWidget {
 }
 
 class _CondomRequestPageState extends State<CondomRequestPage> {
-  // State
   final Map<int, int> _quantities = {49: 0, 52: 0, 54: 0, 56: 0};
 
   int _lubricantQuantity = 0;
@@ -26,13 +27,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   int _animationVersion = 0;
   StreamSubscription<AuthState>? _authSubscription;
 
-  // Quota constants
-  static const int _maxMonthlyQuota = 60;
-  static const int _maxMonthlyLubricantQuota = 30;
-
   // Fetched from Supabase
-  int _currentMonthlyUsed = _maxMonthlyQuota;
-  int _currentMonthlyLubricantUsed = _maxMonthlyLubricantQuota;
+  int _currentMonthlyUsed = AppConstants.maxCondomQuota;
+  int _currentMonthlyLubricantUsed = AppConstants.maxLubricantQuota;
 
   int get _totalSelected =>
       _quantities.values.fold(0, (sum, count) => sum + count);
@@ -46,8 +43,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     ) {
       if (data.event == AuthChangeEvent.signedOut) {
         setState(() {
-          _currentMonthlyUsed = _maxMonthlyQuota;
-          _currentMonthlyLubricantUsed = _maxMonthlyLubricantQuota;
+          _currentMonthlyUsed = AppConstants.maxCondomQuota;
+          _currentMonthlyLubricantUsed = AppConstants.maxLubricantQuota;
           _animationVersion++;
         });
       } else if (data.event == AuthChangeEvent.signedIn) {
@@ -117,9 +114,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFFFF8A50),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF333333),
+              primary: AppColors.primary,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -134,18 +131,19 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8A50)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'รับถุงยางอนามัย',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -158,31 +156,24 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Monthly Progress
               _buildMonthlyProgress(),
               const SizedBox(height: 20),
 
-              // Quantity Card
               _buildQuantityCard(),
 
-              // Lubricant Card
               _buildLubricantCard(),
 
-              // Place & Time Card
               _buildPlaceTimeCard(),
 
-              // Message Card
               _buildMessageCard(),
 
               const SizedBox(height: 48),
 
-              // Submit Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: FilledButton(
                   onPressed: () {
-                    // Check if user is logged in
                     final session =
                         Supabase.instance.client.auth.currentSession;
                     if (session == null) {
@@ -212,7 +203,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                         _selectedTime == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('กรุณาเลือกจุดบริการ วันที่ และเวลา'),
+                          content: Text('กรุณาเลือกสถานบริการ วันที่ และเวลา'),
                         ),
                       );
                       return;
@@ -228,17 +219,17 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                           selectedTime: _selectedTime,
                           message: _messageController.text,
                           currentMonthlyUsed: _currentMonthlyUsed,
-                          maxMonthlyQuota: _maxMonthlyQuota,
+                          maxMonthlyQuota: AppConstants.maxCondomQuota,
                           currentMonthlyLubricantUsed:
                               _currentMonthlyLubricantUsed,
-                          maxMonthlyLubricantQuota: _maxMonthlyLubricantQuota,
+                          maxMonthlyLubricantQuota: AppConstants.maxLubricantQuota,
                         ),
                       ),
                     );
                   },
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(0xFFFF8A50),
-                    foregroundColor: Colors.white,
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -252,15 +243,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
               const SizedBox(height: 16),
 
-              // Reset Button
               SizedBox(
                 width: double.infinity,
                 height: 48,
                 child: OutlinedButton(
                   onPressed: _resetForm,
                   style: OutlinedButton.styleFrom(
-                    side: const BorderSide(color: Color(0xFFFF4D4D)),
-                    foregroundColor: const Color(0xFFFF4D4D),
+                    side: const BorderSide(color: AppColors.error),
+                    foregroundColor: AppColors.error,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -280,20 +270,18 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   }
 
   Widget _buildMonthlyProgress() {
-    // ถุงยางอนามัย
     final int totalUsed = _currentMonthlyUsed + _totalSelected;
-    final int remaining = (_maxMonthlyQuota - totalUsed).clamp(
+    final int remaining = (AppConstants.maxCondomQuota - totalUsed).clamp(
       0,
-      _maxMonthlyQuota,
+      AppConstants.maxCondomQuota,
     );
 
-    // สารหล่อลื่น
     final int totalLubricantUsed =
         _currentMonthlyLubricantUsed + _lubricantQuantity;
     final int remainingLubricant =
-        (_maxMonthlyLubricantQuota - totalLubricantUsed).clamp(
+        (AppConstants.maxLubricantQuota - totalLubricantUsed).clamp(
           0,
-          _maxMonthlyLubricantQuota,
+          AppConstants.maxLubricantQuota,
         );
 
     return Column(
@@ -304,13 +292,12 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           style: GoogleFonts.prompt(
             fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: const Color(0xFF333333),
+            color: AppColors.textPrimary,
           ),
         ),
         const SizedBox(height: 16),
         Row(
           children: [
-            // Condom Progress
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -319,7 +306,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     'ถุงยางอนามัย',
                     style: GoogleFonts.prompt(
                       fontSize: 14,
-                      color: const Color(0xFF666666),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   TweenAnimationBuilder<int>(
@@ -335,7 +322,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                             style: GoogleFonts.prompt(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFFFF8A50),
+                              color: AppColors.primary,
                             ),
                           ),
                           TextSpan(
@@ -343,7 +330,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                             style: GoogleFonts.prompt(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFFFF8A50),
+                              color: AppColors.primary,
                             ),
                           ),
                         ],
@@ -353,15 +340,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   const SizedBox(height: 8),
                   _buildClassicAnimatedProgressBar(
                     animationKey: 'condom_bar_$_animationVersion',
-                    color: const Color(0xFFFF8A50),
+                    color: AppColors.primary,
                     current: remaining,
-                    total: _maxMonthlyQuota,
+                    total: AppConstants.maxCondomQuota,
                   ),
                 ],
               ),
             ),
             const SizedBox(width: 24),
-            // Lubricant Progress
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,7 +356,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     'สารหล่อลื่น',
                     style: GoogleFonts.prompt(
                       fontSize: 14,
-                      color: const Color(0xFF666666),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                   TweenAnimationBuilder<int>(
@@ -386,7 +372,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                             style: GoogleFonts.prompt(
                               fontSize: 28,
                               fontWeight: FontWeight.bold,
-                              color: const Color(0xFF4A9FE8),
+                              color: AppColors.lubricant,
                             ),
                           ),
                           TextSpan(
@@ -394,7 +380,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                             style: GoogleFonts.prompt(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
-                              color: const Color(0xFF4A9FE8),
+                              color: AppColors.lubricant,
                             ),
                           ),
                         ],
@@ -404,9 +390,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   const SizedBox(height: 8),
                   _buildClassicAnimatedProgressBar(
                     animationKey: 'lubricant_bar_$_animationVersion',
-                    color: const Color(0xFF4A9FE8),
+                    color: AppColors.lubricant,
                     current: remainingLubricant,
-                    total: _maxMonthlyLubricantQuota,
+                    total: AppConstants.maxLubricantQuota,
                   ),
                 ],
               ),
@@ -462,13 +448,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   Widget _buildQuantityCard() {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: AppColors.cardShadowMedium,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -478,12 +464,12 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFFFF8A50),
+              color: AppColors.primary,
               width: double.infinity,
               child: const Text(
                 'จำนวนถุงยางอนามัย',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                 ),
@@ -493,10 +479,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: _quantities.entries.map((entry) {
-                  // Calculate max allowed for this row: current value + remaining quota
                   final int totalUsed = _currentMonthlyUsed + _totalSelected;
-                  final int remainingForThisRow = (_maxMonthlyQuota - totalUsed)
-                      .clamp(0, _maxMonthlyQuota);
+                  final int remainingForThisRow = (AppConstants.maxCondomQuota - totalUsed)
+                      .clamp(0, AppConstants.maxCondomQuota);
                   final int maxAllowed = entry.value + remainingForThisRow;
 
                   return StepperRowCondom(
@@ -534,9 +519,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       ),
                     ),
                   ),
-                  // Gap
                   const SizedBox(width: 14),
-                  // Right Unit (Matches Right Button width)
                   const SizedBox(
                     width: 26,
                     child: Center(
@@ -562,13 +545,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: AppColors.cardShadowMedium,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -578,16 +561,16 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFFFF8A50),
+              color: AppColors.primary,
               width: double.infinity,
               child: const Row(
                 children: [
-                  Icon(Icons.add_circle_outline, color: Colors.white),
+                  Icon(Icons.add_circle_outline, color: AppColors.white),
                   SizedBox(width: 8),
                   Text(
                     'เพิ่มเติม',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -602,9 +585,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   final int totalLubricantUsed =
                       _currentMonthlyLubricantUsed + _lubricantQuantity;
                   final int remainingLubricant =
-                      (_maxMonthlyLubricantQuota - totalLubricantUsed).clamp(
+                      (AppConstants.maxLubricantQuota - totalLubricantUsed).clamp(
                         0,
-                        _maxMonthlyLubricantQuota,
+                        AppConstants.maxLubricantQuota,
                       );
                   final int maxLubricantAllowed =
                       _lubricantQuantity + remainingLubricant;
@@ -630,13 +613,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: AppColors.cardShadowMedium,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -646,16 +629,16 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFFFF8A50),
+              color: AppColors.primary,
               width: double.infinity,
               child: const Row(
                 children: [
-                  Icon(Icons.calendar_today_outlined, color: Colors.white),
+                  Icon(Icons.calendar_today_outlined, color: AppColors.white),
                   SizedBox(width: 8),
                   Text(
-                    'จุดบริการ วันและเวลารับ',
+                    'สถานบริการ วันและเวลารับ',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -677,22 +660,16 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         isExpanded: true,
-                        hint: const Text('จุดบริการ'),
+                        hint: const Text('สถานบริการ'),
                         value: _selectedServiceCenter,
-                        items:
-                            [
-                                  'รพ.โพนพิสัย',
-                                  'รพ.สต.วัดหลวง',
-                                  'อบต.วัดหลวง',
-                                  'สสจ.หนองคาย',
-                                ]
-                                .map(
-                                  (e) => DropdownMenuItem(
-                                    value: e,
-                                    child: Text(e),
-                                  ),
-                                )
-                                .toList(),
+                        items: AppConstants.serviceCenters
+                            .map(
+                              (e) => DropdownMenuItem(
+                                value: e,
+                                child: Text(e),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (val) =>
                             setState(() => _selectedServiceCenter = val),
                       ),
@@ -700,10 +677,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Date and Time Row
                   Row(
                     children: [
-                      // Date Picker
                       Expanded(
                         child: GestureDetector(
                           onTap: _pickDate,
@@ -729,7 +704,6 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                         ),
                       ),
                       const SizedBox(width: 16),
-                      // Time Dropdown
                       Expanded(
                         child: Container(
                           padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -773,13 +747,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     return Container(
       margin: const EdgeInsets.only(top: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: AppColors.cardShadowMedium,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -789,16 +763,16 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: const Color(0xFFFF8A50),
+              color: AppColors.primary,
               width: double.infinity,
               child: const Row(
                 children: [
-                  Icon(Icons.comment_outlined, color: Colors.white),
+                  Icon(Icons.comment_outlined, color: AppColors.white),
                   SizedBox(width: 8),
                   Text(
                     'ฝากข้อความ (ไม่ระบุได้)',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: AppColors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),

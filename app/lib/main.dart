@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'core/constants/app_colors.dart';
 import 'features/main/presentation/pages/main_page.dart';
 
 Future<void> main() async {
@@ -27,17 +28,17 @@ class MyCareNKApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFF8A50),
-          primary: const Color(0xFFFF8A50),
-          secondary: const Color(0xFFFFB58A),
-          error: const Color(0xFFFF4D4D),
-          surface: Colors.white,
+          seedColor: AppColors.primary,
+          primary: AppColors.primary,
+          secondary: AppColors.primaryLight,
+          error: AppColors.error,
+          surface: AppColors.white,
         ),
-        scaffoldBackgroundColor: Colors.white,
+        scaffoldBackgroundColor: AppColors.white,
         textTheme: GoogleFonts.promptTextTheme(Theme.of(context).textTheme)
             .apply(
-              bodyColor: const Color(0xFF333333),
-              displayColor: const Color(0xFF333333),
+              bodyColor: AppColors.textPrimary,
+              displayColor: AppColors.textPrimary,
             ),
       ),
       home: const MainScreen(),

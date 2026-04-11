@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/constants/app_colors.dart';
 import 'emergency_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 
@@ -25,7 +26,6 @@ class _HeaderSectionState extends State<HeaderSection> {
           builder: (context, snapshot) {
             final session = snapshot.data?.session;
 
-            // If not logged in
             if (session == null) {
               return InkWell(
                 onTap: () {
@@ -37,22 +37,21 @@ class _HeaderSectionState extends State<HeaderSection> {
                 child: Container(
                   padding: const EdgeInsets.all(4),
                   decoration: const BoxDecoration(
-                    color: Color(0xFFEFE5FD), // Light purple background
+                    color: AppColors.avatarBackground,
                     shape: BoxShape.circle,
                   ),
                   child: const CircleAvatar(
-                    backgroundColor: Color(0xFFD1C4E9),
+                    backgroundColor: AppColors.avatarCircle,
                     radius: 20,
-                    child: Icon(Icons.person, color: Color(0xFF7C4DFF)),
+                    child: Icon(Icons.person, color: AppColors.avatarIcon),
                   ),
                 ),
               );
             }
 
-            // If logged in
             final user = session.user;
-            
-            // Only create memory reference to future when user changes
+
+            // Re-fetch only when user ID changes
             if (_lastUserId != user.id || _profileFuture == null) {
               _lastUserId = user.id;
               _profileFuture = Supabase.instance.client
@@ -65,9 +64,10 @@ class _HeaderSectionState extends State<HeaderSection> {
             return FutureBuilder<Map<String, dynamic>?>(
               future: _profileFuture,
               builder: (context, profileSnapshot) {
-                final username = profileSnapshot.data?['username'] as String? 
-                    ?? user.userMetadata?['username'] as String? 
-                    ?? 'User';
+                final username =
+                    profileSnapshot.data?['username'] as String? ??
+                    user.userMetadata?['username'] as String? ??
+                    'User';
 
                 return PopupMenuButton<String>(
                   onSelected: (value) async {
@@ -84,7 +84,7 @@ class _HeaderSectionState extends State<HeaderSection> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                  itemBuilder: (context) => [
                     PopupMenuItem<String>(
                       value: 'logout',
                       child: Row(
@@ -110,18 +110,18 @@ class _HeaderSectionState extends State<HeaderSection> {
                       vertical: 8,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEFE5FD),
+                      color: AppColors.avatarBackground,
                       borderRadius: BorderRadius.circular(24),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         const CircleAvatar(
-                          backgroundColor: Color(0xFFD1C4E9),
+                          backgroundColor: AppColors.avatarCircle,
                           radius: 14,
                           child: Icon(
                             Icons.person,
-                            color: Color(0xFF7C4DFF),
+                            color: AppColors.avatarIcon,
                             size: 18,
                           ),
                         ),
@@ -129,21 +129,21 @@ class _HeaderSectionState extends State<HeaderSection> {
                         Text(
                           username,
                           style: const TextStyle(
-                            color: Color(0xFF7C4DFF),
+                            color: AppColors.avatarIcon,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(width: 4),
                         const Icon(
                           Icons.keyboard_arrow_down,
-                          color: Color(0xFF7C4DFF),
+                          color: AppColors.avatarIcon,
                           size: 18,
                         ),
                       ],
                     ),
                   ),
                 );
-              }
+              },
             );
           },
         ),

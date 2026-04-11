@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import '../../data/recovery_service.dart';
 import 'registration_success_page.dart';
 
@@ -43,9 +45,9 @@ class _RegisterPageState extends State<RegisterPage> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFFFF8A50),
-              onPrimary: Colors.white,
-              onSurface: Color(0xFF333333),
+              primary: AppColors.primary,
+              onPrimary: AppColors.white,
+              onSurface: AppColors.textPrimary,
             ),
           ),
           child: child!,
@@ -62,34 +64,24 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (_gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาเลือกเพศ'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('กรุณาเลือกเพศ'), backgroundColor: Colors.red),
       );
       return;
     }
 
     if (_selectedDateOfBirth == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('กรุณาเลือกวันเกิด'),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text('กรุณาเลือกวันเกิด'), backgroundColor: Colors.red),
       );
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final username = _usernameController.text.trim();
       final password = _passwordController.text;
-
-      // Use proxy email for privacy-first signup
-      final proxyEmail = '$username@mycarenk.local';
+      final proxyEmail = '$username${AppConstants.proxyEmailDomain}';
 
       final response = await Supabase.instance.client.auth.signUp(
         email: proxyEmail,
@@ -98,7 +90,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
       debugPrint('[Registration] User: $username, ID: ${response.user?.id}');
 
-      // Auto-login after successful registration
       await Supabase.instance.client.auth.signInWithPassword(
         email: proxyEmail,
         password: password,
@@ -111,58 +102,52 @@ class _RegisterPageState extends State<RegisterPage> {
           'username': username,
           'gender': _gender,
           'nationality': _nationality,
-          'date_of_birth': _selectedDateOfBirth!.toIso8601String().split(
-            'T',
-          )[0],
+          'date_of_birth': _selectedDateOfBirth!.toIso8601String().split('T')[0],
         });
       }
 
-      if (mounted) {
-        final recoveryService = RecoveryService();
-        final recoveryCodes = RecoveryService.generateRecoveryCodes();
+      // Check mounted before any context use after the last await
+      if (!mounted) return;
 
-        try {
-          await recoveryService.saveRecoveryCodes(recoveryCodes);
-          debugPrint('บันทึกรหัสกู้คืนทั้ง 6 ชุดเรียบร้อยแล้ว');
-        } catch (e) {
-          debugPrint('เกิดข้อผิดพลาดในการบันทึกรหัสกู้คืน: $e');
-        }
+      final recoveryService = RecoveryService();
+      final recoveryCodes = RecoveryService.generateRecoveryCodes();
 
-        // Navigate to success page
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) =>
-                RegistrationSuccessPage(recoveryCodes: recoveryCodes),
-          ),
-        );
+      try {
+        await recoveryService.saveRecoveryCodes(recoveryCodes);
+        debugPrint('บันทึกรหัสกู้คืนทั้ง 6 ชุดเรียบร้อยแล้ว');
+      } catch (e) {
+        debugPrint('เกิดข้อผิดพลาดในการบันทึกรหัสกู้คืน: $e');
       }
+
+      if (!mounted) return;
+
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) =>
+              RegistrationSuccessPage(recoveryCodes: recoveryCodes),
+        ),
+      );
     } on AuthException catch (e) {
-      if (mounted) {
-        String errorMessage = e.message;
-        if (errorMessage.toLowerCase().contains('already registered') ||
-            errorMessage.toLowerCase().contains('already exists')) {
-          errorMessage = 'ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว';
-        }
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
-        );
+      if (!mounted) return;
+      String errorMessage = e.message;
+      if (errorMessage.toLowerCase().contains('already registered') ||
+          errorMessage.toLowerCase().contains('already exists')) {
+        errorMessage = 'ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว';
       }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+      );
     } catch (e) {
       debugPrint('Error during registration: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('เกิดข้อผิดพลาดในการสร้างบัญชี'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการสร้างบัญชี'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -170,16 +155,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Radio<String>(
-          value: value,
-          groupValue: _nationality,
-          activeColor: Theme.of(context).colorScheme.primary,
-          onChanged: (val) {
-            setState(() {
-              _nationality = val!;
-            });
-          },
-        ),
+        Radio<String>(value: value, activeColor: AppColors.primary),
         Text(value),
       ],
     );
@@ -190,10 +166,11 @@ class _RegisterPageState extends State<RegisterPage> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colorScheme.primary),
@@ -202,7 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
         title: const Text(
           'สร้างบัญชีใหม่',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -217,18 +194,11 @@ class _RegisterPageState extends State<RegisterPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // Username Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                _buildInputBox(
                   child: TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(
-                        Icons.person_outline,
-                        color: Colors.grey[400],
-                      ),
+                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
                       hintText: 'ชื่อผู้ใช้งาน (ตัวอักษรภาษาอังกฤษหรือตัวเลข)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -255,19 +225,12 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16.0),
 
                 // Password Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                _buildInputBox(
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: Colors.grey[400],
-                      ),
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -275,18 +238,9 @@ class _RegisterPageState extends State<RegisterPage> {
                         horizontal: 16.0,
                         vertical: 16.0,
                       ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey[400],
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                      suffixIcon: _buildPasswordToggle(
+                        obscure: _obscurePassword,
+                        onTap: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     validator: (value) {
@@ -296,9 +250,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       if (value.length < 8) {
                         return 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร';
                       }
-                      if (!RegExp(
-                        r'^(?=.*[a-zA-Z])(?=.*\d).+$',
-                      ).hasMatch(value)) {
+                      if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(value)) {
                         return 'รหัสผ่านต้องมีทั้งตัวอักษรและตัวเลข';
                       }
                       return null;
@@ -308,19 +260,12 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 16.0),
 
                 // Confirm Password Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                _buildInputBox(
                   child: TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
                     decoration: InputDecoration(
-                      prefixIcon: Icon(
-                        Icons.lock_outline,
-                        color: Colors.grey[400],
-                      ),
+                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'ยืนยันรหัสผ่าน',
                       hintStyle: TextStyle(color: Colors.grey[400]),
                       border: InputBorder.none,
@@ -328,18 +273,11 @@ class _RegisterPageState extends State<RegisterPage> {
                         horizontal: 16.0,
                         vertical: 16.0,
                       ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                          color: Colors.grey[400],
+                      suffixIcon: _buildPasswordToggle(
+                        obscure: _obscureConfirmPassword,
+                        onTap: () => setState(
+                          () => _obscureConfirmPassword = !_obscureConfirmPassword,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscureConfirmPassword = !_obscureConfirmPassword;
-                          });
-                        },
                       ),
                     ),
                     validator: (value) {
@@ -355,17 +293,13 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
                 const SizedBox(height: 16.0),
 
-                // Age and Gender Row
+                // Gender & Date of Birth Row
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       flex: 2,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          borderRadius: BorderRadius.circular(8.0),
-                        ),
+                      child: _buildInputBox(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16.0,
                           vertical: 4.0,
@@ -388,20 +322,11 @@ class _RegisterPageState extends State<RegisterPage> {
                                     color: Colors.grey[400],
                                   ),
                                   items: const [
-                                    DropdownMenuItem(
-                                      value: 'ชาย',
-                                      child: Text('ชาย'),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: 'หญิง',
-                                      child: Text('หญิง'),
-                                    ),
+                                    DropdownMenuItem(value: 'ชาย', child: Text('ชาย')),
+                                    DropdownMenuItem(value: 'หญิง', child: Text('หญิง')),
                                   ],
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _gender = value;
-                                    });
-                                  },
+                                  onChanged: (value) =>
+                                      setState(() => _gender = value),
                                 ),
                               ),
                             ],
@@ -414,16 +339,10 @@ class _RegisterPageState extends State<RegisterPage> {
                       flex: 4,
                       child: GestureDetector(
                         onTap: _pickDateOfBirth,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8.0),
-                          ),
+                        child: _buildInputBox(
                           child: AbsorbPointer(
                             child: TextFormField(
-                              key: ValueKey(
-                                _selectedDateOfBirth,
-                              ), // Force rebuild on date change
+                              key: ValueKey(_selectedDateOfBirth),
                               initialValue: _selectedDateOfBirth == null
                                   ? ''
                                   : '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year + 543}',
@@ -460,15 +379,19 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Wrap(
-                        alignment: WrapAlignment.end,
-                        spacing: 8,
-                        runSpacing: 0,
-                        children: [
-                          _buildNationalityOption('ไทย'),
-                          _buildNationalityOption('ลาว'),
-                          _buildNationalityOption('พม่า'),
-                        ],
+                      child: RadioGroup<String>(
+                        groupValue: _nationality,
+                        onChanged: (val) => setState(() => _nationality = val!),
+                        child: Wrap(
+                          alignment: WrapAlignment.end,
+                          spacing: 8,
+                          runSpacing: 0,
+                          children: [
+                            _buildNationalityOption('ไทย'),
+                            _buildNationalityOption('ลาว'),
+                            _buildNationalityOption('พม่า'),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -484,7 +407,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     onPressed: _isLoading ? null : _register,
                     style: FilledButton.styleFrom(
                       backgroundColor: colorScheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -494,7 +417,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.white,
                               strokeWidth: 2,
                             ),
                           )
@@ -512,6 +435,30 @@ class _RegisterPageState extends State<RegisterPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInputBox({required Widget child, EdgeInsets? padding}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      padding: padding,
+      child: child,
+    );
+  }
+
+  Widget _buildPasswordToggle({
+    required bool obscure,
+    required VoidCallback onTap,
+  }) {
+    return IconButton(
+      icon: Icon(
+        obscure ? Icons.visibility_off : Icons.visibility,
+        color: Colors.grey[400],
+      ),
+      onPressed: onTap,
     );
   }
 }

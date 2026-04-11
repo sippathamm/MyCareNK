@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/constants/app_constants.dart';
 
 class MonthlyFreeCard extends StatefulWidget {
   /// Incrementing this key from the parent re-triggers all animations.
@@ -17,16 +19,13 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   final PageController _pageController = PageController(viewportFraction: 0.9);
   int _currentPage = 0;
 
-  static const int maxCondomQuota = 60;
-  static const int maxLubricantQuota = 30;
-
-  int _usedCondoms = maxCondomQuota;
-  int _usedLubricants = maxLubricantQuota;
+  int _usedCondoms = AppConstants.maxCondomQuota;
+  int _usedLubricants = AppConstants.maxLubricantQuota;
   int? _daysUntilReset;
   bool _isLoading = true;
 
-  // Version bumped whenever new data arrives OR parent refreshKey changes.
-  // Used as ValueKey so TweenAnimationBuilder replays from 0 each time.
+  // Bumped whenever data arrives or parent refreshKey changes —
+  // used as ValueKey so TweenAnimationBuilder replays from 0.
   int _animationVersion = 0;
 
   StreamSubscription<List<Map<String, dynamic>>>? _quotaSubscription;
@@ -41,7 +40,6 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   @override
   void didUpdateWidget(MonthlyFreeCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // Parent incremented refreshKey (e.g. pull-to-refresh or route return)
     if (oldWidget.refreshKey != widget.refreshKey) {
       setState(() => _animationVersion++);
       _fetchDaysUntilReset();
@@ -52,21 +50,12 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   Future<void> _fetchDaysUntilReset() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
-      if (mounted) {
-        setState(() => _daysUntilReset = null);
-      }
+      if (mounted) setState(() => _daysUntilReset = null);
       return;
     }
-
     try {
-      final response = await Supabase.instance.client.rpc(
-        'get_days_until_reset',
-      );
-      if (mounted) {
-        setState(() {
-          _daysUntilReset = response as int?;
-        });
-      }
+      final response = await Supabase.instance.client.rpc('get_days_until_reset');
+      if (mounted) setState(() => _daysUntilReset = response as int?);
     } catch (e) {
       debugPrint('Error fetching days until reset: $e');
     }
@@ -78,8 +67,8 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
     if (user == null) {
       if (mounted) {
         setState(() {
-          _usedCondoms = maxCondomQuota;
-          _usedLubricants = maxLubricantQuota;
+          _usedCondoms = AppConstants.maxCondomQuota;
+          _usedLubricants = AppConstants.maxLubricantQuota;
           _isLoading = false;
           _animationVersion++;
         });
@@ -88,11 +77,8 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
     }
 
     final now = DateTime.now();
-    final monthStart = DateTime(
-      now.year,
-      now.month,
-      1,
-    ).toIso8601String().substring(0, 10);
+    final monthStart =
+        DateTime(now.year, now.month, 1).toIso8601String().substring(0, 10);
 
     _quotaSubscription = Supabase.instance.client
         .from('user_monthly_quotas')
@@ -100,9 +86,8 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
         .eq('user_id', user.id)
         .listen(
           (rows) {
-            final currentRow = rows
-                .where((r) => r['month'] == monthStart)
-                .firstOrNull;
+            final currentRow =
+                rows.where((r) => r['month'] == monthStart).firstOrNull;
             if (mounted) {
               setState(() {
                 _usedCondoms = (currentRow?['used_condoms'] as int?) ?? 0;
@@ -115,8 +100,8 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
           onError: (_) {
             if (mounted) {
               setState(() {
-                _usedCondoms = maxCondomQuota;
-                _usedLubricants = maxLubricantQuota;
+                _usedCondoms = AppConstants.maxCondomQuota;
+                _usedLubricants = AppConstants.maxLubricantQuota;
                 _isLoading = false;
                 _animationVersion++;
               });
@@ -141,14 +126,13 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
       );
     }
 
-    final int remainingCondoms = (maxCondomQuota - _usedCondoms).clamp(
-      0,
-      maxCondomQuota,
-    );
-    final int remainingLubricants = (maxLubricantQuota - _usedLubricants).clamp(
-      0,
-      maxLubricantQuota,
-    );
+    final int remainingCondoms =
+        (AppConstants.maxCondomQuota - _usedCondoms).clamp(0, AppConstants.maxCondomQuota);
+    final int remainingLubricants =
+        (AppConstants.maxLubricantQuota - _usedLubricants).clamp(
+          0,
+          AppConstants.maxLubricantQuota,
+        );
 
     return Column(
       children: [
@@ -176,7 +160,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
               height: 8,
               decoration: BoxDecoration(
                 color: _currentPage == index
-                    ? const Color(0xFFFF8A50)
+                    ? AppColors.primary
                     : Colors.grey.shade300,
                 borderRadius: BorderRadius.circular(4),
               ),
@@ -195,15 +179,15 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-          colors: [Color(0xFFFEF1D2), Color(0xFFFBCFB8)],
+          colors: [AppColors.primaryCardStart, AppColors.primaryCardEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.1),
+            color: AppColors.primaryCardShadow,
             blurRadius: 10,
-            offset: const Offset(0, 5),
+            offset: Offset(0, 5),
           ),
         ],
       ),
@@ -215,7 +199,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             style: GoogleFonts.prompt(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: const Color(0xFF666666),
+              color: AppColors.textSecondary,
             ),
           ),
           Text(
@@ -223,11 +207,10 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             style: GoogleFonts.prompt(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF333333),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          // Animated number counter
           TweenAnimationBuilder<int>(
             key: ValueKey('condom_num_$_animationVersion'),
             tween: IntTween(begin: 0, end: remaining),
@@ -241,7 +224,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                     style: GoogleFonts.prompt(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFFFF8A50),
+                      color: AppColors.primary,
                     ),
                   ),
                   TextSpan(
@@ -249,7 +232,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                     style: GoogleFonts.prompt(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFFFF8A50),
+                      color: AppColors.primary,
                     ),
                   ),
                 ],
@@ -259,9 +242,9 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
           const SizedBox(height: 8),
           _buildAnimatedProgressBar(
             animationKey: 'condom_bar_$_animationVersion',
-            color: const Color(0xFFFF8A50),
+            color: AppColors.primary,
             current: remaining,
-            total: maxCondomQuota,
+            total: AppConstants.maxCondomQuota,
           ),
           const SizedBox(height: 12),
           Text(
@@ -271,7 +254,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             style: GoogleFonts.prompt(
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: const Color(0xFF666666).withOpacity(0.8),
+              color: AppColors.textSecondary.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -287,15 +270,15 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: const LinearGradient(
-          colors: [Color(0xFFC0DEFB), Color(0xFF86C0FA)],
+          colors: [AppColors.lubricantCardStart, AppColors.lubricantCardEnd],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.blue.withOpacity(0.1),
+            color: AppColors.lubricantShadow,
             blurRadius: 10,
-            offset: const Offset(0, 5),
+            offset: Offset(0, 5),
           ),
         ],
       ),
@@ -307,7 +290,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             style: GoogleFonts.prompt(
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: const Color(0xFF666666),
+              color: AppColors.textSecondary,
             ),
           ),
           Text(
@@ -315,11 +298,10 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             style: GoogleFonts.prompt(
               fontSize: 18,
               fontWeight: FontWeight.w600,
-              color: const Color(0xFF333333),
+              color: AppColors.textPrimary,
             ),
           ),
           const SizedBox(height: 4),
-          // Animated number counter
           TweenAnimationBuilder<int>(
             key: ValueKey('lubricant_num_$_animationVersion'),
             tween: IntTween(begin: 0, end: remaining),
@@ -333,7 +315,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                     style: GoogleFonts.prompt(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF4A9FE8),
+                      color: AppColors.lubricant,
                     ),
                   ),
                   TextSpan(
@@ -341,7 +323,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                     style: GoogleFonts.prompt(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
-                      color: const Color(0xFF4A9FE8),
+                      color: AppColors.lubricant,
                     ),
                   ),
                 ],
@@ -351,9 +333,9 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
           const SizedBox(height: 8),
           _buildAnimatedProgressBar(
             animationKey: 'lubricant_bar_$_animationVersion',
-            color: const Color(0xFF4A9FE8),
+            color: AppColors.lubricant,
             current: remaining,
-            total: maxLubricantQuota,
+            total: AppConstants.maxLubricantQuota,
           ),
           const SizedBox(height: 12),
           Text(
@@ -363,7 +345,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             style: GoogleFonts.prompt(
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: const Color(0xFF666666).withOpacity(0.8),
+              color: AppColors.textSecondary.withValues(alpha: 0.8),
             ),
           ),
         ],
@@ -394,7 +376,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                   height: 8,
                   width: totalWidth,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
+                    color: AppColors.white.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),

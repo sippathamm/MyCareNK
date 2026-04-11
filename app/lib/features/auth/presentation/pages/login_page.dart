@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../core/constants/app_colors.dart';
+import '../../../../core/constants/app_constants.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
 
@@ -27,70 +29,58 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final username = _usernameController.text.trim();
       final password = _passwordController.text;
-
-      // Use proxy email for username-only login
-      final proxyEmail = '$username@mycarenk.local';
+      final proxyEmail = '$username${AppConstants.proxyEmailDomain}';
 
       await Supabase.instance.client.auth.signInWithPassword(
         email: proxyEmail,
         password: password,
       );
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('เข้าสู่ระบบสำเร็จ'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        // After login, return to the previous page
-        Navigator.of(context).pop();
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('เข้าสู่ระบบสำเร็จ'),
+          backgroundColor: Colors.green,
+        ),
+      );
+      Navigator.of(context).pop();
     } on AuthException {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } catch (e) {
       debugPrint('Error during login: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ'),
+          backgroundColor: Colors.red,
+        ),
+      );
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: colorScheme.primary),
@@ -99,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
         title: const Text(
           'เข้าสู่ระบบ',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -114,12 +104,9 @@ class _LoginPageState extends State<LoginPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+
                 // Username Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                _buildInputBox(
                   child: TextFormField(
                     controller: _usernameController,
                     decoration: InputDecoration(
@@ -149,11 +136,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 16.0),
 
                 // Password Field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
-                  ),
+                _buildInputBox(
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
@@ -168,16 +151,11 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off
-                              : Icons.visibility,
+                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
                           color: Colors.grey[400],
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     validator: (value) {
@@ -204,9 +182,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: Text(
                       'ลืมรหัสผ่าน?',
-                      style: TextStyle(
-                        color: colorScheme.primary, // Orange matching the mock
-                      ),
+                      style: TextStyle(color: colorScheme.primary),
                     ),
                   ),
                 ),
@@ -221,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                     onPressed: _isLoading ? null : _login,
                     style: FilledButton.styleFrom(
                       backgroundColor: colorScheme.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -231,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                             height: 24,
                             width: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.white,
+                              color: AppColors.white,
                               strokeWidth: 2,
                             ),
                           )
@@ -286,6 +262,16 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInputBox({required Widget child}) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+      child: child,
     );
   }
 }

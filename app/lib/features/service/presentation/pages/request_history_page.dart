@@ -5,6 +5,7 @@ import 'request_history_detail_page.dart';
 
 import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../../../core/constants/app_colors.dart';
 
 class RequestHistoryPage extends StatefulWidget {
   const RequestHistoryPage({super.key});
@@ -15,7 +16,6 @@ class RequestHistoryPage extends StatefulWidget {
 
 class _RequestHistoryPageState extends State<RequestHistoryPage> {
   // null = ทั้งหมด, otherwise filter by status group
-  // We use a Set<RequestStatus>? to support grouping cancelled statuses
   Set<RequestStatus>? _selectedFilterSet;
   String _searchQuery = '';
 
@@ -112,18 +112,19 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     }).toList();
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
+        scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF8A50)),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
           'ประวัติการขอ',
           style: TextStyle(
-            color: Color(0xFF333333),
+            color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -142,9 +143,9 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
             const SizedBox(height: 16),
             Expanded(
               child: _isLoading && _requests.isEmpty
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFFFF8A50)))
+                  ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
                   : RefreshIndicator(
-                      color: const Color(0xFFFF8A50),
+                      color: AppColors.primary,
                       onRefresh: _fetchHistory,
                       child: ListView.builder(
                         physics: const AlwaysScrollableScrollPhysics(),
@@ -190,7 +191,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: Colors.orange[50], // Light orange theme
+        color: AppColors.primaryBackground,
         borderRadius: BorderRadius.circular(24),
       ),
       child: TextField(
@@ -202,7 +203,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
         decoration: InputDecoration(
           hintText: 'ค้นหาประวัติการขอ',
           hintStyle: GoogleFonts.prompt(color: Colors.grey[600], fontSize: 14),
-          suffixIcon: const Icon(Icons.search, color: Color(0xFFFF8A50)),
+          suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 16,
@@ -220,15 +221,15 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          _buildFilterChip('ทั้งหมด', null, const Color(0xFFFF8A50)),
+          _buildFilterChip('ทั้งหมด', null, AppColors.primary),
           const SizedBox(width: 8),
-          _buildFilterChip('รอดำเนินการ', {RequestStatus.pending}, const Color(0xFFFF8A50)),
+          _buildFilterChip('รอดำเนินการ', {RequestStatus.pending}, AppColors.primary),
           const SizedBox(width: 8),
-          _buildFilterChip('กำลังเตรียม', {RequestStatus.preparing}, const Color(0xFF1F77C3)),
+          _buildFilterChip('กำลังเตรียม', {RequestStatus.preparing}, AppColors.statusPreparing),
           const SizedBox(width: 8),
-          _buildFilterChip('พร้อมรับ', {RequestStatus.ready}, const Color(0xFF9C27B0)),
+          _buildFilterChip('พร้อมรับ', {RequestStatus.ready}, AppColors.statusReady),
           const SizedBox(width: 8),
-          _buildFilterChip('เสร็จสิ้น', {RequestStatus.completed}, const Color(0xFF26A69A)),
+          _buildFilterChip('เสร็จสิ้น', {RequestStatus.completed}, AppColors.statusCompleted),
           const SizedBox(width: 8),
           _buildFilterChip('ยกเลิก', {RequestStatus.cancelledByUser, RequestStatus.cancelledByStaff}, Colors.grey[600]!),
         ],
@@ -242,7 +243,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
         (filterSet != null && _selectedFilterSet != null && filterSet.containsAll(_selectedFilterSet!) && _selectedFilterSet!.containsAll(filterSet));
 
     return Material(
-      color: isSelected ? primaryColor : Colors.white,
+      color: isSelected ? primaryColor : AppColors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
         side: BorderSide(color: primaryColor),
@@ -259,7 +260,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           child: Text(
             label,
             style: GoogleFonts.prompt(
-              color: isSelected ? Colors.white : primaryColor,
+              color: isSelected ? AppColors.white : primaryColor,
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
             ),
@@ -281,40 +282,40 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
       iconBgColor = Colors.grey[200]!;
       iconColor = Colors.grey[600]!;
       statusBgColor = Colors.grey[600]!;
-      statusTextColor = Colors.white;
+      statusTextColor = AppColors.white;
       statusText = data.status == RequestStatus.cancelledByStaff ? 'ยกเลิกโดยเจ้าหน้าที่' : 'ยกเลิกโดยผู้ใช้';
       statusIcon = Icons.cancel_outlined;
     } else {
       switch (data.status) {
         case RequestStatus.pending:
-          iconBgColor = const Color(0xFFFBE9E7);
-          iconColor = const Color(0xFFFF8A50);
-          statusBgColor = const Color(0xFFFF8A50);
-          statusTextColor = Colors.white;
+          iconBgColor = AppColors.statusPendingLight;
+          iconColor = AppColors.primary;
+          statusBgColor = AppColors.primary;
+          statusTextColor = AppColors.white;
           statusText = 'รอดำเนินการ';
           statusIcon = Icons.assignment_outlined;
           break;
         case RequestStatus.preparing:
-          iconBgColor = const Color(0xFFE3F2FD);
-          iconColor = const Color(0xFF1F77C3);
-          statusBgColor = const Color(0xFF1F77C3);
-          statusTextColor = Colors.white;
+          iconBgColor = AppColors.statusPreparingLight;
+          iconColor = AppColors.statusPreparing;
+          statusBgColor = AppColors.statusPreparing;
+          statusTextColor = AppColors.white;
           statusText = 'กำลังเตรียม';
           statusIcon = Icons.inventory_2_outlined;
           break;
         case RequestStatus.ready:
-          iconBgColor = const Color(0xFFF3E5F5);
-          iconColor = const Color(0xFF9C27B0);
-          statusBgColor = const Color(0xFF9C27B0);
-          statusTextColor = Colors.white;
+          iconBgColor = AppColors.statusReadyLight;
+          iconColor = AppColors.statusReady;
+          statusBgColor = AppColors.statusReady;
+          statusTextColor = AppColors.white;
           statusText = 'พร้อมรับ';
           statusIcon = Icons.local_shipping_outlined;
           break;
         case RequestStatus.completed:
-          iconBgColor = const Color(0xFFE0F2F1);
-          iconColor = const Color(0xFF26A69A);
-          statusBgColor = const Color(0xFF26A69A);
-          statusTextColor = Colors.white;
+          iconBgColor = AppColors.statusCompletedLight;
+          iconColor = AppColors.statusCompleted;
+          statusBgColor = AppColors.statusCompleted;
+          statusTextColor = AppColors.white;
           statusText = 'เสร็จสิ้น';
           statusIcon = Icons.check_circle_outline;
           break;
@@ -322,7 +323,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           iconBgColor = Colors.grey[200]!;
           iconColor = Colors.grey[600]!;
           statusBgColor = Colors.grey[600]!;
-          statusTextColor = Colors.white;
+          statusTextColor = AppColors.white;
           statusText = '-';
           statusIcon = Icons.help_outline;
       }
@@ -351,14 +352,14 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.grey[200]!),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: Colors.black.withAlpha(8),
+            color: AppColors.cardShadow,
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -392,7 +393,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                       Text(
                         data.referenceNumber,
                         style: GoogleFonts.prompt(
-                          color: const Color(0xFF333333),
+                          color: AppColors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                         ),
