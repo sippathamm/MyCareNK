@@ -6,6 +6,7 @@ abstract final class AppColors {
   static const Color primaryLight = Color(0xFFFFB58A);
   static const Color primaryShadow = Color(0x29FF8A50); // ~16% opacity
   static const Color primaryCardShadow = Color(0x1AFF8A50); // ~10% opacity
+  static const Color primaryButtonShadow = Color(0x66FF8A50); // ~40% opacity
 
   // Background / surface
   static const Color primaryBackground = Color(0xFFFFF7E6);

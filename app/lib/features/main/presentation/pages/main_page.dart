@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../../core/constants/app_colors.dart';
 import '../../../home/presentation/pages/home_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
 
@@ -33,7 +34,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -46,8 +47,8 @@ class _MainScreenState extends State<MainScreen> {
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFFFF8A50),
-        unselectedItemColor: const Color(0xFF777777),
+        selectedItemColor: AppColors.primary,
+        unselectedItemColor: AppColors.textMuted,
         showSelectedLabels: true,
         showUnselectedLabels: true,
         currentIndex: _currentIndex,
@@ -60,24 +61,24 @@ class _MainScreenState extends State<MainScreen> {
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.grid_view),
-            activeIcon: Icon(Icons.grid_view, color: Color(0xFFFF8A50)),
+            activeIcon: Icon(Icons.grid_view, color: AppColors.primary),
             label: 'บริการ',
           ),
           BottomNavigationBarItem(
             icon: Container(
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
-                color: Color(0xFFFF8A50),
+                color: AppColors.primary,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Color(0x66FF8A50),
+                    color: AppColors.primaryButtonShadow,
                     blurRadius: 10,
                     offset: Offset(0, 4),
                   ),
                 ],
               ),
-              child: const Icon(Icons.camera_alt_outlined, color: Colors.white),
+              child: const Icon(Icons.camera_alt_outlined, color: AppColors.white),
             ),
             label: 'สแกน',
           ),
