@@ -555,7 +555,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           Icon(Icons.calendar_today_outlined, color: Colors.black),
           SizedBox(width: 8),
           Text(
-            'จุดบริการ วันและเวลารับ',
+            'สถานบริการ วันและเวลารับ',
             style: TextStyle(
               color: Colors.black,
               fontSize: 16,
@@ -569,7 +569,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
+              const Text('สถานบริการ', style: TextStyle(fontSize: 16)),
               Text(
                 widget.selectedServiceCenter ?? '-',
                 style: const TextStyle(

@@ -405,7 +405,7 @@ class CondomRequestDetailPage extends StatelessWidget {
           Icon(Icons.calendar_today_outlined, color: Colors.black),
           SizedBox(width: 8),
           Text(
-            'จุดบริการ วันและเวลารับ',
+            'สถานบริการ วันและเวลารับ',
             style: TextStyle(
               color: Colors.black,
               fontSize: 16,
@@ -419,7 +419,7 @@ class CondomRequestDetailPage extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('จุดบริการ', style: TextStyle(fontSize: 16)),
+              const Text('สถานบริการ', style: TextStyle(fontSize: 16)),
               Text(
                 selectedServiceCenter ?? '-',
                 style: const TextStyle(

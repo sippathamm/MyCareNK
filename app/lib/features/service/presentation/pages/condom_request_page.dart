@@ -203,7 +203,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                         _selectedTime == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
-                          content: Text('กรุณาเลือกจุดบริการ วันที่ และเวลา'),
+                          content: Text('กรุณาเลือกสถานบริการ วันที่ และเวลา'),
                         ),
                       );
                       return;
@@ -636,7 +636,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   Icon(Icons.calendar_today_outlined, color: AppColors.white),
                   SizedBox(width: 8),
                   Text(
-                    'จุดบริการ วันและเวลารับ',
+                    'สถานบริการ วันและเวลารับ',
                     style: TextStyle(
                       color: AppColors.white,
                       fontSize: 16,
@@ -660,7 +660,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         isExpanded: true,
-                        hint: const Text('จุดบริการ'),
+                        hint: const Text('สถานบริการ'),
                         value: _selectedServiceCenter,
                         items: AppConstants.serviceCenters
                             .map(

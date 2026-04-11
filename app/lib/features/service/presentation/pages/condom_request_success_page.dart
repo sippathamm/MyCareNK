@@ -117,7 +117,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                         const SizedBox(height: 16),
 
                         const Text(
-                          'จุดบริการกำลังเตรียมถุงยางอนามัยให้คุณ',
+                          'สถานบริการกำลังเตรียมถุงยางอนามัยให้คุณ',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             fontSize: 14,

@@ -9,7 +9,7 @@ class ShortcutMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        _buildShortcutItem(context: context, icon: Icons.location_on, label: 'จุดบริการ'),
+        _buildShortcutItem(context: context, icon: Icons.location_on, label: 'สถานบริการ'),
         const SizedBox(width: 16),
         _buildShortcutItem(context: context, icon: Icons.menu_book, label: 'คู่มือการใช้'),
         const SizedBox(width: 16),
