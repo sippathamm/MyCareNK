@@ -102,7 +102,7 @@ export default function NotificationsPage() {
   const hasUnread = notifications.some(n => !n.is_read);
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 800, margin: '0 auto' }}>
+    <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Box>
           <Typography variant="h5" fontWeight="bold" gutterBottom>
