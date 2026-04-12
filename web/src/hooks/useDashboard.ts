@@ -11,7 +11,11 @@ export interface StatusCounts {
 
 export interface WeeklyDataPoint {
   date: string;
-  requests: number;
+  pending: number;
+  preparing: number;
+  ready: number;
+  completed: number;
+  cancelled: number;
 }
 
 export interface DashboardData {
@@ -74,8 +78,9 @@ export function useDashboard() {
     const currentYear = now.getFullYear();
     const currentMonth = now.getMonth();
     const days = getLast7Days();
-    const dailyMap: Record<string, number> = {};
-    days.forEach(d => { dailyMap[toLocalDateString(d)] = 0; });
+    type DailyEntry = { pending: number; preparing: number; ready: number; completed: number; cancelled: number };
+    const dailyMap: Record<string, DailyEntry> = {};
+    days.forEach(d => { dailyMap[toLocalDateString(d)] = { pending: 0, preparing: 0, ready: 0, completed: 0, cancelled: 0 }; });
 
     for (const row of rows ?? []) {
       const status = row.request_status as string;
@@ -90,13 +95,13 @@ export function useDashboard() {
 
       if (createdAt >= sevenDaysAgo) {
         const dayKey = toLocalDateString(createdAt);
-        if (dayKey in dailyMap) dailyMap[dayKey]++;
+        if (dayKey in dailyMap) dailyMap[dayKey][statusKey]++;
       }
     }
 
     const weeklyData: WeeklyDataPoint[] = days.map(d => ({
       date: d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
-      requests: dailyMap[toLocalDateString(d)],
+      ...dailyMap[toLocalDateString(d)],
     }));
 
     setData({ statusCounts: counts, monthlyStatusCounts: monthlyCounts, weeklyData });

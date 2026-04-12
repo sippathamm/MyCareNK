@@ -1,5 +1,5 @@
 import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, type TooltipProps } from 'recharts';
 import type { Session } from '@supabase/supabase-js';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
@@ -14,6 +14,29 @@ const STATUS_COLORS = {
 
 interface DashboardPageProps {
   session: Session;
+}
+
+const BAR_STATUS_ITEMS = [
+  { key: 'pending',   name: 'รอดำเนินการ' },
+  { key: 'preparing', name: 'กำลังเตรียม' },
+  { key: 'ready',     name: 'รอรับ' },
+  { key: 'completed', name: 'เสร็จสิ้น' },
+  { key: 'cancelled', name: 'ยกเลิก' },
+] as const;
+
+function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null;
+  return (
+    <Box sx={{ bgcolor: 'white', border: 'none', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5, minWidth: 140 }}>
+      <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>{label}</Typography>
+      {payload.map((entry) => (
+        <Box key={entry.dataKey} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: entry.fill }} />
+          <Typography variant="caption">{entry.name}: {entry.value}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
 }
 
 const SummaryCard = ({ title, value, color }: { title: string; value: string | number; color: string }) => (
@@ -84,11 +107,18 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="date" tickLine={false} axisLine={false} />
                   <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                    contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar name="คำขอ" dataKey="requests" fill="#FF8A50" radius={[4, 4, 0, 0]} />
+                  <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} content={<BarTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" />
+                  {BAR_STATUS_ITEMS.map(({ key, name }, idx) => (
+                    <Bar
+                      key={key}
+                      name={name}
+                      dataKey={key}
+                      fill={STATUS_COLORS[key]}
+                      stackId="a"
+                      radius={idx === BAR_STATUS_ITEMS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
