@@ -1,7 +1,23 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../features/auth/presentation/pages/login_page.dart';
+import '../../../service/data/models/condom_request_model.dart';
+
+enum _ScanResultType {
+  loading,
+  preview,
+  alreadyReceived,
+  notReady,
+  notYours,
+  invalidQr,
+  notLoggedIn,
+  error,
+}
 
 class ScanPage extends StatefulWidget {
   const ScanPage({super.key});
@@ -45,8 +61,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     final barcode = capture.barcodes.firstOrNull;
     if (barcode == null || barcode.rawValue == null) return;
 
-    debugPrint('[QR Scanner] สแกนได้: ${barcode.rawValue}');
-
     setState(() => _hasScanned = true);
     _controller.stop();
 
@@ -67,7 +81,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
           content: const Text('ไม่พบ QR Code ในรูปภาพนี้'),
           backgroundColor: AppColors.textPrimary,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           margin: const EdgeInsets.all(16),
         ),
       );
@@ -76,8 +92,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
 
     final rawValue = result.barcodes.first.rawValue;
     if (rawValue == null) return;
-
-    debugPrint('[QR Scanner] สแกนจากรูปภาพได้: $rawValue');
 
     setState(() => _hasScanned = true);
     _controller.stop();
@@ -88,18 +102,37 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) => _ScanResultSheet(
-        value: value,
-        onRescan: () {
-          Navigator.of(context).pop();
-          setState(() => _hasScanned = false);
-          _controller.start();
+      builder: (sheetContext) => _ScanResultSheet(
+        payload: value,
+        onRescan: () => Navigator.of(sheetContext).pop(),
+        onSuccess: () {
+          Navigator.of(sheetContext).pop();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'รับถุงยางอนามัยสำเร็จ',
+                style: GoogleFonts.prompt(),
+              ),
+              backgroundColor: AppColors.statusCompleted,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              margin: const EdgeInsets.all(16),
+            ),
+          );
         },
       ),
-    );
+    ).then((_) {
+      if (mounted) {
+        setState(() => _hasScanned = false);
+        _controller.start();
+      }
+    });
   }
 
   Future<void> _toggleTorch() async {
@@ -113,13 +146,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Camera preview (full screen)
           MobileScanner(controller: _controller, onDetect: _onDetect),
-
-          // Semi-transparent overlay with cutout
           _ScannerOverlay(),
-
-          // Top bar
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -155,8 +183,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               ),
             ),
           ),
-
-          // Bottom instruction area
           Positioned(
             left: 0,
             right: 0,
@@ -240,10 +266,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Scanner overlay — dark vignette with a transparent square cutout + corners
-// ---------------------------------------------------------------------------
-
 class _ScannerOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -263,7 +285,7 @@ class _OverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final double cx = size.width / 2;
-    final double cy = size.height / 2 - 40; // slightly above center
+    final double cy = size.height / 2 - 40;
 
     final Rect frame = Rect.fromCenter(
       center: Offset(cx, cy),
@@ -271,7 +293,6 @@ class _OverlayPainter extends CustomPainter {
       height: _frameSize,
     );
 
-    // Dark overlay outside the frame
     final overlayPath = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
       ..addRRect(
@@ -284,7 +305,6 @@ class _OverlayPainter extends CustomPainter {
       Paint()..color = Colors.black.withValues(alpha: 0.55),
     );
 
-    // Animated corner brackets in primary orange
     final cornerPaint = Paint()
       ..color = AppColors.primary
       ..style = PaintingStyle.stroke
@@ -295,14 +315,13 @@ class _OverlayPainter extends CustomPainter {
   }
 
   void _drawCorners(Canvas canvas, Rect frame, Paint paint) {
-    final double l = _cornerLength;
-    final double r = _cornerRadius;
+    final l = _cornerLength;
+    final r = _cornerRadius;
     final left = frame.left;
     final top = frame.top;
     final right = frame.right;
     final bottom = frame.bottom;
 
-    // Top-left
     canvas.drawPath(
       Path()
         ..moveTo(left + r, top)
@@ -311,7 +330,6 @@ class _OverlayPainter extends CustomPainter {
         ..lineTo(left, top + l),
       paint,
     );
-    // Top-right
     canvas.drawPath(
       Path()
         ..moveTo(right - l, top)
@@ -320,7 +338,6 @@ class _OverlayPainter extends CustomPainter {
         ..lineTo(right, top + l),
       paint,
     );
-    // Bottom-left
     canvas.drawPath(
       Path()
         ..moveTo(left, bottom - l)
@@ -329,7 +346,6 @@ class _OverlayPainter extends CustomPainter {
         ..lineTo(left + l, bottom),
       paint,
     );
-    // Bottom-right
     canvas.drawPath(
       Path()
         ..moveTo(right, bottom - l)
@@ -344,120 +360,1028 @@ class _OverlayPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ---------------------------------------------------------------------------
-// Result bottom sheet
-// ---------------------------------------------------------------------------
-
-class _ScanResultSheet extends StatelessWidget {
-  final String value;
+class _ScanResultSheet extends StatefulWidget {
+  final String payload;
   final VoidCallback onRescan;
+  final VoidCallback onSuccess;
 
-  const _ScanResultSheet({required this.value, required this.onRescan});
+  const _ScanResultSheet({
+    required this.payload,
+    required this.onRescan,
+    required this.onSuccess,
+  });
+
+  @override
+  State<_ScanResultSheet> createState() => _ScanResultSheetState();
+}
+
+class _ScanResultSheetState extends State<_ScanResultSheet> {
+  _ScanResultType _resultType = _ScanResultType.loading;
+  CondomRequestModel? _requestData;
+  bool _isConfirming = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _processQrCode();
+  }
+
+  Future<void> _processQrCode() async {
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) {
+      if (mounted) setState(() => _resultType = _ScanResultType.notLoggedIn);
+      return;
+    }
+
+    String? ref;
+    bool hasValidSignatureFormat = false;
+    try {
+      final map = jsonDecode(widget.payload) as Map<String, dynamic>;
+      ref = (map['ref'] as String?)?.trim();
+      final sig = (map['sig'] as String?)?.trim() ?? '';
+      hasValidSignatureFormat =
+          (ref?.isNotEmpty ?? false) && RegExp(r'^[0-9a-f]{64}$').hasMatch(sig);
+    } catch (_) {}
+
+    if (ref == null || ref.isEmpty) {
+      if (mounted) setState(() => _resultType = _ScanResultType.invalidQr);
+      return;
+    }
+
+    try {
+      final response = await Supabase.instance.client
+          .from('condom_requests')
+          .select()
+          .eq('reference_number', ref)
+          .maybeSingle();
+
+      if (!mounted) return;
+
+      if (response == null) {
+        setState(
+          () => _resultType = hasValidSignatureFormat
+              ? _ScanResultType.notYours
+              : _ScanResultType.invalidQr,
+        );
+        return;
+      }
+
+      final request = CondomRequestModel.fromJson(response);
+
+      if (request.status == RequestStatus.completed) {
+        setState(() {
+          _resultType = _ScanResultType.alreadyReceived;
+          _requestData = request;
+        });
+        return;
+      }
+
+      if (request.status != RequestStatus.ready) {
+        setState(() {
+          _resultType = _ScanResultType.notReady;
+          _requestData = request;
+        });
+        return;
+      }
+
+      setState(() {
+        _resultType = _ScanResultType.preview;
+        _requestData = request;
+      });
+    } catch (e) {
+      String msg = e.toString();
+      try {
+        msg = (e as dynamic).message as String? ?? e.toString();
+      } catch (_) {}
+      debugPrint('[QR Scanner] processQrCode: $msg');
+      if (mounted) setState(() => _resultType = _ScanResultType.error);
+    }
+  }
+
+  Future<void> _confirmReceive() async {
+    setState(() => _isConfirming = true);
+
+    try {
+      await Supabase.instance.client.functions.invoke(
+        'verify-receive',
+        body: {'payload': widget.payload},
+      );
+
+      if (!mounted) return;
+      setState(() => _isConfirming = false);
+      widget.onSuccess();
+    } catch (e) {
+      if (!mounted) return;
+
+      int httpStatus = 500;
+      String responseMessage = e.toString();
+      try {
+        httpStatus = (e as dynamic).status as int? ?? 500;
+        final details = (e as dynamic).details;
+        if (details is Map<String, dynamic>) {
+          responseMessage = details['message'] as String? ?? e.toString();
+        }
+      } catch (_) {}
+
+      debugPrint('[QR Scanner] verify-receive: $responseMessage');
+
+      if (httpStatus == 409) {
+        await _refetchForAlreadyReceived();
+        return;
+      }
+
+      setState(() {
+        _isConfirming = false;
+        switch (httpStatus) {
+          case 400:
+          case 404:
+            _resultType = _ScanResultType.invalidQr;
+            break;
+          case 401:
+            _resultType = _ScanResultType.notLoggedIn;
+            break;
+          case 403:
+            _resultType = _ScanResultType.notYours;
+            break;
+          default:
+            _resultType = _ScanResultType.error;
+        }
+      });
+    }
+  }
+
+  Future<void> _refetchForAlreadyReceived() async {
+    try {
+      if (_requestData != null) {
+        final response = await Supabase.instance.client
+            .from('condom_requests')
+            .select()
+            .eq('id', _requestData!.id)
+            .maybeSingle();
+
+        if (!mounted) return;
+
+        if (response != null) {
+          _requestData = CondomRequestModel.fromJson(response);
+        }
+      }
+    } catch (e) {
+      String msg = e.toString();
+      try {
+        msg = (e as dynamic).message as String? ?? e.toString();
+      } catch (_) {}
+      debugPrint('[QR Scanner] refetch: $msg');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isConfirming = false;
+          _resultType = _ScanResultType.alreadyReceived;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
+    final bool isPreview = _resultType == _ScanResultType.preview;
 
-          // Icon + title
-          Row(
+    final handleBar = Center(
+      child: Container(
+        width: 40,
+        height: 4,
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          color: Colors.grey.shade300,
+          borderRadius: BorderRadius.circular(2),
+        ),
+      ),
+    );
+
+    if (isPreview) {
+      return SafeArea(
+        child: SizedBox(
+          height: MediaQuery.of(context).size.height * 0.88,
+          child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryShadow,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.qr_code_scanner,
-                  color: AppColors.primary,
-                  size: 22,
-                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
+                child: handleBar,
               ),
-              const SizedBox(width: 12),
-              const Text(
-                'สแกนสำเร็จ',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  child: _buildPreview(),
                 ),
               ),
             ],
           ),
+        ),
+      );
+    }
 
-          const SizedBox(height: 16),
-          const Text(
-            'ข้อมูลที่ได้รับ',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textMuted,
-            ),
-          ),
-          const SizedBox(height: 6),
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [handleBar, _buildContent(context)],
+        ),
+      ),
+    );
+  }
 
-          // Value container
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: AppColors.primaryCodeBox,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.primaryCodeBorder),
-            ),
-            child: Text(
-              value,
-              style: const TextStyle(
+  Widget _buildContent(BuildContext context) {
+    switch (_resultType) {
+      case _ScanResultType.loading:
+        return _buildLoading();
+      case _ScanResultType.alreadyReceived:
+        return _buildAlreadyReceived();
+      case _ScanResultType.notReady:
+        return _buildNotReady();
+      case _ScanResultType.notYours:
+        return _buildNotYours();
+      case _ScanResultType.invalidQr:
+        return _buildInvalidQr();
+      case _ScanResultType.notLoggedIn:
+        return _buildNotLoggedIn(context);
+      case _ScanResultType.error:
+        return _buildError();
+      case _ScanResultType.preview:
+        return const SizedBox();
+    }
+  }
+
+  Widget _buildLoading() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 16),
+            Text(
+              'กำลังตรวจสอบ QR Code...',
+              style: GoogleFonts.prompt(
                 fontSize: 14,
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w500,
+                color: AppColors.textMuted,
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPreview() {
+    final request = _requestData!;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildPreviewHeader(request),
+        const SizedBox(height: 24),
+        _buildStatusTracker(request),
+        const SizedBox(height: 32),
+        _buildQuantityCard(request),
+        _buildLubricantCard(request),
+        _buildLocationCard(request),
+        _buildMessageCard(request),
+        const SizedBox(height: 32),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: FilledButton(
+            onPressed: _isConfirming ? null : _confirmReceive,
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.statusCompleted,
+              disabledBackgroundColor: AppColors.statusCompleted.withValues(
+                alpha: 0.5,
+              ),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            child: _isConfirming
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      color: AppColors.white,
+                      strokeWidth: 2,
+                    ),
+                  )
+                : Text(
+                    'ยืนยันการรับ',
+                    style: GoogleFonts.prompt(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.white,
+                    ),
+                  ),
           ),
+        ),
+      ],
+    );
+  }
 
-          const SizedBox(height: 24),
+  Widget _buildPreviewHeader(CondomRequestModel request) {
+    final dt = request.updatedAt.toUtc().add(const Duration(hours: 7));
+    final dateStr =
+        '${dt.day} ${_monthTH(dt.month)} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} น.';
 
-          // Buttons
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: FilledButton(
-              onPressed: onRescan,
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'หมายเลขอ้างอิง',
+              style: GoogleFonts.prompt(color: Colors.grey[500], fontSize: 12),
+            ),
+            Text(
+              request.referenceNumber,
+              style: GoogleFonts.prompt(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              decoration: const BoxDecoration(
+                color: AppColors.statusReadyLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.local_shipping_outlined,
+                color: AppColors.statusReady,
+                size: 16,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              dateStr,
+              style: GoogleFonts.prompt(color: Colors.grey[500], fontSize: 12),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatusTracker(CondomRequestModel request) {
+    const Color prepColor = AppColors.lubricant;
+    const Color readyColor = AppColors.statusReady;
+    const Color compColor = AppColors.statusCompleted;
+
+    final status = request.status;
+    final isPrepDone =
+        status == RequestStatus.preparing ||
+        status == RequestStatus.ready ||
+        status == RequestStatus.completed;
+    final isReadyDone =
+        status == RequestStatus.ready || status == RequestStatus.completed;
+    final isFinalDone = status == RequestStatus.completed;
+
+    return Column(
+      children: [
+        Row(
+          children: [
+            _dot(AppColors.primary, filled: true),
+            Expanded(
+              child: _line(isPrepDone ? AppColors.primary : Colors.grey[300]!),
+            ),
+            _dot(prepColor, filled: isPrepDone),
+            Expanded(child: _line(isReadyDone ? prepColor : Colors.grey[300]!)),
+            _dot(readyColor, filled: isReadyDone),
+            Expanded(
+              child: _line(isFinalDone ? readyColor : Colors.grey[300]!),
+            ),
+            _dot(compColor, filled: isFinalDone),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            _statusLabel(
+              'รอดำเนินการ',
+              status == RequestStatus.pending,
+              AppColors.primary,
+            ),
+            _statusLabel(
+              'กำลังเตรียม',
+              status == RequestStatus.preparing,
+              prepColor,
+            ),
+            _statusLabel('พร้อมรับ', status == RequestStatus.ready, readyColor),
+            _statusLabel(
+              'เสร็จสิ้น',
+              status == RequestStatus.completed,
+              compColor,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _dot(Color color, {required bool filled}) => Container(
+    width: 24,
+    height: 24,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: filled ? color : AppColors.white,
+      border: filled ? null : Border.all(color: color, width: 2),
+    ),
+  );
+
+  Widget _line(Color color) => Container(height: 2, color: color);
+
+  Widget _statusLabel(String label, bool active, Color color) => Text(
+    label,
+    style: GoogleFonts.prompt(
+      color: active ? color : Colors.black87,
+      fontSize: 12,
+      fontWeight: active ? FontWeight.bold : FontWeight.normal,
+    ),
+  );
+
+  Widget _buildQuantityCard(CondomRequestModel request) {
+    final total = request.condomQuantities.values.fold(0, (s, v) => s + v);
+    if (total == 0) return const SizedBox();
+
+    return _card(
+      header: const Text(
+        'จำนวนถุงยางอนามัย',
+        style: TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      content: Column(
+        children: request.condomQuantities.entries
+            .where((e) => e.value > 0)
+            .map(
+              (e) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'ขนาด ${e.key} มม.',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+                    Text(
+                      '${e.value} ชิ้น',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              child: const Text(
-                'สแกนอีกครั้ง',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.white,
-                ),
-              ),
+            )
+            .toList(),
+      ),
+      showDivider: true,
+      footer: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'รวม',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          Text(
+            '$total ชิ้น',
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildLubricantCard(CondomRequestModel request) {
+    if (request.lubricantQuantity == 0) return const SizedBox();
+
+    return _card(
+      header: const Row(
+        children: [
+          Icon(Icons.add_circle_outline, color: Colors.black),
+          SizedBox(width: 8),
+          Text(
+            'เพิ่มเติม',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      content: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'สารหล่อลื่น',
+            style: TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+          Text(
+            '${request.lubricantQuantity} ซอง',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: AppColors.primary,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationCard(CondomRequestModel request) {
+    String outputDate = request.selectedDate ?? '-';
+    if (request.selectedDate != null && request.selectedDate!.contains('-')) {
+      try {
+        final d = DateTime.parse(request.selectedDate!);
+        outputDate = '${d.day} ${_monthTH(d.month)} ${d.year + 543}';
+      } catch (_) {}
+    }
+
+    String outputTime = '-';
+    if (request.selectedTime != null && request.selectedTime!.contains(':')) {
+      final parts = request.selectedTime!.split(':');
+      if (parts.length >= 2) outputTime = '${parts[0]}:${parts[1]} น.';
+    }
+
+    return _card(
+      header: const Row(
+        children: [
+          Icon(Icons.calendar_today_outlined, color: Colors.black),
+          SizedBox(width: 8),
+          Text(
+            'สถานบริการ วันและเวลารับ',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      content: Column(
+        children: [
+          _infoRow('สถานบริการ', request.selectedServiceCenter ?? '-'),
+          const SizedBox(height: 12),
+          _infoRow('วันที่', outputDate),
+          const SizedBox(height: 12),
+          _infoRow('เวลา', outputTime),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMessageCard(CondomRequestModel request) {
+    if (request.message.isEmpty) return const SizedBox();
+
+    return _card(
+      header: const Row(
+        children: [
+          Icon(Icons.comment_outlined, color: Colors.black),
+          SizedBox(width: 8),
+          Text(
+            'ฝากข้อความ',
+            style: TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+      content: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          request.message,
+          style: const TextStyle(fontSize: 16, color: AppColors.primary),
+        ),
+      ),
+    );
+  }
+
+  Widget _infoRow(String label, String value) => Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+      Text(label, style: const TextStyle(fontSize: 16)),
+      Text(
+        value,
+        style: const TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: AppColors.primary,
+        ),
+      ),
+    ],
+  );
+
+  Widget _card({
+    required Widget header,
+    required Widget content,
+    bool showDivider = false,
+    Widget? footer,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(top: 16),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey[300]!),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x05000000),
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: AppColors.white,
+              width: double.infinity,
+              child: header,
+            ),
+            const Divider(height: 1),
+            Padding(padding: const EdgeInsets.all(16), child: content),
+            if (showDivider) const Divider(height: 1),
+            if (footer != null)
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: footer,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAlreadyReceived() {
+    String receivedAt = '-';
+    String refNumber = '-';
+
+    if (_requestData != null) {
+      final dt = _requestData!.updatedAt.toUtc().add(const Duration(hours: 7));
+      receivedAt =
+          '${dt.day} ${_monthTH(dt.month)} ${dt.year + 543} เวลา ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} น.';
+      refNumber = _requestData!.referenceNumber;
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _sheetHeader(
+          icon: Icons.block_outlined,
+          iconColor: AppColors.error,
+          iconBgColor: AppColors.errorShadow,
+          title: 'ไม่สามารถรับได้',
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'คุณรับถุงยางอนามัยคำขอนี้ไปแล้ว เมื่อ $receivedAt',
+          style: GoogleFonts.prompt(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'หมายเลขอ้างอิง: $refNumber',
+          style: GoogleFonts.prompt(
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _rescanButton(),
+      ],
+    );
+  }
+
+  Widget _buildNotReady() {
+    String chipLabel = '-';
+    Color chipColor = Colors.grey[600]!;
+    if (_requestData != null) {
+      switch (_requestData!.status) {
+        case RequestStatus.pending:
+          chipLabel = 'รอดำเนินการ';
+          chipColor = AppColors.primary;
+          break;
+        case RequestStatus.preparing:
+          chipLabel = 'กำลังเตรียม';
+          chipColor = AppColors.statusPreparing;
+          break;
+        case RequestStatus.cancelledByUser:
+          chipLabel = 'ยกเลิกโดยผู้ใช้';
+          chipColor = Colors.grey[600]!;
+          break;
+        case RequestStatus.cancelledByStaff:
+          chipLabel = 'ยกเลิกโดยเจ้าหน้าที่';
+          chipColor = Colors.grey[600]!;
+          break;
+        default:
+          break;
+      }
+    }
+
+    final textStyle = GoogleFonts.prompt(
+      fontSize: 14,
+      color: AppColors.textSecondary,
+    );
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _sheetHeader(
+          icon: Icons.warning_amber_outlined,
+          iconColor: AppColors.primary,
+          iconBgColor: AppColors.primaryShadow,
+          title: 'ยังไม่พร้อมรับ',
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
+          runSpacing: 4,
+          children: [
+            Text('คำขอยังอยู่ในสถานะ', style: textStyle),
+            _statusChip(chipLabel, chipColor),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 4,
+          runSpacing: 4,
+          children: [
+            Text('สามารถรับถุงยางอนามัยได้เมื่อสถานะเป็น', style: textStyle),
+            _statusChip('พร้อมรับ', AppColors.statusReady),
+            Text('เท่านั้น', style: textStyle),
+          ],
+        ),
+        if (_requestData != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            'หมายเลขอ้างอิง: ${_requestData!.referenceNumber}',
+            style: GoogleFonts.prompt(
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        _rescanButton(),
+      ],
+    );
+  }
+
+  Widget _buildNotYours() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _sheetHeader(
+          icon: Icons.block_outlined,
+          iconColor: AppColors.error,
+          iconBgColor: AppColors.errorShadow,
+          title: 'QR Code ไม่ใช่ของคุณ',
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'QR Code นี้เป็นของผู้ใช้งานท่านอื่น ไม่สามารถใช้งานได้',
+          style: GoogleFonts.prompt(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _rescanButton(),
+      ],
+    );
+  }
+
+  Widget _buildInvalidQr() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _sheetHeader(
+          icon: Icons.qr_code_outlined,
+          iconColor: AppColors.error,
+          iconBgColor: AppColors.errorShadow,
+          title: 'QR Code ไม่ถูกต้อง',
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'ไม่พบข้อมูลที่ตรงกับ QR Code นี้',
+          style: GoogleFonts.prompt(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _rescanButton(),
+      ],
+    );
+  }
+
+  Widget _buildNotLoggedIn(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _sheetHeader(
+          icon: Icons.lock_outline,
+          iconColor: AppColors.error,
+          iconBgColor: AppColors.errorShadow,
+          title: 'กรุณาเข้าสู่ระบบ',
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'คุณต้องเข้าสู่ระบบก่อนจึงจะสแกน QR Code ได้',
+          style: GoogleFonts.prompt(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(
+                context,
+                rootNavigator: true,
+              ).push(MaterialPageRoute(builder: (_) => const LoginPage()));
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            child: Text(
+              'เข้าสู่ระบบ',
+              style: GoogleFonts.prompt(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.white,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildError() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _sheetHeader(
+          icon: Icons.error_outline,
+          iconColor: AppColors.error,
+          iconBgColor: AppColors.errorShadow,
+          title: 'เกิดข้อผิดพลาด',
+        ),
+        const SizedBox(height: 12),
+        Text(
+          'ไม่สามารถตรวจสอบ QR Code ได้ในขณะนี้ กรุณาลองอีกครั้ง',
+          style: GoogleFonts.prompt(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _rescanButton(),
+      ],
+    );
+  }
+
+  Widget _statusChip(String label, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: GoogleFonts.prompt(
+          color: AppColors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _sheetHeader({
+    required IconData icon,
+    required Color iconColor,
+    required Color iconBgColor,
+    required String title,
+  }) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(color: iconBgColor, shape: BoxShape.circle),
+          child: Icon(icon, color: iconColor, size: 22),
+        ),
+        const SizedBox(width: 12),
+        Text(
+          title,
+          style: GoogleFonts.prompt(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _rescanButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 48,
+      child: FilledButton(
+        onPressed: widget.onRescan,
+        style: FilledButton.styleFrom(
+          backgroundColor: AppColors.primary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+        ),
+        child: Text(
+          'สแกนอีกครั้ง',
+          style: GoogleFonts.prompt(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppColors.white,
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _monthTH(int month) {
+    const months = [
+      '',
+      'มกราคม',
+      'กุมภาพันธ์',
+      'มีนาคม',
+      'เมษายน',
+      'พฤษภาคม',
+      'มิถุนายน',
+      'กรกฎาคม',
+      'สิงหาคม',
+      'กันยายน',
+      'ตุลาคม',
+      'พฤศจิกายน',
+      'ธันวาคม',
+    ];
+    return month >= 1 && month <= 12 ? months[month] : '';
   }
 }
