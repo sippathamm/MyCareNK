@@ -10,12 +10,12 @@ import '../../../service/data/models/condom_request_model.dart';
 
 enum _ScanResultType {
   loading,
-  preview, // QR valid + status ready → show request details + confirm button
-  alreadyReceived, // Request already completed (client-side or 409 race)
-  notReady, // pending / preparing / cancelled
-  notYours, // 403 or client-side ownership mismatch
-  invalidQr, // Bad payload / parse error / 400 / not found
-  notLoggedIn, // No session
+  preview,
+  alreadyReceived,
+  notReady,
+  notYours,
+  invalidQr,
+  notLoggedIn,
   error,
 }
 
@@ -266,10 +266,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   }
 }
 
-// ---------------------------------------------------------------------------
-// Scanner overlay
-// ---------------------------------------------------------------------------
-
 class _ScannerOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -364,10 +360,6 @@ class _OverlayPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-// ---------------------------------------------------------------------------
-// Result bottom sheet
-// ---------------------------------------------------------------------------
-
 class _ScanResultSheet extends StatefulWidget {
   final String payload;
   final VoidCallback onRescan;
@@ -394,10 +386,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     _processQrCode();
   }
 
-  // ---------------------------------------------------------------------------
-  // Step 1: Parse payload + client-side query (no side effects on the server)
-  // ---------------------------------------------------------------------------
-
   Future<void> _processQrCode() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
@@ -405,10 +393,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       return;
     }
 
-    // Parse the signed payload produced by the `sign` Edge Function.
-    // We also validate the `sig` format here so we can distinguish
-    // "valid QR belonging to another user (filtered by RLS)" from
-    // "genuinely invalid / fake QR" when the DB query returns null.
     String? ref;
     bool hasValidSignatureFormat = false;
     try {
@@ -425,8 +409,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     }
 
     try {
-      // RLS restricts this query to the current user's own rows.
-      // If the record belongs to someone else, `response` will be null.
       final response = await Supabase.instance.client
           .from('condom_requests')
           .select()
@@ -436,8 +418,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       if (!mounted) return;
 
       if (response == null) {
-        // A structurally valid payload that isn't found for this user is
-        // most likely another user's QR code (RLS hid the row).
         setState(
           () => _resultType = hasValidSignatureFormat
               ? _ScanResultType.notYours
@@ -478,10 +458,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     }
   }
 
-  // ---------------------------------------------------------------------------
-  // Step 2: Call verify-receive Edge Function (signature check + atomic update)
-  // ---------------------------------------------------------------------------
-
   Future<void> _confirmReceive() async {
     setState(() => _isConfirming = true);
 
@@ -510,7 +486,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       debugPrint('[QR Scanner] verify-receive: $responseMessage');
 
       if (httpStatus == 409) {
-        // Race condition: someone already confirmed — refetch to get completion date
         await _refetchForAlreadyReceived();
         return;
       }
@@ -565,10 +540,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       }
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -637,13 +608,9 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       case _ScanResultType.error:
         return _buildError();
       case _ScanResultType.preview:
-        return const SizedBox(); // handled above
+        return const SizedBox();
     }
   }
-
-  // ---------------------------------------------------------------------------
-  // Loading
-  // ---------------------------------------------------------------------------
 
   Widget _buildLoading() {
     return Padding(
@@ -666,10 +633,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       ),
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Preview — request details + confirm button
-  // ---------------------------------------------------------------------------
 
   Widget _buildPreview() {
     final request = _requestData!;
@@ -1088,14 +1051,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Success
-  // ---------------------------------------------------------------------------
-
-  // ---------------------------------------------------------------------------
-  // Already received (completed — client-side or 409 race)
-  // ---------------------------------------------------------------------------
-
   Widget _buildAlreadyReceived() {
     String receivedAt = '-';
     String refNumber = '-';
@@ -1138,10 +1093,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       ],
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Not ready (pending / preparing / cancelled)
-  // ---------------------------------------------------------------------------
 
   Widget _buildNotReady() {
     String chipLabel = '-';
@@ -1221,10 +1172,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Not yours
-  // ---------------------------------------------------------------------------
-
   Widget _buildNotYours() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1250,10 +1197,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Invalid QR (400 / 404 / parse error)
-  // ---------------------------------------------------------------------------
-
   Widget _buildInvalidQr() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1278,10 +1221,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       ],
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Not logged in — no rescan button, only go to login
-  // ---------------------------------------------------------------------------
 
   Widget _buildNotLoggedIn(BuildContext context) {
     return Column(
@@ -1334,10 +1273,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // Generic error
-  // ---------------------------------------------------------------------------
-
   Widget _buildError() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1362,10 +1297,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       ],
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Shared UI helpers
-  // ---------------------------------------------------------------------------
 
   Widget _statusChip(String label, Color color) {
     return Container(
@@ -1411,31 +1342,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     );
   }
 
-  Widget _rescanButton({bool outlined = false}) {
-    if (outlined) {
-      return SizedBox(
-        width: double.infinity,
-        height: 48,
-        child: OutlinedButton(
-          onPressed: widget.onRescan,
-          style: OutlinedButton.styleFrom(
-            side: const BorderSide(color: AppColors.primary),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-          child: Text(
-            'สแกนอีกครั้ง',
-            style: GoogleFonts.prompt(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-        ),
-      );
-    }
-
+  Widget _rescanButton() {
     return SizedBox(
       width: double.infinity,
       height: 48,
