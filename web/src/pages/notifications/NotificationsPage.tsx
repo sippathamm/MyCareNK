@@ -20,6 +20,14 @@ function formatRelativeTime(dateStr: string): string {
   return `${Math.floor(hours / 24)} วันที่แล้ว`;
 }
 
+function formatAbsoluteDateTime(dateStr: string): string {
+  const date = new Date(dateStr);
+  const datePart = date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${datePart} ${hours}:${minutes} น.`;
+}
+
 function StatusDot({ eventType }: { eventType: RequestStatus }) {
   const { color } = STATUS_CONFIG[eventType] ?? { color: '#9E9E9E' };
   return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.5 }} />;
@@ -62,7 +70,7 @@ function NotificationRow({ item, onItemClick, onDelete }: {
           {item.reference_number}
         </Typography>
         <Typography variant="caption" color="text.disabled">
-          {formatRelativeTime(item.created_at)}
+          {formatAbsoluteDateTime(item.created_at)} · {formatRelativeTime(item.created_at)}
         </Typography>
       </Box>
 
