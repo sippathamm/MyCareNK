@@ -5,7 +5,7 @@ import { useDashboard } from '../../hooks/useDashboard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 const STATUS_COLORS = {
-  pending: '#FF9800',
+  pending: '#FF8A50',
   preparing: '#2196F3',
   ready: '#9C27B0',
   completed: '#4CAF50',
