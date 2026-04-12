@@ -1,17 +1,5 @@
 import { createClient } from 'jsr:@supabase/supabase-js@2';
-
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
-
-function jsonResponse(body: unknown, status = 200): Response {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
-  });
-}
+import { CORS_HEADERS, jsonResponse } from '../_shared/response.ts';
 
 Deno.serve(async (req: Request): Promise<Response> => {
   if (req.method === 'OPTIONS') {
@@ -19,12 +7,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   if (req.method !== 'POST') {
-    return jsonResponse({ error: 'Method not allowed' }, 405);
+    return jsonResponse(405, 'error', 'วิธีการร้องขอไม่ถูกต้อง');
   }
 
   const authHeader = req.headers.get('Authorization');
   if (!authHeader) {
-    return jsonResponse({ error: 'Missing authorization header' }, 401);
+    return jsonResponse(401, 'error', 'กรุณาเข้าสู่ระบบ');
   }
 
   // Verify caller is an authenticated staff user
@@ -36,7 +24,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const { data: { user }, error: userError } = await userClient.auth.getUser();
   if (userError || !user) {
-    return jsonResponse({ error: 'Unauthorized' }, 401);
+    return jsonResponse(401, 'error', 'กรุณาเข้าสู่ระบบ');
   }
 
   // Parse request body
@@ -44,12 +32,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   try {
     body = await req.json();
   } catch {
-    return jsonResponse({ error: 'Invalid JSON body' }, 400);
+    return jsonResponse(400, 'error', 'ข้อมูลคำขอไม่ถูกต้อง');
   }
 
   const { request_id } = body;
   if (!request_id || typeof request_id !== 'string' || request_id.trim() === '') {
-    return jsonResponse({ error: 'request_id is required' }, 400);
+    return jsonResponse(400, 'error', 'ข้อมูลคำขอไม่ถูกต้อง');
   }
 
   // Look up reference_number via service-role client (bypasses RLS)
@@ -65,7 +53,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     .single();
 
   if (dbError || !requestRow) {
-    return jsonResponse({ error: 'Request not found' }, 404);
+    return jsonResponse(404, 'error', 'ไม่พบคำขอ');
   }
 
   const ref: string = requestRow.reference_number;
@@ -73,7 +61,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Compute HMAC-SHA256 signature
   const secretKey = Deno.env.get('SIGNATURE_SECRET_KEY');
   if (!secretKey) {
-    return jsonResponse({ error: 'Server configuration error' }, 500);
+    return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
   }
 
   const keyMaterial = await crypto.subtle.importKey(
@@ -96,5 +84,5 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const payload = JSON.stringify({ ref, sig });
 
-  return jsonResponse({ payload });
+  return jsonResponse(200, 'success', 'สร้าง QR Code สำเร็จ', { payload });
 });
