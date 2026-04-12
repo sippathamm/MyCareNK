@@ -32,14 +32,14 @@ const SummaryCard = ({ title, value, color }: { title: string; value: string | n
 export default function DashboardPage({ session }: DashboardPageProps) {
   const { profile } = useRoleAccess();
   const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
-  const { statusCounts, weeklyData, loading } = useDashboard();
+  const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard();
 
   const statusData = [
-    { name: 'รอดำเนินการ', value: statusCounts.pending, color: STATUS_COLORS.pending },
-    { name: 'กำลังเตรียม', value: statusCounts.preparing, color: STATUS_COLORS.preparing },
-    { name: 'รอรับ', value: statusCounts.ready, color: STATUS_COLORS.ready },
-    { name: 'เสร็จสิ้น', value: statusCounts.completed, color: STATUS_COLORS.completed },
-    { name: 'ยกเลิก', value: statusCounts.cancelled, color: STATUS_COLORS.cancelled },
+    { name: 'รอดำเนินการ', value: monthlyStatusCounts.pending, color: STATUS_COLORS.pending },
+    { name: 'กำลังเตรียม', value: monthlyStatusCounts.preparing, color: STATUS_COLORS.preparing },
+    { name: 'รอรับ', value: monthlyStatusCounts.ready, color: STATUS_COLORS.ready },
+    { name: 'เสร็จสิ้น', value: monthlyStatusCounts.completed, color: STATUS_COLORS.completed },
+    { name: 'ยกเลิก', value: monthlyStatusCounts.cancelled, color: STATUS_COLORS.cancelled },
   ];
 
   return (
@@ -100,7 +100,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
           <Card sx={{ borderRadius: 2, height: 420 }} elevation={1}>
             <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                สัดส่วนสถานะคำขอ
+                สัดส่วนสถานะคำขอในเดือนนี้
               </Typography>
               <ResponsiveContainer width="100%" height="85%">
                 <PieChart>
