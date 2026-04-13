@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Box, Typography, Paper, Chip, Button, TextField, MenuItem, Stack, Tooltip, Snackbar, Alert } from '@mui/material';
+import { Box, Typography, Paper, Chip, IconButton, TextField, MenuItem, Stack, Tooltip, Snackbar, Alert } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -159,23 +159,23 @@ export default function RequestsPage() {
     {
       field: 'actions',
       headerName: '',
-      flex: 1,
-      minWidth: 120,
+      flex: 0.4,
+      minWidth: 60,
       align: 'center',
       headerAlign: 'center',
       sortable: false,
       filterable: false,
       disableColumnMenu: true,
       renderCell: (params) => (
-        <Button
-          variant="contained"
-          color="primary"
-          size="small"
-          startIcon={<VisibilityIcon />}
-          onClick={() => handleOpenDialog(params.row as RequestData)}
-        >
-          ดูรายละเอียด
-        </Button>
+        <Tooltip title="ดูรายละเอียด">
+          <IconButton
+            size="small"
+            onClick={() => handleOpenDialog(params.row as RequestData)}
+            sx={{ color: 'primary.main' }}
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       )
     }
   ];

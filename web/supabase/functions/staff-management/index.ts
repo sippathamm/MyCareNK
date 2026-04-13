@@ -110,7 +110,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     });
 
     if (authErr || !authData.user) {
-      return jsonResponse(400, 'error', authErr?.message ?? 'ไม่สามารถสร้างบัญชีได้');
+      const raw = authErr?.message ?? '';
+      const thMsg = raw.includes('already been registered') || raw.includes('already registered')
+        ? 'อีเมลนี้ถูกใช้งานแล้ว'
+        : raw || 'ไม่สามารถสร้างบัญชีได้';
+      return jsonResponse(400, 'error', thMsg);
     }
 
     const userId = authData.user.id;
@@ -148,9 +152,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // UPDATE
   if (action === 'update') {
-    const { user_id, first_name, last_name, service_center, role } = body as {
+    const { user_id, first_name, last_name, service_center, role, email } = body as {
       user_id?: string; first_name?: string; last_name?: string;
-      service_center?: string; role?: string;
+      service_center?: string; role?: string; email?: string;
     };
 
     if (!user_id || typeof user_id !== 'string') {
@@ -173,13 +177,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
       tasks.push(serviceClient.from('staff_roles').update({ role }).eq('user_id', user_id) as Promise<{ error: unknown }>);
     }
 
-    if (tasks.length === 0) {
+    if (email !== undefined) {
+      const { error: emailErr } = await serviceClient.auth.admin.updateUserById(user_id, { email, email_confirm: true });
+      if (emailErr) {
+        return jsonResponse(400, 'error', emailErr.message ?? 'ไม่สามารถอัปเดตอีเมลได้');
+      }
+    }
+
+    if (tasks.length === 0 && email === undefined) {
       return jsonResponse(400, 'error', 'ไม่มีข้อมูลที่ต้องการแก้ไข');
     }
 
-    const results = await Promise.all(tasks);
-    if (results.some(r => r.error)) {
-      return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ');
+    if (tasks.length > 0) {
+      const results = await Promise.all(tasks);
+      if (results.some(r => r.error)) {
+        return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ');
+      }
     }
 
     return jsonResponse(200, 'success', 'แก้ไขข้อมูลสำเร็จ');

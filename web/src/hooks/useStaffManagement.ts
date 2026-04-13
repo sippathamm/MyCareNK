@@ -71,6 +71,7 @@ export function useStaffManagement() {
     last_name?: string;
     service_center?: string;
     role?: string;
+    email?: string;
   }): Promise<string | null> => {
     const { error: err } = await callStaffManagement('update', payload);
     if (!err) await fetchStaff();

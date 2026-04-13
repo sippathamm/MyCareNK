@@ -154,10 +154,9 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle fontWeight="bold">เพิ่มเจ้าหน้าที่</DialogTitle>
       <DialogContent dividers>
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
         {step === 1 ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            {error && <Alert severity="error">{error}</Alert>}
             <Box sx={{ display: 'flex', gap: 2 }}>
               <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth required />
               <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth required />
@@ -170,7 +169,7 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
               {SERVICE_CENTER_OPTIONS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
             </TextField>
             <TextField
-              select label="ระดับเจ้าหน้าที่" value={role}
+              select label="ระดับสิทธิ์" value={role}
               onChange={e => setRole(e.target.value)} fullWidth required
             >
               {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
@@ -181,6 +180,7 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
             <Alert severity="info">
               รหัสผ่านนี้จะแสดงเพียงครั้งเดียว กรุณาคัดลอกและแจ้งให้เจ้าหน้าที่ทราบ
             </Alert>
+            {error && <Alert severity="error">{error}</Alert>}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'grey.100', borderRadius: 2, px: 2, py: 1.5 }}>
               <Typography fontFamily="monospace" fontWeight="bold" sx={{ flex: 1, wordBreak: 'break-all' }}>
                 {password}
@@ -242,13 +242,14 @@ interface EditStaffDialogProps {
   staff: StaffMember | null;
   currentUserId: string;
   onClose: () => void;
-  onUpdate: (payload: { user_id: string; first_name: string; last_name: string; service_center: string; role: string }) => Promise<string | null>;
+  onUpdate: (payload: { user_id: string; first_name: string; last_name: string; service_center: string; role: string; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
 function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
   const [serviceCenter, setServiceCenter] = useState('');
   const [role, setRole] = useState('staff');
   const [submitting, setSubmitting] = useState(false);
@@ -261,6 +262,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
     if (staff) {
       setFirstName(staff.first_name);
       setLastName(staff.last_name);
+      setEmail(staff.email);
       setServiceCenter(staff.service_center);
       setRole(staff.role);
       setError(null);
@@ -280,7 +282,8 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
     }
     setSubmitting(true);
     setError(null);
-    const err = await onUpdate({ user_id: staff.user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role });
+    const emailChanged = email !== staff.email;
+    const err = await onUpdate({ user_id: staff.user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role, ...(emailChanged && { email }) });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -306,6 +309,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
             <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth />
             <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth />
           </Box>
+          <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth />
           <TextField
             select label="สถานบริการ" value={serviceCenter}
             onChange={e => setServiceCenter(e.target.value)} fullWidth
@@ -371,7 +375,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StaffManagementPage() {
-  const { role } = useRoleAccess();
+  const { role, loading: roleLoading } = useRoleAccess();
   const { session } = useAuth();
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
@@ -380,6 +384,7 @@ export default function StaffManagementPage() {
 
   useEffect(() => { fetchStaff(); }, [fetchStaff]);
 
+  if (roleLoading) return null;
   if (role !== 'admin' && role !== 'superadmin') {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2, color: 'text.secondary' }}>
@@ -405,7 +410,7 @@ export default function StaffManagementPage() {
         />
       ),
     },
-    { field: 'service_center', headerName: 'สถานบริการที่ประจำการ', flex: 1.5, minWidth: 160 },
+    { field: 'service_center', headerName: 'สถานบริการ', flex: 1.5, minWidth: 160 },
     {
       field: 'last_sign_in_at',
       headerName: 'เข้าสู่ระบบล่าสุดเมื่อ',
@@ -430,13 +435,15 @@ export default function StaffManagementPage() {
       align: 'center',
       headerAlign: 'center',
       renderCell: (params) => (
-        <IconButton
-          size="small"
-          color="primary"
-          onClick={() => setEditTarget(params.row as StaffMember)}
-        >
-          <EditIcon fontSize="small" />
-        </IconButton>
+        <Tooltip title="แก้ไขข้อมูล">
+          <IconButton
+            size="small"
+            color="primary"
+            onClick={() => setEditTarget(params.row as StaffMember)}
+          >
+            <EditIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ];
