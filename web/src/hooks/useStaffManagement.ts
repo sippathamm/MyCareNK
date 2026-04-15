@@ -18,8 +18,16 @@ async function callStaffManagement<T = undefined>(
   action: string,
   payload?: Record<string, unknown>
 ): Promise<{ data: T | null; error: string | null }> {
-  const { data: { session } } = await supabase.auth.getSession();
+  let { data: { session } } = await supabase.auth.getSession();
   if (!session) return { data: null, error: 'กรุณาเข้าสู่ระบบ' };
+
+  // Refresh the token if it has expired or will expire within 60 seconds
+  const expiresAt = session.expires_at ?? 0;
+  if (expiresAt - Math.floor(Date.now() / 1000) < 60) {
+    const { data: refreshed } = await supabase.auth.refreshSession();
+    if (!refreshed.session) return { data: null, error: 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่' };
+    session = refreshed.session;
+  }
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string;
   const res = await fetch(`${supabaseUrl}/functions/v1/staff-management`, {
@@ -31,8 +39,10 @@ async function callStaffManagement<T = undefined>(
     body: JSON.stringify({ action, ...payload }),
   });
 
-  const json = await res.json();
-  if (json.status === 'error') return { data: null, error: json.message };
+  const json = await res.json().catch(() => null);
+  if (!json || !res.ok || json.status === 'error') {
+    return { data: null, error: json?.message ?? 'เกิดข้อผิดพลาดของระบบ' };
+  }
   return { data: json.result as T, error: null };
 }
 
