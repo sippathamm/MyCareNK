@@ -68,9 +68,9 @@ export default function RequestsPage() {
     // Optimistic update
     const prevRequests = requests;
     const prevSelected = selectedRequest;
-    setRequests(prev => prev.map(r => r.id === id ? { ...r, request_status, cancel_reason: reason } : r));
+    setRequests(prev => prev.map(r => r.id === id ? { ...r, request_status, cancel_reason: reason ?? null } : r));
     if (selectedRequest?.id === id) {
-      setSelectedRequest({ ...selectedRequest, request_status, cancel_reason: reason });
+      setSelectedRequest({ ...selectedRequest, request_status, cancel_reason: reason ?? null });
     }
 
     setStatusUpdating(true);
@@ -112,8 +112,8 @@ export default function RequestsPage() {
       minWidth: 150,
       renderCell: (params) => {
         const row = params.row as RequestData;
-        const days = getOverdueDays(row.selected_date, row.request_status);
-        const dateFormatted = formatDate(row.selected_date);
+        const days = getOverdueDays(row.selected_date ?? '', row.request_status);
+        const dateFormatted = formatDate(row.selected_date ?? '');
         if (days > 0) {
           return (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, height: '100%', width: '100%' }}>
@@ -136,7 +136,7 @@ export default function RequestsPage() {
       headerName: 'เวลารับ',
       flex: 0.8,
       minWidth: 100,
-      valueGetter: (_, row) => `${(row as RequestData).selected_time} น.`
+      valueGetter: (_, row) => `${(row as RequestData).selected_time ?? '-'} น.`
     },
     {
       field: 'items',
@@ -145,7 +145,7 @@ export default function RequestsPage() {
       minWidth: 200,
       valueGetter: (_, row) => {
         const r = row as RequestData;
-        const totalCondoms = Object.values(r.condom_quantities).reduce((a, b) => a + b, 0);
+        const totalCondoms = Object.values(r.condom_quantities as Record<string, number>).reduce((a, b) => a + b, 0);
         return `ถุงยางอนามัย ${totalCondoms} ชิ้น / สารหล่อลื่น ${r.lubricant_quantity} ชิ้น`;
       }
     },

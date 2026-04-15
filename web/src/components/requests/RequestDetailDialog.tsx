@@ -3,22 +3,23 @@ import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, 
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { formatDate, formatDateTime, getOverdueDays } from '../../utils/requestUtils';
 import QRCodeDialog from './QRCodeDialog';
+import type { Enums } from '../../lib/database.types';
 
 export interface RequestData {
   id: string;
   reference_number: string;
-  selected_date: string;
-  selected_time: string;
-  selected_service_center: string;
+  selected_date: string | null;
+  selected_time: string | null;
+  selected_service_center: Enums<'service_center'>;
   condom_quantities: Record<string, number>;
   lubricant_quantity: number;
-  message?: string;
-  cancel_reason?: string;
-  handled_by?: string | null;
-  completed_at?: string | null;
-  created_at?: string;
-  updated_at?: string;
-  request_status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled_by_user' | 'cancelled_by_staff';
+  message: string | null;
+  cancel_reason: string | null;
+  handled_by: string | null;
+  completed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  request_status: Enums<'status'>;
 }
 
 interface RequestDetailDialogProps {
@@ -143,20 +144,20 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="subtitle2" color="text.secondary">วันเดือนปีรับ</Typography>
                   {(() => {
-                    const days = getOverdueDays(request.selected_date, request.request_status);
+                    const days = getOverdueDays(request.selected_date ?? '', request.request_status);
                     if (days > 0) {
                       return (
                         <Typography variant="body1" color="error.main">
-                          {formatDate(request.selected_date)} (เลยกำหนด {days} วัน)
+                          {formatDate(request.selected_date ?? '')} (เลยกำหนด {days} วัน)
                         </Typography>
                       );
                     }
-                    return <Typography variant="body1">{formatDate(request.selected_date)}</Typography>;
+                    return <Typography variant="body1">{formatDate(request.selected_date ?? '')}</Typography>;
                   })()}
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">เวลารับ</Typography>
-                  <Typography variant="body1">{request.selected_time} น.</Typography>
+                  <Typography variant="body1">{request.selected_time ?? '-'} น.</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">สถานที่รับ</Typography>
@@ -311,7 +312,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                         onClick={() => setIsConfirmingComplete(true)}
                         color="success"
                         variant="contained"
-                        disabled={getOverdueDays(request.selected_date, request.request_status) <= 7}
+                        disabled={getOverdueDays(request.selected_date ?? '', request.request_status) <= 7}
                       >
                         เสร็จสิ้น
                       </Button>

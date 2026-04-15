@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { RequestData } from '../components/requests/RequestDetailDialog';
 
-function formatRow(row: Record<string, unknown>): RequestData {
+function formatRow(row: RequestData): RequestData {
   return {
     ...row,
-    selected_time: (row.selected_time as string)?.slice(0, 5) ?? '',
-  } as RequestData;
+    selected_time: row.selected_time?.slice(0, 5) ?? null,
+  };
 }
 
 export function useRequests() {
@@ -30,7 +30,7 @@ export function useRequests() {
       setError(error.message);
     } else {
       setRequests(
-        (data ?? []).map(r => formatRow(r as unknown as Record<string, unknown>))
+        (data ?? []).map(r => formatRow(r as unknown as RequestData))
       );
     }
     setLoading(false);
@@ -48,10 +48,10 @@ export function useRequests() {
         { event: '*', schema: 'public', table: 'condom_requests' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newRow = formatRow(payload.new as unknown as Record<string, unknown>);
+            const newRow = formatRow(payload.new as unknown as RequestData);
             setRequests(prev => [newRow, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            const updatedRow = formatRow(payload.new as unknown as Record<string, unknown>);
+            const updatedRow = formatRow(payload.new as unknown as RequestData);
             setRequests(prev =>
               prev.map(r => r.id === updatedRow.id ? updatedRow : r)
             );

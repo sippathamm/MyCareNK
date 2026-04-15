@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './useAuth';
+import type { Enums, Tables } from '../lib/database.types';
 
-export type StaffRole = 'staff' | 'admin' | 'superadmin' | null;
+export type StaffRole = Enums<'role'> | null;
 
-export interface StaffProfile {
-  first_name: string;
-  last_name: string;
-  service_center: string;
-}
+export type StaffProfile = Pick<Tables<'staff_profiles'>, 'first_name' | 'last_name' | 'service_center'>;
 
 export function useRoleAccess() {
   const { session } = useAuth();
@@ -46,7 +43,7 @@ export function useRoleAccess() {
         if (profileError) throw profileError;
 
         if (isMounted) {
-          setRole(roleData?.role as StaffRole);
+          setRole(roleData?.role ?? null);
           setProfile(profileData);
         }
       } catch (error) {

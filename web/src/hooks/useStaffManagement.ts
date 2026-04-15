@@ -1,12 +1,13 @@
 import { useState, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
+import type { Enums } from '../lib/database.types';
 
 export interface StaffMember {
   user_id: string;
   first_name: string;
   last_name: string;
-  service_center: string;
-  role: string;
+  service_center: Enums<'service_center'>;
+  role: Enums<'role'>;
   email: string;
   created_at: string;
   updated_at: string | null;
@@ -57,8 +58,8 @@ export function useStaffManagement() {
     password: string;
     first_name: string;
     last_name: string;
-    service_center: string;
-    role: string;
+    service_center: Enums<'service_center'>;
+    role: Enums<'role'>;
   }): Promise<string | null> => {
     const { error: err } = await callStaffManagement('create', payload);
     if (!err) await fetchStaff();
@@ -69,8 +70,8 @@ export function useStaffManagement() {
     user_id: string;
     first_name?: string;
     last_name?: string;
-    service_center?: string;
-    role?: string;
+    service_center?: Enums<'service_center'>;
+    role?: Enums<'role'>;
     email?: string;
   }): Promise<string | null> => {
     const { error: err } = await callStaffManagement('update', payload);

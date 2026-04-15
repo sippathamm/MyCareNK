@@ -9,27 +9,15 @@ import {
 } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import type { Enums, Tables } from '../lib/database.types';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
-export type RequestStatus =
-  | 'pending'
-  | 'preparing'
-  | 'ready'
-  | 'completed'
-  | 'cancelled_by_user'
-  | 'cancelled_by_staff';
+export type RequestStatus = Enums<'status'>;
 
-export interface NotificationItem {
-  id: string;
-  request_id: string;
-  reference_number: string;
-  event_type: RequestStatus;
-  created_at: string;
-  is_read: boolean;
-}
+export type NotificationItem = Tables<'notifications'> & { is_read: boolean };
 
 interface NotificationContextValue {
   notifications: NotificationItem[];
@@ -136,13 +124,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       if (cancelled) return;
 
-      const ids = new Set<string>((readsData ?? []).map(r => r.notification_id as string));
+      const ids = new Set<string>((readsData ?? []).map(r => r.notification_id));
       setReadIds(ids);
 
       setNotifications(
         (notifData ?? []).map(r => ({
-          ...(r as Omit<NotificationItem, 'is_read'>),
-          is_read: ids.has(r.id as string),
+          ...r,
+          is_read: ids.has(r.id),
         }))
       );
     })();
@@ -160,7 +148,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
         (payload) => {
-          const row = payload.new as Omit<NotificationItem, 'is_read'>;
+          const row = payload.new as Tables<'notifications'>;
           const item: NotificationItem = { ...row, is_read: false };
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastEventType(row.event_type);
