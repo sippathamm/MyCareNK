@@ -11,11 +11,16 @@ export interface StatusCounts {
 
 export interface WeeklyDataPoint {
   date: string;
-  requests: number;
+  pending: number;
+  preparing: number;
+  ready: number;
+  completed: number;
+  cancelled: number;
 }
 
 export interface DashboardData {
   statusCounts: StatusCounts;
+  monthlyStatusCounts: StatusCounts;
   weeklyData: WeeklyDataPoint[];
 }
 
@@ -43,6 +48,7 @@ function toLocalDateString(date: Date): string {
 export function useDashboard() {
   const [data, setData] = useState<DashboardData>({
     statusCounts: EMPTY_COUNTS,
+    monthlyStatusCounts: EMPTY_COUNTS,
     weeklyData: [],
   });
   const [loading, setLoading] = useState(true);
@@ -67,29 +73,38 @@ export function useDashboard() {
     }
 
     const counts: StatusCounts = { ...EMPTY_COUNTS };
+    const monthlyCounts: StatusCounts = { ...EMPTY_COUNTS };
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
     const days = getLast7Days();
-    const dailyMap: Record<string, number> = {};
-    days.forEach(d => { dailyMap[toLocalDateString(d)] = 0; });
+    type DailyEntry = { pending: number; preparing: number; ready: number; completed: number; cancelled: number };
+    const dailyMap: Record<string, DailyEntry> = {};
+    days.forEach(d => { dailyMap[toLocalDateString(d)] = { pending: 0, preparing: 0, ready: 0, completed: 0, cancelled: 0 }; });
 
     for (const row of rows ?? []) {
       const status = row.request_status as string;
-      const key: keyof StatusCounts =
+      const statusKey: keyof StatusCounts =
         status === 'cancelled_by_user' || status === 'cancelled_by_staff' ? 'cancelled' : status as keyof StatusCounts;
-      if (key in counts) counts[key]++;
+      if (statusKey in counts) counts[statusKey]++;
 
       const createdAt = new Date(row.created_at);
+      if (createdAt.getFullYear() === currentYear && createdAt.getMonth() === currentMonth) {
+        if (statusKey in monthlyCounts) monthlyCounts[statusKey]++;
+      }
+
       if (createdAt >= sevenDaysAgo) {
-        const key = toLocalDateString(createdAt);
-        if (key in dailyMap) dailyMap[key]++;
+        const dayKey = toLocalDateString(createdAt);
+        if (dayKey in dailyMap) dailyMap[dayKey][statusKey]++;
       }
     }
 
     const weeklyData: WeeklyDataPoint[] = days.map(d => ({
       date: d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
-      requests: dailyMap[toLocalDateString(d)],
+      ...dailyMap[toLocalDateString(d)],
     }));
 
-    setData({ statusCounts: counts, weeklyData });
+    setData({ statusCounts: counts, monthlyStatusCounts: monthlyCounts, weeklyData });
     setLoading(false);
   }, []);
 

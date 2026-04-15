@@ -1,11 +1,11 @@
 import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, type TooltipProps } from 'recharts';
 import type { Session } from '@supabase/supabase-js';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 const STATUS_COLORS = {
-  pending: '#FF9800',
+  pending: '#FF8A50',
   preparing: '#2196F3',
   ready: '#9C27B0',
   completed: '#4CAF50',
@@ -14,6 +14,29 @@ const STATUS_COLORS = {
 
 interface DashboardPageProps {
   session: Session;
+}
+
+const BAR_STATUS_ITEMS = [
+  { key: 'pending',   name: 'รอดำเนินการ' },
+  { key: 'preparing', name: 'กำลังเตรียม' },
+  { key: 'ready',     name: 'รอรับ' },
+  { key: 'completed', name: 'เสร็จสิ้น' },
+  { key: 'cancelled', name: 'ยกเลิก' },
+] as const;
+
+function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
+  if (!active || !payload?.length) return null;
+  return (
+    <Box sx={{ bgcolor: 'white', border: 'none', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5, minWidth: 140 }}>
+      <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>{label}</Typography>
+      {payload.map((entry) => (
+        <Box key={entry.dataKey} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+          <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: entry.fill }} />
+          <Typography variant="caption">{entry.name}: {entry.value}</Typography>
+        </Box>
+      ))}
+    </Box>
+  );
 }
 
 const SummaryCard = ({ title, value, color }: { title: string; value: string | number; color: string }) => (
@@ -32,14 +55,14 @@ const SummaryCard = ({ title, value, color }: { title: string; value: string | n
 export default function DashboardPage({ session }: DashboardPageProps) {
   const { profile } = useRoleAccess();
   const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
-  const { statusCounts, weeklyData, loading } = useDashboard();
+  const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard();
 
   const statusData = [
-    { name: 'รอดำเนินการ', value: statusCounts.pending, color: STATUS_COLORS.pending },
-    { name: 'กำลังเตรียม', value: statusCounts.preparing, color: STATUS_COLORS.preparing },
-    { name: 'รอรับ', value: statusCounts.ready, color: STATUS_COLORS.ready },
-    { name: 'เสร็จสิ้น', value: statusCounts.completed, color: STATUS_COLORS.completed },
-    { name: 'ยกเลิก', value: statusCounts.cancelled, color: STATUS_COLORS.cancelled },
+    { name: 'รอดำเนินการ', value: monthlyStatusCounts.pending, color: STATUS_COLORS.pending },
+    { name: 'กำลังเตรียม', value: monthlyStatusCounts.preparing, color: STATUS_COLORS.preparing },
+    { name: 'รอรับ', value: monthlyStatusCounts.ready, color: STATUS_COLORS.ready },
+    { name: 'เสร็จสิ้น', value: monthlyStatusCounts.completed, color: STATUS_COLORS.completed },
+    { name: 'ยกเลิก', value: monthlyStatusCounts.cancelled, color: STATUS_COLORS.cancelled },
   ];
 
   return (
@@ -84,11 +107,18 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="date" tickLine={false} axisLine={false} />
                   <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip
-                    cursor={{ fill: 'rgba(0,0,0,0.05)' }}
-                    contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                  />
-                  <Bar name="คำขอ" dataKey="requests" fill="#FF8A50" radius={[4, 4, 0, 0]} />
+                  <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} content={<BarTooltip />} />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" />
+                  {BAR_STATUS_ITEMS.map(({ key, name }, idx) => (
+                    <Bar
+                      key={key}
+                      name={name}
+                      dataKey={key}
+                      fill={STATUS_COLORS[key]}
+                      stackId="a"
+                      radius={idx === BAR_STATUS_ITEMS.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]}
+                    />
+                  ))}
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -100,7 +130,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
           <Card sx={{ borderRadius: 2, height: 420 }} elevation={1}>
             <CardContent sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                สัดส่วนสถานะคำขอ
+                สัดส่วนสถานะคำขอในเดือนนี้
               </Typography>
               <ResponsiveContainer width="100%" height="85%">
                 <PieChart>

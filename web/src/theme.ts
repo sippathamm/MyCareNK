@@ -6,6 +6,10 @@ const theme = createTheme({
       main: '#FF8A50',
       contrastText: '#ffffff',
     },
+    warning: {
+      main: '#FF8A50',
+      contrastText: '#ffffff',
+    },
     background: {
       default: '#F4F6F8',
     },
