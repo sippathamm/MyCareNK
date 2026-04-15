@@ -14,6 +14,8 @@ export interface RequestData {
   lubricant_quantity: number;
   message?: string;
   cancel_reason?: string;
+  handled_by?: string | null;
+  completed_at?: string | null;
   created_at?: string;
   updated_at?: string;
   request_status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled_by_user' | 'cancelled_by_staff';
