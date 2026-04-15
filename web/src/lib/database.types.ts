@@ -68,6 +68,50 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_transactions: {
+        Row: {
+          condom_delta: number
+          created_at: string
+          id: string
+          lubricant_delta: number
+          note: string | null
+          performed_by: string
+          reference_request_id: string | null
+          service_center: Database["public"]["Enums"]["service_center"]
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Insert: {
+          condom_delta: number
+          created_at?: string
+          id?: string
+          lubricant_delta: number
+          note?: string | null
+          performed_by: string
+          reference_request_id?: string | null
+          service_center: Database["public"]["Enums"]["service_center"]
+          transaction_type: Database["public"]["Enums"]["transaction_type"]
+        }
+        Update: {
+          condom_delta?: number
+          created_at?: string
+          id?: string
+          lubricant_delta?: number
+          note?: string | null
+          performed_by?: string
+          reference_request_id?: string | null
+          service_center?: Database["public"]["Enums"]["service_center"]
+          transaction_type?: Database["public"]["Enums"]["transaction_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventory_transactions_reference_request_id_fkey"
+            columns: ["reference_request_id"]
+            isOneToOne: false
+            referencedRelation: "condom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_reads: {
         Row: {
           notification_id: string
@@ -394,6 +438,7 @@ export type Database = {
         | "completed"
         | "cancelled_by_user"
         | "cancelled_by_staff"
+      transaction_type: "restock" | "fulfillment" | "adjustment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -536,6 +581,7 @@ export const Constants = {
         "cancelled_by_user",
         "cancelled_by_staff",
       ],
+      transaction_type: ["restock", "fulfillment", "adjustment"],
     },
   },
 } as const
