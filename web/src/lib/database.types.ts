@@ -68,41 +68,6 @@ export type Database = {
         }
         Relationships: []
       }
-      request_status_logs: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          from_status: Database["public"]["Enums"]["status"] | null
-          id: string
-          request_id: string
-          to_status: Database["public"]["Enums"]["status"]
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["status"] | null
-          id?: string
-          request_id: string
-          to_status: Database["public"]["Enums"]["status"]
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["status"] | null
-          id?: string
-          request_id?: string
-          to_status?: Database["public"]["Enums"]["status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "request_status_logs_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "condom_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       notification_reads: {
         Row: {
           notification_id: string
@@ -179,6 +144,71 @@ export type Database = {
           id?: string
           success?: boolean | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      request_status_logs: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          from_status: Database["public"]["Enums"]["status"] | null
+          id: string
+          request_id: string
+          to_status: Database["public"]["Enums"]["status"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["status"] | null
+          id?: string
+          request_id: string
+          to_status: Database["public"]["Enums"]["status"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["status"] | null
+          id?: string
+          request_id?: string
+          to_status?: Database["public"]["Enums"]["status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_status_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "condom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_center_inventory: {
+        Row: {
+          condom_qty: number
+          id: string
+          last_restocked_at: string | null
+          lubricant_qty: number
+          service_center: Database["public"]["Enums"]["service_center"]
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          condom_qty?: number
+          id?: string
+          last_restocked_at?: string | null
+          lubricant_qty?: number
+          service_center: Database["public"]["Enums"]["service_center"]
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          condom_qty?: number
+          id?: string
+          last_restocked_at?: string | null
+          lubricant_qty?: number
+          service_center?: Database["public"]["Enums"]["service_center"]
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
