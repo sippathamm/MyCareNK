@@ -444,6 +444,7 @@ export type Database = {
           p_action: string
           p_new_value?: Json
           p_old_value?: Json
+          p_performed_by?: string
           p_target_id: string
           p_target_table: string
         }
