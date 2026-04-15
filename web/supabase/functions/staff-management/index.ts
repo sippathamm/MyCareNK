@@ -190,39 +190,55 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (last_name !== undefined) profileUpdates.last_name = last_name;
     if (service_center !== undefined) profileUpdates.service_center = service_center;
 
-    const hasProfileUpdate = Object.keys(profileUpdates).length > 0;
+    const hasPotentialProfileUpdate = Object.keys(profileUpdates).length > 0;
     const hasRoleUpdate = role !== undefined;
+    const hasEmailUpdate = email !== undefined;
 
-    // Fetch old values for audit before applying changes
-    const [profileBefore, roleBefore] = await Promise.all([
-      hasProfileUpdate
+    // Fetch old values first — needed to diff what actually changed
+    const [profileBefore, roleBefore, authUserBefore] = await Promise.all([
+      (hasPotentialProfileUpdate || hasEmailUpdate)
         ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center').eq('user_id', user_id).single()
         : Promise.resolve({ data: null, error: null }),
       hasRoleUpdate
         ? serviceClient.from('staff_roles').select('id, role').eq('user_id', user_id).single()
         : Promise.resolve({ data: null, error: null }),
+      hasEmailUpdate
+        ? serviceClient.auth.admin.getUserById(user_id)
+        : Promise.resolve({ data: { user: null }, error: null }),
     ]);
+
+    // Diff: only keep profile fields that actually changed
+    const changedProfileUpdates: Record<string, unknown> = {};
+    if (first_name !== undefined && first_name !== profileBefore.data?.first_name) changedProfileUpdates.first_name = first_name;
+    if (last_name !== undefined && last_name !== profileBefore.data?.last_name) changedProfileUpdates.last_name = last_name;
+    if (service_center !== undefined && service_center !== profileBefore.data?.service_center) changedProfileUpdates.service_center = service_center;
+
+    const oldEmail = authUserBefore.data?.user?.email ?? null;
+
+    const hasActualProfileChange = Object.keys(changedProfileUpdates).length > 0;
+    const hasActualRoleChange = hasRoleUpdate && roleBefore.data != null && role !== roleBefore.data.role;
+    const hasActualEmailChange = hasEmailUpdate && email !== oldEmail;
+
+    if (!hasActualProfileChange && !hasActualRoleChange && !hasActualEmailChange) {
+      return jsonResponse(200, 'success', 'แก้ไขข้อมูลสำเร็จ');
+    }
 
     const tasks: Promise<{ error: unknown }>[] = [];
 
-    if (hasProfileUpdate) {
-      profileUpdates.updated_at = new Date().toISOString();
-      tasks.push(serviceClient.from('staff_profiles').update(profileUpdates).eq('user_id', user_id) as Promise<{ error: unknown }>);
+    if (hasActualProfileChange) {
+      changedProfileUpdates.updated_at = new Date().toISOString();
+      tasks.push(serviceClient.from('staff_profiles').update(changedProfileUpdates).eq('user_id', user_id) as Promise<{ error: unknown }>);
     }
 
-    if (hasRoleUpdate) {
+    if (hasActualRoleChange) {
       tasks.push(serviceClient.from('staff_roles').update({ role }).eq('user_id', user_id) as Promise<{ error: unknown }>);
     }
 
-    if (email !== undefined) {
+    if (hasActualEmailChange) {
       const { error: emailErr } = await serviceClient.auth.admin.updateUserById(user_id, { email, email_confirm: true });
       if (emailErr) {
         return jsonResponse(400, 'error', emailErr.message ?? 'ไม่สามารถอัปเดตอีเมลได้');
       }
-    }
-
-    if (tasks.length === 0 && email === undefined) {
-      return jsonResponse(400, 'error', 'ไม่มีข้อมูลที่ต้องการแก้ไข');
     }
 
     if (tasks.length > 0) {
@@ -232,26 +248,35 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Log audit events after successful update
+    // Log audit events — each event fires only when that specific thing actually changed
     const auditTasks: Promise<unknown>[] = [];
 
-    if (hasProfileUpdate && profileBefore.data) {
-      const { updated_at: _ts, ...newProfileValues } = profileUpdates;
+    if (hasActualProfileChange && profileBefore.data) {
+      const oldProfileValues: Record<string, unknown> = {};
+      const newProfileValues: Record<string, unknown> = {};
+      if (changedProfileUpdates.first_name !== undefined) {
+        oldProfileValues.first_name = profileBefore.data.first_name;
+        newProfileValues.first_name = changedProfileUpdates.first_name;
+      }
+      if (changedProfileUpdates.last_name !== undefined) {
+        oldProfileValues.last_name = profileBefore.data.last_name;
+        newProfileValues.last_name = changedProfileUpdates.last_name;
+      }
+      if (changedProfileUpdates.service_center !== undefined) {
+        oldProfileValues.service_center = profileBefore.data.service_center;
+        newProfileValues.service_center = changedProfileUpdates.service_center;
+      }
       auditTasks.push(serviceClient.rpc('log_audit_event', {
         p_performed_by: user.id,
         p_action: 'staff_profile_updated',
         p_target_table: 'staff_profiles',
         p_target_id: profileBefore.data.id,
-        p_old_value: {
-          first_name: profileBefore.data.first_name,
-          last_name: profileBefore.data.last_name,
-          service_center: profileBefore.data.service_center,
-        },
+        p_old_value: oldProfileValues,
         p_new_value: newProfileValues,
       }));
     }
 
-    if (hasRoleUpdate && roleBefore.data) {
+    if (hasActualRoleChange && roleBefore.data) {
       auditTasks.push(serviceClient.rpc('log_audit_event', {
         p_performed_by: user.id,
         p_action: 'role_updated',
@@ -259,6 +284,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_target_id: roleBefore.data.id,
         p_old_value: { role: roleBefore.data.role },
         p_new_value: { role },
+      }));
+    }
+
+    if (hasActualEmailChange && profileBefore.data) {
+      auditTasks.push(serviceClient.rpc('log_audit_event', {
+        p_performed_by: user.id,
+        p_action: 'email_updated',
+        p_target_table: 'staff_profiles',
+        p_target_id: profileBefore.data.id,
+        p_old_value: { email: oldEmail },
+        p_new_value: { email },
       }));
     }
 
