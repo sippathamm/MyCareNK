@@ -68,6 +68,41 @@ export type Database = {
         }
         Relationships: []
       }
+      request_status_logs: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          from_status: Database["public"]["Enums"]["status"] | null
+          id: string
+          request_id: string
+          to_status: Database["public"]["Enums"]["status"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["status"] | null
+          id?: string
+          request_id: string
+          to_status: Database["public"]["Enums"]["status"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["status"] | null
+          id?: string
+          request_id?: string
+          to_status?: Database["public"]["Enums"]["status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_status_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "condom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_reads: {
         Row: {
           notification_id: string
