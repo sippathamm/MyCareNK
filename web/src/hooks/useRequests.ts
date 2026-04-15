@@ -21,7 +21,8 @@ export function useRequests() {
       .from('condom_requests')
       .select(
         'id, reference_number, selected_date, selected_time, selected_service_center, ' +
-        'condom_quantities, lubricant_quantity, message, request_status, cancel_reason, created_at, updated_at'
+        'condom_quantities, lubricant_quantity, message, request_status, cancel_reason, ' +
+        'handled_by, completed_at, created_at, updated_at'
       )
       .order('created_at', { ascending: false });
 
