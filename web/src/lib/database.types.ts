@@ -435,6 +435,19 @@ export type Database = {
       dearmor: { Args: { "": string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
+      get_average_lead_time: {
+        Args: {
+          p_date_from: string
+          p_date_to: string
+          p_service_center?: string | null
+        }
+        Returns: {
+          overall_avg_minutes: number | null
+          pending_to_preparing: number | null
+          preparing_to_ready: number | null
+          ready_to_completed: number | null
+        }[]
+      }
       get_days_until_reset: { Args: never; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }

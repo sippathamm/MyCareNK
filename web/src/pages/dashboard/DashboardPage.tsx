@@ -1,8 +1,11 @@
-import { Box, Typography, Card, CardContent, Grid } from '@mui/material';
+import { useState } from 'react';
+import { Box, Typography, Card, CardContent, Grid, TextField, MenuItem, Stack } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, type TooltipProps } from 'recharts';
 import type { Session } from '@supabase/supabase-js';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useLeadTime } from '../../hooks/useLeadTime';
+import type { Enums } from '../../lib/database.types';
 
 const STATUS_COLORS = {
   pending: '#FF8A50',
@@ -11,6 +14,19 @@ const STATUS_COLORS = {
   completed: '#4CAF50',
   cancelled: '#9E9E9E',
 } as const;
+
+const LEAD_TIME_COLORS = {
+  pending_to_preparing: '#FF8A50',
+  preparing_to_ready: '#2196F3',
+  ready_to_completed: '#9C27B0',
+} as const;
+
+const SERVICE_CENTERS: Enums<'service_center'>[] = [
+  'รพ.โพนพิสัย',
+  'รพ.สต.วัดหลวง',
+  'อบต.วัดหลวง',
+  'สสจ.หนองคาย',
+];
 
 interface DashboardPageProps {
   session: Session;
@@ -23,6 +39,20 @@ const BAR_STATUS_ITEMS = [
   { key: 'completed', name: 'เสร็จสิ้น' },
   { key: 'cancelled', name: 'ยกเลิก' },
 ] as const;
+
+const BREAKDOWN_COLORS = [
+  LEAD_TIME_COLORS.pending_to_preparing,
+  LEAD_TIME_COLORS.preparing_to_ready,
+  LEAD_TIME_COLORS.ready_to_completed,
+];
+
+function ColoredYTick({ x, y, payload, index }: { x?: number; y?: number; payload?: { value: string }; index?: number }) {
+  return (
+    <text x={x} y={y} dy={4} textAnchor="end" fontSize={12} fontWeight="bold" fill={BREAKDOWN_COLORS[index ?? 0]}>
+      {payload?.value}
+    </text>
+  );
+}
 
 function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
@@ -39,6 +69,20 @@ function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
   );
 }
 
+function formatLeadTime(minutes: number | null | undefined): string {
+  if (minutes === null || minutes === undefined || minutes < 0) return 'ไม่มีข้อมูล';
+  const mins = Number(minutes);
+  if (mins < 1) {
+    const secs = Math.round(mins * 60);
+    return `${secs} วินาที`;
+  }
+  const total = Math.round(mins);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m} นาที`;
+  return `${h} ชั่วโมง ${m} นาที`;
+}
+
 const SummaryCard = ({ title, value, color }: { title: string; value: string | number; color: string }) => (
   <Card sx={{ height: '100%', borderRadius: 2 }} elevation={1}>
     <CardContent>
@@ -52,10 +96,29 @@ const SummaryCard = ({ title, value, color }: { title: string; value: string | n
   </Card>
 );
 
+function getDefaultDateFrom(): string {
+  const d = new Date();
+  d.setMonth(d.getMonth() - 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function getDefaultDateTo(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default function DashboardPage({ session }: DashboardPageProps) {
-  const { profile } = useRoleAccess();
+  const { profile, role } = useRoleAccess();
   const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
   const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard();
+
+  const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
+  const [dateTo, setDateTo] = useState(getDefaultDateTo);
+  const [serviceCenter, setServiceCenter] = useState<string>('all');
+
+  const isSuperadmin = role === 'superadmin';
+  const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
+
+  const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedSC);
 
   const statusData = [
     { name: 'รอดำเนินการ', value: monthlyStatusCounts.pending, color: STATUS_COLORS.pending },
@@ -64,6 +127,32 @@ export default function DashboardPage({ session }: DashboardPageProps) {
     { name: 'เสร็จสิ้น', value: monthlyStatusCounts.completed, color: STATUS_COLORS.completed },
     { name: 'ยกเลิก', value: monthlyStatusCounts.cancelled, color: STATUS_COLORS.cancelled },
   ];
+
+  const overallCurrent = leadTime.overall_avg_minutes;
+  const overallPrevious = prevLeadTime.overall_avg_minutes;
+  const hasComparison = overallCurrent !== null && overallPrevious !== null;
+  const improved = hasComparison && overallCurrent <= overallPrevious;
+  const diffMinutes = hasComparison ? Math.abs(overallCurrent - overallPrevious) : null;
+
+  const breakdownData = [
+    { name: 'รอดำเนินการ → กำลังเตรียม', minutes: leadTime.pending_to_preparing, fill: LEAD_TIME_COLORS.pending_to_preparing },
+    { name: 'กำลังเตรียม → รอรับ', minutes: leadTime.preparing_to_ready, fill: LEAD_TIME_COLORS.preparing_to_ready },
+    { name: 'รอรับ → เสร็จสิ้น', minutes: leadTime.ready_to_completed, fill: LEAD_TIME_COLORS.ready_to_completed },
+  ];
+
+  const hasBreakdownData = breakdownData.some(d => d.minutes !== null);
+
+  function LeadTimeBarTooltip({ active, payload }: TooltipProps<number, string>) {
+    if (!active || !payload?.length) return null;
+    return (
+      <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
+        <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
+          {payload[0]?.payload?.name}
+        </Typography>
+        <Typography variant="caption">{formatLeadTime(payload[0]?.value as number)}</Typography>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
@@ -94,7 +183,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
       </Grid>
 
       {/* Charts */}
-      <Grid container spacing={3} columns={12}>
+      <Grid container spacing={3} columns={12} sx={{ mb: 3 }}>
         {/* Bar Chart - Weekly Trend */}
         <Grid size={{ xs: 12, md: 8 }}>
           <Card sx={{ borderRadius: 2, height: 420 }} elevation={1}>
@@ -160,6 +249,111 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                   />
                 </PieChart>
               </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      <Grid container spacing={3} columns={12}>
+        {/* Lead Time Summary Card with filters */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card sx={{ borderRadius: 2, height: '100%' }} elevation={1}>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                เวลาเฉลี่ยในการดำเนินการ
+              </Typography>
+              <Stack direction="column" spacing={1.5} sx={{ mb: 3 }}>
+                <TextField
+                  label="ตั้งแต่วันที่"
+                  type="date"
+                  size="small"
+                  value={dateFrom}
+                  onChange={e => setDateFrom(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  label="ถึงวันที่"
+                  type="date"
+                  size="small"
+                  value={dateTo}
+                  onChange={e => setDateTo(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                {isSuperadmin && (
+                  <TextField
+                    label="สถานบริการ"
+                    select
+                    size="small"
+                    value={serviceCenter}
+                    onChange={e => setServiceCenter(e.target.value)}
+                  >
+                    <MenuItem value="all">ทั้งหมด</MenuItem>
+                    {SERVICE_CENTERS.map(sc => (
+                      <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              </Stack>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <Typography variant="caption" fontWeight="bold" sx={{ color: STATUS_COLORS.pending }}>รอดำเนินการ</Typography>
+                <Typography variant="caption" color="text.secondary">→</Typography>
+                <Typography variant="caption" fontWeight="bold" sx={{ color: STATUS_COLORS.completed }}>สำเร็จ</Typography>
+              </Box>
+              <Typography variant="h4" fontWeight="bold" sx={{ color: overallCurrent === null && !ltLoading ? '#9E9E9E' : '#4CAF50' }}>
+                {ltLoading ? '-' : formatLeadTime(overallCurrent)}
+              </Typography>
+              {!ltLoading && hasComparison && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
+                  <Typography
+                    variant="body2"
+                    fontWeight="medium"
+                    sx={{ color: improved ? '#4CAF50' : '#f44336' }}
+                  >
+                    {improved ? '↓' : '↑'} {formatLeadTime(diffMinutes)}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {improved ? 'ดีขึ้น' : 'นานขึ้น'}จากช่วงก่อนหน้า
+                  </Typography>
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Lead Time Breakdown Bar Chart */}
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Card sx={{ borderRadius: 2, height: '100%', minHeight: 220 }} elevation={1}>
+            <CardContent sx={{ height: '100%' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                เวลาแต่ละสถานะ (นาที)
+              </Typography>
+              {ltLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
+                  <Typography variant="body2" color="text.secondary">กำลังโหลด...</Typography>
+                </Box>
+              ) : !hasBreakdownData ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
+                  <Typography variant="body2" color="text.secondary">ไม่มีข้อมูลในช่วงที่เลือก</Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height="80%">
+                  <BarChart
+                    layout="vertical"
+                    data={breakdownData}
+                    margin={{ top: 4, right: 120, left: 8, bottom: 4 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                    <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} unit=" นาที" />
+                    <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={180} tick={<ColoredYTick />} />
+                    <Tooltip content={<LeadTimeBarTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
+                    <Bar dataKey="minutes" radius={[0, 4, 4, 0]} minPointSize={4} label={{ position: 'right', fontSize: 11, fill: '#666', formatter: (v: number) => formatLeadTime(v) }}>
+                      {breakdownData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </Grid>

@@ -125,14 +125,23 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   // Mark as completed (#55)
+  const completedAt = new Date().toISOString();
   const { error: updateError } = await serviceClient
     .from('condom_requests')
-    .update({ request_status: 'completed' })
+    .update({ request_status: 'completed', completed_at: completedAt })
     .eq('id', requestRow.id);
 
   if (updateError) {
     return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
   }
+
+  // Update changed_by in the log entry created by the trigger (service-role sets it to null)
+  await serviceClient
+    .from('request_status_logs')
+    .update({ changed_by: user.id })
+    .eq('request_id', requestRow.id)
+    .eq('to_status', 'completed')
+    .is('changed_by', null);
 
   return jsonResponse(200, 'success', 'รับถุงยางอนามัยสำเร็จ', { reference_number: ref });
 });
