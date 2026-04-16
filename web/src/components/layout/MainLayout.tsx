@@ -154,10 +154,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
         >
           {sidebarOpen ? (
             <Typography variant="h5" fontWeight="900" color="white" letterSpacing={1} noWrap>
-              <span style={{ color: '#FF8A50' }}>MyCareNK</span> Staff
+              <span style={{ color: '#FF9F6B' }}>MyCareNK</span> Staff
             </Typography>
           ) : (
-            <Typography variant="h6" fontWeight="900" sx={{ color: '#FF8A50' }}>
+            <Typography variant="h6" fontWeight="900" sx={{ color: '#FF9F6B' }}>
               M
             </Typography>
           )}
@@ -175,11 +175,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     onClick={() => navigate(item.path)}
                     sx={{
                       borderRadius: 2,
-                      backgroundColor: isActive ? 'rgba(255, 138, 80, 0.15)' : 'transparent',
-                      color: isActive ? '#FF8A50' : '#CBD5E1',
+                      backgroundColor: isActive ? 'rgba(255, 159, 107, 0.15)' : 'transparent',
+                      color: isActive ? '#FF9F6B' : '#CBD5E1',
                       justifyContent: sidebarOpen ? 'flex-start' : 'center',
                       px: sidebarOpen ? 2 : 1,
-                      '&:hover': { backgroundColor: 'rgba(255, 138, 80, 0.25)', color: '#FF8A50' },
+                      '&:hover': { backgroundColor: 'rgba(255, 159, 107, 0.25)', color: '#FF9F6B' },
                       transition: 'all 0.2s',
                     }}
                   >

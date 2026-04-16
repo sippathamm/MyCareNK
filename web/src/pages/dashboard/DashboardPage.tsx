@@ -9,17 +9,17 @@ import { usePeakTime } from '../../hooks/usePeakTime';
 import type { Enums } from '../../lib/database.types';
 
 const STATUS_COLORS = {
-  pending: '#FF8A50',
-  preparing: '#2196F3',
-  ready: '#9C27B0',
-  completed: '#4CAF50',
-  cancelled: '#9E9E9E',
+  pending: '#FF9F6B',
+  preparing: '#64B5F6',
+  ready: '#BA68C8',
+  completed: '#81C784',
+  cancelled: '#BDBDBD',
 } as const;
 
 const LEAD_TIME_COLORS = {
-  pending_to_preparing: '#FF8A50',
-  preparing_to_ready: '#2196F3',
-  ready_to_completed: '#9C27B0',
+  pending_to_preparing: '#FF9F6B',
+  preparing_to_ready: '#64B5F6',
+  ready_to_completed: '#BA68C8',
 } as const;
 
 const SERVICE_CENTERS: Enums<'service_center'>[] = [
@@ -427,7 +427,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                       {hourlyChartData.map((entry) => (
                         <Cell
                           key={entry.bucket}
-                          fill={entry.bucket === peakHourBucket ? '#FF6B35' : '#4FC3F7'}
+                          fill={entry.bucket === peakHourBucket ? '#FF9F6B' : '#64B5F6'}
                         />
                       ))}
                     </Bar>
@@ -478,7 +478,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                       {dailyChartData.map((entry) => (
                         <Cell
                           key={entry.bucket}
-                          fill={entry.bucket === peakDayBucket ? '#FF6B35' : '#81C784'}
+                          fill={entry.bucket === peakDayBucket ? '#FF9F6B' : '#81C784'}
                         />
                       ))}
                     </Bar>

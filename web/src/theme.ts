@@ -3,11 +3,27 @@ import { createTheme } from '@mui/material';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#FF8A50',
+      main: '#FF9F6B',
+      contrastText: '#ffffff',
+    },
+    error: {
+      main: '#EF7070',
       contrastText: '#ffffff',
     },
     warning: {
-      main: '#FF8A50',
+      main: '#FF9F6B',
+      contrastText: '#ffffff',
+    },
+    info: {
+      main: '#64B5F6',
+      contrastText: '#ffffff',
+    },
+    secondary: {
+      main: '#BA68C8',
+      contrastText: '#ffffff',
+    },
+    success: {
+      main: '#81C784',
       contrastText: '#ffffff',
     },
     background: {
@@ -29,7 +45,7 @@ const theme = createTheme({
         },
         containedPrimary: {
           '&:hover': {
-            backgroundColor: '#FF8A50',
+            backgroundColor: '#FF9F6B',
           },
         },
       },
