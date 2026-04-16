@@ -518,7 +518,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
       <Card sx={{ borderRadius: 2, mt: 3 }} elevation={1}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-            อันดับความต้องการจุดบริการ
+            อันดับความต้องการสถานบริการ
           </Typography>
           {demandLoading ? (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80 }}>
@@ -529,7 +529,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
               <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
                 <Box component="thead">
                   <Box component="tr">
-                    {['อันดับ', 'จุดบริการ', 'คำขอทั้งหมด', 'ถุงยาง', 'เจลหล่อลื่น', 'สัดส่วน', 'Trend 30 วัน'].map(h => (
+                    {['อันดับ', 'สถานบริการ', 'คำขอทั้งหมด', 'ถุงยางอนามัย', 'เจลหล่อลื่น', 'สัดส่วน', 'แนวโน้ม 30 วัน'].map(h => (
                       <Box component="th" key={h} sx={{ textAlign: 'left', pb: 1.5, pr: 2, fontSize: 12, color: 'text.secondary', fontWeight: 'medium', whiteSpace: 'nowrap' }}>
                         {h}
                       </Box>
