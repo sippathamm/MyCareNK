@@ -120,14 +120,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const userId = authData.user.id;
 
     const [profileResult, roleResult] = await Promise.all([
-      serviceClient.from('staff_profiles').insert({ user_id: userId, first_name, last_name, service_center }),
-      serviceClient.from('staff_roles').insert({ user_id: userId, role }),
+      serviceClient.from('staff_profiles').insert({ user_id: userId, first_name, last_name, service_center }).select('id').single(),
+      serviceClient.from('staff_roles').insert({ user_id: userId, role }).select('id').single(),
     ]);
 
     if (profileResult.error || roleResult.error) {
       await serviceClient.auth.admin.deleteUser(userId);
       return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
     }
+
+    await serviceClient.rpc('log_audit_event', {
+      p_performed_by: user.id,
+      p_action: 'staff_created',
+      p_target_table: 'staff_profiles',
+      p_target_id: profileResult.data!.id,
+      p_new_value: { user_id: userId, email, first_name, last_name, service_center, role },
+    });
 
     return jsonResponse(201, 'success', 'สร้างบัญชีสำเร็จ', { user_id: userId });
   }
@@ -142,9 +150,25 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(400, 'error', 'ไม่สามารถลบบัญชีของตัวเองได้');
     }
 
+    // Snapshot before delete (cascade will remove rows after deleteUser)
+    const [{ data: profileSnapshot }, { data: roleSnapshot }] = await Promise.all([
+      serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center').eq('user_id', user_id).single(),
+      serviceClient.from('staff_roles').select('role').eq('user_id', user_id).single(),
+    ]);
+
     const { error: deleteErr } = await serviceClient.auth.admin.deleteUser(user_id);
     if (deleteErr) {
       return jsonResponse(500, 'error', 'ไม่สามารถลบบัญชีได้');
+    }
+
+    if (profileSnapshot) {
+      await serviceClient.rpc('log_audit_event', {
+        p_performed_by: user.id,
+        p_action: 'staff_deleted',
+        p_target_table: 'staff_profiles',
+        p_target_id: profileSnapshot.id,
+        p_old_value: { ...profileSnapshot, role: roleSnapshot?.role ?? null },
+      });
     }
 
     return jsonResponse(200, 'success', 'ลบบัญชีสำเร็จ');
@@ -166,26 +190,55 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (last_name !== undefined) profileUpdates.last_name = last_name;
     if (service_center !== undefined) profileUpdates.service_center = service_center;
 
-    const tasks: Promise<{ error: unknown }>[] = [];
+    const hasPotentialProfileUpdate = Object.keys(profileUpdates).length > 0;
+    const hasRoleUpdate = role !== undefined;
+    const hasEmailUpdate = email !== undefined;
 
-    if (Object.keys(profileUpdates).length > 0) {
-      profileUpdates.updated_at = new Date().toISOString();
-      tasks.push(serviceClient.from('staff_profiles').update(profileUpdates).eq('user_id', user_id) as Promise<{ error: unknown }>);
+    // Fetch old values first — needed to diff what actually changed
+    const [profileBefore, roleBefore, authUserBefore] = await Promise.all([
+      (hasPotentialProfileUpdate || hasEmailUpdate)
+        ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center').eq('user_id', user_id).single()
+        : Promise.resolve({ data: null, error: null }),
+      hasRoleUpdate
+        ? serviceClient.from('staff_roles').select('id, role').eq('user_id', user_id).single()
+        : Promise.resolve({ data: null, error: null }),
+      hasEmailUpdate
+        ? serviceClient.auth.admin.getUserById(user_id)
+        : Promise.resolve({ data: { user: null }, error: null }),
+    ]);
+
+    // Diff: only keep profile fields that actually changed
+    const changedProfileUpdates: Record<string, unknown> = {};
+    if (first_name !== undefined && first_name !== profileBefore.data?.first_name) changedProfileUpdates.first_name = first_name;
+    if (last_name !== undefined && last_name !== profileBefore.data?.last_name) changedProfileUpdates.last_name = last_name;
+    if (service_center !== undefined && service_center !== profileBefore.data?.service_center) changedProfileUpdates.service_center = service_center;
+
+    const oldEmail = authUserBefore.data?.user?.email ?? null;
+
+    const hasActualProfileChange = Object.keys(changedProfileUpdates).length > 0;
+    const hasActualRoleChange = hasRoleUpdate && roleBefore.data != null && role !== roleBefore.data.role;
+    const hasActualEmailChange = hasEmailUpdate && email !== oldEmail;
+
+    if (!hasActualProfileChange && !hasActualRoleChange && !hasActualEmailChange) {
+      return jsonResponse(200, 'success', 'แก้ไขข้อมูลสำเร็จ');
     }
 
-    if (role !== undefined) {
+    const tasks: Promise<{ error: unknown }>[] = [];
+
+    if (hasActualProfileChange) {
+      changedProfileUpdates.updated_at = new Date().toISOString();
+      tasks.push(serviceClient.from('staff_profiles').update(changedProfileUpdates).eq('user_id', user_id) as Promise<{ error: unknown }>);
+    }
+
+    if (hasActualRoleChange) {
       tasks.push(serviceClient.from('staff_roles').update({ role }).eq('user_id', user_id) as Promise<{ error: unknown }>);
     }
 
-    if (email !== undefined) {
+    if (hasActualEmailChange) {
       const { error: emailErr } = await serviceClient.auth.admin.updateUserById(user_id, { email, email_confirm: true });
       if (emailErr) {
         return jsonResponse(400, 'error', emailErr.message ?? 'ไม่สามารถอัปเดตอีเมลได้');
       }
-    }
-
-    if (tasks.length === 0 && email === undefined) {
-      return jsonResponse(400, 'error', 'ไม่มีข้อมูลที่ต้องการแก้ไข');
     }
 
     if (tasks.length > 0) {
@@ -193,6 +246,60 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (results.some(r => r.error)) {
         return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ');
       }
+    }
+
+    // Log audit events — each event fires only when that specific thing actually changed
+    const auditTasks: Promise<unknown>[] = [];
+
+    if (hasActualProfileChange && profileBefore.data) {
+      const oldProfileValues: Record<string, unknown> = {};
+      const newProfileValues: Record<string, unknown> = {};
+      if (changedProfileUpdates.first_name !== undefined) {
+        oldProfileValues.first_name = profileBefore.data.first_name;
+        newProfileValues.first_name = changedProfileUpdates.first_name;
+      }
+      if (changedProfileUpdates.last_name !== undefined) {
+        oldProfileValues.last_name = profileBefore.data.last_name;
+        newProfileValues.last_name = changedProfileUpdates.last_name;
+      }
+      if (changedProfileUpdates.service_center !== undefined) {
+        oldProfileValues.service_center = profileBefore.data.service_center;
+        newProfileValues.service_center = changedProfileUpdates.service_center;
+      }
+      auditTasks.push(serviceClient.rpc('log_audit_event', {
+        p_performed_by: user.id,
+        p_action: 'staff_profile_updated',
+        p_target_table: 'staff_profiles',
+        p_target_id: profileBefore.data.id,
+        p_old_value: oldProfileValues,
+        p_new_value: newProfileValues,
+      }));
+    }
+
+    if (hasActualRoleChange && roleBefore.data) {
+      auditTasks.push(serviceClient.rpc('log_audit_event', {
+        p_performed_by: user.id,
+        p_action: 'role_updated',
+        p_target_table: 'staff_roles',
+        p_target_id: roleBefore.data.id,
+        p_old_value: { role: roleBefore.data.role },
+        p_new_value: { role },
+      }));
+    }
+
+    if (hasActualEmailChange && profileBefore.data) {
+      auditTasks.push(serviceClient.rpc('log_audit_event', {
+        p_performed_by: user.id,
+        p_action: 'email_updated',
+        p_target_table: 'staff_profiles',
+        p_target_id: profileBefore.data.id,
+        p_old_value: { email: oldEmail },
+        p_new_value: { email },
+      }));
+    }
+
+    if (auditTasks.length > 0) {
+      await Promise.all(auditTasks);
     }
 
     return jsonResponse(200, 'success', 'แก้ไขข้อมูลสำเร็จ');
