@@ -18,7 +18,7 @@ const STATUS_COLORS = {
 const LEAD_TIME_COLORS = {
   pending_to_preparing: '#FF8A50',
   preparing_to_ready: '#2196F3',
-  ready_to_completed: '#4CAF50',
+  ready_to_completed: '#9C27B0',
 } as const;
 
 const SERVICE_CENTERS: Enums<'service_center'>[] = [
@@ -254,59 +254,47 @@ export default function DashboardPage({ session }: DashboardPageProps) {
         </Grid>
       </Grid>
 
-      {/* Lead Time Header Card */}
-      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
-        <CardContent>
-          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-            เวลาเฉลี่ยในการดำเนินการ
-          </Typography>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField
-              label="ตั้งแต่วันที่"
-              type="date"
-              size="small"
-              value={dateFrom}
-              onChange={e => setDateFrom(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ minWidth: 160 }}
-            />
-            <TextField
-              label="ถึงวันที่"
-              type="date"
-              size="small"
-              value={dateTo}
-              onChange={e => setDateTo(e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ minWidth: 160 }}
-            />
-            {isSuperadmin && (
-              <TextField
-                label="สถานบริการ"
-                select
-                size="small"
-                value={serviceCenter}
-                onChange={e => setServiceCenter(e.target.value)}
-                sx={{ minWidth: 180 }}
-              >
-                <MenuItem value="all">ทั้งหมด</MenuItem>
-                {SERVICE_CENTERS.map(sc => (
-                  <MenuItem key={sc} value={sc}>{sc}</MenuItem>
-                ))}
-              </TextField>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
-
       <Grid container spacing={3} columns={12}>
-        {/* Lead Time Summary Card */}
+        {/* Lead Time Summary Card with filters */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ borderRadius: 2, height: '100%' }} elevation={1}>
-            <CardContent>
-              <Typography variant="subtitle2" color="text.secondary" fontWeight="medium" gutterBottom>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                 เวลาเฉลี่ยในการดำเนินการ
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+              <Stack direction="column" spacing={1.5} sx={{ mb: 3 }}>
+                <TextField
+                  label="ตั้งแต่วันที่"
+                  type="date"
+                  size="small"
+                  value={dateFrom}
+                  onChange={e => setDateFrom(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                <TextField
+                  label="ถึงวันที่"
+                  type="date"
+                  size="small"
+                  value={dateTo}
+                  onChange={e => setDateTo(e.target.value)}
+                  slotProps={{ inputLabel: { shrink: true } }}
+                />
+                {isSuperadmin && (
+                  <TextField
+                    label="สถานบริการ"
+                    select
+                    size="small"
+                    value={serviceCenter}
+                    onChange={e => setServiceCenter(e.target.value)}
+                  >
+                    <MenuItem value="all">ทั้งหมด</MenuItem>
+                    {SERVICE_CENTERS.map(sc => (
+                      <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+                    ))}
+                  </TextField>
+                )}
+              </Stack>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                 <Typography variant="caption" fontWeight="bold" sx={{ color: STATUS_COLORS.pending }}>รอดำเนินการ</Typography>
                 <Typography variant="caption" color="text.secondary">→</Typography>
                 <Typography variant="caption" fontWeight="bold" sx={{ color: STATUS_COLORS.completed }}>สำเร็จ</Typography>
@@ -314,7 +302,6 @@ export default function DashboardPage({ session }: DashboardPageProps) {
               <Typography variant="h4" fontWeight="bold" sx={{ color: overallCurrent === null && !ltLoading ? '#9E9E9E' : '#4CAF50' }}>
                 {ltLoading ? '-' : formatLeadTime(overallCurrent)}
               </Typography>
-
               {!ltLoading && hasComparison && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
                   <Typography
@@ -335,10 +322,10 @@ export default function DashboardPage({ session }: DashboardPageProps) {
 
         {/* Lead Time Breakdown Bar Chart */}
         <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ borderRadius: 2, height: 220 }} elevation={1}>
+          <Card sx={{ borderRadius: 2, height: '100%', minHeight: 220 }} elevation={1}>
             <CardContent sx={{ height: '100%' }}>
-              <Typography variant="subtitle2" color="text.secondary" fontWeight="medium" gutterBottom>
-                รายละเอียดเวลาแต่ละสถานะ (นาที)
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                เวลาแต่ละสถานะ (นาที)
               </Typography>
               {ltLoading ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
