@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Box, Typography, Card, CardContent, Grid, TextField, MenuItem, Stack } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, type TooltipProps } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line, type TooltipProps } from 'recharts';
 import type { Session } from '@supabase/supabase-js';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useLeadTime } from '../../hooks/useLeadTime';
 import { usePeakTime } from '../../hooks/usePeakTime';
+import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
 import type { Enums } from '../../lib/database.types';
 
 const STATUS_COLORS = {
@@ -128,6 +129,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
 
   const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedSC);
   const { hourlyData, dailyData, loading: ptLoading } = usePeakTime(dateFrom, dateTo, selectedSC);
+  const { demand, trend, loading: demandLoading } = useServiceCenterDemand(dateFrom, dateTo);
 
   const THAI_DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
 
@@ -511,6 +513,94 @@ export default function DashboardPage({ session }: DashboardPageProps) {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Row 3: Service Center Demand Ranking */}
+      <Card sx={{ borderRadius: 2, mt: 3 }} elevation={1}>
+        <CardContent>
+          <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+            อันดับความต้องการจุดบริการ
+          </Typography>
+          {demandLoading ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80 }}>
+              <Typography variant="body2" color="text.secondary">กำลังโหลด...</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ overflowX: 'auto' }}>
+              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                <Box component="thead">
+                  <Box component="tr">
+                    {['อันดับ', 'จุดบริการ', 'คำขอทั้งหมด', 'ถุงยาง', 'เจลหล่อลื่น', 'สัดส่วน', 'Trend 30 วัน'].map(h => (
+                      <Box component="th" key={h} sx={{ textAlign: 'left', pb: 1.5, pr: 2, fontSize: 12, color: 'text.secondary', fontWeight: 'medium', whiteSpace: 'nowrap' }}>
+                        {h}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+                <Box component="tbody">
+                  {demand.map((row, idx) => {
+                    const RANK_COLORS = ['#FF9F6B', '#64B5F6', '#BA68C8', '#81C784'];
+                    const maxRequests = demand[0]?.total_requests ?? 1;
+                    const barPct = maxRequests > 0 ? (row.total_requests / maxRequests) * 100 : 0;
+                    const sparkData = trend
+                      .filter(t => t.service_center === row.service_center)
+                      .map(t => ({ v: t.request_count }));
+                    return (
+                      <Box component="tr" key={row.service_center} sx={{ borderTop: '1px solid', borderColor: 'divider' }}>
+                        <Box component="td" sx={{ py: 1.5, pr: 2, width: 40 }}>
+                          <Box sx={{
+                            width: 28, height: 28, borderRadius: '50%',
+                            bgcolor: RANK_COLORS[idx] ?? '#BDBDBD',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          }}>
+                            <Typography variant="caption" fontWeight="bold" sx={{ color: '#fff', lineHeight: 1 }}>
+                              {idx + 1}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Box component="td" sx={{ py: 1.5, pr: 3, whiteSpace: 'nowrap' }}>
+                          <Typography variant="body2" fontWeight="medium">{row.service_center}</Typography>
+                        </Box>
+                        <Box component="td" sx={{ py: 1.5, pr: 3, whiteSpace: 'nowrap' }}>
+                          <Typography variant="body2" fontWeight="bold" sx={{ color: RANK_COLORS[idx] ?? '#BDBDBD' }}>
+                            {row.total_requests.toLocaleString()}
+                          </Typography>
+                        </Box>
+                        <Box component="td" sx={{ py: 1.5, pr: 3, whiteSpace: 'nowrap' }}>
+                          <Typography variant="body2" color="text.secondary">{row.total_condoms.toLocaleString()}</Typography>
+                        </Box>
+                        <Box component="td" sx={{ py: 1.5, pr: 3, whiteSpace: 'nowrap' }}>
+                          <Typography variant="body2" color="text.secondary">{row.total_lubricants.toLocaleString()}</Typography>
+                        </Box>
+                        <Box component="td" sx={{ py: 1.5, pr: 3, minWidth: 200 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Box sx={{ flex: 1, bgcolor: 'grey.100', borderRadius: 1, height: 8, overflow: 'hidden' }}>
+                              <Box sx={{ width: `${barPct}%`, height: '100%', bgcolor: RANK_COLORS[idx] ?? '#BDBDBD', borderRadius: 1, transition: 'width 0.4s ease' }} />
+                            </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ minWidth: 36, textAlign: 'right' }}>
+                              {barPct.toFixed(0)}%
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Box component="td" sx={{ py: 1.5, width: 120 }}>
+                          {sparkData.length > 0 ? (
+                            <ResponsiveContainer width={120} height={36}>
+                              <LineChart data={sparkData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+                                <Line type="monotone" dataKey="v" stroke={RANK_COLORS[idx] ?? '#BDBDBD'} dot={false} strokeWidth={1.5} />
+                              </LineChart>
+                            </ResponsiveContainer>
+                          ) : (
+                            <Typography variant="caption" color="text.secondary">—</Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
     </Box>
   );
 }
