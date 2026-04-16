@@ -448,6 +448,18 @@ export type Database = {
           ready_to_completed: number | null
         }[]
       }
+      get_peak_time_stats: {
+        Args: {
+          p_period: string
+          p_date_from: string
+          p_date_to: string
+          p_service_center?: string | null
+        }
+        Returns: {
+          bucket: string
+          count: number
+        }[]
+      }
       get_days_until_reset: { Args: never; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }

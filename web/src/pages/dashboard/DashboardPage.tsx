@@ -5,6 +5,7 @@ import type { Session } from '@supabase/supabase-js';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useLeadTime } from '../../hooks/useLeadTime';
+import { usePeakTime } from '../../hooks/usePeakTime';
 import type { Enums } from '../../lib/database.types';
 
 const STATUS_COLORS = {
@@ -119,6 +120,29 @@ export default function DashboardPage({ session }: DashboardPageProps) {
   const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
 
   const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedSC);
+  const { hourlyData, dailyData, loading: ptLoading } = usePeakTime(dateFrom, dateTo, selectedSC);
+
+  const THAI_DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+
+  const hourlyChartData = hourlyData.map(d => ({
+    label: `${d.bucket}:00`,
+    count: d.count,
+    bucket: d.bucket,
+  }));
+
+  const dailyChartData = dailyData.map(d => ({
+    label: THAI_DAYS[Number(d.bucket)] ?? d.bucket,
+    count: d.count,
+    bucket: d.bucket,
+  }));
+
+  const peakHourBucket = hourlyData.length
+    ? hourlyData.reduce((m, d) => (d.count > m.count ? d : m)).bucket
+    : null;
+
+  const peakDayBucket = dailyData.length
+    ? dailyData.reduce((m, d) => (d.count > m.count ? d : m)).bucket
+    : null;
 
   const statusData = [
     { name: 'รอดำเนินการ', value: monthlyStatusCounts.pending, color: STATUS_COLORS.pending },
@@ -349,6 +373,113 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                     <Bar dataKey="minutes" radius={[0, 4, 4, 0]} minPointSize={4} label={{ position: 'right', fontSize: 11, fill: '#666', formatter: (v: number) => formatLeadTime(v) }}>
                       {breakdownData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Peak Time Charts */}
+      <Grid container spacing={3} columns={12} sx={{ mt: 3 }}>
+        {/* Hourly Chart */}
+        <Grid size={{ xs: 12, md: 8 }}>
+          <Card sx={{ borderRadius: 2, height: 320 }} elevation={1}>
+            <CardContent sx={{ height: '100%' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                ช่วงเวลาที่มีคำขอมากที่สุด (รายชั่วโมง)
+              </Typography>
+              {ptLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '75%' }}>
+                  <Typography variant="body2" color="text.secondary">กำลังโหลด...</Typography>
+                </Box>
+              ) : hourlyChartData.every(d => d.count === 0) ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '75%' }}>
+                  <Typography variant="body2" color="text.secondary">ไม่มีข้อมูลในช่วงที่เลือก</Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={hourlyChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} interval={1} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0].payload;
+                        const h = d.bucket;
+                        const hNext = String(Number(h) + 1).padStart(2, '0');
+                        return (
+                          <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
+                            <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
+                              {h}:00 น. – {hNext}:00 น.
+                            </Typography>
+                            <Typography variant="caption">{d.count} คำขอ</Typography>
+                          </Box>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                      {hourlyChartData.map((entry) => (
+                        <Cell
+                          key={entry.bucket}
+                          fill={entry.bucket === peakHourBucket ? '#FF6B35' : '#4FC3F7'}
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Day-of-week Chart */}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Card sx={{ borderRadius: 2, height: 320 }} elevation={1}>
+            <CardContent sx={{ height: '100%' }}>
+              <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
+                วันที่มีคำขอมากที่สุด (รายวัน)
+              </Typography>
+              {ptLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '75%' }}>
+                  <Typography variant="body2" color="text.secondary">กำลังโหลด...</Typography>
+                </Box>
+              ) : dailyChartData.every(d => d.count === 0) ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '75%' }}>
+                  <Typography variant="body2" color="text.secondary">ไม่มีข้อมูลในช่วงที่เลือก</Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height="85%">
+                  <BarChart data={dailyChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <Tooltip
+                      cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                      content={({ active, payload }) => {
+                        if (!active || !payload?.length) return null;
+                        const d = payload[0].payload;
+                        return (
+                          <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
+                            <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
+                              {d.label}
+                            </Typography>
+                            <Typography variant="caption">{d.count} คำขอ</Typography>
+                          </Box>
+                        );
+                      }}
+                    />
+                    <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+                      {dailyChartData.map((entry) => (
+                        <Cell
+                          key={entry.bucket}
+                          fill={entry.bucket === peakDayBucket ? '#FF6B35' : '#81C784'}
+                        />
                       ))}
                     </Bar>
                   </BarChart>
