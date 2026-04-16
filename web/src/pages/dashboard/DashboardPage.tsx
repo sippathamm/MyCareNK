@@ -278,52 +278,67 @@ export default function DashboardPage({ session }: DashboardPageProps) {
         </Grid>
       </Grid>
 
-      <Grid container spacing={3} columns={12}>
-        {/* Lead Time Summary Card with filters */}
+      {/* ── Analysis Section ─────────────────────────────────────── */}
+      <Typography variant="h6" fontWeight="bold" sx={{ mt: 4, mb: 1.5 }}>
+        การวิเคราะห์คำขอ
+      </Typography>
+
+      {/* Shared Filter Card */}
+      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
+        <CardContent>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
+            <TextField
+              label="ตั้งแต่วันที่"
+              type="date"
+              size="small"
+              value={dateFrom}
+              onChange={e => setDateFrom(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 160 }}
+            />
+            <TextField
+              label="ถึงวันที่"
+              type="date"
+              size="small"
+              value={dateTo}
+              onChange={e => setDateTo(e.target.value)}
+              slotProps={{ inputLabel: { shrink: true } }}
+              sx={{ minWidth: 160 }}
+            />
+            {isSuperadmin && (
+              <TextField
+                label="สถานบริการ"
+                select
+                size="small"
+                value={serviceCenter}
+                onChange={e => setServiceCenter(e.target.value)}
+                sx={{ minWidth: 180 }}
+              >
+                <MenuItem value="all">ทั้งหมด</MenuItem>
+                {SERVICE_CENTERS.map(sc => (
+                  <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+                ))}
+              </TextField>
+            )}
+          </Stack>
+        </CardContent>
+      </Card>
+
+      {/* Row 1: Lead Time cards */}
+      <Grid container spacing={3} columns={12} sx={{ mb: 3 }}>
+        {/* Lead Time Summary */}
         <Grid size={{ xs: 12, md: 4 }}>
           <Card sx={{ borderRadius: 2, height: '100%' }} elevation={1}>
             <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
                 เวลาเฉลี่ยในการดำเนินการ
               </Typography>
-              <Stack direction="column" spacing={1.5} sx={{ mb: 3 }}>
-                <TextField
-                  label="ตั้งแต่วันที่"
-                  type="date"
-                  size="small"
-                  value={dateFrom}
-                  onChange={e => setDateFrom(e.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-                <TextField
-                  label="ถึงวันที่"
-                  type="date"
-                  size="small"
-                  value={dateTo}
-                  onChange={e => setDateTo(e.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-                {isSuperadmin && (
-                  <TextField
-                    label="สถานบริการ"
-                    select
-                    size="small"
-                    value={serviceCenter}
-                    onChange={e => setServiceCenter(e.target.value)}
-                  >
-                    <MenuItem value="all">ทั้งหมด</MenuItem>
-                    {SERVICE_CENTERS.map(sc => (
-                      <MenuItem key={sc} value={sc}>{sc}</MenuItem>
-                    ))}
-                  </TextField>
-                )}
-              </Stack>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
                 <Typography variant="caption" fontWeight="bold" sx={{ color: STATUS_COLORS.pending }}>รอดำเนินการ</Typography>
                 <Typography variant="caption" color="text.secondary">→</Typography>
                 <Typography variant="caption" fontWeight="bold" sx={{ color: STATUS_COLORS.completed }}>สำเร็จ</Typography>
               </Box>
-              <Typography variant="h4" fontWeight="bold" sx={{ color: overallCurrent === null && !ltLoading ? '#9E9E9E' : '#4CAF50' }}>
+              <Typography variant="h4" fontWeight="bold" sx={{ color: overallCurrent === null && !ltLoading ? '#9E9E9E' : STATUS_COLORS.completed }}>
                 {ltLoading ? '-' : formatLeadTime(overallCurrent)}
               </Typography>
               {!ltLoading && hasComparison && (
@@ -331,7 +346,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                   <Typography
                     variant="body2"
                     fontWeight="medium"
-                    sx={{ color: improved ? '#4CAF50' : '#f44336' }}
+                    sx={{ color: improved ? STATUS_COLORS.completed : '#f44336' }}
                   >
                     {improved ? '↓' : '↑'} {formatLeadTime(diffMinutes)}
                   </Typography>
@@ -349,7 +364,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
           <Card sx={{ borderRadius: 2, height: '100%', minHeight: 220 }} elevation={1}>
             <CardContent sx={{ height: '100%' }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                เวลาแต่ละสถานะ (นาที)
+                เวลาแต่ละสถานะ
               </Typography>
               {ltLoading ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80%' }}>
@@ -383,14 +398,14 @@ export default function DashboardPage({ session }: DashboardPageProps) {
         </Grid>
       </Grid>
 
-      {/* Peak Time Charts */}
-      <Grid container spacing={3} columns={12} sx={{ mt: 3 }}>
+      {/* Row 2: Peak Time Charts */}
+      <Grid container spacing={3} columns={12}>
         {/* Hourly Chart */}
         <Grid size={{ xs: 12, md: 8 }}>
           <Card sx={{ borderRadius: 2, height: 320 }} elevation={1}>
             <CardContent sx={{ height: '100%' }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                ช่วงเวลาที่มีคำขอมากที่สุด (รายชั่วโมง)
+                เวลาที่มีคำขอมากที่สุด
               </Typography>
               {ptLoading ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '75%' }}>
@@ -443,7 +458,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
           <Card sx={{ borderRadius: 2, height: 320 }} elevation={1}>
             <CardContent sx={{ height: '100%' }}>
               <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-                วันที่มีคำขอมากที่สุด (รายวัน)
+                วันที่มีคำขอมากที่สุด
               </Typography>
               {ptLoading ? (
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '75%' }}>
