@@ -40,6 +40,20 @@ const BAR_STATUS_ITEMS = [
   { key: 'cancelled', name: 'ยกเลิก' },
 ] as const;
 
+const BREAKDOWN_COLORS = [
+  LEAD_TIME_COLORS.pending_to_preparing,
+  LEAD_TIME_COLORS.preparing_to_ready,
+  LEAD_TIME_COLORS.ready_to_completed,
+];
+
+function ColoredYTick({ x, y, payload, index }: { x?: number; y?: number; payload?: { value: string }; index?: number }) {
+  return (
+    <text x={x} y={y} dy={4} textAnchor="end" fontSize={12} fontWeight="bold" fill={BREAKDOWN_COLORS[index ?? 0]}>
+      {payload?.value}
+    </text>
+  );
+}
+
 function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
   if (!active || !payload?.length) return null;
   return (
@@ -57,9 +71,16 @@ function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
 
 function formatLeadTime(minutes: number | null | undefined): string {
   if (minutes === null || minutes === undefined || minutes < 0) return 'ไม่มีข้อมูล';
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  return `${h}:${String(m).padStart(2, '0')}`;
+  const mins = Number(minutes);
+  if (mins < 1) {
+    const secs = Math.round(mins * 60);
+    return `${secs} วินาที`;
+  }
+  const total = Math.round(mins);
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  if (h === 0) return `${m} นาที`;
+  return `${h} ชั่วโมง ${m} นาที`;
 }
 
 const SummaryCard = ({ title, value, color }: { title: string; value: string | number; color: string }) => (
@@ -332,13 +353,13 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                   <BarChart
                     layout="vertical"
                     data={breakdownData}
-                    margin={{ top: 4, right: 40, left: 8, bottom: 4 }}
+                    margin={{ top: 4, right: 120, left: 8, bottom: 4 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} unit=" นาที" />
-                    <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={180} tick={{ fontSize: 12 }} />
+                    <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={180} tick={<ColoredYTick />} />
                     <Tooltip content={<LeadTimeBarTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                    <Bar dataKey="minutes" radius={[0, 4, 4, 0]}>
+                    <Bar dataKey="minutes" radius={[0, 4, 4, 0]} minPointSize={4} label={{ position: 'right', fontSize: 11, fill: '#666', formatter: (v: number) => formatLeadTime(v) }}>
                       {breakdownData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}

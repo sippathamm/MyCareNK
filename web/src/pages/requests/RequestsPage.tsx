@@ -76,11 +76,14 @@ export default function RequestsPage() {
     setStatusUpdating(true);
     setUpdateError(null);
 
-    const updatePayload: { request_status: string; cancel_reason?: string | null } = { request_status: newStatus };
+    const updatePayload: { request_status: string; cancel_reason?: string | null; completed_at?: string | null } = { request_status: newStatus };
     if (reason !== undefined) {
       updatePayload.cancel_reason = reason;
     } else {
       updatePayload.cancel_reason = null;
+    }
+    if (newStatus === 'completed') {
+      updatePayload.completed_at = new Date().toISOString();
     }
 
     const { error } = await supabase.from('condom_requests').update(updatePayload).eq('id', id);
