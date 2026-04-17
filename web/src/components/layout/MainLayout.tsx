@@ -56,7 +56,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navItems = [
     { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: '/dashboard', show: true },
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
-    { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: role === 'admin' || role === 'superadmin' },
+    { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
   ];
 

@@ -4,7 +4,6 @@ import {
   Alert, AlertTitle, Chip, Skeleton, Divider, Button,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -154,7 +153,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 
 export default function InventoryPage() {
   const { forecast, trend, loading, error, refetch } = useInventoryForecast();
-  const { role, loading: roleLoading } = useRoleAccess();
+  const { role, profile, loading: roleLoading } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
   const [historyTrigger, setHistoryTrigger] = useState(0);
@@ -172,18 +171,20 @@ export default function InventoryPage() {
   }, [refetch]);
 
   if (roleLoading) return null;
-  if (role !== 'admin' && role !== 'superadmin') {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2, color: 'text.secondary' }}>
-        <LockOutlinedIcon sx={{ fontSize: 72, opacity: 0.3 }} />
-        <Typography variant="h6" color="error">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</Typography>
-      </Box>
-    );
-  }
 
-  const canRestock = role === 'admin' || role === 'superadmin';
+  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
+  const canRestock = isAdminOrSuperadmin;
 
-  const lowStockItems = forecast.filter(
+  // staff เห็นเฉพาะสถานบริการตัวเอง
+  const visibleForecast = role === 'staff' && profile?.service_center
+    ? forecast.filter((r) => r.service_center === profile.service_center)
+    : forecast;
+
+  const visibleTrend = role === 'staff' && profile?.service_center
+    ? trend.filter((t) => t.service_center === profile.service_center)
+    : trend;
+
+  const lowStockItems = visibleForecast.filter(
     (r) =>
       (r.condom_days_left !== null && r.condom_days_left < LOW_STOCK_DAYS) ||
       (r.lubricant_days_left !== null && r.lubricant_days_left < LOW_STOCK_DAYS),
@@ -230,33 +231,57 @@ export default function InventoryPage() {
         </Alert>
       )}
 
-      {/* Inventory cards */}
-      <Grid container spacing={2} mb={4}>
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
-              <Grid key={i} size={{ xs: 12, sm: 6, lg: 3 }}>
-                <Skeleton variant="rounded" height={220} />
-              </Grid>
-            ))
-          : forecast.map((row) => (
-              <Grid key={row.service_center} size={{ xs: 12, sm: 6, lg: 3 }}>
+      {role === 'staff' ? (
+        /* ── Staff layout: card + trend chart side by side ── */
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 2, mb: 4 }}>
+          <Box sx={{ flexShrink: 0, width: { xs: '100%', md: 280 } }}>
+            {loading ? (
+              <Skeleton variant="rounded" height={220} />
+            ) : (
+              visibleForecast.map((row) => (
                 <InventoryCard
+                  key={row.service_center}
                   row={row}
-                  canRestock={canRestock}
+                  canRestock={false}
                   onRestock={setRestockTarget}
                   onAdjust={setAdjustmentTarget}
                 />
-              </Grid>
-            ))}
-      </Grid>
+              ))
+            )}
+          </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <ConsumptionTrendChart trend={visibleTrend} loading={loading} />
+          </Box>
+        </Box>
+      ) : (
+        /* ── Admin / Superadmin layout ── */
+        <>
+          <Grid container spacing={2} mb={4}>
+            {loading
+              ? Array.from({ length: 4 }).map((_, i) => (
+                  <Grid key={i} size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <Skeleton variant="rounded" height={220} />
+                  </Grid>
+                ))
+              : visibleForecast.map((row) => (
+                  <Grid key={row.service_center} size={{ xs: 12, sm: 6, lg: 3 }}>
+                    <InventoryCard
+                      row={row}
+                      canRestock={canRestock}
+                      onRestock={setRestockTarget}
+                      onAdjust={setAdjustmentTarget}
+                    />
+                  </Grid>
+                ))}
+          </Grid>
 
-      {/* Consumption trend chart */}
-      <ConsumptionTrendChart trend={trend} loading={loading} />
+          <ConsumptionTrendChart trend={visibleTrend} loading={loading} />
 
-      {/* Restock history table */}
-      <Box sx={{ mt: 4 }}>
-        <RestockHistoryTable refetchTrigger={historyTrigger} />
-      </Box>
+          <Box sx={{ mt: 4 }}>
+            <RestockHistoryTable refetchTrigger={historyTrigger} />
+          </Box>
+        </>
+      )}
 
       {/* Restock modal */}
       <RestockModal
