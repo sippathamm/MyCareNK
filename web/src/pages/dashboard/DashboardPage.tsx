@@ -287,6 +287,8 @@ export default function DashboardPage({ session }: DashboardPageProps) {
         </Grid>
       </Grid>
 
+      {(role === 'admin' || role === 'superadmin') && (
+      <>
       {/* ── Analysis Section ─────────────────────────────────────── */}
       <Typography variant="h6" fontWeight="bold" sx={{ mt: 4, mb: 1.5 }}>
         การวิเคราะห์คำขอ
@@ -518,7 +520,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
       <Card sx={{ borderRadius: 2, mt: 3 }} elevation={1}>
         <CardContent>
           <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
-            อันดับความต้องการสถานบริการ
+            อันดับความต้องการตามสถานบริการ
           </Typography>
           {demandLoading ? (
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 80 }}>
@@ -601,6 +603,8 @@ export default function DashboardPage({ session }: DashboardPageProps) {
           )}
         </CardContent>
       </Card>
+      </>
+      )}
     </Box>
   );
 }

@@ -84,7 +84,7 @@ export default function QRCodeDialog({
               <Box id="qr-print-area" display="flex" flexDirection="column" alignItems="center" gap={1}>
                 <QRCodeSVG value={displayPayload} size={220} />
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  รหัสอ้างอิง: {referenceNumber}
+                  หมายเลขอ้างอิง: {referenceNumber}
                 </Typography>
               </Box>
               <Typography variant="body2" color="error" textAlign="center" fontWeight="medium">

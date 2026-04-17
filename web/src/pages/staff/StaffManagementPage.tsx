@@ -301,7 +301,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
 
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle fontWeight="bold">แก้ไขข้อมูลเจ้าหน้าที่</DialogTitle>
+      <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
       <DialogContent dividers>
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
@@ -456,7 +456,7 @@ export default function StaffManagementPage() {
             จัดการเจ้าหน้าที่
           </Typography>
           <Typography variant="body1" color="text.secondary">
-            เพิ่ม ลบ หรือแก้ไขสิทธิ์การใช้งานของเจ้าหน้าที่ในระบบ
+            จัดการบัญชีเจ้าหน้าที่ เพิ่ม แก้ไขข้อมูลและระดับสิทธิ์ หรือลบบัญชีออกจากระบบ
           </Typography>
         </Box>
         <Button variant="contained" startIcon={<PersonAddIcon />} onClick={() => setAddOpen(true)}>

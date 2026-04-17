@@ -78,7 +78,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
-          เติมรายการ
+          เติมสต็อก
         </Typography>
         <Typography variant="caption" color="text.secondary">
           {target.service_center}

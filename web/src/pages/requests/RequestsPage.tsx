@@ -12,7 +12,7 @@ import { useRequests } from '../../hooks/useRequests';
 import { supabase } from '../../lib/supabase';
 
 const thGridLocale = {
-  noRowsLabel: 'ไม่มีข้อมูลคำขอ',
+  noRowsLabel: 'ไม่มีรายการคำขอ',
   noResultsOverlayLabel: 'ไม่พบข้อมูล',
   footerRowSelected: (count: number) => `เลือกแล้ว ${count} แถว`,
   MuiTablePagination: {
@@ -107,7 +107,7 @@ export default function RequestsPage() {
   });
 
   const columns: GridColDef[] = [
-    { field: 'reference_number', headerName: 'รหัสอ้างอิง', flex: 1, minWidth: 120 },
+    { field: 'reference_number', headerName: 'หมายเลขอ้างอิง', flex: 1, minWidth: 120 },
     {
       field: 'selected_date',
       headerName: 'วันเดือนปีรับ',
@@ -195,7 +195,7 @@ export default function RequestsPage() {
       <Paper sx={{ p: 3, mb: 4, borderRadius: 3, boxShadow: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
           <TextField
-            label="ค้นหารหัสอ้างอิง"
+            label="ค้นหาหมายเลขอ้างอิง"
             variant="outlined"
             size="small"
             value={search}

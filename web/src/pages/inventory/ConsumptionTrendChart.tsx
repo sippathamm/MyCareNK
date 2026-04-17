@@ -122,7 +122,7 @@ export default function ConsumptionTrendChart({ trend, loading }: ConsumptionTre
         ) : trend.length === 0 ? (
           <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography color="text.secondary" variant="body2">
-              ไม่มีข้อมูลการใช้งานในช่วง 30 วันที่ผ่านมา
+              ไม่มีข้อมูลการใช้ในช่วง 30 วันที่ผ่านมา
             </Typography>
           </Box>
         ) : (

@@ -27,7 +27,7 @@ function daysLeftColor(days: number | null): 'error' | 'warning' | 'success' {
 }
 
 function daysLeftLabel(days: number | null): string {
-  if (days === null) return 'ไม่มีข้อมูลการใช้งาน';
+  if (days === null) return 'ไม่มีข้อมูลการใช้';
   if (days <= 0) return 'หมดแล้ว';
   return `เหลือประมาณ ${days} วัน`;
 }
@@ -131,7 +131,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               fullWidth
               sx={{ fontWeight: 600, fontSize: '0.82rem', bgcolor: '#FF9F6B', '&:hover': { bgcolor: '#fb8c4a' } }}
             >
-              เติมรายการ
+              เติมสต็อก
             </Button>
             <Button
               variant="outlined"

@@ -7,7 +7,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { useRestockHistory } from '../../hooks/useRestockHistory';
 
 const thGridLocale = {
-  noRowsLabel: 'ไม่มีประวัติการเติมรายการ',
+  noRowsLabel: 'ไม่มีประวัติการแก้ไขสต็อก',
   noResultsOverlayLabel: 'ไม่พบข้อมูล',
   MuiTablePagination: {
     labelRowsPerPage: 'จำนวนต่อหน้า:',
@@ -49,7 +49,7 @@ function TypeChip({ type }: { type: 'restock' | 'adjustment' }) {
   return type === 'restock' ? (
     <Chip
       icon={<InventoryIcon sx={{ fontSize: '0.85rem !important' }} />}
-      label="เติมรายการ"
+      label="เติมสต็อก"
       size="small"
       sx={{ bgcolor: '#EBF4FF', color: '#1565C0', fontWeight: 600, fontSize: '0.75rem' }}
     />
