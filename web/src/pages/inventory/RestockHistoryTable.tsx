@@ -80,18 +80,18 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
     {
       field: 'transaction_type',
       headerName: 'ประเภท',
-      flex: 1.2,
+      flex: 0.9,
       renderCell: (params) => <TypeChip type={params.value as 'restock' | 'adjustment'} />,
     },
     {
       field: 'service_center',
       headerName: 'สถานบริการ',
-      flex: 1.5,
+      flex: 1.1,
     },
     {
       field: 'condom_delta',
       headerName: 'ถุงยางอนามัย (ชิ้น)',
-      flex: 1.4,
+      flex: 1.2,
       align: 'center',
       headerAlign: 'center',
       renderCell: (params) => <QtyChip value={params.value as number} />,
@@ -99,7 +99,7 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
     {
       field: 'lubricant_delta',
       headerName: 'เจลหล่อลื่น (ชิ้น)',
-      flex: 1.3,
+      flex: 1.2,
       align: 'center',
       headerAlign: 'center',
       renderCell: (params) => <QtyChip value={params.value as number} />,
@@ -107,7 +107,7 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
     {
       field: 'created_at',
       headerName: 'เมื่อวันที่',
-      flex: 1.3,
+      flex: 1.7,
       valueGetter: (value: string) => value,
       renderCell: (params) => (
         <Typography variant="body2">{formatDateTime(params.value as string)}</Typography>
@@ -116,7 +116,7 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
     {
       field: 'performer_name',
       headerName: 'โดย',
-      flex: 1,
+      flex: 1.3,
     },
     {
       field: 'note',
