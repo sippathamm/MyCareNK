@@ -47,6 +47,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
     setLoading(true);
     setError(null);
 
+    // DB trigger apply_inventory_adjustment() อัปเดต service_center_inventory อัตโนมัติ
     const { error: insertError } = await supabase
       .from('inventory_transactions')
       .insert({
@@ -60,23 +61,6 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
 
     if (insertError) {
       setError(insertError.message);
-      setLoading(false);
-      return;
-    }
-
-    // อัปเดต service_center_inventory โดยตรง
-    const { error: updateError } = await supabase
-      .from('service_center_inventory')
-      .update({
-        condom_qty: target.condom_qty + condomDelta,
-        lubricant_qty: target.lubricant_qty + lubricantDelta,
-        last_restocked_at: new Date().toISOString(),
-        updated_by: session.user.id,
-      })
-      .eq('service_center', target.service_center);
-
-    if (updateError) {
-      setError(updateError.message);
       setLoading(false);
       return;
     }
