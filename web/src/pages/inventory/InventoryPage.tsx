@@ -124,12 +124,12 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
         {canRestock && (
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
-              variant="outlined"
+              variant="contained"
               size="small"
               startIcon={<InventoryIcon />}
               onClick={() => onRestock(row)}
               fullWidth
-              sx={{ fontWeight: 600, fontSize: '0.82rem' }}
+              sx={{ fontWeight: 600, fontSize: '0.82rem', bgcolor: '#FF9F6B', '&:hover': { bgcolor: '#fb8c4a' } }}
             >
               เติมรายการ
             </Button>
