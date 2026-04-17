@@ -11,6 +11,7 @@ import DashboardPage from './pages/dashboard/DashboardPage';
 import RequestsPage from './pages/requests/RequestsPage';
 import StaffManagementPage from './pages/staff/StaffManagementPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
+import InventoryPage from './pages/inventory/InventoryPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -61,6 +62,7 @@ function App() {
                   <Route path="requests" element={<RequestsPage />} />
                   <Route path="staff" element={<StaffManagementPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="inventory" element={<InventoryPage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </MainLayout>
