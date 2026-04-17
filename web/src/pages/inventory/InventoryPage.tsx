@@ -4,6 +4,7 @@ import {
   Alert, AlertTitle, Chip, Skeleton, Divider, Button,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import TuneIcon from '@mui/icons-material/Tune';
@@ -153,10 +154,20 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 
 export default function InventoryPage() {
   const { forecast, trend, loading, error, refetch } = useInventoryForecast();
-  const { role } = useRoleAccess();
+  const { role, loading: roleLoading } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
   const [historyTrigger, setHistoryTrigger] = useState(0);
+
+  if (roleLoading) return null;
+  if (role !== 'admin' && role !== 'superadmin') {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2, color: 'text.secondary' }}>
+        <LockOutlinedIcon sx={{ fontSize: 72, opacity: 0.3 }} />
+        <Typography variant="h6" color="error">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</Typography>
+      </Box>
+    );
+  }
 
   const canRestock = role === 'admin' || role === 'superadmin';
 
