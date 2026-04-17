@@ -159,18 +159,6 @@ export default function InventoryPage() {
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
   const [historyTrigger, setHistoryTrigger] = useState(0);
 
-  if (roleLoading) return null;
-  if (role !== 'admin' && role !== 'superadmin') {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2, color: 'text.secondary' }}>
-        <LockOutlinedIcon sx={{ fontSize: 72, opacity: 0.3 }} />
-        <Typography variant="h6" color="error">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</Typography>
-      </Box>
-    );
-  }
-
-  const canRestock = role === 'admin' || role === 'superadmin';
-
   const handleRestockSuccess = useCallback(() => {
     setRestockTarget(null);
     refetch();
@@ -182,6 +170,18 @@ export default function InventoryPage() {
     refetch();
     setHistoryTrigger((n) => n + 1);
   }, [refetch]);
+
+  if (roleLoading) return null;
+  if (role !== 'admin' && role !== 'superadmin') {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2, color: 'text.secondary' }}>
+        <LockOutlinedIcon sx={{ fontSize: 72, opacity: 0.3 }} />
+        <Typography variant="h6" color="error">คุณไม่มีสิทธิ์เข้าถึงหน้านี้</Typography>
+      </Box>
+    );
+  }
+
+  const canRestock = role === 'admin' || role === 'superadmin';
 
   const lowStockItems = forecast.filter(
     (r) =>
