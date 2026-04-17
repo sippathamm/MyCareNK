@@ -2,8 +2,9 @@ import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, CircularProgress,
-  Alert, Divider, MenuItem,
+  Alert, Divider, MenuItem, Collapse,
 } from '@mui/material';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';
@@ -96,8 +97,13 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
 
   const condomPreview = parseInt(condomDelta, 10);
   const lubricantPreview = parseInt(lubricantDelta, 10);
-  const condomAfter = isNaN(condomPreview) ? target.condom_qty : Math.max(0, target.condom_qty + condomPreview);
-  const lubricantAfter = isNaN(lubricantPreview) ? target.lubricant_qty : Math.max(0, target.lubricant_qty + lubricantPreview);
+  const condomRaw = isNaN(condomPreview) ? target.condom_qty : target.condom_qty + condomPreview;
+  const lubricantRaw = isNaN(lubricantPreview) ? target.lubricant_qty : target.lubricant_qty + lubricantPreview;
+  const condomAfter = Math.max(0, condomRaw);
+  const lubricantAfter = Math.max(0, lubricantRaw);
+  const clampWarnings: string[] = [];
+  if (!isNaN(condomPreview) && condomRaw < 0) clampWarnings.push('ถุงยางอนามัย');
+  if (!isNaN(lubricantPreview) && lubricantRaw < 0) clampWarnings.push('เจลหล่อลื่น');
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
@@ -150,6 +156,18 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
             </Box>
           ))}
         </Box>
+
+        <Collapse in={clampWarnings.length > 0}>
+          <Alert
+            severity="warning"
+            icon={<WarningAmberIcon fontSize="small" />}
+            sx={{ mb: 2, borderRadius: 1.5, py: 0.5 }}
+          >
+            <Typography variant="caption">
+              {clampWarnings.join(' และ ')} จะถูกปรับเป็น 0 เนื่องจากสต็อกไม่เพียงพอ
+            </Typography>
+          </Alert>
+        </Collapse>
 
         {error && (
           <Alert severity="error" sx={{ mb: 2, borderRadius: 1.5 }}>

@@ -16,14 +16,16 @@ const thGridLocale = {
   },
 };
 
+const THAI_MONTHS = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+
 function formatDateTime(iso: string): string {
   const d = new Date(iso);
-  const y = d.getFullYear();
-  const mo = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const day = d.getDate();
+  const month = THAI_MONTHS[d.getMonth()];
+  const year = d.getFullYear() + 543;
   const h = String(d.getHours()).padStart(2, '0');
   const min = String(d.getMinutes()).padStart(2, '0');
-  return `${day}/${mo}/${y} ${h}:${min}`;
+  return `${day} ${month} ${year} เวลา ${h}:${min} น.`;
 }
 
 function QtyChip({ value }: { value: number }) {
@@ -34,8 +36,8 @@ function QtyChip({ value }: { value: number }) {
       label={`${isPositive ? '+' : ''}${value.toLocaleString()}`}
       size="small"
       sx={{
-        bgcolor: isPositive ? (value >= 100 ? '#EBF7EC' : '#F4F6F8') : '#FFF0F0',
-        color: isPositive ? (value >= 100 ? '#2E7D32' : '#546E7A') : '#C62828',
+        bgcolor: isPositive ? '#EBF7EC' : '#FFF0F0',
+        color: isPositive ? '#2E7D32' : '#C62828',
         fontWeight: 600,
         fontSize: '0.78rem',
       }}
@@ -56,7 +58,7 @@ function TypeChip({ type }: { type: 'restock' | 'adjustment' }) {
       icon={<TuneIcon sx={{ fontSize: '0.85rem !important' }} />}
       label="ปรับแก้สต็อก"
       size="small"
-      sx={{ bgcolor: '#FFF8E1', color: '#E65100', fontWeight: 600, fontSize: '0.75rem' }}
+      sx={{ bgcolor: '#FFF0F0', color: '#C62828', fontWeight: 600, fontSize: '0.75rem' }}
     />
   );
 }
@@ -164,6 +166,7 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
             border: 'none',
             '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
             '& .MuiDataGrid-row:hover': { bgcolor: 'rgba(255,159,107,0.05)' },
+            '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
           }}
         />
       </Box>
