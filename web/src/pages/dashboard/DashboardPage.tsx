@@ -539,8 +539,8 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                 <Box component="tbody">
                   {demand.map((row, idx) => {
                     const RANK_COLORS = ['#FF9F6B', '#64B5F6', '#BA68C8', '#81C784'];
-                    const maxRequests = demand[0]?.total_requests ?? 1;
-                    const barPct = maxRequests > 0 ? (row.total_requests / maxRequests) * 100 : 0;
+                    const totalRequests = demand.reduce((sum, d) => sum + d.total_requests, 0);
+                    const barPct = totalRequests > 0 ? (row.total_requests / totalRequests) * 100 : 0;
                     const sparkData = trend
                       .filter(t => t.service_center === row.service_center)
                       .map(t => ({ v: t.request_count }));
