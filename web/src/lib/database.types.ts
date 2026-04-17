@@ -460,6 +460,27 @@ export type Database = {
           count: number
         }[]
       }
+      get_inventory_forecast: {
+        Args: Record<string, never>
+        Returns: {
+          service_center: Database["public"]["Enums"]["service_center"]
+          condom_qty: number
+          lubricant_qty: number
+          condom_daily_burn: number
+          lubricant_daily_burn: number
+          condom_days_left: number | null
+          lubricant_days_left: number | null
+        }[]
+      }
+      get_consumption_trend: {
+        Args: Record<string, never>
+        Returns: {
+          day: string
+          service_center: Database["public"]["Enums"]["service_center"]
+          condom_used: number
+          lubricant_used: number
+        }[]
+      }
       get_days_until_reset: { Args: never; Returns: number }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }

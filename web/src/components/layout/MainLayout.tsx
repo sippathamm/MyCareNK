@@ -12,6 +12,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import InventoryIcon from '@mui/icons-material/Inventory2';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useNotification, STATUS_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
@@ -55,6 +56,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navItems = [
     { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: '/dashboard', show: true },
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
+    { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: role === 'admin' || role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
   ];
 
