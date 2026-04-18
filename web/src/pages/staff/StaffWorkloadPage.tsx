@@ -9,6 +9,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
+import { useStaffWorkloadTrend } from '../../hooks/useStaffWorkloadTrend';
+import StaffWeeklyTrendChart from '../../components/staff/StaffWeeklyTrendChart';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -90,6 +92,10 @@ export default function StaffWorkloadPage() {
   const [compareDateTo, setCompareDateTo] = useState('');
 
   const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
+
+  const { data: trendData, loading: trendLoading } = useStaffWorkloadTrend(
+    dateFrom, dateTo, selectedSC,
+  );
 
   const { data, compareData, loading, error } = useStaffWorkload(
     dateFrom, dateTo, selectedSC,
@@ -227,6 +233,16 @@ export default function StaffWorkloadPage() {
       </Card>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
+
+      {/* Weekly Trend Chart */}
+      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
+        <CardContent>
+          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
+            Trend รายสัปดาห์ (เสร็จสิ้น)
+          </Typography>
+          <StaffWeeklyTrendChart data={trendData} loading={trendLoading} />
+        </CardContent>
+      </Card>
 
       {/* Leaderboard Table */}
       <Card sx={{ borderRadius: 2 }} elevation={1}>
