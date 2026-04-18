@@ -2,12 +2,12 @@ import { useMemo } from 'react';
 import { Box, Typography, CircularProgress } from '@mui/material';
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
-  CartesianGrid, Tooltip, Legend,
+  CartesianGrid, Tooltip,
 } from 'recharts';
 import type { WorkloadTrendRow } from '../../hooks/useStaffWorkloadTrend';
 
-const LINE_COLORS = ['#FF9F6B', '#64B5F6', '#81C784', '#BA68C8', '#EF7070'];
-const MAX_LINES   = 5;
+const LINE_COLOR = '#66BB6A';
+const DATA_KEY   = 'จำนวนคำขอ';
 
 interface Props {
   data:    WorkloadTrendRow[];
@@ -22,39 +22,17 @@ function formatWeek(isoDate: string): string {
 }
 
 export default function StaffWeeklyTrendChart({ data, loading }: Props) {
-  // Pick top MAX_LINES staff by total completed in the period
-  const topStaff = useMemo(() => {
-    const totals = new Map<string, { name: string; total: number }>();
-    for (const row of data) {
-      const key  = row.staff_user_id;
-      const name = `${row.first_name} ${row.last_name}`;
-      const prev = totals.get(key);
-      totals.set(key, { name, total: (prev?.total ?? 0) + row.completed_count });
-    }
-    return [...totals.entries()]
-      .sort((a, b) => b[1].total - a[1].total)
-      .slice(0, MAX_LINES)
-      .map(([id, { name }]) => ({ id, name }));
-  }, [data]);
-
-  // Pivot data: [{ week_start, [staffName]: count, ... }]
+  // Pivot data: [{ week, จำนวนคำขอ: count }]
   const chartData = useMemo(() => {
-    const topIds = new Set(topStaff.map(s => s.id));
-    const byWeek = new Map<string, Record<string, number>>();
-
+    const byWeek = new Map<string, number>();
     for (const row of data) {
-      if (!topIds.has(row.staff_user_id)) continue;
-      const name = `${row.first_name} ${row.last_name}`;
-      const week = row.week_start.slice(0, 10); // 'YYYY-MM-DD'
-      const entry = byWeek.get(week) ?? {};
-      entry[name] = row.completed_count;
-      byWeek.set(week, entry);
+      const week = row.week_start.slice(0, 10);
+      byWeek.set(week, (byWeek.get(week) ?? 0) + row.completed_count);
     }
-
     return [...byWeek.entries()]
       .sort(([a], [b]) => a.localeCompare(b))
-      .map(([week, counts]) => ({ week, ...counts }));
-  }, [data, topStaff]);
+      .map(([week, count]) => ({ week, [DATA_KEY]: count }));
+  }, [data]);
 
   if (loading) {
     return (
@@ -93,19 +71,15 @@ export default function StaffWeeklyTrendChart({ data, loading }: Props) {
           labelFormatter={(label: string) => `สัปดาห์ ${formatWeek(label)}`}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
-        <Legend wrapperStyle={{ fontSize: 12 }} />
-        {topStaff.map((staff, i) => (
-          <Line
-            key={staff.id}
-            type="monotone"
-            dataKey={staff.name}
-            stroke={LINE_COLORS[i % LINE_COLORS.length]}
-            strokeWidth={2}
-            dot={{ r: 3 }}
-            activeDot={{ r: 5 }}
-            connectNulls
-          />
-        ))}
+        <Line
+          type="monotone"
+          dataKey={DATA_KEY}
+          stroke={LINE_COLOR}
+          strokeWidth={2}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
+          connectNulls
+        />
       </LineChart>
     </ResponsiveContainer>
   );

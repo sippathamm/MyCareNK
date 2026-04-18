@@ -1,25 +1,19 @@
 import { useState, useMemo } from 'react';
 import {
   Box, Typography, Card, CardContent, TextField, MenuItem, Stack,
-  Chip, Alert, Switch, FormControlLabel, Divider,
+  Chip, Alert, Switch, FormControlLabel, Divider, IconButton, Tooltip,
 } from '@mui/material';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import type { Enums } from '../../lib/database.types';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
-import { useStaffWorkloadTrend } from '../../hooks/useStaffWorkloadTrend';
-import StaffWeeklyTrendChart from '../../components/staff/StaffWeeklyTrendChart';
+import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
+import { toLocalDateString } from '../../utils/staffWorkloadUtils';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
-export function toLocalDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 function getDefaultDateFrom(): string {
   const d = new Date();
@@ -29,17 +23,6 @@ function getDefaultDateFrom(): string {
 
 function getDefaultDateTo(): string {
   return toLocalDateString(new Date());
-}
-
-export function formatLeadTime(minutes: number | null | undefined): string {
-  if (minutes === null || minutes === undefined || minutes < 0) return '—';
-  const mins = Number(minutes);
-  if (mins < 1) return `${Math.round(mins * 60)} วินาที`;
-  const total = Math.round(mins);
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  if (h === 0) return `${m} นาที`;
-  return `${h} ชม. ${m} นาที`;
 }
 
 // ─── Delta Chip ───────────────────────────────────────────────────────────────
@@ -91,11 +74,10 @@ export default function StaffWorkloadPage() {
   const [compareDateFrom, setCompareDateFrom] = useState('');
   const [compareDateTo, setCompareDateTo] = useState('');
 
-  const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
+  // Detail dialog
+  const [detailRow, setDetailRow] = useState<EnrichedRow | null>(null);
 
-  const { data: trendData, loading: trendLoading } = useStaffWorkloadTrend(
-    dateFrom, dateTo, selectedSC,
-  );
+  const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
 
   const { data, compareData, loading, error } = useStaffWorkload(
     dateFrom, dateTo, selectedSC,
@@ -118,7 +100,7 @@ export default function StaffWorkloadPage() {
     });
   }, [data, compareData, compareEnabled]);
 
-  // Columns (inside component to capture compareEnabled)
+  // Columns (inside component to capture compareEnabled + setDetailRow)
   const columns = useMemo<GridColDef<EnrichedRow>[]>(() => [
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 120 },
     { field: 'last_name',  headerName: 'นามสกุล', flex: 1, minWidth: 120 },
@@ -127,8 +109,8 @@ export default function StaffWorkloadPage() {
       headerName: 'เสร็จสิ้น',
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: '#EBF7EC', color: '#2E7D32', fontWeight: 600, minWidth: 44 }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
+          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#EBF7EC' : '#F5F5F5', color: params.value > 0 ? '#2E7D32' : '#9E9E9E', fontWeight: 600 }} />
           {compareEnabled && <DeltaChip delta={params.row.delta_completed} positiveIsGood />}
         </Box>
       ),
@@ -138,8 +120,8 @@ export default function StaffWorkloadPage() {
       headerName: 'ยกเลิก',
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF0F0' : '#F5F5F5', color: params.value > 0 ? '#C62828' : '#9E9E9E', fontWeight: 600, minWidth: 44 }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
+          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF0F0' : '#F5F5F5', color: params.value > 0 ? '#C62828' : '#9E9E9E', fontWeight: 600 }} />
           {compareEnabled && <DeltaChip delta={params.row.delta_cancelled} positiveIsGood={false} />}
         </Box>
       ),
@@ -149,8 +131,8 @@ export default function StaffWorkloadPage() {
       headerName: 'ล่าช้า',
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
-        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF8E1' : '#F5F5F5', color: params.value > 0 ? '#E65100' : '#9E9E9E', fontWeight: 600, minWidth: 44 }} />
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
+          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF8E1' : '#F5F5F5', color: params.value > 0 ? '#E65100' : '#9E9E9E', fontWeight: 600 }} />
           {compareEnabled && <DeltaChip delta={params.row.delta_overdue} positiveIsGood={false} />}
         </Box>
       ),
@@ -162,9 +144,34 @@ export default function StaffWorkloadPage() {
       renderCell: (params) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography variant="body2" color={params.value === null ? 'text.disabled' : 'text.primary'}>
-            {formatLeadTime(params.value as number | null)}
+            {params.value === null ? '—' : (() => {
+              const mins = Number(params.value);
+              if (mins < 1) return `${Math.round(mins * 60)} วินาที`;
+              const total = Math.round(mins);
+              const h = Math.floor(total / 60);
+              const m = total % 60;
+              return h === 0 ? `${m} นาที` : `${h} ชม. ${m} นาที`;
+            })()}
           </Typography>
         </Box>
+      ),
+    },
+    {
+      field: '__detail',
+      headerName: '',
+      flex: 0.4, minWidth: 60, sortable: false, filterable: false, disableColumnMenu: true,
+      align: 'center', headerAlign: 'center',
+      renderCell: (params) => (
+        <Tooltip title="ดูรายละเอียด">
+          <IconButton
+            size="small"
+            onClick={(e) => { e.stopPropagation(); setDetailRow(params.row as EnrichedRow); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            sx={{ color: 'primary.main' }}
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
       ),
     },
   ], [compareEnabled]);
@@ -234,16 +241,6 @@ export default function StaffWorkloadPage() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
 
-      {/* Weekly Trend Chart */}
-      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
-        <CardContent>
-          <Typography variant="subtitle1" fontWeight={600} sx={{ mb: 2 }}>
-            Trend รายสัปดาห์ (เสร็จสิ้น)
-          </Typography>
-          <StaffWeeklyTrendChart data={trendData} loading={trendLoading} />
-        </CardContent>
-      </Card>
-
       {/* Leaderboard Table */}
       <Card sx={{ borderRadius: 2 }} elevation={1}>
         <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
@@ -265,6 +262,16 @@ export default function StaffWorkloadPage() {
           </Box>
         </CardContent>
       </Card>
+
+      {/* Detail Dialog */}
+      <StaffWorkloadDetailDialog
+        open={detailRow !== null}
+        row={detailRow}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+        serviceCenter={selectedSC}
+        onClose={() => setDetailRow(null)}
+      />
     </Box>
   );
 }
