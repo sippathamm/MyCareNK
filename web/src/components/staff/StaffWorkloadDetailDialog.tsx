@@ -19,9 +19,8 @@ import type { EnrichedRow } from '../../hooks/useStaffWorkload';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-function isOverdue(r: { request_status: string; completed_at: string | null; selected_date: string | null }): boolean {
-  if (r.request_status !== 'completed' || !r.completed_at || !r.selected_date) return false;
-  return r.completed_at.slice(0, 10) > r.selected_date;
+function isOverdue(r: { is_delay: boolean }): boolean {
+  return r.is_delay;
 }
 
 function toRequestData(r: StaffRequestRow): RequestData {

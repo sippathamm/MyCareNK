@@ -5,6 +5,7 @@ export interface StaffRequestRow {
   id:                      string;
   reference_number:        string;
   request_status:          string;
+  is_delay:                boolean;
   created_at:              string;
   updated_at:              string;
   completed_at:            string | null;
@@ -44,7 +45,7 @@ export function useStaffRequests(
       const { data: rows, error: dbError } = await supabase
         .from('condom_requests')
         .select(`
-          id, reference_number, request_status,
+          id, reference_number, request_status, is_delay,
           created_at, updated_at, completed_at,
           selected_date, selected_time, selected_service_center,
           condom_quantities, lubricant_quantity, message, cancel_reason, handled_by
