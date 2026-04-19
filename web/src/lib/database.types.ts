@@ -58,6 +58,7 @@ export type Database = {
           created_at: string
           handled_by: string | null
           id: string
+          is_delay: boolean
           lubricant_quantity: number
           message: string | null
           reference_number: string
@@ -75,6 +76,7 @@ export type Database = {
           created_at?: string
           handled_by?: string | null
           id?: string
+          is_delay?: boolean
           lubricant_quantity?: number
           message?: string | null
           reference_number: string
@@ -92,6 +94,7 @@ export type Database = {
           created_at?: string
           handled_by?: string | null
           id?: string
+          is_delay?: boolean
           lubricant_quantity?: number
           message?: string | null
           reference_number?: string

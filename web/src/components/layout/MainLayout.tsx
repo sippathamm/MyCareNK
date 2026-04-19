@@ -13,6 +13,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import InventoryIcon from '@mui/icons-material/Inventory2';
+import AssessmentIcon from '@mui/icons-material/Assessment';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useNotification, STATUS_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
@@ -57,6 +58,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: '/dashboard', show: true },
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
+    { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
   ];
 
@@ -169,7 +171,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         {/* Nav Items */}
         <List sx={{ px: sidebarOpen ? 2 : 1, pt: 2, gap: 1, display: 'flex', flexDirection: 'column' }}>
           {navItems.filter(item => item.show).map((item) => {
-            const isActive = location.pathname.startsWith(item.path);
+            const isActive = location.pathname === item.path;
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
                 <Tooltip title={sidebarOpen ? '' : item.text} placement="right">

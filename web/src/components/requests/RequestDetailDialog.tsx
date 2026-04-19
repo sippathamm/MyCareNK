@@ -310,20 +310,30 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                     ดู QR Code
                   </Button>
                 )}
-                {request.request_status === 'ready' && (
-                  <Tooltip title="กดปุ่มนี้ได้เมื่อเลยกำหนดมากกว่า 7 วัน">
-                    <span>
-                      <Button
-                        onClick={() => setIsConfirmingComplete(true)}
-                        color="success"
-                        variant="contained"
-                        disabled={getOverdueDays(request.selected_date ?? '', request.request_status) <= 7}
-                      >
-                        เสร็จสิ้น
-                      </Button>
-                    </span>
-                  </Tooltip>
-                )}
+                {request.request_status === 'ready' && (() => {
+                  const daysPast = (() => {
+                    if (!request.selected_date) return 0;
+                    const selected = new Date(request.selected_date);
+                    selected.setHours(0, 0, 0, 0);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    return Math.floor((today.getTime() - selected.getTime()) / 86400000);
+                  })();
+                  return (
+                    <Tooltip title={daysPast <= 7 ? 'กดปุ่มนี้ได้เมื่อเลยกำหนดมากกว่า 7 วัน' : ''}>
+                      <span>
+                        <Button
+                          onClick={() => setIsConfirmingComplete(true)}
+                          color="success"
+                          variant="contained"
+                          disabled={daysPast <= 7}
+                        >
+                          เสร็จสิ้น
+                        </Button>
+                      </span>
+                    </Tooltip>
+                  );
+                })()}
                 {request.request_status === 'pending' && (
                   <>
                     <Button onClick={() => setIsRejecting(true)} color="error" variant="outlined">
