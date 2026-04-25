@@ -15,16 +15,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return jsonResponse(401, 'error', 'กรุณาเข้าสู่ระบบ');
   }
 
-  const userClient = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_ANON_KEY')!,
-    { global: { headers: { Authorization: authHeader } } }
-  );
+  const authRes = await fetch(`${Deno.env.get('SUPABASE_URL')}/auth/v1/user`, {
+    headers: {
+      Authorization: authHeader,
+      apikey: Deno.env.get('SUPABASE_ANON_KEY')!,
+    },
+  });
 
-  const { data: { user }, error: userError } = await userClient.auth.getUser();
-  if (userError || !user) {
+  if (!authRes.ok) {
     return jsonResponse(401, 'error', 'กรุณาเข้าสู่ระบบ');
   }
+
+  const user = await authRes.json();
 
   const serviceClient = createClient(
     Deno.env.get('SUPABASE_URL')!,
@@ -32,13 +34,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
   );
 
   // Verify caller is admin or superadmin
-  const { data: callerRole, error: roleErr } = await serviceClient
-    .from('staff_roles')
+  const { data: callerProfile, error: callerErr } = await serviceClient
+    .from('staff_profiles')
     .select('role')
     .eq('user_id', user.id)
     .single();
 
-  if (roleErr || !callerRole || (callerRole.role !== 'admin' && callerRole.role !== 'superadmin')) {
+  if (callerErr || !callerProfile || (callerProfile.role !== 'admin' && callerProfile.role !== 'superadmin')) {
     return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์ดำเนินการนี้');
   }
 
@@ -53,15 +55,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // LIST
   if (action === 'list') {
-    const [{ data: profiles, error: profileErr }, { data: roles, error: rolesErr }] = await Promise.all([
-      serviceClient
-        .from('staff_profiles')
-        .select('user_id, first_name, last_name, service_center, created_at, updated_at')
-        .order('created_at', { ascending: true }),
-      serviceClient.from('staff_roles').select('user_id, role'),
-    ]);
+    const { data: profiles, error: profileErr } = await serviceClient
+      .from('staff_profiles')
+      .select('user_id, first_name, last_name, service_center, role, created_at, updated_at')
+      .order('created_at', { ascending: true });
 
-    if (profileErr || rolesErr) {
+    if (profileErr) {
       return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ');
     }
 
@@ -74,7 +73,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ');
     }
 
-    const roleMap = new Map((roles ?? []).map(r => [r.user_id as string, r.role as string]));
     const authMap = new Map(authUsers.map(u => [u.id, { email: u.email ?? '', last_sign_in_at: u.last_sign_in_at ?? null }]));
 
     const staff = (profiles ?? []).map(p => ({
@@ -82,9 +80,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       first_name: p.first_name,
       last_name: p.last_name,
       service_center: p.service_center,
+      role: p.role,
       created_at: p.created_at,
       updated_at: p.updated_at,
-      role: roleMap.get(p.user_id as string) ?? 'staff',
       email: authMap.get(p.user_id as string)?.email ?? '',
       last_sign_in_at: authMap.get(p.user_id as string)?.last_sign_in_at ?? null,
     }));
@@ -119,12 +117,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const userId = authData.user.id;
 
-    const [profileResult, roleResult] = await Promise.all([
-      serviceClient.from('staff_profiles').insert({ user_id: userId, first_name, last_name, service_center }).select('id').single(),
-      serviceClient.from('staff_roles').insert({ user_id: userId, role }).select('id').single(),
-    ]);
+    const { data: profileData, error: profileErr } = await serviceClient
+      .from('staff_profiles')
+      .insert({ user_id: userId, first_name, last_name, service_center, role })
+      .select('id')
+      .single();
 
-    if (profileResult.error || roleResult.error) {
+    if (profileErr) {
       await serviceClient.auth.admin.deleteUser(userId);
       return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
     }
@@ -133,8 +132,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
       p_performed_by: user.id,
       p_action: 'staff_created',
       p_target_table: 'staff_profiles',
-      p_target_id: profileResult.data!.id,
-      p_new_value: { user_id: userId, email, first_name, last_name, service_center, role },
+      p_target_id: profileData!.id,
+      p_new_value: { email, first_name, last_name, service_center, role },
     });
 
     return jsonResponse(201, 'success', 'สร้างบัญชีสำเร็จ', { user_id: userId });
@@ -150,11 +149,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(400, 'error', 'ไม่สามารถลบบัญชีของตัวเองได้');
     }
 
-    // Snapshot before delete (cascade will remove rows after deleteUser)
-    const [{ data: profileSnapshot }, { data: roleSnapshot }] = await Promise.all([
-      serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center').eq('user_id', user_id).single(),
-      serviceClient.from('staff_roles').select('role').eq('user_id', user_id).single(),
+    // Snapshot profile + email before delete (cascade will remove rows after deleteUser)
+    const [{ data: profileSnapshot }, authUserSnapshot] = await Promise.all([
+      serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, role').eq('user_id', user_id).single(),
+      serviceClient.auth.admin.getUserById(user_id),
     ]);
+    const snapshotEmail = authUserSnapshot.data?.user?.email ?? null;
 
     const { error: deleteErr } = await serviceClient.auth.admin.deleteUser(user_id);
     if (deleteErr) {
@@ -167,7 +167,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_action: 'staff_deleted',
         p_target_table: 'staff_profiles',
         p_target_id: profileSnapshot.id,
-        p_old_value: { ...profileSnapshot, role: roleSnapshot?.role ?? null },
+        p_old_value: {
+          email: snapshotEmail,
+          first_name: profileSnapshot.first_name,
+          last_name: profileSnapshot.last_name,
+          service_center: profileSnapshot.service_center,
+          role: profileSnapshot.role,
+        },
       });
     }
 
@@ -185,53 +191,47 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(400, 'error', 'ข้อมูลไม่ครบถ้วน');
     }
 
-    const profileUpdates: Record<string, unknown> = {};
-    if (first_name !== undefined) profileUpdates.first_name = first_name;
-    if (last_name !== undefined) profileUpdates.last_name = last_name;
-    if (service_center !== undefined) profileUpdates.service_center = service_center;
-
-    const hasPotentialProfileUpdate = Object.keys(profileUpdates).length > 0;
+    const hasPotentialProfileUpdate = first_name !== undefined || last_name !== undefined || service_center !== undefined;
     const hasRoleUpdate = role !== undefined;
     const hasEmailUpdate = email !== undefined;
 
-    // Fetch old values first — needed to diff what actually changed
-    const [profileBefore, roleBefore, authUserBefore] = await Promise.all([
-      (hasPotentialProfileUpdate || hasEmailUpdate)
-        ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center').eq('user_id', user_id).single()
-        : Promise.resolve({ data: null, error: null }),
-      hasRoleUpdate
-        ? serviceClient.from('staff_roles').select('id, role').eq('user_id', user_id).single()
+    // Fetch old values — needed for diffing and audit snapshots
+    const needsProfileFetch = hasPotentialProfileUpdate || hasEmailUpdate || hasRoleUpdate;
+    const [profileBefore, authUserBefore] = await Promise.all([
+      needsProfileFetch
+        ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, role').eq('user_id', user_id).single()
         : Promise.resolve({ data: null, error: null }),
       hasEmailUpdate
         ? serviceClient.auth.admin.getUserById(user_id)
         : Promise.resolve({ data: { user: null }, error: null }),
     ]);
 
-    // Diff: only keep profile fields that actually changed
+    // Diff: only keep fields that actually changed
     const changedProfileUpdates: Record<string, unknown> = {};
     if (first_name !== undefined && first_name !== profileBefore.data?.first_name) changedProfileUpdates.first_name = first_name;
     if (last_name !== undefined && last_name !== profileBefore.data?.last_name) changedProfileUpdates.last_name = last_name;
     if (service_center !== undefined && service_center !== profileBefore.data?.service_center) changedProfileUpdates.service_center = service_center;
 
     const oldEmail = authUserBefore.data?.user?.email ?? null;
+    const oldRole = profileBefore.data?.role ?? null;
 
     const hasActualProfileChange = Object.keys(changedProfileUpdates).length > 0;
-    const hasActualRoleChange = hasRoleUpdate && roleBefore.data != null && role !== roleBefore.data.role;
+    const hasActualRoleChange = hasRoleUpdate && profileBefore.data != null && role !== oldRole;
     const hasActualEmailChange = hasEmailUpdate && email !== oldEmail;
 
     if (!hasActualProfileChange && !hasActualRoleChange && !hasActualEmailChange) {
       return jsonResponse(200, 'success', 'แก้ไขข้อมูลสำเร็จ');
     }
 
+    // Build a single staff_profiles update for profile + role changes
+    const profileTableUpdates: Record<string, unknown> = { ...changedProfileUpdates };
+    if (hasActualRoleChange) profileTableUpdates.role = role;
+
     const tasks: Promise<{ error: unknown }>[] = [];
 
-    if (hasActualProfileChange) {
-      changedProfileUpdates.updated_at = new Date().toISOString();
-      tasks.push(serviceClient.from('staff_profiles').update(changedProfileUpdates).eq('user_id', user_id) as Promise<{ error: unknown }>);
-    }
-
-    if (hasActualRoleChange) {
-      tasks.push(serviceClient.from('staff_roles').update({ role }).eq('user_id', user_id) as Promise<{ error: unknown }>);
+    if (Object.keys(profileTableUpdates).length > 0) {
+      profileTableUpdates.updated_at = new Date().toISOString();
+      tasks.push(serviceClient.from('staff_profiles').update(profileTableUpdates).eq('user_id', user_id) as Promise<{ error: unknown }>);
     }
 
     if (hasActualEmailChange) {
@@ -248,23 +248,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
     }
 
-    // Log audit events — each event fires only when that specific thing actually changed
+    // Log audit events — one event per concern, only changed fields stored
     const auditTasks: Promise<unknown>[] = [];
 
     if (hasActualProfileChange && profileBefore.data) {
       const oldProfileValues: Record<string, unknown> = {};
       const newProfileValues: Record<string, unknown> = {};
-      if (changedProfileUpdates.first_name !== undefined) {
-        oldProfileValues.first_name = profileBefore.data.first_name;
-        newProfileValues.first_name = changedProfileUpdates.first_name;
-      }
-      if (changedProfileUpdates.last_name !== undefined) {
-        oldProfileValues.last_name = profileBefore.data.last_name;
-        newProfileValues.last_name = changedProfileUpdates.last_name;
-      }
-      if (changedProfileUpdates.service_center !== undefined) {
-        oldProfileValues.service_center = profileBefore.data.service_center;
-        newProfileValues.service_center = changedProfileUpdates.service_center;
+      for (const key of Object.keys(changedProfileUpdates)) {
+        oldProfileValues[key] = (profileBefore.data as Record<string, unknown>)[key];
+        newProfileValues[key] = changedProfileUpdates[key];
       }
       auditTasks.push(serviceClient.rpc('log_audit_event', {
         p_performed_by: user.id,
@@ -276,17 +268,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }));
     }
 
-    if (hasActualRoleChange && roleBefore.data) {
-      auditTasks.push(serviceClient.rpc('log_audit_event', {
-        p_performed_by: user.id,
-        p_action: 'role_updated',
-        p_target_table: 'staff_roles',
-        p_target_id: roleBefore.data.id,
-        p_old_value: { role: roleBefore.data.role },
-        p_new_value: { role },
-      }));
-    }
-
     if (hasActualEmailChange && profileBefore.data) {
       auditTasks.push(serviceClient.rpc('log_audit_event', {
         p_performed_by: user.id,
@@ -295,6 +276,17 @@ Deno.serve(async (req: Request): Promise<Response> => {
         p_target_id: profileBefore.data.id,
         p_old_value: { email: oldEmail },
         p_new_value: { email },
+      }));
+    }
+
+    if (hasActualRoleChange && profileBefore.data) {
+      auditTasks.push(serviceClient.rpc('log_audit_event', {
+        p_performed_by: user.id,
+        p_action: 'role_updated',
+        p_target_table: 'staff_profiles',
+        p_target_id: profileBefore.data.id,
+        p_old_value: { role: oldRole },
+        p_new_value: { role },
       }));
     }
 

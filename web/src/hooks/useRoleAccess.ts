@@ -30,21 +30,17 @@ export function useRoleAccess() {
       try {
         const userId = session.user.id;
 
-        // Fetch role and profile in parallel
-        const [
-          { data: roleData, error: roleError },
-          { data: profileData, error: profileError },
-        ] = await Promise.all([
-          supabase.from('staff_roles').select('role').eq('user_id', userId).single(),
-          supabase.from('staff_profiles').select('first_name, last_name, service_center').eq('user_id', userId).single(),
-        ]);
+        const { data, error } = await supabase
+          .from('staff_profiles')
+          .select('first_name, last_name, service_center, role')
+          .eq('user_id', userId)
+          .single();
 
-        if (roleError) throw roleError;
-        if (profileError) throw profileError;
+        if (error) throw error;
 
         if (isMounted) {
-          setRole(roleData?.role ?? null);
-          setProfile(profileData);
+          setRole(data?.role ?? null);
+          setProfile(data ? { first_name: data.first_name, last_name: data.last_name, service_center: data.service_center } : null);
         }
       } catch (error) {
         console.error('Error fetching role or profile:', error);

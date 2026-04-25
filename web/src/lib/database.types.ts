@@ -16,35 +16,32 @@ export type Database = {
     Tables: {
       audit_logs: {
         Row: {
-          action: string
+          action: Database["public"]["Enums"]["audit_action"]
           created_at: string
           id: string
-          ip_address: string | null
           new_value: Json | null
           old_value: Json | null
-          performed_by: string
+          performed_by: string | null
           target_id: string
           target_table: string
         }
         Insert: {
-          action: string
+          action: Database["public"]["Enums"]["audit_action"]
           created_at?: string
           id?: string
-          ip_address?: string | null
           new_value?: Json | null
           old_value?: Json | null
-          performed_by: string
+          performed_by?: string | null
           target_id: string
           target_table: string
         }
         Update: {
-          action?: string
+          action?: Database["public"]["Enums"]["audit_action"]
           created_at?: string
           id?: string
-          ip_address?: string | null
           new_value?: Json | null
           old_value?: Json | null
-          performed_by?: string
+          performed_by?: string | null
           target_id?: string
           target_table?: string
         }
@@ -301,6 +298,7 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          role: Database["public"]["Enums"]["role"]
           service_center: Database["public"]["Enums"]["service_center"] | null
           updated_at: string | null
           user_id: string
@@ -310,6 +308,7 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          role?: Database["public"]["Enums"]["role"]
           service_center?: Database["public"]["Enums"]["service_center"] | null
           updated_at?: string | null
           user_id: string
@@ -319,29 +318,9 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          role?: Database["public"]["Enums"]["role"]
           service_center?: Database["public"]["Enums"]["service_center"] | null
           updated_at?: string | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      staff_roles: {
-        Row: {
-          created_at: string
-          id: string
-          role: Database["public"]["Enums"]["role"]
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["role"]
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          role?: Database["public"]["Enums"]["role"]
           user_id?: string
         }
         Relationships: []
@@ -438,53 +417,157 @@ export type Database = {
       dearmor: { Args: { "": string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
+      get_audit_log: {
+        Args: {
+          p_action?: Database["public"]["Enums"]["audit_action"]
+          p_date_from?: string
+          p_date_to?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_target_table?: string
+        }
+        Returns: {
+          action: Database["public"]["Enums"]["audit_action"]
+          created_at: string
+          full_name: string
+          id: string
+          new_value: Json
+          old_value: Json
+          performed_by: string
+          target_id: string
+          target_table: string
+        }[]
+      }
       get_average_lead_time: {
         Args: {
           p_date_from: string
           p_date_to: string
-          p_service_center?: string | null
+          p_service_center?: Database["public"]["Enums"]["service_center"]
         }
         Returns: {
-          overall_avg_minutes: number | null
-          pending_to_preparing: number | null
-          preparing_to_ready: number | null
-          ready_to_completed: number | null
+          overall_avg_minutes: number
+          pending_to_preparing: number
+          preparing_to_ready: number
+          ready_to_completed: number
+        }[]
+      }
+      get_consumption_trend: {
+        Args: never
+        Returns: {
+          condom_used: number
+          day: string
+          lubricant_used: number
+          service_center: Database["public"]["Enums"]["service_center"]
+        }[]
+      }
+      get_days_until_reset: { Args: never; Returns: number }
+      get_inventory_forecast: {
+        Args: never
+        Returns: {
+          condom_daily_burn: number
+          condom_days_left: number
+          condom_qty: number
+          lubricant_daily_burn: number
+          lubricant_days_left: number
+          lubricant_qty: number
+          service_center: Database["public"]["Enums"]["service_center"]
         }[]
       }
       get_peak_time_stats: {
         Args: {
-          p_period: string
           p_date_from: string
           p_date_to: string
-          p_service_center?: string | null
+          p_period: string
+          p_service_center?: string
         }
         Returns: {
           bucket: string
           count: number
         }[]
       }
-      get_inventory_forecast: {
-        Args: Record<string, never>
+      get_request_status_log: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_from_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_to_status?: string
+        }
         Returns: {
-          service_center: Database["public"]["Enums"]["service_center"]
-          condom_qty: number
-          lubricant_qty: number
-          condom_daily_burn: number
-          lubricant_daily_burn: number
-          condom_days_left: number | null
-          lubricant_days_left: number | null
+          changed_at: string
+          from_status: string
+          full_name: string
+          id: string
+          performed_by: string
+          request_id: string
+          to_status: string
         }[]
       }
-      get_consumption_trend: {
-        Args: Record<string, never>
+      get_service_center_demand: {
+        Args: { p_date_from: string; p_date_to: string }
+        Returns: {
+          service_center: Database["public"]["Enums"]["service_center"]
+          total_condoms: number
+          total_lubricants: number
+          total_requests: number
+        }[]
+      }
+      get_service_center_demand_trend: {
+        Args: never
         Returns: {
           day: string
+          request_count: number
           service_center: Database["public"]["Enums"]["service_center"]
-          condom_used: number
-          lubricant_used: number
         }[]
       }
-      get_days_until_reset: { Args: never; Returns: number }
+      get_staff_workload:
+        | {
+            Args: { p_date_from: string; p_date_to: string }
+            Returns: {
+              avg_lead_time_minutes: number
+              cancelled_count: number
+              completed_count: number
+              full_name: string
+              service_center: Database["public"]["Enums"]["service_center"]
+              staff_user_id: string
+            }[]
+          }
+        | {
+            Args: {
+              p_date_from: string
+              p_date_to: string
+              p_service_center?: string
+            }
+            Returns: {
+              avg_lead_time_minutes: number
+              cancelled_count: number
+              completed_count: number
+              first_name: string
+              last_name: string
+              overdue_count: number
+              service_center: Database["public"]["Enums"]["service_center"]
+              staff_user_id: string
+            }[]
+          }
+      get_staff_workload_trend: {
+        Args: {
+          p_date_from: string
+          p_date_to: string
+          p_service_center?: string
+          p_staff_user_id?: string
+        }
+        Returns: {
+          cancelled_count: number
+          completed_count: number
+          first_name: string
+          last_name: string
+          staff_user_id: string
+          week_start: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
@@ -493,7 +576,7 @@ export type Database = {
           p_action: string
           p_new_value?: Json
           p_old_value?: Json
-          p_performed_by?: string
+          p_performed_by: string
           p_target_id: string
           p_target_table: string
         }
@@ -519,8 +602,28 @@ export type Database = {
         }
         Returns: Json
       }
+      write_audit_log: {
+        Args: {
+          p_action: Database["public"]["Enums"]["audit_action"]
+          p_new_value?: Json
+          p_old_value?: Json
+          p_performed_by?: string
+          p_target_id: string
+          p_target_table: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
+      audit_action:
+        | "role_updated"
+        | "staff_profile_updated"
+        | "restock"
+        | "fulfillment"
+        | "adjustment"
+        | "staff_created"
+        | "staff_deleted"
+        | "email_updated"
       role: "staff" | "admin" | "superadmin"
       service_center:
         | "รพ.โพนพิสัย"
@@ -662,6 +765,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      audit_action: [
+        "role_updated",
+        "staff_profile_updated",
+        "restock",
+        "fulfillment",
+        "adjustment",
+        "staff_created",
+        "staff_deleted",
+        "email_updated",
+      ],
       role: ["staff", "admin", "superadmin"],
       service_center: [
         "รพ.โพนพิสัย",

@@ -19,7 +19,7 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 
 const verifyStaffRole = async (userId: string): Promise<boolean> => {
   const { data, error } = await supabase
-    .from('staff_roles')
+    .from('staff_profiles')
     .select('user_id')
     .eq('user_id', userId)
     .maybeSingle();
