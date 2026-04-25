@@ -14,6 +14,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import AssessmentIcon from '@mui/icons-material/Assessment';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useNotification, STATUS_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
@@ -60,6 +61,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
     { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
+    { text: 'บันทึกการตรวจสอบ', icon: <ManageSearchIcon />, path: '/audit-log', show: role === 'superadmin' },
   ];
 
   if (loading) {

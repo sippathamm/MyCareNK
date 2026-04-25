@@ -12,7 +12,6 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import RestockModal from './RestockModal';
 import AdjustmentModal from './AdjustmentModal';
 import ConsumptionTrendChart from './ConsumptionTrendChart';
-import RestockHistoryTable from './RestockHistoryTable';
 
 const LOW_STOCK_DAYS = 7;
 
@@ -156,18 +155,15 @@ export default function InventoryPage() {
   const { role, profile, loading: roleLoading } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
-  const [historyTrigger, setHistoryTrigger] = useState(0);
 
   const handleRestockSuccess = useCallback(() => {
     setRestockTarget(null);
     refetch();
-    setHistoryTrigger((n) => n + 1);
   }, [refetch]);
 
   const handleAdjustmentSuccess = useCallback(() => {
     setAdjustmentTarget(null);
     refetch();
-    setHistoryTrigger((n) => n + 1);
   }, [refetch]);
 
   if (roleLoading) return null;
@@ -276,10 +272,6 @@ export default function InventoryPage() {
           </Grid>
 
           <ConsumptionTrendChart trend={visibleTrend} loading={loading} />
-
-          <Box sx={{ mt: 4 }}>
-            <RestockHistoryTable refetchTrigger={historyTrigger} />
-          </Box>
         </>
       )}
 
