@@ -8,9 +8,11 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useAuditLog, type AuditLogRow, type AuditLogFilters } from '../../hooks/useAuditLog';
+import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
+import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
-import AuditLogDetailDrawer from '../../components/audit/AuditLogDetailDrawer';
+import StaffAuditLogDetailDrawer from '../../components/audit/StaffAuditLogDetailDrawer';
+import InventoryLogDetailDrawer from '../../components/audit/InventoryLogDetailDrawer';
 import {
   AUDIT_ACTION, AUDIT_ACTION_LABEL, AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR,
 } from '../../constants/auditLogActions';
@@ -153,23 +155,21 @@ function AuditLogTab() {
   const [targetIdFilter, setTargetIdFilter] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
-  const [detailRow, setDetailRow] = useState<AuditLogRow | null>(null);
+  const [detailRow, setDetailRow] = useState<StaffAuditLogRow | null>(null);
 
   const resetPage = useCallback(() => setPage(0), []);
 
-  const filters = useMemo<AuditLogFilters>(() => ({
-    performedBy:   null,
-    action:        (actionFilter as AuditAction) || null,
-    targetTable:   'staff_profiles',
-    targetId:      targetIdFilter.trim() || null,
-    serviceCenter: null,
-    dateFrom:      dateFrom  || null,
-    dateTo:        dateTo    || null,
+  const filters = useMemo<StaffAuditLogFilters>(() => ({
+    performedBy: null,
+    action:      (actionFilter as AuditAction) || null,
+    targetId:    targetIdFilter.trim() || null,
+    dateFrom:    dateFrom  || null,
+    dateTo:      dateTo    || null,
   }), [actionFilter, targetIdFilter, dateFrom, dateTo]);
 
-  const { rows, loading, error } = useAuditLog(filters, page, pageSize);
+  const { rows, loading, error } = useStaffAuditLog(filters, page, pageSize);
 
-  const columns = useMemo<GridColDef<AuditLogRow>[]>(() => [
+  const columns = useMemo<GridColDef<StaffAuditLogRow>[]>(() => [
     {
       field: 'action', headerName: 'ประเภท', width: 180, minWidth: 160,
       renderCell: (p) => <ActionChip action={p.value} />,
@@ -228,7 +228,7 @@ function AuditLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
-              onRowClick={({ row }) => setDetailRow(row as AuditLogRow)}
+              onRowClick={({ row }) => setDetailRow(row as StaffAuditLogRow)}
               sx={{
                 border: 'none', borderRadius: 2,
                 '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
@@ -240,7 +240,7 @@ function AuditLogTab() {
         </CardContent>
       </Card>
 
-      <AuditLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
+      <StaffAuditLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
     </>
   );
 }
@@ -357,45 +357,37 @@ function InventoryLogTab() {
   const [serviceCenterFilter, setServiceCenterFilter] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
-  const [detailRow, setDetailRow] = useState<AuditLogRow | null>(null);
+  const [detailRow, setDetailRow] = useState<InventoryLogRow | null>(null);
 
   const resetPage = useCallback(() => setPage(0), []);
 
-  const filters = useMemo<AuditLogFilters>(() => ({
-    performedBy:   null,
+  const filters = useMemo<InventoryLogFilters>(() => ({
     action:        (actionFilter as AuditAction) || null,
-    targetTable:   'inventory_transactions',
-    targetId:      null,
     serviceCenter: serviceCenterFilter || null,
     dateFrom:      dateFrom  || null,
     dateTo:        dateTo    || null,
   }), [actionFilter, serviceCenterFilter, dateFrom, dateTo]);
 
-  const { rows, loading, error } = useAuditLog(filters, page, pageSize);
+  const { rows, loading, error } = useInventoryLog(filters, page, pageSize);
 
-  const columns = useMemo<GridColDef<AuditLogRow>[]>(() => [
+  const columns = useMemo<GridColDef<InventoryLogRow>[]>(() => [
     {
       field: 'action', headerName: 'ประเภท', width: 130, minWidth: 120,
       renderCell: (p) => <ActionChip action={p.value} />,
     },
     {
-      field: '__service_center', headerName: 'สถานบริการ', flex: 1.2, minWidth: 150,
-      sortable: false,
-      renderCell: (p) => (
-        <Typography variant="body2">
-          {String(p.row.new_value?.service_center ?? '—')}
-        </Typography>
-      ),
+      field: 'service_center', headerName: 'สถานบริการ', flex: 1.2, minWidth: 150,
+      renderCell: (p) => <Typography variant="body2">{p.value}</Typography>,
     },
     {
-      field: '__condom_delta', headerName: 'ถุงยางอนามัย (ชิ้น)', flex: 0.9, minWidth: 140,
-      sortable: false, align: 'center', headerAlign: 'center',
-      renderCell: (p) => <InventoryQtyChip value={p.row.new_value?.condom_delta} />,
+      field: 'condom_delta', headerName: 'ถุงยางอนามัย (ชิ้น)', flex: 0.9, minWidth: 140,
+      align: 'center', headerAlign: 'center',
+      renderCell: (p) => <InventoryQtyChip value={p.value} />,
     },
     {
-      field: '__lubricant_delta', headerName: 'เจลหล่อลื่น (ชิ้น)', flex: 0.9, minWidth: 140,
-      sortable: false, align: 'center', headerAlign: 'center',
-      renderCell: (p) => <InventoryQtyChip value={p.row.new_value?.lubricant_delta} />,
+      field: 'lubricant_delta', headerName: 'เจลหล่อลื่น (ชิ้น)', flex: 0.9, minWidth: 140,
+      align: 'center', headerAlign: 'center',
+      renderCell: (p) => <InventoryQtyChip value={p.value} />,
     },
     {
       field: 'full_name', headerName: 'โดย', flex: 1.1, minWidth: 130,
@@ -406,14 +398,10 @@ function InventoryLogTab() {
       renderCell: (p) => <DateTimeCell value={p.value} />,
     },
     {
-      field: '__note', headerName: 'หมายเหตุ', flex: 1.2, minWidth: 140,
-      sortable: false,
-      renderCell: (p) => {
-        const note = p.row.new_value?.note as string | null | undefined;
-        return note
-          ? <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{note}</Typography>
-          : <Typography variant="body2" color="text.disabled">—</Typography>;
-      },
+      field: 'note', headerName: 'หมายเหตุ', flex: 1.2, minWidth: 140,
+      renderCell: (p) => p.value
+        ? <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{p.value}</Typography>
+        : <Typography variant="body2" color="text.disabled">—</Typography>,
     },
   ], []);
 
@@ -459,7 +447,7 @@ function InventoryLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
-              onRowClick={({ row }) => setDetailRow(row as AuditLogRow)}
+              onRowClick={({ row }) => setDetailRow(row as InventoryLogRow)}
               sx={{
                 border: 'none', borderRadius: 2,
                 '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
@@ -471,7 +459,7 @@ function InventoryLogTab() {
         </CardContent>
       </Card>
 
-      <AuditLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
+      <InventoryLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
     </>
   );
 }
