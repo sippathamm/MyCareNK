@@ -79,11 +79,11 @@ export default function InventoryLogDetailDrawer({ row, onClose }: Props) {
               <Typography variant="body1">{row.service_center}</Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">ถุงยางอนามัย</Typography>
+              <Typography variant="subtitle2" color="text.secondary">ถุงยางอนามัย (ชิ้น)</Typography>
               <QtyChip value={row.condom_delta} />
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">เจลหล่อลื่น</Typography>
+              <Typography variant="subtitle2" color="text.secondary">เจลหล่อลื่น (ชิ้น)</Typography>
               <QtyChip value={row.lubricant_delta} />
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -94,12 +94,20 @@ export default function InventoryLogDetailDrawer({ row, onClose }: Props) {
               <Typography variant="subtitle2" color="text.secondary">เมื่อวันที่</Typography>
               <Typography variant="body1">{formatDateTime(row.created_at)}</Typography>
             </Box>
-            {row.note && (
-              <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-                <Typography variant="subtitle2" color="text.secondary">หมายเหตุ</Typography>
-                <Typography variant="body1" sx={{ maxWidth: '60%', textAlign: 'right' }}>{row.note}</Typography>
-              </Box>
-            )}
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+              <Typography variant="subtitle2" color="text.secondary">เหตุผล</Typography>
+              {row.reason
+                ? <Typography variant="body1" sx={{ maxWidth: '60%', textAlign: 'right' }}>{row.reason}</Typography>
+                : <Typography variant="body1" color="text.disabled">—</Typography>
+              }
+            </Box>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+              <Typography variant="subtitle2" color="text.secondary">หมายเหตุ</Typography>
+              {row.note
+                ? <Typography variant="body1" sx={{ maxWidth: '60%', textAlign: 'right' }}>{row.note}</Typography>
+                : <Typography variant="body1" color="text.disabled">—</Typography>
+              }
+            </Box>
           </Box>
         </Box>
       )}

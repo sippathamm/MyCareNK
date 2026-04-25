@@ -1,13 +1,12 @@
-import { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   Box, Typography, Card, CardContent, TextField, MenuItem, Stack,
   Alert, Chip, Tabs, Tab,
 } from '@mui/material';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
-import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useRoleAccess, type StaffRole } from '../../hooks/useRoleAccess';
 import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
@@ -177,7 +176,7 @@ function AuditLogTab() {
     {
       field: 'target_id', headerName: 'UUID เจ้าหน้าที่', width: 310,
       renderCell: (p) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.value ?? '—'}</Typography>
+        <Typography variant="body2">{p.value ?? '—'}</Typography>
       ),
     },
     {
@@ -252,50 +251,45 @@ function RequestStatusLogTab() {
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [fromStatus, setFromStatus] = useState('');
   const [toStatus, setToStatus] = useState('');
+  const [refNumFilter, setRefNumFilter] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
 
   const resetPage = useCallback(() => setPage(0), []);
 
   const filters = useMemo<RequestStatusLogFilters>(() => ({
-    performedBy: null,
-    fromStatus:  fromStatus || null,
-    toStatus:    toStatus   || null,
-    dateFrom:    dateFrom   || null,
-    dateTo:      dateTo     || null,
-  }), [fromStatus, toStatus, dateFrom, dateTo]);
+    performedBy:     null,
+    fromStatus:      fromStatus || null,
+    toStatus:        toStatus   || null,
+    referenceNumber: refNumFilter.trim() || null,
+    dateFrom:        dateFrom   || null,
+    dateTo:          dateTo     || null,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
 
   const { rows, loading, error } = useRequestStatusLog(filters, page, pageSize);
 
   const columns = useMemo<GridColDef<RequestStatusLogRow>[]>(() => [
     {
-      field: 'changed_at', headerName: 'เมื่อวันที่', flex: 1.3, minWidth: 170,
-      renderCell: (p) => <DateTimeCell value={p.value} />,
-    },
-    {
-      field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
-      renderCell: (p) => <Typography variant="body2">{p.value}</Typography>,
+      field: 'reference_number', headerName: 'หมายเลขอ้างอิง', width: 160, minWidth: 140,
+      renderCell: (p) => (
+        <Typography variant="body2">{p.value ?? '—'}</Typography>
+      ),
     },
     {
       field: 'from_status', headerName: 'จากสถานะ', flex: 1, minWidth: 160,
       renderCell: (p) => <StatusChip status={p.value} />,
     },
     {
-      field: '__arrow', headerName: '', width: 32, sortable: false, filterable: false,
-      disableColumnMenu: true, align: 'center', headerAlign: 'center',
-      renderCell: () => <ArrowForwardRoundedIcon sx={{ fontSize: 16, color: 'text.disabled' }} />,
-    },
-    {
       field: 'to_status', headerName: 'เป็นสถานะ', flex: 1, minWidth: 160,
       renderCell: (p) => <StatusChip status={p.value} />,
     },
     {
-      field: 'request_id', headerName: 'คำขอ', flex: 1, minWidth: 120,
-      renderCell: (p) => (
-        <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem', color: 'text.secondary' }}>
-          #{(p.value as string)?.slice(0, 8)}…
-        </Typography>
-      ),
+      field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
+      renderCell: (p) => <Typography variant="body2">{p.value}</Typography>,
+    },
+    {
+      field: 'changed_at', headerName: 'เมื่อวันที่', flex: 1.3, minWidth: 170,
+      renderCell: (p) => <DateTimeCell value={p.value} />,
     },
   ], []);
 
@@ -303,23 +297,28 @@ function RequestStatusLogTab() {
     <>
       <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
         <CardContent>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
-            <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
-              onChange={e => { setDateFrom(e.target.value); resetPage(); }}
-              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
-              onChange={e => { setDateTo(e.target.value); resetPage(); }}
-              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="จากสถานะ" select size="small" value={fromStatus}
-              onChange={e => { setFromStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-              {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-            </TextField>
-            <TextField label="เป็นสถานะ" select size="small" value={toStatus}
-              onChange={e => { setToStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-              {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-            </TextField>
+          <Stack spacing={2}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+              <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
+                onChange={e => { setDateFrom(e.target.value); resetPage(); }}
+                slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+              <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
+                onChange={e => { setDateTo(e.target.value); resetPage(); }}
+                slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+              <TextField label="จากสถานะ" select size="small" value={fromStatus}
+                onChange={e => { setFromStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
+                slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              </TextField>
+              <TextField label="เป็นสถานะ" select size="small" value={toStatus}
+                onChange={e => { setToStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
+                slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              </TextField>
+            </Stack>
+            <TextField size="small" value={refNumFilter}
+              onChange={e => { setRefNumFilter(e.target.value); resetPage(); }}
+              sx={{ maxWidth: 320 }} placeholder="ค้นหาหมายเลขอ้างอิง" />
           </Stack>
         </CardContent>
       </Card>
@@ -390,7 +389,7 @@ function InventoryLogTab() {
       renderCell: (p) => <InventoryQtyChip value={p.value} />,
     },
     {
-      field: 'full_name', headerName: 'โดย', flex: 1.1, minWidth: 130,
+      field: 'full_name', headerName: 'โดย', flex: 1.3, minWidth: 160,
       renderCell: (p) => <Typography variant="body2">{p.value}</Typography>,
     },
     {
@@ -398,7 +397,7 @@ function InventoryLogTab() {
       renderCell: (p) => <DateTimeCell value={p.value} />,
     },
     {
-      field: 'note', headerName: 'หมายเหตุ', flex: 1.2, minWidth: 140,
+      field: 'reason', headerName: 'เหตุผล', flex: 1.2, minWidth: 140,
       renderCell: (p) => p.value
         ? <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{p.value}</Typography>
         : <Typography variant="body2" color="text.disabled">—</Typography>,
@@ -466,12 +465,22 @@ function InventoryLogTab() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
+// ─── Tab definitions ──────────────────────────────────────────────────────────
+
+const ALL_TABS: { label: string; roles: StaffRole[]; Component: () => React.JSX.Element }[] = [
+  { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['superadmin'],          Component: AuditLogTab },
+  { label: 'ประวัติสถานะคำขอ',                  roles: ['staff', 'admin', 'superadmin'], Component: RequestStatusLogTab },
+  { label: 'ประวัติการแก้ไขสต็อก',              roles: ['admin', 'superadmin'], Component: InventoryLogTab },
+];
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function AuditLogPage() {
   const { role, loading: roleLoading } = useRoleAccess();
   const [tab, setTab] = useState(0);
 
   if (roleLoading) return null;
-  if (role !== 'superadmin') {
+  if (!role) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
         <LockOutlinedIcon sx={{ fontSize: 72, opacity: 0.3 }} />
@@ -480,26 +489,26 @@ export default function AuditLogPage() {
     );
   }
 
+  const visibleTabs = ALL_TABS.filter(t => t.roles.includes(role));
+  const safeTab = Math.min(tab, visibleTabs.length - 1);
+  const ActiveComponent = visibleTabs[safeTab]?.Component ?? null;
+
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>บันทึกการตรวจสอบ</Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ และการจัดการสต็อกวัสดุ
+        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ และการจัดการสต็อก
       </Typography>
 
       <Tabs
-        value={tab}
+        value={safeTab}
         onChange={(_, v) => setTab(v)}
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
       >
-        <Tab label="ประวัติการแก้ไขข้อมูลเจ้าหน้าที่" />
-        <Tab label="ประวัติสถานะคำขอ" />
-        <Tab label="ประวัติการแก้ไขสต็อก" />
+        {visibleTabs.map(t => <Tab key={t.label} label={t.label} />)}
       </Tabs>
 
-      {tab === 0 && <AuditLogTab />}
-      {tab === 1 && <RequestStatusLogTab />}
-      {tab === 2 && <InventoryLogTab />}
+      {ActiveComponent && <ActiveComponent />}
     </Box>
   );
 }

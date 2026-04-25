@@ -10,6 +10,7 @@ export interface InventoryLogRow {
   service_center: string;
   condom_delta: number;
   lubricant_delta: number;
+  reason: string | null;
   note: string | null;
   created_at: string;
 }

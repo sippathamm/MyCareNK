@@ -65,8 +65,6 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
     setLoading(true);
     setError(null);
 
-    const noteText = [reason, note.trim()].filter(Boolean).join(' — ');
-
     // Insert adjustment transaction — trigger apply_inventory_adjustment จะอัปเดต service_center_inventory อัตโนมัติ
     const { error: insertError } = await supabase
       .from('inventory_transactions')
@@ -75,7 +73,8 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
         transaction_type: 'adjustment',
         condom_delta: isNaN(condom) ? 0 : condom,
         lubricant_delta: isNaN(lubricant) ? 0 : lubricant,
-        note: noteText,
+        reason: reason,
+        note: note.trim() || null,
         performed_by: session.user.id,
       });
 

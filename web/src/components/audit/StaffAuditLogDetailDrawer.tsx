@@ -19,17 +19,16 @@ function formatDateTime(iso: string): string {
 
 // ─── Diff Row (before / after) ────────────────────────────────────────────────
 
-interface DiffRowProps { fieldKey: string; oldVal: unknown; newVal: unknown }
+interface DiffRowProps { rawKey: string; fieldKey: string; oldVal: unknown; newVal: unknown }
 
-function DiffRow({ fieldKey, oldVal, newVal }: DiffRowProps) {
-  const fmt = (v: unknown) => v === null || v === undefined ? '—' : String(v);
+function DiffRow({ rawKey, fieldKey, oldVal, newVal }: DiffRowProps) {
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Typography variant="subtitle2" color="text.secondary">{fieldKey}</Typography>
       <Box display="flex" alignItems="center" gap={1}>
-        <Typography variant="body1" sx={{ color: '#C62828' }}>{fmt(oldVal)}</Typography>
+        <Typography variant="body1" sx={{ color: '#C62828' }}>{formatFieldValue(rawKey, oldVal)}</Typography>
         <Typography variant="body2" color="text.disabled">→</Typography>
-        <Typography variant="body1" sx={{ color: '#2E7D32' }}>{fmt(newVal)}</Typography>
+        <Typography variant="body1" sx={{ color: '#2E7D32' }}>{formatFieldValue(rawKey, newVal)}</Typography>
       </Box>
     </Box>
   );
@@ -37,15 +36,38 @@ function DiffRow({ fieldKey, oldVal, newVal }: DiffRowProps) {
 
 // ─── Value Row (insert-only display) ─────────────────────────────────────────
 
-function ValueRow({ fieldKey, value }: { fieldKey: string; value: unknown }) {
-  const fmt = (v: unknown) => v === null || v === undefined ? '—' : String(v);
+function ValueRow({ rawKey, fieldKey, value }: { rawKey: string; fieldKey: string; value: unknown }) {
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Typography variant="subtitle2" color="text.secondary">{fieldKey}</Typography>
-      <Typography variant="body1">{fmt(value)}</Typography>
+      <Typography variant="body1">{formatFieldValue(rawKey, value)}</Typography>
     </Box>
   );
 }
+
+// ─── Field display name map ───────────────────────────────────────────────────
+
+const FIELD_LABEL: Record<string, string> = {
+  first_name:     'ชื่อ',
+  last_name:      'นามสกุล',
+  email:          'อีเมล',
+  service_center: 'สถานบริการ',
+  role:           'ระดับสิทธิ์',
+};
+
+const ROLE_LABEL: Record<string, string> = {
+  staff:      'เจ้าหน้าที่',
+  admin:      'ผู้ดูแล',
+  superadmin: 'ผู้ดูแลสูงสุด',
+};
+
+const formatFieldValue = (key: string, value: unknown): string => {
+  if (value === null || value === undefined) return '—';
+  if (key === 'role') return ROLE_LABEL[String(value)] ?? String(value);
+  return String(value);
+};
+
+const fieldLabel = (key: string) => FIELD_LABEL[key] ?? key;
 
 // ─── Field group definitions ──────────────────────────────────────────────────
 
@@ -142,7 +164,7 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
                   <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>ข้อมูล</Typography>
                   <Box display="flex" flexDirection="column" gap={2}>
                     {orderedKeys.map(k => (
-                      <ValueRow key={k} fieldKey={k} value={row.new_value?.[k]} />
+                      <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={row.new_value?.[k]} />
                     ))}
                   </Box>
                 </>
@@ -153,7 +175,7 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
                     {(hasGroups ? orderedKeys : allKeys).map(k => {
                       const oldVal = row.old_value?.[k] ?? null;
                       const newVal = row.new_value?.[k] ?? null;
-                      return <DiffRow key={k} fieldKey={k} oldVal={oldVal} newVal={newVal} />;
+                      return <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)} oldVal={oldVal} newVal={newVal} />;
                     })}
                   </Box>
                 </>

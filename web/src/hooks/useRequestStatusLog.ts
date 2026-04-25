@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 export interface RequestStatusLogRow {
   id: string;
   request_id: string;
+  reference_number: string | null;
   performed_by: string | null;
   full_name: string;
   from_status: string | null;
@@ -12,11 +13,12 @@ export interface RequestStatusLogRow {
 }
 
 export interface RequestStatusLogFilters {
-  performedBy: string | null;
-  fromStatus:  string | null;
-  toStatus:    string | null;
-  dateFrom:    string | null;
-  dateTo:      string | null;
+  performedBy:     string | null;
+  fromStatus:      string | null;
+  toStatus:        string | null;
+  referenceNumber: string | null;
+  dateFrom:        string | null;
+  dateTo:          string | null;
 }
 
 function parseError(e: unknown): string {
@@ -45,13 +47,14 @@ export function useRequestStatusLog(
       }
 
       const { data, error: rpcError } = await supabase.rpc('get_request_status_log', {
-        p_performed_by: filters.performedBy ?? null,
-        p_from_status:  filters.fromStatus  ?? null,
-        p_to_status:    filters.toStatus    ?? null,
-        p_date_from:    filters.dateFrom    ? new Date(filters.dateFrom).toISOString() : null,
-        p_date_to:      dateTo,
-        p_limit:        pageSize,
-        p_offset:       page * pageSize,
+        p_performed_by:     filters.performedBy     ?? null,
+        p_from_status:      filters.fromStatus      ?? null,
+        p_to_status:        filters.toStatus        ?? null,
+        p_reference_number: filters.referenceNumber ?? null,
+        p_date_from:        filters.dateFrom        ? new Date(filters.dateFrom).toISOString() : null,
+        p_date_to:          dateTo,
+        p_limit:            pageSize,
+        p_offset:           page * pageSize,
       });
 
       if (rpcError) throw rpcError;

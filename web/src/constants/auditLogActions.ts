@@ -30,7 +30,7 @@ export type AuditAction = typeof AUDIT_ACTION[keyof typeof AUDIT_ACTION];
 export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
   [AUDIT_ACTION.STAFF_CREATED]:         'เพิ่มเจ้าหน้าที่',
   [AUDIT_ACTION.STAFF_DELETED]:         'ลบเจ้าหน้าที่',
-  [AUDIT_ACTION.ROLE_UPDATED]:          'แก้ไขสิทธิ์เจ้าหน้าที่',
+  [AUDIT_ACTION.ROLE_UPDATED]:          'แก้ไขระดับสิทธิ์เจ้าหน้าที่',
   [AUDIT_ACTION.STAFF_PROFILE_UPDATED]: 'แก้ไขโปรไฟล์เจ้าหน้าที่',
   [AUDIT_ACTION.EMAIL_UPDATED]:         'แก้ไขอีเมลเจ้าหน้าที่',
   [AUDIT_ACTION.RESTOCK]:               'เติมสต็อก',
@@ -46,9 +46,9 @@ export const AUDIT_ACTION_COLOR: Record<AuditAction, { bg: string; color: string
   [AUDIT_ACTION.ROLE_UPDATED]:          { bg: '#F5EAF9', color: '#7B1FA2' },
   [AUDIT_ACTION.STAFF_PROFILE_UPDATED]: { bg: '#FFF3E0', color: '#E65100' },
   [AUDIT_ACTION.EMAIL_UPDATED]:         { bg: '#E3F2FD', color: '#1565C0' },
-  [AUDIT_ACTION.RESTOCK]:               { bg: '#EBF7EC', color: '#2E7D32' },
+  [AUDIT_ACTION.RESTOCK]:               { bg: '#EBF4FF', color: '#1565C0' },
   [AUDIT_ACTION.FULFILLMENT]:           { bg: '#EBF4FF', color: '#1565C0' },
-  [AUDIT_ACTION.ADJUSTMENT]:            { bg: '#FFF8E1', color: '#F57F17' },
+  [AUDIT_ACTION.ADJUSTMENT]:            { bg: '#FFF3E0', color: '#E65100' },
 };
 
 export const AUDIT_ACTION_FALLBACK_COLOR = { bg: '#F5F5F5', color: '#616161' };

@@ -61,7 +61,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
     { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
-    { text: 'บันทึกการตรวจสอบ', icon: <ManageSearchIcon />, path: '/audit-log', show: role === 'superadmin' },
+    { text: 'บันทึกการตรวจสอบ', icon: <ManageSearchIcon />, path: '/audit-log', show: !!role },
   ];
 
   if (loading) {
