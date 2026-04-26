@@ -107,7 +107,7 @@ function toLocalDateString(d: Date): string {
 
 function getDefaultDateFrom(): string {
   const d = new Date();
-  d.setMonth(d.getMonth() - 1);
+  d.setDate(d.getDate() - 31);
   return toLocalDateString(d);
 }
 

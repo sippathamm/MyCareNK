@@ -157,7 +157,7 @@ export default function StaffWorkloadDetailDialog({
       valueGetter: (_, r) => {
         const row = r as StaffRequestRow;
         const totalCondoms = Object.values(row.condom_quantities ?? {}).reduce((a: number, b: number) => a + b, 0);
-        return `ถุงยางอนามัย ${totalCondoms} ชิ้น / สารหล่อลื่น ${row.lubricant_quantity ?? 0} ชิ้น`;
+        return `ถุงยางอนามัย ${totalCondoms} ชิ้น / เจลหล่อลื่น ${row.lubricant_quantity ?? 0} ชิ้น`;
       },
     },
     {

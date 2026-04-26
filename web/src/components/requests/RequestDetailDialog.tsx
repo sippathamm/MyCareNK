@@ -143,7 +143,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   <Typography variant="body1">{formatDateTime(request.created_at)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">แก้ไขล่าสุดเมื่อ</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">เปลี่ยนแปลงล่าสุดเมื่อ</Typography>
                   <Typography variant="body1">{formatDateTime(request.updated_at)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
@@ -200,7 +200,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
 
                   <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>เพิ่มเติม</Typography>
                   <Box display="flex" justifyContent="space-between" pl={2}>
-                    <Typography variant="body2">• สารหล่อลื่น</Typography>
+                    <Typography variant="body2">• เจลหล่อลื่น</Typography>
                     <Typography variant="body2" fontWeight="bold" color={request.lubricant_quantity > 0 ? 'text.primary' : 'text.secondary'}>
                       {request.lubricant_quantity > 0 ? `${request.lubricant_quantity} ซอง` : 'ไม่ต้องการ'}
                     </Typography>

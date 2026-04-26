@@ -146,7 +146,7 @@ export default function RequestsPage() {
       valueGetter: (_, row) => {
         const r = row as RequestData;
         const totalCondoms = Object.values(r.condom_quantities as Record<string, number>).reduce((a, b) => a + b, 0);
-        return `ถุงยางอนามัย ${totalCondoms} ชิ้น / สารหล่อลื่น ${r.lubricant_quantity} ชิ้น`;
+        return `ถุงยางอนามัย ${totalCondoms} ชิ้น / เจลหล่อลื่น ${r.lubricant_quantity} ชิ้น`;
       }
     },
     {
@@ -201,7 +201,7 @@ export default function RequestsPage() {
           />
           <TextField
             select
-            label="คัดกรองตามสถานะ"
+            label="สถานะ"
             size="small"
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}

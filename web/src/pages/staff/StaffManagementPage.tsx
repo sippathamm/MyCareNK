@@ -395,6 +395,7 @@ export default function StaffManagementPage() {
   }
 
   const columns: GridColDef[] = [
+    { field: 'user_id', headerName: 'UUID', flex: 1.8, minWidth: 280 },
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 100 },
     { field: 'last_name', headerName: 'นามสกุล', flex: 1, minWidth: 100 },
     {

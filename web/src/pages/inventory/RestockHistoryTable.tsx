@@ -51,12 +51,12 @@ function TypeChip({ type }: { type: 'restock' | 'adjustment' }) {
       icon={<InventoryIcon sx={{ fontSize: '0.85rem !important' }} />}
       label="เติมสต็อก"
       size="small"
-      sx={{ bgcolor: '#EBF4FF', color: '#1565C0', fontWeight: 600, fontSize: '0.75rem' }}
+      sx={{ bgcolor: '#EBF7EC', color: '#2E7D32', fontWeight: 600, fontSize: '0.75rem' }}
     />
   ) : (
     <Chip
       icon={<TuneIcon sx={{ fontSize: '0.85rem !important' }} />}
-      label="ปรับแก้สต็อก"
+      label="ปรับสต็อก"
       size="small"
       sx={{ bgcolor: '#FFF0F0', color: '#C62828', fontWeight: 600, fontSize: '0.75rem' }}
     />

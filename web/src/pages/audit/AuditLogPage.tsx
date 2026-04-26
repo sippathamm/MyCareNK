@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import {
-  Box, Typography, Card, CardContent, TextField, MenuItem, Stack,
+  Box, Typography, Paper, TextField, MenuItem, Stack,
   Alert, Chip, Tabs, Tab,
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -28,7 +28,7 @@ function toLocalDateString(date: Date): string {
 
 function getDefaultDateFrom(): string {
   const d = new Date();
-  d.setDate(d.getDate() - 30);
+  d.setDate(d.getDate() - 31);
   return toLocalDateString(d);
 }
 
@@ -191,36 +191,33 @@ function AuditLogTab() {
 
   return (
     <>
-      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
-        <CardContent>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
-            <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
-              onChange={e => { setDateFrom(e.target.value); resetPage(); }}
-              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
-              onChange={e => { setDateTo(e.target.value); resetPage(); }}
-              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="ประเภท" select size="small" value={actionFilter}
-              onChange={e => { setActionFilter(e.target.value); resetPage(); }} sx={{ minWidth: 220 }}
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-              <MenuItem value="">ทั้งหมด</MenuItem>
-              {STAFF_AUDIT_ACTIONS.map(v => (
-                <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
-              ))}
-            </TextField>
-            <TextField size="small" value={targetIdFilter}
-              onChange={e => { setTargetIdFilter(e.target.value); resetPage(); }}
-              sx={{ minWidth: 220 }}
-              placeholder="ค้นหา UUID เจ้าหน้าที่" />
-          </Stack>
-        </CardContent>
-      </Card>
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+          <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
+            onChange={e => { setDateFrom(e.target.value); resetPage(); }}
+            slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+          <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
+            onChange={e => { setDateTo(e.target.value); resetPage(); }}
+            slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+          <TextField label="ประเภท" select size="small" value={actionFilter}
+            onChange={e => { setActionFilter(e.target.value); resetPage(); }} sx={{ minWidth: 220 }}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            {STAFF_AUDIT_ACTIONS.map(v => (
+              <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
+            ))}
+          </TextField>
+          <TextField size="small" value={targetIdFilter}
+            onChange={e => { setTargetIdFilter(e.target.value); resetPage(); }}
+            sx={{ minWidth: 220 }}
+            placeholder="ค้นหา UUID เจ้าหน้าที่" />
+        </Stack>
+      </Paper>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
 
-      <Card sx={{ borderRadius: 2 }} elevation={1}>
-        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-          <Box sx={{ height: 520 }}>
+      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+        <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
               localeText={thGridLocale}
@@ -236,8 +233,7 @@ function AuditLogTab() {
               }}
             />
           </Box>
-        </CardContent>
-      </Card>
+      </Paper>
 
       <StaffAuditLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
     </>
@@ -295,39 +291,36 @@ function RequestStatusLogTab() {
 
   return (
     <>
-      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
-        <CardContent>
-          <Stack spacing={2}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
-              <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
-                onChange={e => { setDateFrom(e.target.value); resetPage(); }}
-                slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-              <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
-                onChange={e => { setDateTo(e.target.value); resetPage(); }}
-                slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-              <TextField label="จากสถานะ" select size="small" value={fromStatus}
-                onChange={e => { setFromStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
-                slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-                {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-              </TextField>
-              <TextField label="เป็นสถานะ" select size="small" value={toStatus}
-                onChange={e => { setToStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
-                slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-                {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
-              </TextField>
-            </Stack>
-            <TextField size="small" value={refNumFilter}
-              onChange={e => { setRefNumFilter(e.target.value); resetPage(); }}
-              sx={{ maxWidth: 320 }} placeholder="ค้นหาหมายเลขอ้างอิง" />
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
+        <Stack spacing={2}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+            <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
+              onChange={e => { setDateFrom(e.target.value); resetPage(); }}
+              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+            <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
+              onChange={e => { setDateTo(e.target.value); resetPage(); }}
+              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+            <TextField label="จากสถานะ" select size="small" value={fromStatus}
+              onChange={e => { setFromStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+              {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+            </TextField>
+            <TextField label="เป็นสถานะ" select size="small" value={toStatus}
+              onChange={e => { setToStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+              {STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+            </TextField>
           </Stack>
-        </CardContent>
-      </Card>
+          <TextField size="small" value={refNumFilter}
+            onChange={e => { setRefNumFilter(e.target.value); resetPage(); }}
+            sx={{ maxWidth: 320 }} placeholder="ค้นหาหมายเลขอ้างอิง" />
+        </Stack>
+      </Paper>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
 
-      <Card sx={{ borderRadius: 2 }} elevation={1}>
-        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-          <Box sx={{ height: 520 }}>
+      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+        <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
               localeText={thGridLocale}
@@ -341,8 +334,7 @@ function RequestStatusLogTab() {
               }}
             />
           </Box>
-        </CardContent>
-      </Card>
+      </Paper>
     </>
   );
 }
@@ -406,40 +398,37 @@ function InventoryLogTab() {
 
   return (
     <>
-      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
-        <CardContent>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
-            <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
-              onChange={e => { setDateFrom(e.target.value); resetPage(); }}
-              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
-              onChange={e => { setDateTo(e.target.value); resetPage(); }}
-              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="ประเภท" select size="small" value={actionFilter}
-              onChange={e => { setActionFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-              <MenuItem value="">ทั้งหมด</MenuItem>
-              {INVENTORY_AUDIT_ACTIONS.map(v => (
-                <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
-              ))}
-            </TextField>
-            <TextField label="สถานบริการ" select size="small" value={serviceCenterFilter}
-              onChange={e => { setServiceCenterFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
-              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-              <MenuItem value="">ทั้งหมด</MenuItem>
-              {SERVICE_CENTER_OPTIONS.map(sc => (
-                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
-              ))}
-            </TextField>
-          </Stack>
-        </CardContent>
-      </Card>
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+          <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
+            onChange={e => { setDateFrom(e.target.value); resetPage(); }}
+            slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+          <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
+            onChange={e => { setDateTo(e.target.value); resetPage(); }}
+            slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+          <TextField label="ประเภท" select size="small" value={actionFilter}
+            onChange={e => { setActionFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            {INVENTORY_AUDIT_ACTIONS.map(v => (
+              <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
+            ))}
+          </TextField>
+          <TextField label="สถานบริการ" select size="small" value={serviceCenterFilter}
+            onChange={e => { setServiceCenterFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
+            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+            <MenuItem value="">ทั้งหมด</MenuItem>
+            {SERVICE_CENTER_OPTIONS.map(sc => (
+              <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+            ))}
+          </TextField>
+        </Stack>
+      </Paper>
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
 
-      <Card sx={{ borderRadius: 2 }} elevation={1}>
-        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-          <Box sx={{ height: 520 }}>
+      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+        <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
               localeText={thGridLocale}
@@ -455,8 +444,7 @@ function InventoryLogTab() {
               }}
             />
           </Box>
-        </CardContent>
-      </Card>
+      </Paper>
 
       <InventoryLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
     </>

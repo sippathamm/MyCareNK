@@ -141,7 +141,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               fullWidth
               sx={{ fontWeight: 600, fontSize: '0.82rem' }}
             >
-              ปรับแก้สต็อก
+              ปรับสต็อก
             </Button>
           </Box>
         )}

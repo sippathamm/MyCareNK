@@ -20,7 +20,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
   const { session } = useAuth();
   const [condomAdd, setCondomAdd] = useState('');
   const [lubricantAdd, setLubricantAdd] = useState('');
-  const [note, setNote] = useState('');
+  const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,7 +28,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
     if (loading) return;
     setCondomAdd('');
     setLubricantAdd('');
-    setNote('');
+    setReason('');
     setError(null);
     onClose();
   };
@@ -55,7 +55,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
         transaction_type: 'restock',
         condom_delta: condomDelta,
         lubricant_delta: lubricantDelta,
-        note: note.trim() || null,
+        reason: reason.trim() || null,
         performed_by: session.user.id,
       });
 
@@ -68,7 +68,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
     setLoading(false);
     setCondomAdd('');
     setLubricantAdd('');
-    setNote('');
+    setReason('');
     onSuccess();
   };
 
@@ -143,9 +143,9 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
         />
 
         <TextField
-          label="หมายเหตุ (ไม่บังคับ)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
+          label="เหตุผล (ไม่บังคับ)"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
           fullWidth
           multiline
           rows={2}
