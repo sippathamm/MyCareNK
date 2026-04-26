@@ -65,12 +65,12 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
     setLoading(true);
     setError(null);
 
-    // Insert adjustment transaction — trigger apply_inventory_adjustment จะอัปเดต service_center_inventory อัตโนมัติ
+    // Insert into inventory_logs — trigger on_inventory_log_insert → apply_inventory_adjustment จะอัปเดต service_center_inventory อัตโนมัติ
     const { error: insertError } = await supabase
-      .from('inventory_transactions')
+      .from('inventory_logs')
       .insert({
         service_center: target.service_center,
-        transaction_type: 'adjustment',
+        action: 'adjustment',
         condom_delta: isNaN(condom) ? 0 : condom,
         lubricant_delta: isNaN(lubricant) ? 0 : lubricant,
         reason: reason,

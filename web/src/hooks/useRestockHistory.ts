@@ -5,7 +5,7 @@ import type { Enums } from '../lib/database.types';
 export interface RestockHistoryRow {
   id: string;
   service_center: Enums<'service_center'>;
-  transaction_type: 'restock' | 'adjustment';
+  action: 'restock' | 'adjustment';
   condom_delta: number;
   lubricant_delta: number;
   created_at: string;
@@ -23,12 +23,12 @@ export function useRestockHistory() {
     setLoading(true);
     setError(null);
 
-    const [{ data: transactions, error: txErr }, { data: profiles, error: profileErr }] =
+    const [{ data: logs, error: logsErr }, { data: profiles, error: profileErr }] =
       await Promise.all([
         supabase
-          .from('inventory_transactions')
-          .select('id, service_center, transaction_type, condom_delta, lubricant_delta, created_at, note, performed_by')
-          .in('transaction_type', ['restock', 'adjustment'])
+          .from('inventory_logs')
+          .select('id, service_center, action, condom_delta, lubricant_delta, created_at, note, performed_by')
+          .in('action', ['restock', 'adjustment'])
           .order('created_at', { ascending: false })
           .limit(200),
         supabase
@@ -36,8 +36,8 @@ export function useRestockHistory() {
           .select('user_id, first_name, last_name'),
       ]);
 
-    if (txErr || profileErr) {
-      setError((txErr ?? profileErr)!.message);
+    if (logsErr || profileErr) {
+      setError((logsErr ?? profileErr)!.message);
       setLoading(false);
       return;
     }
@@ -50,10 +50,11 @@ export function useRestockHistory() {
     );
 
     setRows(
-      (transactions ?? []).map((t) => ({
+      (logs ?? []).map((t) => ({
         ...t,
+        action: t.action as 'restock' | 'adjustment',
         performer_name: profileMap.get(t.performed_by) ?? 'ไม่ทราบชื่อ',
-      })) as RestockHistoryRow[],
+      })),
     );
     setLoading(false);
   }, []);

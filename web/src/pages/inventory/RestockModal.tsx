@@ -47,12 +47,12 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
     setLoading(true);
     setError(null);
 
-    // DB trigger apply_inventory_adjustment() อัปเดต service_center_inventory อัตโนมัติ
+    // DB trigger on_inventory_log_insert → apply_inventory_adjustment() อัปเดต service_center_inventory อัตโนมัติ
     const { error: insertError } = await supabase
-      .from('inventory_transactions')
+      .from('inventory_logs')
       .insert({
         service_center: target.service_center,
-        transaction_type: 'restock',
+        action: 'restock',
         condom_delta: condomDelta,
         lubricant_delta: lubricantDelta,
         reason: reason.trim() || null,

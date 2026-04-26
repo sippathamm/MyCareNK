@@ -78,7 +78,7 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
 
   const columns: GridColDef[] = [
     {
-      field: 'transaction_type',
+      field: 'action',
       headerName: 'ประเภท',
       flex: 0.9,
       renderCell: (params) => <TypeChip type={params.value as 'restock' | 'adjustment'} />,
