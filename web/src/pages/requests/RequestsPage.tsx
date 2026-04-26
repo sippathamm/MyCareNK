@@ -254,7 +254,6 @@ export default function RequestsPage() {
           >
             <InboxIcon sx={{ fontSize: 48 }} />
             <Typography variant="body1" fontWeight={500}>ไม่มีคำขอในสถานบริการของคุณ</Typography>
-            <Typography variant="body2">คำขอที่ตรงกับสถานบริการของคุณจะแสดงที่นี่</Typography>
           </Box>
         ) : (
           <Box sx={{ height: 500, width: '100%' }}>
