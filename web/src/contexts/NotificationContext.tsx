@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import { useRoleAccess } from '../hooks/useRoleAccess';
 import type { Enums, Tables } from '../lib/database.types';
 
 // ---------------------------------------------------------------------------
@@ -78,16 +79,22 @@ const MAX_NOTIFICATIONS = 50;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user?.id ?? '';
+  const { role, profile, loading: roleLoading } = useRoleAccess();
+  const serviceCenter = profile?.service_center ?? null;
 
   const readIdsRef = useRef<Set<string>>(new Set());
+  const roleRef = useRef(role);
+  const serviceCenterRef = useRef(serviceCenter);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastEventType, setToastEventType] = useState<RequestStatus | null>(null);
 
-  // Keep ref in sync for stable callbacks
+  // Keep refs in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
+  useEffect(() => { roleRef.current = role; }, [role]);
+  useEffect(() => { serviceCenterRef.current = serviceCenter; }, [serviceCenter]);
 
   // Resume AudioContext on any user interaction (bypass browser autoplay policy)
   useEffect(() => {
@@ -105,38 +112,57 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   // Initial load: fetch notifications + read state from DB
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || roleLoading) return;
 
     let cancelled = false;
 
     (async () => {
-      const [{ data: notifData }, { data: readsData }] = await Promise.all([
-        supabase
-          .from('notifications')
-          .select('id, request_id, reference_number, event_type, created_at')
-          .order('created_at', { ascending: false })
-          .limit(MAX_NOTIFICATIONS),
-        supabase
-          .from('notification_reads')
-          .select('notification_id')
-          .eq('staff_user_id', userId),
-      ]);
+      const { data: readsData } = await supabase
+        .from('notification_reads')
+        .select('notification_id')
+        .eq('staff_user_id', userId);
 
       if (cancelled) return;
 
       const ids = new Set<string>((readsData ?? []).map(r => r.notification_id));
-      setReadIds(ids);
 
-      setNotifications(
-        (notifData ?? []).map(r => ({
-          ...r,
-          is_read: ids.has(r.id),
-        }))
-      );
+      let notifData: Tables<'notifications'>[] = [];
+
+      if (role === 'staff' && serviceCenter) {
+        const { data: requests } = await supabase
+          .from('condom_requests')
+          .select('id')
+          .eq('selected_service_center', serviceCenter);
+
+        if (cancelled) return;
+
+        const requestIds = (requests ?? []).map(r => r.id);
+        if (requestIds.length > 0) {
+          const { data } = await supabase
+            .from('notifications')
+            .select('id, request_id, reference_number, event_type, created_at')
+            .in('request_id', requestIds)
+            .order('created_at', { ascending: false })
+            .limit(MAX_NOTIFICATIONS);
+          notifData = data ?? [];
+        }
+      } else {
+        const { data } = await supabase
+          .from('notifications')
+          .select('id, request_id, reference_number, event_type, created_at')
+          .order('created_at', { ascending: false })
+          .limit(MAX_NOTIFICATIONS);
+        notifData = data ?? [];
+      }
+
+      if (cancelled) return;
+
+      setReadIds(ids);
+      setNotifications(notifData.map(r => ({ ...r, is_read: ids.has(r.id) })));
     })();
 
     return () => { cancelled = true; };
-  }, [userId]);
+  }, [userId, role, serviceCenter, roleLoading]);
 
   // Realtime: new notification inserted
   useEffect(() => {
@@ -147,8 +173,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
-        (payload) => {
+        async (payload) => {
           const row = payload.new as Tables<'notifications'>;
+
+          // For staff: only show notifications for their service center
+          if (roleRef.current === 'staff' && serviceCenterRef.current) {
+            if (!row.request_id) return;
+            const { data: req } = await supabase
+              .from('condom_requests')
+              .select('selected_service_center')
+              .eq('id', row.request_id)
+              .single();
+            if (req?.selected_service_center !== serviceCenterRef.current) return;
+          }
+
           const item: NotificationItem = { ...row, is_read: false };
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastEventType(row.event_type);
