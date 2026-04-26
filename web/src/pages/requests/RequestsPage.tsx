@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Chip, IconButton, TextField, MenuItem, Stack, Tooltip, Snackbar, Alert } from '@mui/material';
 import WarningIcon from '@mui/icons-material/Warning';
+import InboxIcon from '@mui/icons-material/Inbox';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import RequestDetailDialog from '../../components/requests/RequestDetailDialog';
@@ -9,7 +10,10 @@ import type { RequestData } from '../../components/requests/RequestDetailDialog'
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 import { useRequests } from '../../hooks/useRequests';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { supabase } from '../../lib/supabase';
+
+const SERVICE_CENTERS = ['รพ.โพนพิสัย', 'รพ.สต.วัดหลวง', 'อบต.วัดหลวง', 'สสจ.หนองคาย'] as const;
 
 const thGridLocale = {
   noRowsLabel: 'ไม่มีรายการคำขอ',
@@ -26,8 +30,11 @@ export default function RequestsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { requests, setRequests, loading } = useRequests();
+  const { role, loading: roleLoading } = useRoleAccess();
+  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -100,7 +107,9 @@ export default function RequestsPage() {
     const matchStatus = statusFilter === 'all'
       || r.request_status === statusFilter
       || (statusFilter === 'cancelled' && (r.request_status === 'cancelled_by_user' || r.request_status === 'cancelled_by_staff'));
-    return matchSearch && matchStatus;
+    const matchServiceCenter = !isAdminOrSuperadmin || serviceCenterFilter === 'all'
+      || r.selected_service_center === serviceCenterFilter;
+    return matchSearch && matchStatus && matchServiceCenter;
   });
 
   const columns: GridColDef[] = [
@@ -199,6 +208,21 @@ export default function RequestsPage() {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
+          {isAdminOrSuperadmin && (
+            <TextField
+              select
+              label="สถานบริการ"
+              size="small"
+              value={serviceCenterFilter}
+              onChange={(e) => setServiceCenterFilter(e.target.value)}
+              sx={{ minWidth: 200 }}
+            >
+              <MenuItem value="all">ทั้งหมด</MenuItem>
+              {SERVICE_CENTERS.map(sc => (
+                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+              ))}
+            </TextField>
+          )}
           <TextField
             select
             label="สถานะ"
@@ -216,21 +240,39 @@ export default function RequestsPage() {
           </TextField>
         </Stack>
 
-        <Box sx={{ height: 500, width: '100%' }}>
-          <DataGrid
-            rows={filteredRequests}
-            columns={columns}
-            loading={loading}
-            localeText={thGridLocale}
-            initialState={{
-              pagination: {
-                paginationModel: { pageSize: 10, page: 0 },
-              },
+        {!loading && !roleLoading && role === 'staff' && requests.length === 0 ? (
+          <Box
+            sx={{
+              height: 500,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1.5,
+              color: 'text.disabled',
             }}
-            pageSizeOptions={[10, 25, 50]}
-            disableRowSelectionOnClick
-          />
-        </Box>
+          >
+            <InboxIcon sx={{ fontSize: 48 }} />
+            <Typography variant="body1" fontWeight={500}>ไม่มีคำขอในสถานบริการของคุณ</Typography>
+            <Typography variant="body2">คำขอที่ตรงกับสถานบริการของคุณจะแสดงที่นี่</Typography>
+          </Box>
+        ) : (
+          <Box sx={{ height: 500, width: '100%' }}>
+            <DataGrid
+              rows={filteredRequests}
+              columns={columns}
+              loading={loading || roleLoading}
+              localeText={thGridLocale}
+              initialState={{
+                pagination: {
+                  paginationModel: { pageSize: 10, page: 0 },
+                },
+              }}
+              pageSizeOptions={[10, 25, 50]}
+              disableRowSelectionOnClick
+            />
+          </Box>
+        )}
       </Paper>
 
       <RequestDetailDialog
