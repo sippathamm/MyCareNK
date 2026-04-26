@@ -114,7 +114,7 @@ class CondomRequestDetailPage extends StatelessWidget {
       children: [
         Text(
           'สิทธิ์รับฟรีคงเหลือ',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontWeight: FontWeight.bold,
             fontSize: 18,
             color: AppColors.textPrimary,
@@ -130,7 +130,7 @@ class CondomRequestDetailPage extends StatelessWidget {
                 children: [
                   Text(
                     'ถุงยางอนามัย',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -151,7 +151,7 @@ class CondomRequestDetailPage extends StatelessWidget {
                           children: [
                             TextSpan(
                               text: '$value ',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
@@ -159,7 +159,7 @@ class CondomRequestDetailPage extends StatelessWidget {
                             ),
                             TextSpan(
                               text: 'ชิ้น',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.primary,
@@ -180,7 +180,7 @@ class CondomRequestDetailPage extends StatelessWidget {
                 children: [
                   Text(
                     'สารหล่อลื่น',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -201,7 +201,7 @@ class CondomRequestDetailPage extends StatelessWidget {
                           children: [
                             TextSpan(
                               text: '$value ',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 color: AppColors.lubricant,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
@@ -209,7 +209,7 @@ class CondomRequestDetailPage extends StatelessWidget {
                             ),
                             TextSpan(
                               text: 'ซอง',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.lubricant,

@@ -175,13 +175,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           children: [
             Text(
               'หมายเลขอ้างอิง',
-              style: GoogleFonts.prompt(color: Colors.grey[500], fontSize: 12),
+              style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Row(
               children: [
                 Text(
                   _currentData.referenceNumber,
-                  style: GoogleFonts.prompt(
+                  style: GoogleFonts.googleSans(
                     color: AppColors.textPrimary,
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -198,7 +198,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                       SnackBar(
                         content: Text(
                           'คัดลอกหมายเลขอ้างอิงแล้ว',
-                          style: GoogleFonts.prompt(),
+                          style: GoogleFonts.googleSans(),
                         ),
                         duration: const Duration(seconds: 2),
                       ),
@@ -224,7 +224,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             const SizedBox(height: 4),
             Text(
               dateStr,
-              style: GoogleFonts.prompt(color: Colors.grey[500], fontSize: 12),
+              style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
           ],
         ),
@@ -254,11 +254,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             children: [
               Text(
                 'รอดำเนินการ',
-                style: GoogleFonts.prompt(color: Colors.black87, fontSize: 12),
+                style: GoogleFonts.googleSans(color: Colors.black87, fontSize: 12),
               ),
               Text(
                 cancelLabel,
-                style: GoogleFonts.prompt(
+                style: GoogleFonts.googleSans(
                   color: Colors.grey[600],
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
@@ -300,7 +300,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           children: [
             Text(
               'รอดำเนินการ',
-              style: GoogleFonts.prompt(
+              style: GoogleFonts.googleSans(
                 color: status == RequestStatus.pending ? AppColors.primary : Colors.black87,
                 fontSize: 12,
                 fontWeight: status == RequestStatus.pending ? FontWeight.bold : FontWeight.normal,
@@ -308,7 +308,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             ),
             Text(
               'กำลังเตรียม',
-              style: GoogleFonts.prompt(
+              style: GoogleFonts.googleSans(
                 color: status == RequestStatus.preparing ? prepColor : Colors.black87,
                 fontSize: 12,
                 fontWeight: status == RequestStatus.preparing ? FontWeight.bold : FontWeight.normal,
@@ -316,7 +316,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             ),
             Text(
               'พร้อมรับ',
-              style: GoogleFonts.prompt(
+              style: GoogleFonts.googleSans(
                 color: status == RequestStatus.ready ? readyColor : Colors.black87,
                 fontSize: 12,
                 fontWeight: status == RequestStatus.ready ? FontWeight.bold : FontWeight.normal,
@@ -324,7 +324,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             ),
             Text(
               'เสร็จสิ้น',
-              style: GoogleFonts.prompt(
+              style: GoogleFonts.googleSans(
                 color: status == RequestStatus.completed ? compColor : Colors.black87,
                 fontSize: 12,
                 fontWeight: status == RequestStatus.completed ? FontWeight.bold : FontWeight.normal,

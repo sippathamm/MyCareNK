@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 
 abstract final class AppColors {
   // Primary palette
-  static const Color primary = Color(0xFFFF8A50);
-  static const Color primaryLight = Color(0xFFFFB58A);
-  static const Color primaryShadow = Color(0x29FF8A50); // ~16% opacity
-  static const Color primaryCardShadow = Color(0x1AFF8A50); // ~10% opacity
-  static const Color primaryButtonShadow = Color(0x66FF8A50); // ~40% opacity
+  static const Color primary = Color(0xFFFF9F6B);
+  static const Color primaryLight = Color(0xFFFFC49B);
+  static const Color primaryShadow = Color(0x29FF9F6B); // ~16% opacity
+  static const Color primaryCardShadow = Color(0x1AFF9F6B); // ~10% opacity
+  static const Color primaryButtonShadow = Color(0x66FF9F6B); // ~40% opacity
 
   // Background / surface
   static const Color primaryBackground = Color(0xFFFFF7E6);
@@ -22,7 +22,7 @@ abstract final class AppColors {
   static const Color lubricantShadow = Color(0x1A4A9FE8); // ~10% opacity
 
   // Error / red
-  static const Color error = Color(0xFFFF4D4D);
+  static const Color error = Color(0xFFEF7070);
   static const Color errorDark = Color(0xFFB71C1C);
   static const Color errorShadow = Color(0x4DB71C1C); // ~30% opacity
 
@@ -30,13 +30,13 @@ abstract final class AppColors {
   static const Color success = Color(0xFF5DB036);
 
   // Request status colors
-  static const Color statusPendingLight = Color(0xFFFBE9E7);
-  static const Color statusPreparing = Color(0xFF1F77C3);
+  static const Color statusPendingLight = Color(0xFFFFF3E0);
+  static const Color statusPreparing = Color(0xFF64B5F6);
   static const Color statusPreparingLight = Color(0xFFE3F2FD);
-  static const Color statusReady = Color(0xFF9C27B0);
+  static const Color statusReady = Color(0xFFBA68C8);
   static const Color statusReadyLight = Color(0xFFF3E5F5);
-  static const Color statusCompleted = Color(0xFF26A69A);
-  static const Color statusCompletedLight = Color(0xFFE0F2F1);
+  static const Color statusCompleted = Color(0xFF81C784);
+  static const Color statusCompletedLight = Color(0xFFE8F5E9);
 
   // Text
   static const Color textPrimary = Color(0xFF333333);

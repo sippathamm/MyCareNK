@@ -156,7 +156,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                             return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.5,
                               child: Center(
-                                child: Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.prompt(fontSize: 18, color: Colors.grey[400])),
+                                child: Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.googleSans(fontSize: 18, color: Colors.grey[400])),
                               ),
                             );
                           }
@@ -164,7 +164,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                             return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.5,
                               child: Center(
-                                child: Text('ยังไม่มีรายการ', style: GoogleFonts.prompt(fontSize: 18, color: Colors.grey[400])),
+                                child: Text('ยังไม่มีรายการ', style: GoogleFonts.googleSans(fontSize: 18, color: Colors.grey[400])),
                               ),
                             );
                           }
@@ -172,7 +172,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                             return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.5,
                               child: Center(
-                                child: Text('ไม่พบรายการ', style: GoogleFonts.prompt(fontSize: 18, color: Colors.grey[400])),
+                                child: Text('ไม่พบรายการ', style: GoogleFonts.googleSans(fontSize: 18, color: Colors.grey[400])),
                               ),
                             );
                           }
@@ -202,7 +202,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
         },
         decoration: InputDecoration(
           hintText: 'ค้นหาประวัติการขอ',
-          hintStyle: GoogleFonts.prompt(color: Colors.grey[600], fontSize: 14),
+          hintStyle: GoogleFonts.googleSans(color: Colors.grey[600], fontSize: 14),
           suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -259,7 +259,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           child: Text(
             label,
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               color: isSelected ? AppColors.white : primaryColor,
               fontSize: 14,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
@@ -385,14 +385,14 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                     children: [
                       Text(
                         'หมายเลขอ้างอิง',
-                        style: GoogleFonts.prompt(
+                        style: GoogleFonts.googleSans(
                           color: Colors.grey[500],
                           fontSize: 12,
                         ),
                       ),
                       Text(
                         data.referenceNumber,
-                        style: GoogleFonts.prompt(
+                        style: GoogleFonts.googleSans(
                           color: AppColors.textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -412,7 +412,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                   ),
                   child: Text(
                     statusText,
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       color: statusTextColor,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -435,7 +435,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                 const SizedBox(width: 8),
                 Text(
                   dateStr,
-                  style: GoogleFonts.prompt(
+                  style: GoogleFonts.googleSans(
                     color: Colors.grey[500],
                     fontSize: 14,
                   ),
@@ -449,7 +449,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                 const SizedBox(width: 8),
                 Text(
                   data.selectedServiceCenter ?? '-',
-                  style: GoogleFonts.prompt(
+                  style: GoogleFonts.googleSans(
                     color: Colors.grey[500],
                     fontSize: 14,
                   ),

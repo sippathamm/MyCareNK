@@ -196,7 +196,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
         children: [
           Text(
             'ถุงยางอนามัย',
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
@@ -204,7 +204,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
           ),
           Text(
             'สิทธิ์รับฟรีเดือนนี้',
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -221,7 +221,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                 children: [
                   TextSpan(
                     text: '$value ',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
@@ -229,7 +229,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                   ),
                   TextSpan(
                     text: 'ชิ้น',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                       color: AppColors.primary,
@@ -251,7 +251,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             _daysUntilReset != null
                 ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
                 : 'จะรีเซ็ตในอีก -- วัน',
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary.withValues(alpha: 0.8),
@@ -287,7 +287,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
         children: [
           Text(
             'สารหล่อลื่น',
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary,
@@ -295,7 +295,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
           ),
           Text(
             'สิทธิ์รับฟรีเดือนนี้',
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               fontSize: 18,
               fontWeight: FontWeight.w600,
               color: AppColors.textPrimary,
@@ -312,7 +312,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                 children: [
                   TextSpan(
                     text: '$value ',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 40,
                       fontWeight: FontWeight.bold,
                       color: AppColors.lubricant,
@@ -320,7 +320,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                   ),
                   TextSpan(
                     text: 'ซอง',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,
                       color: AppColors.lubricant,
@@ -342,7 +342,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             _daysUntilReset != null
                 ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
                 : 'จะรีเซ็ตในอีก -- วัน',
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               fontSize: 12,
               fontWeight: FontWeight.w400,
               color: AppColors.textSecondary.withValues(alpha: 0.8),

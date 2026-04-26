@@ -35,7 +35,7 @@ class MyCareNKApp extends StatelessWidget {
           surface: AppColors.white,
         ),
         scaffoldBackgroundColor: AppColors.white,
-        textTheme: GoogleFonts.promptTextTheme(Theme.of(context).textTheme)
+        textTheme: GoogleFonts.googleSansTextTheme(Theme.of(context).textTheme)
             .apply(
               bodyColor: AppColors.textPrimary,
               displayColor: AppColors.textPrimary,

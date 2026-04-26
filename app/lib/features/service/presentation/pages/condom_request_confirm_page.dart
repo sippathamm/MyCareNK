@@ -261,7 +261,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       children: [
         Text(
           'สิทธิ์รับฟรีคงเหลือ',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontWeight: FontWeight.bold,
             fontSize: 18,
             color: AppColors.textPrimary,
@@ -277,7 +277,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                 children: [
                   Text(
                     'ถุงยางอนามัย',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -297,7 +297,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                           children: [
                             TextSpan(
                               text: '$value ',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 color: AppColors.primary,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
@@ -305,7 +305,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                             ),
                             TextSpan(
                               text: 'ชิ้น',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.primary,
@@ -326,7 +326,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                 children: [
                   Text(
                     'สารหล่อลื่น',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 14,
                       color: AppColors.textSecondary,
                     ),
@@ -347,7 +347,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                           children: [
                             TextSpan(
                               text: '$value ',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 color: AppColors.lubricant,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 28,
@@ -355,7 +355,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                             ),
                             TextSpan(
                               text: 'ซอง',
-                              style: GoogleFonts.prompt(
+                              style: GoogleFonts.googleSans(
                                 fontSize: 20,
                                 fontWeight: FontWeight.w500,
                                 color: AppColors.lubricant,

@@ -47,7 +47,7 @@ class EmergencyButton extends StatelessWidget {
                   children: [
                     Text(
                       '1669',
-                      style: GoogleFonts.prompt(
+                      style: GoogleFonts.googleSans(
                         color: AppColors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -56,7 +56,7 @@ class EmergencyButton extends StatelessWidget {
                     ),
                     Text(
                       'เจ็บป่วยฉุกเฉิน',
-                      style: GoogleFonts.prompt(
+                      style: GoogleFonts.googleSans(
                         color: AppColors.white.withValues(alpha: 0.9),
                         fontSize: 12,
                         height: 1.0,

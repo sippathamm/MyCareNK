@@ -115,7 +115,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
             SnackBar(
               content: Text(
                 'รับถุงยางอนามัยสำเร็จ',
-                style: GoogleFonts.prompt(),
+                style: GoogleFonts.googleSans(),
               ),
               backgroundColor: AppColors.statusCompleted,
               behavior: SnackBarBehavior.floating,
@@ -623,7 +623,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
             const SizedBox(height: 16),
             Text(
               'กำลังตรวจสอบ QR Code...',
-              style: GoogleFonts.prompt(
+              style: GoogleFonts.googleSans(
                 fontSize: 14,
                 color: AppColors.textMuted,
               ),
@@ -674,7 +674,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
                   )
                 : Text(
                     'ยืนยันการรับ',
-                    style: GoogleFonts.prompt(
+                    style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                       color: AppColors.white,
@@ -700,11 +700,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           children: [
             Text(
               'หมายเลขอ้างอิง',
-              style: GoogleFonts.prompt(color: Colors.grey[500], fontSize: 12),
+              style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Text(
               request.referenceNumber,
-              style: GoogleFonts.prompt(
+              style: GoogleFonts.googleSans(
                 color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -731,7 +731,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
             const SizedBox(height: 4),
             Text(
               dateStr,
-              style: GoogleFonts.prompt(color: Colors.grey[500], fontSize: 12),
+              style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
           ],
         ),
@@ -810,7 +810,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
 
   Widget _statusLabel(String label, bool active, Color color) => Text(
     label,
-    style: GoogleFonts.prompt(
+    style: GoogleFonts.googleSans(
       color: active ? color : Colors.black87,
       fontSize: 12,
       fontWeight: active ? FontWeight.bold : FontWeight.normal,
@@ -1075,7 +1075,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(height: 12),
         Text(
           'คุณรับถุงยางอนามัยคำขอนี้ไปแล้ว เมื่อ $receivedAt',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
           ),
@@ -1083,7 +1083,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(height: 6),
         Text(
           'หมายเลขอ้างอิง: $refNumber',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 12,
             color: AppColors.textSecondary,
           ),
@@ -1120,7 +1120,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       }
     }
 
-    final textStyle = GoogleFonts.prompt(
+    final textStyle = GoogleFonts.googleSans(
       fontSize: 14,
       color: AppColors.textSecondary,
     );
@@ -1160,7 +1160,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           const SizedBox(height: 6),
           Text(
             'หมายเลขอ้างอิง: ${_requestData!.referenceNumber}',
-            style: GoogleFonts.prompt(
+            style: GoogleFonts.googleSans(
               fontSize: 12,
               color: AppColors.textSecondary,
             ),
@@ -1186,7 +1186,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(height: 12),
         Text(
           'QR Code นี้เป็นของผู้ใช้งานท่านอื่น ไม่สามารถใช้งานได้',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
           ),
@@ -1211,7 +1211,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(height: 12),
         Text(
           'ไม่พบข้อมูลที่ตรงกับ QR Code นี้',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
           ),
@@ -1236,7 +1236,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(height: 12),
         Text(
           'คุณต้องเข้าสู่ระบบก่อนจึงจะสแกน QR Code ได้',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
           ),
@@ -1261,7 +1261,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
             ),
             child: Text(
               'เข้าสู่ระบบ',
-              style: GoogleFonts.prompt(
+              style: GoogleFonts.googleSans(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: AppColors.white,
@@ -1287,7 +1287,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(height: 12),
         Text(
           'ไม่สามารถตรวจสอบ QR Code ได้ในขณะนี้ กรุณาลองอีกครั้ง',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
           ),
@@ -1307,7 +1307,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       ),
       child: Text(
         label,
-        style: GoogleFonts.prompt(
+        style: GoogleFonts.googleSans(
           color: AppColors.white,
           fontSize: 12,
           fontWeight: FontWeight.bold,
@@ -1332,7 +1332,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(width: 12),
         Text(
           title,
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 18,
             fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
@@ -1356,7 +1356,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         ),
         child: Text(
           'สแกนอีกครั้ง',
-          style: GoogleFonts.prompt(
+          style: GoogleFonts.googleSans(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             color: AppColors.white,
