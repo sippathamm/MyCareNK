@@ -96,7 +96,6 @@ export default function StaffWorkloadDetailDialog({
 
   const handleStatusChange = async (id: string, newStatus: string, reason?: string): Promise<boolean> => {
     const payload: Record<string, unknown> = { request_status: newStatus, cancel_reason: reason ?? null };
-    if (newStatus === 'completed') payload.completed_at = new Date().toISOString();
 
     setStatusUpdating(true);
     setStatusError(null);
@@ -107,14 +106,12 @@ export default function StaffWorkloadDetailDialog({
 
     // Update local list + open dialog state
     setRequests(prev => prev.map(r =>
-      r.id === id ? { ...r, request_status: newStatus, cancel_reason: reason ?? null,
-        completed_at: newStatus === 'completed' ? payload.completed_at as string : r.completed_at } : r,
+      r.id === id ? { ...r, request_status: newStatus, cancel_reason: reason ?? null } : r,
     ));
     if (selectedReq?.id === id) {
       setSelectedReq(prev => prev ? { ...prev,
         request_status: newStatus as RequestData['request_status'],
         cancel_reason: reason ?? null,
-        completed_at: newStatus === 'completed' ? payload.completed_at as string : prev.completed_at,
       } : null);
     }
     return true;
