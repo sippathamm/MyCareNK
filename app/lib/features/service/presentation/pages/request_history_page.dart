@@ -477,7 +477,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'ดูข้อมูล',
+                      'ดูรายละเอียด',
                       style: TextStyle(
                         color: statusBgColor,
                         fontSize: 14,

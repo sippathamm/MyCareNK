@@ -85,7 +85,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'ดูข้อมูล',
+          'ดูรายละเอียดคำขอ',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -642,8 +642,119 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     );
   }
 
+  Future<void> _doCancelRequest() async {
+    setState(() => _isCancelling = true);
+    try {
+      await Supabase.instance.client
+          .from('condom_requests')
+          .update({'request_status': 'cancelled_by_user'})
+          .eq('id', _currentData.id);
+
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session != null) {
+        final userId = session.user.id;
+        final createdAt = _currentData.createdAt.toLocal();
+        final monthStart = DateTime(createdAt.year, createdAt.month, 1)
+            .toIso8601String()
+            .substring(0, 10);
+
+        final existingQuota = await Supabase.instance.client
+            .from('user_monthly_quotas')
+            .select('used_condoms, used_lubricants')
+            .eq('user_id', userId)
+            .eq('month', monthStart)
+            .maybeSingle();
+
+        if (existingQuota != null) {
+          final totalCondomsToRefund = _currentData.condomQuantities.values
+              .fold(0, (sum, val) => sum + val);
+          final lubricantToRefund = _currentData.lubricantQuantity;
+          final newUsedCondoms =
+              (((existingQuota['used_condoms'] as int?) ?? 0) - totalCondomsToRefund)
+                  .clamp(0, 9999);
+          final newUsedLubricants =
+              (((existingQuota['used_lubricants'] as int?) ?? 0) - lubricantToRefund)
+                  .clamp(0, 9999);
+
+          await Supabase.instance.client.from('user_monthly_quotas').upsert({
+            'user_id': userId,
+            'month': monthStart,
+            'used_condoms': newUsedCondoms,
+            'used_lubricants': newUsedLubricants,
+          }, onConflict: 'user_id, month');
+        }
+      }
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('ยกเลิกคำขอเรียบร้อยแล้ว')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('เกิดข้อผิดพลาดในการยกเลิกคำขอ')),
+      );
+    } finally {
+      if (mounted) setState(() => _isCancelling = false);
+    }
+  }
+
+  Future<void> _confirmCancel() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text(
+          'ยืนยันการยกเลิกคำขอ',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: const Text(
+          'คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?\nการยกเลิกจะคืนสิทธิ์การรับให้กับคุณทันที',
+          style: TextStyle(fontSize: 15, height: 1.6),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.error,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              child: const Text('ยืนยันยกเลิก',
+                  style:
+                      TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: OutlinedButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.primary, width: 1.5),
+                foregroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              child: const Text('ไม่ยกเลิก',
+                  style:
+                      TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirmed == true) _doCancelRequest();
+  }
+
   Widget _buildBottomButtons(BuildContext context) {
-    bool canCancel = _currentData.status == RequestStatus.pending;
+    final canCancel = _currentData.status == RequestStatus.pending;
 
     return Column(
       children: [
@@ -671,72 +782,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             width: double.infinity,
             height: 48,
             child: OutlinedButton(
-              onPressed: _isCancelling ? null : () async {
-                setState(() {
-                  _isCancelling = true;
-                });
-                try {
-                  await Supabase.instance.client
-                      .from('condom_requests')
-                      .update({
-                        'request_status': 'cancelled_by_user',
-                      })
-                      .eq('id', _currentData.id);
-
-                  // Refund quota to user_monthly_quotas
-                  final session = Supabase.instance.client.auth.currentSession;
-                  if (session != null) {
-                    final userId = session.user.id;
-                    final createdAt = _currentData.createdAt.toLocal();
-                    final monthStart = DateTime(createdAt.year, createdAt.month, 1)
-                        .toIso8601String()
-                        .substring(0, 10);
-
-                    final existingQuota = await Supabase.instance.client
-                        .from('user_monthly_quotas')
-                        .select('used_condoms, used_lubricants')
-                        .eq('user_id', userId)
-                        .eq('month', monthStart)
-                        .maybeSingle();
-
-                    if (existingQuota != null) {
-                      int totalCondomsToRefund = _currentData.condomQuantities.values
-                          .fold(0, (sum, val) => sum + val);
-                      int lubricantToRefund = _currentData.lubricantQuantity;
-
-                      int currentUsedCondoms = (existingQuota['used_condoms'] as int?) ?? 0;
-                      int currentUsedLubricants = (existingQuota['used_lubricants'] as int?) ?? 0;
-
-                      int newUsedCondoms = (currentUsedCondoms - totalCondomsToRefund).clamp(0, 9999);
-                      int newUsedLubricants = (currentUsedLubricants - lubricantToRefund).clamp(0, 9999);
-
-                      await Supabase.instance.client.from('user_monthly_quotas').upsert({
-                        'user_id': userId,
-                        'month': monthStart,
-                        'used_condoms': newUsedCondoms,
-                        'used_lubricants': newUsedLubricants,
-                      }, onConflict: 'user_id, month');
-                    }
-                  }
-
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('ยกเลิกคำขอเรียบร้อยแล้ว')),
-                  );
-                  Navigator.of(context).pop();
-                } catch (e) {
-                  if (!context.mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('เกิดข้อผิดพลาดในการยกเลิกคำขอ')),
-                  );
-                } finally {
-                  if (mounted) {
-                    setState(() {
-                      _isCancelling = false;
-                    });
-                  }
-                }
-              },
+              onPressed: _isCancelling ? null : _confirmCancel,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.error,
                 side: const BorderSide(color: AppColors.error),
@@ -748,11 +794,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                   ? const SizedBox(
                       width: 24,
                       height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.error),
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: AppColors.error),
                     )
                   : const Text(
                       'ยกเลิกคำขอ',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
             ),
           ),
