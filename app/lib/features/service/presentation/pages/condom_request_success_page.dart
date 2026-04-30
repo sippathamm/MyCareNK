@@ -30,251 +30,309 @@ class CondomRequestSuccessPage extends StatelessWidget {
     required this.referenceNumber,
   });
 
+  int get _totalSelected =>
+      quantities.values.fold(0, (sum, c) => sum + c);
+
   String _formatDate(DateTime? date) {
     if (date == null) return '-';
-    const List<String> months = [
-      '',
-      'มกราคม',
-      'กุมภาพันธ์',
-      'มีนาคม',
-      'เมษายน',
-      'พฤษภาคม',
-      'มิถุนายน',
-      'กรกฎาคม',
-      'สิงหาคม',
-      'กันยายน',
-      'ตุลาคม',
-      'พฤศจิกายน',
-      'ธันวาคม',
+    const months = [
+      '', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
     ];
     return '${date.day} ${months[date.month]} ${date.year + 543}';
   }
 
   String _formatTime(TimeOfDay? time) {
     if (time == null) return '-';
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} น.';
   }
 
   @override
   Widget build(BuildContext context) {
+    final infoRows = [
+      (Icons.local_hospital_outlined, 'สถานบริการ', selectedServiceCenter ?? '-'),
+      (Icons.event_outlined, 'วันที่', _formatDate(selectedDate)),
+      (Icons.schedule_outlined, 'เวลา', _formatTime(selectedTime)),
+      if (_totalSelected > 0)
+        (Icons.inventory_2_outlined, 'ถุงยางอนามัย', '$_totalSelected ชิ้น'),
+      if (lubricantQuantity > 0)
+        (Icons.add_circle_outline, 'สารหล่อลื่น', '$lubricantQuantity ซอง'),
+    ];
+
     return Scaffold(
       backgroundColor: AppColors.white,
-      body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Spacer(),
-                        const Text(
-                          'ขอขอบคุณ!',
-                          style: TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-
-                        Container(
-                          width: 120,
-                          height: 120,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.success,
-                              width: 12,
-                            ),
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.check,
-                              size: 80,
-                              color: AppColors.success,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-
-                        const Text(
-                          'ส่งข้อมูลสำเร็จ',
-                          style: TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        const Divider(color: Color(0xFFEEEEEE), thickness: 1),
-                        const SizedBox(height: 16),
-
-                        const Text(
-                          'สถานบริการกำลังเตรียมถุงยางอนามัยให้คุณ',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
-                            height: 1.5,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        const Text(
-                          'โปรดมารับที่',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textPrimary,
-                            height: 1.5,
-                          ),
-                        ),
-
-                        Text(
-                          selectedServiceCenter ?? '-',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                            height: 1.5,
-                          ),
-                        ),
-
-                        RichText(
-                          textAlign: TextAlign.center,
-                          text: TextSpan(
-                            style: DefaultTextStyle.of(context).style.copyWith(
-                              fontSize: 14,
-                              color: AppColors.textPrimary,
-                              height: 1.5,
-                            ),
-                            children: [
-                              const TextSpan(text: 'วันที่ '),
-                              TextSpan(
-                                text: _formatDate(selectedDate),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              const TextSpan(text: ' เวลา '),
-                              TextSpan(
-                                text: _formatTime(selectedTime),
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                              const TextSpan(text: ' น.'),
-                            ],
-                          ),
-                        ),
-
-                        const SizedBox(height: 24),
-
-                        Text(
-                          'หมายเลขอ้างอิง: $referenceNumber',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            color: AppColors.textHint,
-                          ),
-                        ),
-
-                        const Spacer(),
-
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            SizedBox(
-                              height: 48,
-                              child: FilledButton(
-                                onPressed: () {
-                                  Navigator.of(context).push(
-                                    MaterialPageRoute(
-                                      builder:
-                                          (context) => CondomRequestDetailPage(
-                                            quantities: quantities,
-                                            lubricantQuantity:
-                                                lubricantQuantity,
-                                            selectedServiceCenter: selectedServiceCenter,
-                                            selectedDate: selectedDate,
-                                            selectedTime: selectedTime,
-                                            message: message,
-                                            currentMonthlyUsed:
-                                                currentMonthlyUsed,
-                                            maxMonthlyQuota: maxMonthlyQuota,
-                                            currentMonthlyLubricantUsed:
-                                                currentMonthlyLubricantUsed,
-                                            maxMonthlyLubricantQuota:
-                                                maxMonthlyLubricantQuota,
-                                          ),
-                                    ),
-                                  );
-                                },
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'ดูข้อมูล',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.white,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            SizedBox(
-                              height: 48,
-                              child: OutlinedButton(
-                                onPressed: () {
-                                  Navigator.of(
-                                    context,
-                                  ).popUntil((route) => route.isFirst);
-                                },
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(
-                                    color: AppColors.primary,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(24),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'กลับไปบริการ',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 24),
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new,
+              size: 20, color: AppColors.primary),
+          onPressed: () =>
+              Navigator.of(context).popUntil((route) => route.isFirst),
+        ),
+        title: const Text(
+          'รับถุงยางอนามัย',
+          style: TextStyle(
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: Column(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
+            ),
+            child: _buildStepIndicator(2),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+              child: Column(
+                children: [
+                  Container(
+                    width: 96,
+                    height: 96,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: const Color(0xFFE8F5E9),
+                      border: Border.all(color: AppColors.success, width: 4),
+                    ),
+                    child: const Icon(Icons.check,
+                        color: AppColors.success, size: 52),
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'ส่งข้อมูลสำเร็จ!',
+                    style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary),
+                  ),
+                  const SizedBox(height: 6),
+                  const Text(
+                    'สถานบริการกำลังเตรียมถุงยางอนามัยให้คุณ',
+                    style: TextStyle(
+                        fontSize: 15, color: AppColors.textSecondary),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 24),
+                  // Info card
+                  Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: const [
+                        BoxShadow(
+                            color: AppColors.cardShadowMedium,
+                            blurRadius: 10,
+                            offset: Offset(0, 4)),
                       ],
                     ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                            color: AppColors.primary,
+                            width: double.infinity,
+                            child: const Row(
+                              children: [
+                                Icon(Icons.event_note_outlined,
+                                    color: Colors.white, size: 18),
+                                SizedBox(width: 8),
+                                Text('รายละเอียดการรับ',
+                                    style: TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold)),
+                              ],
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              children: infoRows
+                                  .map((row) => Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 12),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 36,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: AppColors.primaryCardStart,
+                                                borderRadius:
+                                                    BorderRadius.circular(10),
+                                              ),
+                                              child: Icon(row.$1,
+                                                  color: AppColors.primary,
+                                                  size: 18),
+                                            ),
+                                            const SizedBox(width: 12),
+                                            Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(row.$2,
+                                                    style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color:
+                                                            AppColors.textHint)),
+                                                Text(row.$3,
+                                                    style: const TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                        color: AppColors
+                                                            .textPrimary)),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ))
+                                  .toList(),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'หมายเลขอ้างอิง: $referenceNumber',
+                    style: const TextStyle(
+                        fontSize: 14, color: AppColors.textHint),
+                  ),
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: FilledButton(
+                      onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => CondomRequestDetailPage(
+                            quantities: quantities,
+                            lubricantQuantity: lubricantQuantity,
+                            selectedServiceCenter: selectedServiceCenter,
+                            selectedDate: selectedDate,
+                            selectedTime: selectedTime,
+                            message: message,
+                            currentMonthlyUsed: currentMonthlyUsed,
+                            maxMonthlyQuota: maxMonthlyQuota,
+                            currentMonthlyLubricantUsed:
+                                currentMonthlyLubricantUsed,
+                            maxMonthlyLubricantQuota: maxMonthlyLubricantQuota,
+                          ),
+                        ),
+                      ),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: const Text('ดูข้อมูล',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.white)),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context)
+                          .popUntil((route) => route.isFirst),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                            color: AppColors.primary, width: 1.5),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: const Text('กลับไปบริการ',
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepIndicator(int step) {
+    const labels = ['กรอกข้อมูล', 'ยืนยัน', 'สำเร็จ'];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      child: Row(
+        children: List.generate(labels.length * 2 - 1, (i) {
+          if (i.isOdd) {
+            final done = (i ~/ 2) < step;
+            return Expanded(
+              child: Container(
+                height: 3,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: done ? AppColors.primary : const Color(0xFFE8E8E8),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
             );
-          },
-        ),
+          }
+          final idx = i ~/ 2;
+          final isDone = idx < step;
+          final isCurrent = idx == step;
+          final active = isDone || isCurrent;
+          return Column(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: active ? AppColors.primary : const Color(0xFFE8E8E8),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: isDone
+                      ? const Icon(Icons.check, color: Colors.white, size: 16)
+                      : Text('${idx + 1}',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: active
+                                  ? Colors.white
+                                  : AppColors.textMuted)),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                labels[idx],
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                  color: active ? AppColors.primary : AppColors.textMuted,
+                ),
+              ),
+            ],
+          );
+        }),
       ),
     );
   }

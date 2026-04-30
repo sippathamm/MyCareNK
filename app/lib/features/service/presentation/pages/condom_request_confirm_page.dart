@@ -49,42 +49,37 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('กรุณาเข้าสู่ระบบก่อนทำรายการ')),
       );
-      Navigator.of(
-        context,
-        rootNavigator: true,
-      ).push(MaterialPageRoute(builder: (context) => const LoginPage()));
+      Navigator.of(context, rootNavigator: true)
+          .push(MaterialPageRoute(builder: (context) => const LoginPage()));
       return;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
     try {
       final userId = session.user.id;
-      final quantitiesJson = widget.quantities.map(
-        (key, value) => MapEntry(key.toString(), value),
-      );
+      final quantitiesJson =
+          widget.quantities.map((key, value) => MapEntry(key.toString(), value));
 
       String? dateString;
       if (widget.selectedDate != null) {
         dateString =
-            "${widget.selectedDate!.year.toString().padLeft(4, '0')}-${widget.selectedDate!.month.toString().padLeft(2, '0')}-${widget.selectedDate!.day.toString().padLeft(2, '0')}";
+            '${widget.selectedDate!.year.toString().padLeft(4, '0')}-'
+            '${widget.selectedDate!.month.toString().padLeft(2, '0')}-'
+            '${widget.selectedDate!.day.toString().padLeft(2, '0')}';
       }
 
       String? timeString;
       if (widget.selectedTime != null) {
         timeString =
-            "${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')}:00";
+            '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:'
+            '${widget.selectedTime!.minute.toString().padLeft(2, '0')}:00';
       }
 
-      // Generate an 8-character alphanumeric reference number.
       const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
       final Random random = Random();
-      final String refNumber = List.generate(
-        8,
-        (_) => chars[random.nextInt(chars.length)],
-      ).join();
+      final String refNumber =
+          List.generate(8, (_) => chars[random.nextInt(chars.length)]).join();
 
       await Supabase.instance.client.from('condom_requests').insert({
         'user_id': userId,
@@ -98,15 +93,10 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         'request_status': 'pending',
       });
 
-      // Update user's monthly quota usage
       final now = DateTime.now();
-      final monthStart = DateTime(
-        now.year,
-        now.month,
-        1,
-      ).toIso8601String().substring(0, 10);
+      final monthStart =
+          DateTime(now.year, now.month, 1).toIso8601String().substring(0, 10);
 
-      // Fetch existing row first (to compute new totals for upsert)
       final existingQuota = await Supabase.instance.client
           .from('user_monthly_quotas')
           .select('used_condoms, used_lubricants')
@@ -118,7 +108,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           ((existingQuota?['used_condoms'] as int?) ?? 0) + _totalSelected;
       final int newUsedLubricants =
           ((existingQuota?['used_lubricants'] as int?) ?? 0) +
-          widget.lubricantQuantity;
+              widget.lubricantQuantity;
 
       await Supabase.instance.client.from('user_monthly_quotas').upsert({
         'user_id': userId,
@@ -154,11 +144,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -171,90 +157,272 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back_ios_new,
+              size: 20, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'ยืนยันข้อมูล',
+          'รับถุงยางอนามัย',
           style: TextStyle(
-            color: AppColors.textPrimary,
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-          ),
+              color: AppColors.textPrimary,
+              fontSize: 18,
+              fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.edit_outlined, color: AppColors.primary),
-            onPressed: () => Navigator.of(context).pop(),
+      ),
+      body: Column(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
+            ),
+            child: _buildStepIndicator(1),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              child: Column(
+                children: [
+                  _buildMonthlyProgress(),
+                  const SizedBox(height: 20),
+                  if (_totalSelected > 0) _buildQuantityCard(),
+                  if (widget.lubricantQuantity > 0) _buildLubricantCard(),
+                  _buildPlaceTimeCard(),
+                  if (widget.message.isNotEmpty) _buildMessageCard(),
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF8E1),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: const Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.info_outline,
+                            color: Color(0xFFFF8F00), size: 18),
+                        SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยัน หากต้องการแก้ไขให้กดปุ่ม "แก้ไข"',
+                            style: TextStyle(
+                                fontSize: 14,
+                                color: Color(0xFF5D4037),
+                                height: 1.6),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            color: Colors.white,
+            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+            child: Column(
+              children: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    onPressed: _isLoading ? null : _submitRequest,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: AppColors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                                color: AppColors.white, strokeWidth: 2),
+                          )
+                        : const Text('ยืนยัน',
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(
+                          color: AppColors.primary, width: 1.5),
+                      foregroundColor: AppColors.primary,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24)),
+                    ),
+                    child: const Text('แก้ไข',
+                        style: TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.bold)),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildMonthlyProgress(context),
-              const SizedBox(height: 20),
-              _buildQuantityCard(context),
-              _buildLubricantCard(context),
-              _buildPlaceTimeCard(context),
-              if (widget.message.isNotEmpty) _buildMessageCard(context),
-              const SizedBox(height: 48),
-              SizedBox(
-                width: double.infinity,
-                height: 48,
-                child: FilledButton(
-                  onPressed: _isLoading ? null : _submitRequest,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            color: AppColors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'ยืนยัน',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
+    );
+  }
+
+  // ── Step indicator ──────────────────────────────────────────────────────────
+
+  Widget _buildStepIndicator(int step) {
+    const labels = ['กรอกข้อมูล', 'ยืนยัน', 'สำเร็จ'];
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
+      child: Row(
+        children: List.generate(labels.length * 2 - 1, (i) {
+          if (i.isOdd) {
+            final done = (i ~/ 2) < step;
+            return Expanded(
+              child: Container(
+                height: 3,
+                margin: const EdgeInsets.only(bottom: 20),
+                decoration: BoxDecoration(
+                  color: done ? AppColors.primary : const Color(0xFFE8E8E8),
+                  borderRadius: BorderRadius.circular(2),
                 ),
               ),
-              const SizedBox(height: 40),
+            );
+          }
+          final idx = i ~/ 2;
+          final isDone = idx < step;
+          final isCurrent = idx == step;
+          final active = isDone || isCurrent;
+          return Column(
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                width: 34,
+                height: 34,
+                decoration: BoxDecoration(
+                  color: active ? AppColors.primary : const Color(0xFFE8E8E8),
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: isDone
+                      ? const Icon(Icons.check, color: Colors.white, size: 16)
+                      : Text('${idx + 1}',
+                          style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color:
+                                  active ? Colors.white : AppColors.textMuted)),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                labels[idx],
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+                  color: active ? AppColors.primary : AppColors.textMuted,
+                ),
+              ),
             ],
-          ),
+          );
+        }),
+      ),
+    );
+  }
+
+  // ── Section card ────────────────────────────────────────────────────────────
+
+  Widget _buildSectionCard({
+    required String title,
+    required IconData icon,
+    required Widget child,
+  }) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: AppColors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: const [
+          BoxShadow(
+              color: AppColors.cardShadowMedium,
+              blurRadius: 10,
+              offset: Offset(0, 4)),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: AppColors.primary,
+              width: double.infinity,
+              child: Row(children: [
+                Icon(icon, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                Text(title,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold)),
+              ]),
+            ),
+            Padding(padding: const EdgeInsets.all(16), child: child),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildMonthlyProgress(BuildContext context) {
-    final int totalUsed = widget.currentMonthlyUsed + _totalSelected;
-    final int remaining = (widget.maxMonthlyQuota - totalUsed).clamp(
-      0,
-      widget.maxMonthlyQuota,
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 14, color: AppColors.textSecondary)),
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+        ],
+      ),
     );
+  }
 
+  // ── Monthly progress ────────────────────────────────────────────────────────
+
+  Widget _buildMonthlyProgress() {
+    final int totalUsed = widget.currentMonthlyUsed + _totalSelected;
+    final int remaining =
+        (widget.maxMonthlyQuota - totalUsed).clamp(0, widget.maxMonthlyQuota);
     final int totalLubricantUsed =
         widget.currentMonthlyLubricantUsed + widget.lubricantQuantity;
     final int remainingLubricant =
-        (widget.maxMonthlyLubricantQuota - totalLubricantUsed).clamp(
-          0,
-          widget.maxMonthlyLubricantQuota,
-        );
+        (widget.maxMonthlyLubricantQuota - totalLubricantUsed)
+            .clamp(0, widget.maxMonthlyLubricantQuota);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -262,10 +430,9 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         Text(
           'สิทธิ์รับฟรีคงเหลือ',
           style: GoogleFonts.googleSans(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: AppColors.textPrimary,
-          ),
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+              color: AppColors.textPrimary),
         ),
         const SizedBox(height: 16),
         Row(
@@ -275,46 +442,35 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'ถุงยางอนามัย',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  Text('ถุงยางอนามัย',
+                      style: GoogleFonts.googleSans(
+                          fontSize: 14, color: AppColors.textSecondary)),
                   TweenAnimationBuilder<int>(
                     tween: IntTween(
-                      begin:
-                          (widget.maxMonthlyQuota - widget.currentMonthlyUsed)
-                              .clamp(0, widget.maxMonthlyQuota),
+                      begin: (widget.maxMonthlyQuota - widget.currentMonthlyUsed)
+                          .clamp(0, widget.maxMonthlyQuota),
                       end: remaining,
                     ),
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOut,
-                    builder: (context, value, child) {
-                      return RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: '$value ',
-                              style: GoogleFonts.googleSans(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 28,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'ชิ้น',
-                              style: GoogleFonts.googleSans(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ],
+                    builder: (context, value, _) => RichText(
+                      text: TextSpan(children: [
+                        TextSpan(
+                          text: '$value ',
+                          style: GoogleFonts.googleSans(
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28),
                         ),
-                      );
-                    },
+                        TextSpan(
+                          text: 'ชิ้น',
+                          style: GoogleFonts.googleSans(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.primary),
+                        ),
+                      ]),
+                    ),
                   ),
                 ],
               ),
@@ -324,47 +480,36 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'สารหล่อลื่น',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 14,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
+                  Text('สารหล่อลื่น',
+                      style: GoogleFonts.googleSans(
+                          fontSize: 14, color: AppColors.textSecondary)),
                   TweenAnimationBuilder<int>(
                     tween: IntTween(
-                      begin:
-                          (widget.maxMonthlyLubricantQuota -
-                                  widget.currentMonthlyLubricantUsed)
-                              .clamp(0, widget.maxMonthlyLubricantQuota),
+                      begin: (widget.maxMonthlyLubricantQuota -
+                              widget.currentMonthlyLubricantUsed)
+                          .clamp(0, widget.maxMonthlyLubricantQuota),
                       end: remainingLubricant,
                     ),
                     duration: const Duration(milliseconds: 500),
                     curve: Curves.easeOut,
-                    builder: (context, value, child) {
-                      return RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(
-                              text: '$value ',
-                              style: GoogleFonts.googleSans(
-                                color: AppColors.lubricant,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 28,
-                              ),
-                            ),
-                            TextSpan(
-                              text: 'ซอง',
-                              style: GoogleFonts.googleSans(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w500,
-                                color: AppColors.lubricant,
-                              ),
-                            ),
-                          ],
+                    builder: (context, value, _) => RichText(
+                      text: TextSpan(children: [
+                        TextSpan(
+                          text: '$value ',
+                          style: GoogleFonts.googleSans(
+                              color: AppColors.lubricant,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 28),
                         ),
-                      );
-                    },
+                        TextSpan(
+                          text: 'ซอง',
+                          style: GoogleFonts.googleSans(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.lubricant),
+                        ),
+                      ]),
+                    ),
                   ),
                 ],
               ),
@@ -375,272 +520,83 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     );
   }
 
-  Widget _buildCard({
-    required Widget header,
-    required Widget content,
-    bool showDivider = false,
-    Widget? footer,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[300]!),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.cardShadow,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.white,
-              width: double.infinity,
-              child: header,
-            ),
-            const Divider(height: 1),
-            Padding(padding: const EdgeInsets.all(16.0), child: content),
-            if (showDivider) const Divider(height: 1),
-            if (footer != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: footer,
+  // ── Summary cards ───────────────────────────────────────────────────────────
+
+  Widget _buildQuantityCard() {
+    return _buildSectionCard(
+      title: 'จำนวนถุงยางอนามัย',
+      icon: Icons.inventory_2_outlined,
+      child: Column(
+        children: [
+          ...widget.quantities.entries
+              .where((e) => e.value > 0)
+              .map((e) => _buildInfoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('รวม',
+                  style:
+                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                '$_totalSelected ชิ้น',
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary),
               ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildQuantityCard(BuildContext context) {
-    if (_totalSelected == 0) return const SizedBox();
-
-    return _buildCard(
-      header: const Text(
-        'จำนวนถุงยางอนามัย',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      content: Column(
-        children: widget.quantities.entries
-            .where((entry) => entry.value > 0)
-            .map((entry) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'ขนาด ${entry.key} มม.',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      '${entry.value} ชิ้น',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            })
-            .toList(),
-      ),
-      showDivider: true,
-      footer: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'รวม',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            '$_totalSelected ชิ้น',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLubricantCard(BuildContext context) {
-    if (widget.lubricantQuantity == 0) return const SizedBox();
-
-    return _buildCard(
-      header: const Row(
-        children: [
-          Icon(Icons.add_circle_outline, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'เพิ่มเติม',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'สารหล่อลื่น',
-            style: TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          Text(
-            '${widget.lubricantQuantity} ซอง',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
+  Widget _buildLubricantCard() {
+    return _buildSectionCard(
+      title: 'เพิ่มเติม',
+      icon: Icons.add_circle_outline,
+      child: _buildInfoRow('สารหล่อลื่น', '${widget.lubricantQuantity} ซอง'),
     );
   }
 
-  String formatMonthTH(int month) {
-    switch (month) {
-      case 1: return 'มกราคม';
-      case 2: return 'กุมภาพันธ์';
-      case 3: return 'มีนาคม';
-      case 4: return 'เมษายน';
-      case 5: return 'พฤษภาคม';
-      case 6: return 'มิถุนายน';
-      case 7: return 'กรกฎาคม';
-      case 8: return 'สิงหาคม';
-      case 9: return 'กันยายน';
-      case 10: return 'ตุลาคม';
-      case 11: return 'พฤศจิกายน';
-      case 12: return 'ธันวาคม';
-      default: return '';
-    }
-  }
-
-  Widget _buildPlaceTimeCard(BuildContext context) {
-    String dateStr = widget.selectedDate != null
-        ? '${widget.selectedDate!.day} ${formatMonthTH(widget.selectedDate!.month)} ${widget.selectedDate!.year + 543}'
+  Widget _buildPlaceTimeCard() {
+    final dateStr = widget.selectedDate != null
+        ? '${widget.selectedDate!.day} ${_monthTH(widget.selectedDate!.month)} ${widget.selectedDate!.year + 543}'
         : '-';
-    String timeStr = widget.selectedTime != null
+    final timeStr = widget.selectedTime != null
         ? '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')} น.'
         : '-';
 
-    return _buildCard(
-      header: const Row(
+    return _buildSectionCard(
+      title: 'สถานบริการ วันและเวลารับ',
+      icon: Icons.calendar_today_outlined,
+      child: Column(
         children: [
-          Icon(Icons.calendar_today_outlined, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'สถานบริการ วันและเวลารับ',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      content: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('สถานบริการ', style: TextStyle(fontSize: 16)),
-              Text(
-                widget.selectedServiceCenter ?? '-',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('วันที่', style: TextStyle(fontSize: 16)),
-              Text(
-                dateStr,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('เวลา', style: TextStyle(fontSize: 16)),
-              Text(
-                timeStr,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
+          _buildInfoRow('สถานบริการ', widget.selectedServiceCenter ?? '-'),
+          _buildInfoRow('วันที่', dateStr),
+          _buildInfoRow('เวลา', timeStr),
         ],
       ),
     );
   }
 
-  Widget _buildMessageCard(BuildContext context) {
-    return _buildCard(
-      header: const Row(
-        children: [
-          Icon(Icons.comment_outlined, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'ฝากข้อความ',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      content: Align(
+  Widget _buildMessageCard() {
+    return _buildSectionCard(
+      title: 'ฝากข้อความ',
+      icon: Icons.comment_outlined,
+      child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          widget.message,
-          style: const TextStyle(
-            fontSize: 16,
-            color: AppColors.primary,
-          ),
-        ),
+        child: Text(widget.message,
+            style: const TextStyle(fontSize: 15, color: AppColors.textPrimary)),
       ),
     );
+  }
+
+  String _monthTH(int m) {
+    const months = [
+      '', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+    ];
+    return months[m];
   }
 }
