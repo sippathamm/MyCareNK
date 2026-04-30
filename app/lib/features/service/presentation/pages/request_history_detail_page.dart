@@ -239,117 +239,123 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       final cancelLabel = status == RequestStatus.cancelledByStaff
           ? 'ยกเลิกโดยเจ้าหน้าที่'
           : 'ยกเลิก';
-      return Column(
+      return Row(
         children: [
-          Row(
-            children: [
-              _buildDot(AppColors.primary, isFilled: true),
-              Expanded(child: _buildLine(AppColors.primary)),
-              _buildDot(Colors.grey[600]!, isFilled: true),
-            ],
+          _buildStepNode(
+            color: AppColors.primary,
+            icon: Icons.check,
+            label: 'รอดำเนินการ',
+            isCurrent: false,
+            isDone: true,
           ),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'รอดำเนินการ',
-                style: GoogleFonts.googleSans(color: Colors.black87, fontSize: 12),
+          Expanded(
+            child: Container(
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8E8E8),
+                borderRadius: BorderRadius.circular(2),
               ),
-              Text(
-                cancelLabel,
-                style: GoogleFonts.googleSans(
-                  color: Colors.grey[600],
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
+            ),
+          ),
+          _buildStepNode(
+            color: Colors.grey,
+            icon: Icons.close,
+            label: cancelLabel,
+            isCurrent: true,
+            isDone: false,
+            labelColor: Colors.grey[600],
           ),
         ],
       );
     }
 
-    const Color prepColor = AppColors.lubricant;
-    const Color readyColor = AppColors.statusReady;
-    const Color compColor = AppColors.statusCompleted;
+    final steps = [
+      (label: 'รอดำเนินการ', status: RequestStatus.pending,   color: AppColors.primary),
+      (label: 'กำลังเตรียม', status: RequestStatus.preparing,  color: AppColors.statusPreparing),
+      (label: 'พร้อมรับ',    status: RequestStatus.ready,      color: AppColors.statusReady),
+      (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
+    ];
+    final currentIdx = steps.indexWhere((s) => s.status == status);
 
-    final isPrepDone = status == RequestStatus.preparing ||
-        status == RequestStatus.ready ||
-        status == RequestStatus.completed;
-    final isReadyDone = status == RequestStatus.ready ||
-        status == RequestStatus.completed;
-    final isFinalDone = status == RequestStatus.completed;
+    return Row(
+      children: List.generate(steps.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          final leftIdx = i ~/ 2;
+          final done = leftIdx < currentIdx;
+          return Expanded(
+            child: Container(
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: done ? steps[leftIdx].color : const Color(0xFFE8E8E8),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }
+        final idx = i ~/ 2;
+        final isDone = idx < currentIdx;
+        final isCurrent = idx == currentIdx;
+        return _buildStepNode(
+          color: (isDone || isCurrent) ? steps[idx].color : const Color(0xFFE8E8E8),
+          icon: isDone ? Icons.check : null,
+          label: steps[idx].label,
+          number: isDone ? null : idx + 1,
+          isCurrent: isCurrent,
+          isDone: isDone,
+          labelColor: isCurrent
+              ? steps[idx].color
+              : isDone
+                  ? AppColors.textSecondary
+                  : AppColors.textMuted,
+        );
+      }),
+    );
+  }
 
+  Widget _buildStepNode({
+    required Color color,
+    IconData? icon,
+    int? number,
+    required String label,
+    required bool isCurrent,
+    required bool isDone,
+    Color? labelColor,
+  }) {
     return Column(
       children: [
-        Row(
-          children: [
-            _buildDot(AppColors.primary, isFilled: true),
-            Expanded(child: _buildLine(isPrepDone ? AppColors.primary : Colors.grey[300]!)),
-            _buildDot(prepColor, isFilled: isPrepDone),
-            Expanded(child: _buildLine(isReadyDone ? prepColor : Colors.grey[300]!)),
-            _buildDot(readyColor, isFilled: isReadyDone),
-            Expanded(child: _buildLine(isFinalDone ? readyColor : Colors.grey[300]!)),
-            _buildDot(compColor, isFilled: isFinalDone),
-          ],
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          child: Center(
+            child: icon != null
+                ? Icon(icon, color: Colors.white, size: 14)
+                : Text(
+                    '${number ?? ''}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: (isCurrent || isDone)
+                          ? Colors.white
+                          : AppColors.textMuted,
+                    ),
+                  ),
+          ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'รอดำเนินการ',
-              style: GoogleFonts.googleSans(
-                color: status == RequestStatus.pending ? AppColors.primary : Colors.black87,
-                fontSize: 12,
-                fontWeight: status == RequestStatus.pending ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            Text(
-              'กำลังเตรียม',
-              style: GoogleFonts.googleSans(
-                color: status == RequestStatus.preparing ? prepColor : Colors.black87,
-                fontSize: 12,
-                fontWeight: status == RequestStatus.preparing ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            Text(
-              'พร้อมรับ',
-              style: GoogleFonts.googleSans(
-                color: status == RequestStatus.ready ? readyColor : Colors.black87,
-                fontSize: 12,
-                fontWeight: status == RequestStatus.ready ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-            Text(
-              'เสร็จสิ้น',
-              style: GoogleFonts.googleSans(
-                color: status == RequestStatus.completed ? compColor : Colors.black87,
-                fontSize: 12,
-                fontWeight: status == RequestStatus.completed ? FontWeight.bold : FontWeight.normal,
-              ),
-            ),
-          ],
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+            color: labelColor ?? AppColors.textMuted,
+          ),
         ),
       ],
     );
-  }
-
-  Widget _buildDot(Color color, {required bool isFilled}) {
-    return Container(
-      width: 24,
-      height: 24,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: isFilled ? color : AppColors.white,
-        border: isFilled ? null : Border.all(color: color, width: 2),
-      ),
-    );
-  }
-
-  Widget _buildLine(Color color) {
-    return Container(height: 2, color: color);
   }
 
   Widget _buildCard({
@@ -363,10 +369,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[300]!),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x05000000),
+            color: AppColors.cardShadowMedium,
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -378,11 +383,10 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.white,
+              color: AppColors.primary,
               width: double.infinity,
               child: header,
             ),
-            const Divider(height: 1),
             Padding(padding: const EdgeInsets.all(16.0), child: content),
             if (showDivider) const Divider(height: 1),
             if (footer != null)
@@ -404,14 +408,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (totalCondoms == 0) return const SizedBox();
 
     return _buildCard(
-      header: const Text(
-        'จำนวนถุงยางอนามัย',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      header: const Row(children: [
+        Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
+        SizedBox(width: 8),
+        Text('จำนวนถุงยางอนามัย',
+            style: TextStyle(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Column(
         children: _currentData.condomQuantities.entries
             .where((e) => e.value > 0)
@@ -466,20 +469,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.lubricantQuantity == 0) return const SizedBox();
 
     return _buildCard(
-      header: const Row(
-        children: [
-          Icon(Icons.add_circle_outline, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'เพิ่มเติม',
+      header: const Row(children: [
+        Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
+        SizedBox(width: 8),
+        Text('เพิ่มเติม',
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
@@ -520,20 +516,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     }
 
     return _buildCard(
-      header: const Row(
-        children: [
-          Icon(Icons.calendar_today_outlined, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'สถานบริการ วันและเวลารับ',
+      header: const Row(children: [
+        Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
+        SizedBox(width: 8),
+        Text('สถานบริการ วันและเวลารับ',
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Column(
         children: [
           Row(
@@ -589,20 +578,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.message.isEmpty) return const SizedBox();
 
     return _buildCard(
-      header: const Row(
-        children: [
-          Icon(Icons.comment_outlined, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'ฝากข้อความ',
+      header: const Row(children: [
+        Icon(Icons.comment_outlined, color: Colors.white, size: 18),
+        SizedBox(width: 8),
+        Text('ฝากข้อความ',
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Align(
         alignment: Alignment.centerLeft,
         child: Text(
@@ -618,20 +600,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.cancelReason == null || _currentData.cancelReason!.isEmpty) return const SizedBox();
 
     return _buildCard(
-      header: const Row(
-        children: [
-          Icon(Icons.info_outline, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'เหตุผลที่ยกเลิก',
+      header: const Row(children: [
+        Icon(Icons.info_outline, color: Colors.white, size: 18),
+        SizedBox(width: 8),
+        Text('เหตุผลที่ยกเลิก',
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Align(
         alignment: Alignment.centerLeft,
         child: Text(
@@ -764,7 +739,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       children: [
         SizedBox(
           width: double.infinity,
-          height: 48,
+          height: 50,
           child: FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(
@@ -781,10 +756,10 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           ),
         ),
         if (canCancel) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: 48,
+            height: 50,
             child: OutlinedButton(
               onPressed: _isCancelling ? null : _confirmCancel,
               style: OutlinedButton.styleFrom(
