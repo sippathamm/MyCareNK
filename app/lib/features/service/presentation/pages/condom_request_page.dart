@@ -462,7 +462,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   Text(
                     '${center.hours} น.',
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 14,
                       color: AppColors.textHint,
                     ),
                   ),
@@ -580,7 +580,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(text,
               style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary)),
         );
