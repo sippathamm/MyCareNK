@@ -85,7 +85,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'ดูรายละเอียดคำขอ',
+          'รายละเอียดคำขอ',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -703,7 +703,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   Future<void> _confirmCancel() async {
     final confirmed = await showDialog<bool>(
       context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.white,
+        elevation: 24,
+        shadowColor: Colors.black38,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text(
           'ยืนยันการยกเลิกคำขอ',
@@ -734,11 +738,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           SizedBox(
             width: double.infinity,
             height: 46,
-            child: OutlinedButton(
+            child: FilledButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primary, width: 1.5),
-                foregroundColor: AppColors.primary,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFEEEEEE),
+                foregroundColor: AppColors.textPrimary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
