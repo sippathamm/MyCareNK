@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../health/presentation/pages/hiv_assessment_page.dart';
 
 class CampaignBanner extends StatelessWidget {
   const CampaignBanner({super.key});
@@ -24,9 +25,9 @@ class CampaignBanner extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('"ทำแบบประเมินความเสี่ยง HIV" ถูกกด'),
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const HivAssessmentPage(),
               ),
             );
           },
@@ -36,7 +37,7 @@ class CampaignBanner extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'ทำแบบประเมินความเสี่ยง HIV',
+                  'ทำแบบประเมินความเสี่ยงการติดเชื้อ HIV',
                   style: TextStyle(
                     color: AppColors.white,
                     fontSize: 16,

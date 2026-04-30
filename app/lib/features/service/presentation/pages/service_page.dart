@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/service_card.dart';
 import 'condom_request_page.dart';
+import '../../../health/presentation/pages/hiv_assessment_page.dart';
+import '../../../health/presentation/pages/doctor_booking_page.dart';
 
 class ServicePage extends StatelessWidget {
   const ServicePage({super.key});
@@ -27,10 +29,27 @@ class ServicePage extends StatelessWidget {
             const SizedBox(height: 12),
             ServiceCard(
               icon: Icons.assignment,
-              title: 'ประเมินความเสี่ยง HIV',
-              subtitle: 'ทำแบบทดสอบเพื่อประเมินความเสี่ยงติดเชื้อ HIV',
+              title: 'ประเมินความเสี่ยงการติดเชื้อ HIV',
+              subtitle: 'ทำแบบทดสอบเพื่อประเมินความเสี่ยงการติดเชื้อ HIV',
               onTap: () {
-                // TODO: Navigate to HIV Assessment
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const HivAssessmentPage(),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 12),
+            ServiceCard(
+              icon: Icons.calendar_month,
+              title: 'นัดพบแพทย์',
+              subtitle: 'จองคิวล่วงหน้าเพื่อรับยา PrEP/PEP ตรวจเลือด หรือปรึกษาสุขภาพ',
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const DoctorBookingPage(),
+                  ),
+                );
               },
             ),
           ],

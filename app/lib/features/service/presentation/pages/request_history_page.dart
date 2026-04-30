@@ -201,7 +201,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           });
         },
         decoration: InputDecoration(
-          hintText: 'ค้นหาประวัติการขอ',
+          hintText: 'ค้นหาหมายเลขอ้างอิง',
           hintStyle: GoogleFonts.googleSans(color: Colors.grey[600], fontSize: 14),
           suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
