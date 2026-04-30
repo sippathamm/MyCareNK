@@ -24,6 +24,19 @@ class _PickDate {
   const _PickDate(this.date, this.dayLabel, this.monthLabel);
 }
 
+class _ServiceCenter {
+  final String name;
+  final String hours;
+  const _ServiceCenter(this.name, this.hours);
+}
+
+const _kServiceCenters = [
+  _ServiceCenter('รพ.โพนพิสัย', 'จ–ศ 08:00–16:00'),
+  _ServiceCenter('รพ.สต.วัดหลวง', 'จ–ศ 08:00–16:00'),
+  _ServiceCenter('อบต.วัดหลวง', 'จ–ศ 08:30–16:30'),
+  _ServiceCenter('สสจ.หนองคาย', 'จ–ศ 08:00–17:00'),
+];
+
 List<_PickDate> _buildDateList() {
   final list = <_PickDate>[];
   var d = DateTime.now();
@@ -118,17 +131,6 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     super.dispose();
   }
 
-  void _resetForm() {
-    setState(() {
-      _quantities.updateAll((key, value) => 0);
-      _lubricantQuantity = 0;
-      _selectedServiceCenter = null;
-      _selectedDate = null;
-      _selectedTime = null;
-      _messageController.clear();
-    });
-  }
-
   void _navigateToConfirm() {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
@@ -213,9 +215,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     icon: Icons.local_hospital_outlined,
                     child: Column(
                       children: List.generate(
-                        AppConstants.serviceCenters.length,
-                        (i) => _buildLocationTile(
-                            AppConstants.serviceCenters[i], i),
+                        _kServiceCenters.length,
+                        (i) => _buildLocationTile(_kServiceCenters[i], i),
                       ),
                     ),
                   ),
@@ -269,46 +270,25 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           Container(
             color: Colors.white,
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: Column(
-              children: [
-                AnimatedOpacity(
-                  opacity: _canProceed ? 1.0 : 0.4,
-                  duration: const Duration(milliseconds: 200),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: FilledButton(
-                      onPressed: _canProceed ? _navigateToConfirm : null,
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.white,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                      ),
-                      child: const Text('ถัดไป',
-                          style: TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
-                    ),
+            child: AnimatedOpacity(
+              opacity: _canProceed ? 1.0 : 0.4,
+              duration: const Duration(milliseconds: 200),
+              child: SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton(
+                  onPressed: _canProceed ? _navigateToConfirm : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(24)),
                   ),
+                  child: const Text('ถัดไป',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: OutlinedButton(
-                    onPressed: _resetForm,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: AppColors.error, width: 1.5),
-                      foregroundColor: AppColors.error,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                    ),
-                    child: const Text('ล้างข้อมูล',
-                        style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ],
@@ -429,10 +409,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   // ── Location tiles ──────────────────────────────────────────────────────────
 
-  Widget _buildLocationTile(String label, int index) {
-    final sel = _selectedServiceCenter == label;
+  Widget _buildLocationTile(_ServiceCenter center, int index) {
+    final sel = _selectedServiceCenter == center.name;
     return GestureDetector(
-      onTap: () => setState(() => _selectedServiceCenter = label),
+      onTap: () => setState(() => _selectedServiceCenter = center.name),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -467,13 +447,26 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(
-                label,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.textPrimary,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    center.name,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${center.hours} น.',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textHint,
+                    ),
+                  ),
+                ],
               ),
             ),
             if (sel)
@@ -554,38 +547,67 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // ── Time picker ─────────────────────────────────────────────────────────────
 
   Widget _buildTimePicker() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: AppConstants.pickupTimes.map((t) {
-        final parts = t.split(':');
-        final tod =
-            TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-        final sel = _selectedTime == tod;
-        return GestureDetector(
-          onTap: () => setState(() => _selectedTime = tod),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 150),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-            decoration: BoxDecoration(
-              color: sel ? AppColors.primary : Colors.white,
-              border: Border.all(
-                  color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
-                  width: 1.5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '$t น.',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                color: sel ? Colors.white : AppColors.textPrimary,
-              ),
+    Widget chip(String t) {
+      final parts = t.split(':');
+      final tod =
+          TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
+      final sel = _selectedTime == tod;
+      return GestureDetector(
+        onTap: () => setState(() => _selectedTime = tod),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 150),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          decoration: BoxDecoration(
+            color: sel ? AppColors.primary : Colors.white,
+            border: Border.all(
+                color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
+                width: 1.5),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Text(
+            '$t น.',
+            style: TextStyle(
+              fontSize: 15,
+              fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
+              color: sel ? Colors.white : AppColors.textPrimary,
             ),
           ),
+        ),
+      );
+    }
+
+    Widget label(String text) => Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: Text(text,
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textSecondary)),
         );
-      }).toList(),
+
+    final morning = AppConstants.pickupTimes
+        .where((t) => int.parse(t.split(':')[0]) < 12)
+        .toList();
+    final afternoon = AppConstants.pickupTimes
+        .where((t) => int.parse(t.split(':')[0]) >= 12)
+        .toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (morning.isNotEmpty) ...[
+          label('ช่วงเช้า'),
+          Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList()),
+        ],
+        if (afternoon.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          label('ช่วงบ่าย'),
+          Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: afternoon.map(chip).toList()),
+        ],
+      ],
     );
   }
 
