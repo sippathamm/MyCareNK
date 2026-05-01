@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../home/presentation/pages/home_page.dart';
+import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
 
@@ -42,7 +43,7 @@ class _MainScreenState extends State<MainScreen> {
           HomePage(visibilityKey: _homeVisibilityKey),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
-          const Center(child: Text('Message Screen Placeholder')),
+          const MessagesPage(),
           const Center(child: Text('Settings Screen Placeholder')),
         ],
       ),
