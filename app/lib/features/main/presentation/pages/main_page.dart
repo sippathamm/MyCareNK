@@ -18,14 +18,21 @@ class _MainScreenState extends State<MainScreen> {
   final GlobalKey<NavigatorState> _serviceNavigatorKey =
       GlobalKey<NavigatorState>();
 
+  // Unread count จาก MessagesPage — ใช้แสดง badge บน nav bar
+  final ValueNotifier<int> _messagesUnreadNotifier = ValueNotifier(0);
+
+  @override
+  void dispose() {
+    _messagesUnreadNotifier.dispose();
+    super.dispose();
+  }
+
   void _onItemTapped(int index) {
     if (_currentIndex == index && index == 1) {
-      // If tapping on Service tab while already on it, navigate to the first route
       _serviceNavigatorKey.currentState?.popUntil((route) => route.isFirst);
     } else {
       setState(() {
         if (index == 0 && _currentIndex != 0) {
-          // Switching back to Home tab — bump key to replay animations
           _homeVisibilityKey++;
         }
         _currentIndex = index;
@@ -43,7 +50,7 @@ class _MainScreenState extends State<MainScreen> {
           HomePage(visibilityKey: _homeVisibilityKey),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
-          const MessagesPage(),
+          MessagesPage(unreadNotifier: _messagesUnreadNotifier),
           const Center(child: Text('Settings Screen Placeholder')),
         ],
       ),
@@ -84,8 +91,31 @@ class _MainScreenState extends State<MainScreen> {
             ),
             label: 'สแกน',
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.chat_bubble_outline),
+          BottomNavigationBarItem(
+            icon: ValueListenableBuilder<int>(
+              valueListenable: _messagesUnreadNotifier,
+              builder: (context, count, child) => Badge(
+                isLabelVisible: count > 0,
+                backgroundColor: Colors.red,
+                label: Text(
+                  count > 99 ? '99+' : '$count',
+                  style: const TextStyle(fontSize: 10, color: Colors.white),
+                ),
+                child: const Icon(Icons.chat_bubble_outline),
+              ),
+            ),
+            activeIcon: ValueListenableBuilder<int>(
+              valueListenable: _messagesUnreadNotifier,
+              builder: (context, count, child) => Badge(
+                isLabelVisible: count > 0,
+                backgroundColor: Colors.red,
+                label: Text(
+                  count > 99 ? '99+' : '$count',
+                  style: const TextStyle(fontSize: 10, color: Colors.white),
+                ),
+                child: const Icon(Icons.chat_bubble),
+              ),
+            ),
             label: 'ข้อความ',
           ),
           const BottomNavigationBarItem(

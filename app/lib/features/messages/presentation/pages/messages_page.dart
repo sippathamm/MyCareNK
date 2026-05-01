@@ -11,17 +11,12 @@ enum _MsgType { submitted, preparing, ready, completed, cancelled }
 
 _MsgType _parseMsgType(String? type) {
   switch (type) {
-    case 'preparing':
-      return _MsgType.preparing;
-    case 'ready':
-      return _MsgType.ready;
-    case 'completed':
-      return _MsgType.completed;
+    case 'preparing':      return _MsgType.preparing;
+    case 'ready':          return _MsgType.ready;
+    case 'completed':      return _MsgType.completed;
     case 'cancelled_by_staff':
-    case 'cancelled_by_user':
-      return _MsgType.cancelled;
-    default:
-      return _MsgType.submitted;
+    case 'cancelled_by_user': return _MsgType.cancelled;
+    default:               return _MsgType.submitted;
   }
 }
 
@@ -29,6 +24,8 @@ class _MsgItem {
   final String id;
   final _MsgType type;
   final String text;
+  // ถ้ากำหนด textSpans จะ render เป็น RichText แทน (เช่น ยกเลิกโดยเจ้าหน้าที่)
+  final List<InlineSpan>? textSpans;
   final DateTime createdAt;
   bool isNew;
 
@@ -36,6 +33,7 @@ class _MsgItem {
     required this.id,
     required this.type,
     required this.text,
+    this.textSpans,
     required this.createdAt,
     required this.isNew,
   });
@@ -81,7 +79,7 @@ String _formatTime(DateTime utc) {
 }
 
 // ---------------------------------------------------------------------------
-// Type config — สีและไอคอนตรงกับ request_history_page
+// Type config — ตรงกับ request_history_page
 // ---------------------------------------------------------------------------
 
 class _TypeConfig {
@@ -103,7 +101,7 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
     icon: Icons.assignment_outlined,
     iconColor: AppColors.primary,
     iconBg: AppColors.statusPendingLight,
-    label: 'ส่งคำขอแล้ว',
+    label: 'รอดำเนินการ',
   ),
   _MsgType.preparing: _TypeConfig(
     icon: Icons.inventory_2_outlined,
@@ -115,27 +113,26 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
     icon: Icons.local_shipping_outlined,
     iconColor: AppColors.statusReady,
     iconBg: AppColors.statusReadyLight,
-    label: 'พร้อมรับแล้ว',
+    label: 'พร้อมรับ',
   ),
   _MsgType.completed: _TypeConfig(
     icon: Icons.check_circle_outline,
     iconColor: AppColors.statusCompleted,
     iconBg: AppColors.statusCompletedLight,
-    label: 'รับแล้ว',
+    label: 'สำเร็จ',
   ),
   _MsgType.cancelled: _TypeConfig(
     icon: Icons.cancel_outlined,
     iconColor: Colors.grey.shade600,
     iconBg: Colors.grey.shade200,
-    label: 'ถูกยกเลิก',
+    label: 'ยกเลิก',
   ),
 };
 
 // ---------------------------------------------------------------------------
-// Mock data
+// Mock data — ครอบทุกกรณี
 // ---------------------------------------------------------------------------
 
-// Set to true to bypass Supabase and show all mock cases
 const bool _kUseMock = true;
 
 List<_RequestGroup> _buildMockGroups() {
@@ -144,7 +141,7 @@ List<_RequestGroup> _buildMockGroups() {
       now.subtract(Duration(days: daysAgo)).copyWith(hour: hour, minute: minute, second: 0);
 
   return [
-    // 1. กำลังดำเนินการ — มีข้อความใหม่ 2 รายการ (preparing + ready)
+    // 1. พร้อมรับ — มี 2 ข้อความใหม่
     _RequestGroup(
       requestId: 'mock-1',
       referenceNumber: 'NK-2568-00145',
@@ -153,27 +150,27 @@ List<_RequestGroup> _buildMockGroups() {
         _MsgItem(
           id: 'm1-3',
           type: _MsgType.ready,
-          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับตามวันและเวลาที่นัด',
+          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด (2 พ.ค. 2568 เวลา 10:00 น.)',
           createdAt: d(0, 10, 23),
           isNew: true,
         ),
         _MsgItem(
           id: 'm1-2',
           type: _MsgType.preparing,
-          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ กรุณารอสักครู่',
+          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ จัดเตรียมโดย: สมชาย ใจดี',
           createdAt: d(0, 9, 14),
           isNew: true,
         ),
         _MsgItem(
           id: 'm1-1',
           type: _MsgType.submitted,
-          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
           createdAt: d(0, 8, 50),
           isNew: false,
         ),
       ],
     ),
-    // 2. รับของแล้ว — flow สมบูรณ์ทุกขั้นตอน
+    // 2. สำเร็จ — flow ครบ
     _RequestGroup(
       requestId: 'mock-2',
       referenceNumber: 'NK-2568-00141',
@@ -182,28 +179,28 @@ List<_RequestGroup> _buildMockGroups() {
         _MsgItem(
           id: 'm2-4',
           type: _MsgType.completed,
-          text: 'คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ MyCareNK',
+          text: 'คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว',
           createdAt: d(7, 14, 35),
           isNew: false,
         ),
         _MsgItem(
           id: 'm2-3',
           type: _MsgType.ready,
-          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด',
+          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด (25 เม.ย. 2568 เวลา 14:00 น.)',
           createdAt: d(8, 13, 5),
           isNew: false,
         ),
         _MsgItem(
           id: 'm2-2',
           type: _MsgType.preparing,
-          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ กรุณารอสักครู่',
+          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ จัดเตรียมโดย: วิภา สุขใจ',
           createdAt: d(8, 10, 20),
           isNew: false,
         ),
         _MsgItem(
           id: 'm2-1',
           type: _MsgType.submitted,
-          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
           createdAt: d(8, 9, 30),
           isNew: false,
         ),
@@ -218,21 +215,28 @@ List<_RequestGroup> _buildMockGroups() {
         _MsgItem(
           id: 'm3-3',
           type: _MsgType.cancelled,
-          text: 'คำขอถูกยกเลิกโดยเจ้าหน้าที่ หากมีข้อสงสัยกรุณาติดต่อเจ้าหน้าที่โดยตรง',
+          text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ประวัติการขอ › รายละเอียด › เหตุผล',
+          textSpans: [
+            const TextSpan(text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ '),
+            const TextSpan(
+              text: 'ประวัติการขอ › รายละเอียด › เหตุผล',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
           createdAt: d(14, 11, 45),
           isNew: false,
         ),
         _MsgItem(
           id: 'm3-2',
           type: _MsgType.preparing,
-          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ กรุณารอสักครู่',
+          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ จัดเตรียมโดย: ประทีป มั่นคง',
           createdAt: d(14, 9, 0),
           isNew: false,
         ),
         _MsgItem(
           id: 'm3-1',
           type: _MsgType.submitted,
-          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
           createdAt: d(14, 8, 30),
           isNew: false,
         ),
@@ -247,20 +251,20 @@ List<_RequestGroup> _buildMockGroups() {
         _MsgItem(
           id: 'm4-2',
           type: _MsgType.cancelled,
-          text: 'คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว สามารถส่งคำขอใหม่ได้เมื่อต้องการ',
+          text: 'คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว',
           createdAt: d(21, 15, 10),
           isNew: false,
         ),
         _MsgItem(
           id: 'm4-1',
           type: _MsgType.submitted,
-          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
           createdAt: d(21, 14, 55),
           isNew: false,
         ),
       ],
     ),
-    // 5. เพิ่งส่งคำขอ — ยังไม่มีการดำเนินการ (1 ข้อความใหม่)
+    // 5. เพิ่งส่งคำขอ — 1 ข้อความใหม่
     _RequestGroup(
       requestId: 'mock-5',
       referenceNumber: 'NK-2568-00125',
@@ -269,7 +273,7 @@ List<_RequestGroup> _buildMockGroups() {
         _MsgItem(
           id: 'm5-1',
           type: _MsgType.submitted,
-          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย กรุณารอเจ้าหน้าที่ดำเนินการ',
+          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
           createdAt: d(30, 16, 5),
           isNew: true,
         ),
@@ -283,7 +287,9 @@ List<_RequestGroup> _buildMockGroups() {
 // ---------------------------------------------------------------------------
 
 class MessagesPage extends StatefulWidget {
-  const MessagesPage({super.key});
+  final ValueNotifier<int>? unreadNotifier;
+
+  const MessagesPage({super.key, this.unreadNotifier});
 
   @override
   State<MessagesPage> createState() => _MessagesPageState();
@@ -300,6 +306,7 @@ class _MessagesPageState extends State<MessagesPage> {
     if (_kUseMock) {
       _groups = _buildMockGroups();
       _isLoading = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => _notifyUnread());
     } else {
       _fetchData();
       _setupRealtime();
@@ -310,6 +317,10 @@ class _MessagesPageState extends State<MessagesPage> {
   void dispose() {
     _subscription?.unsubscribe();
     super.dispose();
+  }
+
+  void _notifyUnread() {
+    if (mounted) widget.unreadNotifier?.value = _totalUnread;
   }
 
   void _setupRealtime() {
@@ -397,6 +408,7 @@ class _MessagesPageState extends State<MessagesPage> {
           _groups = groups;
           _isLoading = false;
         });
+        _notifyUnread();
       }
     } catch (e) {
       debugPrint('MessagesPage fetch error: $e');
@@ -416,9 +428,7 @@ class _MessagesPageState extends State<MessagesPage> {
           .toList();
       if (unreadIds.isEmpty) return;
       await Supabase.instance.client.from('notification_reads').upsert(
-        unreadIds
-            .map((id) => {'notification_id': id, 'user_id': userId})
-            .toList(),
+        unreadIds.map((id) => {'notification_id': id, 'user_id': userId}).toList(),
         onConflict: 'notification_id,user_id',
       );
     }
@@ -430,6 +440,7 @@ class _MessagesPageState extends State<MessagesPage> {
           }
         }
       });
+      _notifyUnread();
     }
   }
 
@@ -442,9 +453,7 @@ class _MessagesPageState extends State<MessagesPage> {
       final unreadIds =
           group.messages.where((m) => m.isNew).map((m) => m.id).toList();
       await Supabase.instance.client.from('notification_reads').upsert(
-        unreadIds
-            .map((id) => {'notification_id': id, 'user_id': userId})
-            .toList(),
+        unreadIds.map((id) => {'notification_id': id, 'user_id': userId}).toList(),
         onConflict: 'notification_id,user_id',
       );
     }
@@ -454,6 +463,7 @@ class _MessagesPageState extends State<MessagesPage> {
           m.isNew = false;
         }
       });
+      _notifyUnread();
     }
   }
 
@@ -472,9 +482,9 @@ class _MessagesPageState extends State<MessagesPage> {
         titleSpacing: 24,
         title: Row(
           children: [
-            Text(
+            const Text(
               'ข้อความ',
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -485,7 +495,7 @@ class _MessagesPageState extends State<MessagesPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: Colors.red,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -524,9 +534,7 @@ class _MessagesPageState extends State<MessagesPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            )
+          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : _groups.isEmpty
               ? _buildEmpty()
               : _buildList(),
@@ -542,10 +550,7 @@ class _MessagesPageState extends State<MessagesPage> {
           const SizedBox(height: 12),
           Text(
             'ยังไม่มีข้อความ',
-            style: GoogleFonts.googleSans(
-              fontSize: 16,
-              color: Colors.grey[400],
-            ),
+            style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
       ),
@@ -664,7 +669,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                 padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
-                    // Status icon
+                    // Status icon (latest message)
                     Container(
                       width: 48,
                       height: 48,
@@ -675,7 +680,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                       child: Icon(latestCfg.icon, color: latestCfg.iconColor, size: 24),
                     ),
                     const SizedBox(width: 12),
-                    // Ref number + location
+                    // Ref + location row
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,7 +703,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: AppColors.primary,
+                                    color: Colors.red,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
@@ -716,11 +721,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(
-                                Icons.location_on_outlined,
-                                size: 13,
-                                color: Colors.grey[400],
-                              ),
+                              Icon(Icons.location_on_outlined, size: 13, color: Colors.grey[400]),
                               const SizedBox(width: 3),
                               Text(
                                 g.serviceCenter,
@@ -821,7 +822,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
 }
 
 // ---------------------------------------------------------------------------
-// Message bubble with timeline connector
+// Message bubble — IntrinsicHeight ทำให้เส้น timeline ต่อเนื่อง
 // ---------------------------------------------------------------------------
 
 class _MessageBubble extends StatelessWidget {
@@ -833,114 +834,116 @@ class _MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cfg = _typeConfigs[msg.type] ?? _typeConfigs[_MsgType.submitted]!;
+    final bodyStyle = GoogleFonts.googleSans(
+      fontSize: 14,
+      color: AppColors.textPrimary,
+      height: 1.5,
+    );
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+    return IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon + timeline connector
-          SizedBox(
-            width: 36,
-            child: Stack(
-              clipBehavior: Clip.none,
-              alignment: Alignment.topCenter,
-              children: [
-                if (!isLast)
-                  Positioned(
-                    top: 36,
-                    bottom: -12,
-                    left: 17,
-                    child: Container(
-                      width: 1.5,
-                      color: Colors.grey.shade200,
-                    ),
-                  ),
-                Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    color: cfg.iconBg,
-                    shape: BoxShape.circle,
-                    border: msg.isNew
-                        ? Border.all(color: cfg.iconColor, width: 1.5)
-                        : null,
-                  ),
-                  child: Icon(cfg.icon, size: 18, color: cfg.iconColor),
+          // ── Icon + เส้น timeline ──
+          Column(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: cfg.iconBg,
+                  shape: BoxShape.circle,
+                  border: msg.isNew
+                      ? Border.all(color: cfg.iconColor, width: 1.5)
+                      : null,
                 ),
-              ],
-            ),
+                child: Icon(cfg.icon, size: 18, color: cfg.iconColor),
+              ),
+              if (!isLast)
+                Expanded(
+                  child: Container(
+                    width: 1.5,
+                    color: Colors.grey.shade200,
+                  ),
+                ),
+            ],
           ),
           const SizedBox(width: 10),
-          // Bubble
+          // ── Bubble ──
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-              decoration: BoxDecoration(
-                color: msg.isNew ? AppColors.white : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: msg.isNew ? cfg.iconColor.withAlpha(40) : Colors.grey.shade200,
+            child: Padding(
+              // ระยะห่างระหว่าง bubble — อยู่ใน Expanded เพื่อให้เส้นยาวถึงไอคอนถัดไป
+              padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                decoration: BoxDecoration(
+                  color: msg.isNew ? AppColors.white : const Color(0xFFF5F5F5),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: msg.isNew
+                        ? cfg.iconColor.withAlpha(40)
+                        : Colors.grey.shade200,
+                  ),
+                  boxShadow: msg.isNew
+                      ? const [
+                          BoxShadow(
+                            color: AppColors.cardShadow,
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ]
+                      : null,
                 ),
-                boxShadow: msg.isNew
-                    ? const [
-                        BoxShadow(
-                          color: AppColors.cardShadow,
-                          blurRadius: 8,
-                          offset: Offset(0, 2),
-                        ),
-                      ]
-                    : null,
-              ),
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        cfg.label,
-                        style: GoogleFonts.googleSans(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: cfg.iconColor,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Padding(
-                        padding: EdgeInsets.only(right: msg.isNew ? 14 : 0),
-                        child: Text(
-                          msg.text,
+                child: Stack(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          cfg.label,
                           style: GoogleFonts.googleSans(
                             fontSize: 13,
-                            color: AppColors.textPrimary,
-                            height: 1.5,
+                            fontWeight: FontWeight.bold,
+                            color: cfg.iconColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Padding(
+                          padding: EdgeInsets.only(right: msg.isNew ? 14 : 0),
+                          child: msg.textSpans != null
+                              ? RichText(
+                                  text: TextSpan(
+                                    style: bodyStyle,
+                                    children: msg.textSpans,
+                                  ),
+                                )
+                              : Text(msg.text, style: bodyStyle),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          '${_formatTime(msg.createdAt)} น.',
+                          style: GoogleFonts.googleSans(
+                            fontSize: 11,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (msg.isNew)
+                      Positioned(
+                        top: 2,
+                        right: 2,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: BoxDecoration(
+                            color: cfg.iconColor,
+                            shape: BoxShape.circle,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(
-                        '${_formatTime(msg.createdAt)} น.',
-                        style: GoogleFonts.googleSans(
-                          fontSize: 11,
-                          color: Colors.grey[400],
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (msg.isNew)
-                    Positioned(
-                      top: 2,
-                      right: 2,
-                      child: Container(
-                        width: 7,
-                        height: 7,
-                        decoration: BoxDecoration(
-                          color: cfg.iconColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
