@@ -81,7 +81,7 @@ String _formatTime(DateTime utc) {
 }
 
 // ---------------------------------------------------------------------------
-// Type config
+// Type config — สีและไอคอนตรงกับ request_history_page
 // ---------------------------------------------------------------------------
 
 class _TypeConfig {
@@ -98,49 +98,42 @@ class _TypeConfig {
   });
 }
 
-const _typeConfigs = <_MsgType, _TypeConfig>{
+final _typeConfigs = <_MsgType, _TypeConfig>{
   _MsgType.submitted: _TypeConfig(
-    icon: Icons.send_rounded,
-    iconColor: AppColors.lubricant,
-    iconBg: AppColors.lubricantCardStart,
+    icon: Icons.assignment_outlined,
+    iconColor: AppColors.primary,
+    iconBg: AppColors.statusPendingLight,
     label: 'ส่งคำขอแล้ว',
   ),
   _MsgType.preparing: _TypeConfig(
-    icon: Icons.inventory_2_rounded,
-    iconColor: AppColors.primary,
-    iconBg: AppColors.primaryCardStart,
+    icon: Icons.inventory_2_outlined,
+    iconColor: AppColors.statusPreparing,
+    iconBg: AppColors.statusPreparingLight,
     label: 'กำลังเตรียม',
   ),
   _MsgType.ready: _TypeConfig(
-    icon: Icons.check_circle_rounded,
-    iconColor: AppColors.success,
-    iconBg: Color(0xFFE8F5E9),
+    icon: Icons.local_shipping_outlined,
+    iconColor: AppColors.statusReady,
+    iconBg: AppColors.statusReadyLight,
     label: 'พร้อมรับแล้ว',
   ),
   _MsgType.completed: _TypeConfig(
-    icon: Icons.done_all_rounded,
-    iconColor: AppColors.success,
-    iconBg: Color(0xFFE8F5E9),
+    icon: Icons.check_circle_outline,
+    iconColor: AppColors.statusCompleted,
+    iconBg: AppColors.statusCompletedLight,
     label: 'รับแล้ว',
   ),
   _MsgType.cancelled: _TypeConfig(
-    icon: Icons.cancel_rounded,
-    iconColor: AppColors.error,
-    iconBg: Color(0xFFFFEBEE),
+    icon: Icons.cancel_outlined,
+    iconColor: Colors.grey.shade600,
+    iconBg: Colors.grey.shade200,
     label: 'ถูกยกเลิก',
   ),
 };
 
 // ---------------------------------------------------------------------------
-// Page
+// Mock data
 // ---------------------------------------------------------------------------
-
-class MessagesPage extends StatefulWidget {
-  const MessagesPage({super.key});
-
-  @override
-  State<MessagesPage> createState() => _MessagesPageState();
-}
 
 // Set to true to bypass Supabase and show all mock cases
 const bool _kUseMock = true;
@@ -285,6 +278,17 @@ List<_RequestGroup> _buildMockGroups() {
   ];
 }
 
+// ---------------------------------------------------------------------------
+// Page
+// ---------------------------------------------------------------------------
+
+class MessagesPage extends StatefulWidget {
+  const MessagesPage({super.key});
+
+  @override
+  State<MessagesPage> createState() => _MessagesPageState();
+}
+
 class _MessagesPageState extends State<MessagesPage> {
   List<_RequestGroup> _groups = [];
   bool _isLoading = true;
@@ -358,14 +362,12 @@ class _MessagesPageState extends State<MessagesPage> {
         (rawReads as List).map((r) => r['notification_id'] as String),
       );
 
-      // Group by request_id
       final groupMap = <String, _RequestGroup>{};
       for (final n in rawNotifs as List) {
         final reqId = n['request_id'] as String? ?? '';
         final req = n['condom_requests'] as Map<String, dynamic>? ?? {};
         final refNum = req['reference_number'] as String? ?? reqId;
-        final center =
-            req['selected_service_center'] as String? ?? '';
+        final center = req['selected_service_center'] as String? ?? '';
 
         final item = _MsgItem(
           id: n['id'] as String,
@@ -387,7 +389,6 @@ class _MessagesPageState extends State<MessagesPage> {
         }
       }
 
-      // Sort groups by latest notification date
       final groups = groupMap.values.toList()
         ..sort((a, b) => b.latestDate.compareTo(a.latestDate));
 
@@ -461,84 +462,74 @@ class _MessagesPageState extends State<MessagesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final unread = _totalUnread;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F8F8),
-      appBar: _buildAppBar(),
+      backgroundColor: AppColors.white,
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        titleSpacing: 24,
+        title: Row(
+          children: [
+            Text(
+              'ข้อความ',
+              style: const TextStyle(
+                color: AppColors.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            if (unread > 0) ...[
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '$unread ใหม่',
+                  style: GoogleFonts.googleSans(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.white,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          if (unread > 0)
+            Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: TextButton(
+                onPressed: _markAllRead,
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'อ่านทั้งหมด',
+                  style: GoogleFonts.googleSans(
+                    fontSize: 13,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? const Center(
+              child: CircularProgressIndicator(color: AppColors.primary),
+            )
           : _groups.isEmpty
               ? _buildEmpty()
               : _buildList(),
-    );
-  }
-
-  PreferredSizeWidget _buildAppBar() {
-    final unread = _totalUnread;
-    return PreferredSize(
-      preferredSize: const Size.fromHeight(56),
-      child: Container(
-        color: AppColors.white,
-        child: SafeArea(
-          bottom: false,
-          child: Container(
-            height: 56,
-            decoration: const BoxDecoration(
-              color: AppColors.white,
-              border: Border(
-                bottom: BorderSide(color: Color(0xFFE0E0E0)),
-              ),
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
-                Text(
-                  'ข้อความ',
-                  style: GoogleFonts.prompt(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                if (unread > 0) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      '$unread ใหม่',
-                      style: GoogleFonts.prompt(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.white,
-                      ),
-                    ),
-                  ),
-                ],
-                const Spacer(),
-                if (unread > 0)
-                  TextButton(
-                    onPressed: _markAllRead,
-                    style: TextButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 4),
-                      minimumSize: Size.zero,
-                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                    child: Text(
-                      'อ่านทั้งหมด',
-                      style: GoogleFonts.prompt(
-                        fontSize: 13,
-                        color: AppColors.textHint,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 
@@ -547,11 +538,14 @@ class _MessagesPageState extends State<MessagesPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.chat_bubble_outline, size: 48, color: Color(0xFFDDDDDD)),
+          Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
           const SizedBox(height: 12),
           Text(
             'ยังไม่มีข้อความ',
-            style: GoogleFonts.prompt(fontSize: 14, color: AppColors.textHint),
+            style: GoogleFonts.googleSans(
+              fontSize: 16,
+              color: Colors.grey[400],
+            ),
           ),
         ],
       ),
@@ -563,7 +557,8 @@ class _MessagesPageState extends State<MessagesPage> {
       color: AppColors.primary,
       onRefresh: _fetchData,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         itemCount: _groups.length,
         itemBuilder: (context, i) => _RequestGroupTile(
           group: _groups[i],
@@ -638,176 +633,188 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
   @override
   Widget build(BuildContext context) {
     final g = widget.group;
-    final latestCfg = _typeConfigs[g.latestMessage.type] ?? _typeConfigs[_MsgType.submitted]!;
+    final latestCfg =
+        _typeConfigs[g.latestMessage.type] ?? _typeConfigs[_MsgType.submitted]!;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x12000000),
+            color: AppColors.cardShadow,
             blurRadius: 10,
-            offset: Offset(0, 2),
+            offset: Offset(0, 4),
           ),
         ],
       ),
-      clipBehavior: Clip.antiAlias,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          InkWell(
-            onTap: _toggle,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                border: _open
-                    ? const Border(
-                        bottom: BorderSide(color: Color(0xFFE0E0E0)),
-                      )
-                    : null,
-              ),
-              child: Row(
-                children: [
-                  // Tag icon
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryCardStart,
-                      borderRadius: BorderRadius.circular(14),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // ── Header ──
+            InkWell(
+              onTap: _toggle,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    // Status icon
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: latestCfg.iconBg,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(latestCfg.icon, color: latestCfg.iconColor, size: 24),
                     ),
-                    child: const Icon(
-                      Icons.tag_rounded,
-                      size: 22,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  // Title + preview
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              g.referenceNumber,
-                              style: GoogleFonts.prompt(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
+                    const SizedBox(width: 12),
+                    // Ref number + location
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                g.referenceNumber,
+                                style: GoogleFonts.googleSans(
+                                  color: AppColors.textPrimary,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            if (g.unreadCount > 0) ...[
+                              if (g.unreadCount > 0) ...[
+                                const SizedBox(width: 6),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 7,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    '${g.unreadCount}',
+                                    style: GoogleFonts.googleSans(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: AppColors.white,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.location_on_outlined,
+                                size: 13,
+                                color: Colors.grey[400],
+                              ),
+                              const SizedBox(width: 3),
+                              Text(
+                                g.serviceCenter,
+                                style: GoogleFonts.googleSans(
+                                  fontSize: 13,
+                                  color: Colors.grey[500],
+                                ),
+                              ),
                               const SizedBox(width: 6),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 7,
-                                  vertical: 1,
+                                  horizontal: 8,
+                                  vertical: 2,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.primary,
-                                  borderRadius: BorderRadius.circular(10),
+                                  color: latestCfg.iconBg,
+                                  borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  '${g.unreadCount}',
-                                  style: GoogleFonts.prompt(
+                                  latestCfg.label,
+                                  style: GoogleFonts.googleSans(
                                     fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.white,
-                                    height: 1.6,
+                                    fontWeight: FontWeight.bold,
+                                    color: latestCfg.iconColor,
                                   ),
                                 ),
                               ),
                             ],
-                          ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Date + chevron
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          _formatThaiDate(g.latestDate),
+                          style: GoogleFonts.googleSans(
+                            fontSize: 11,
+                            color: Colors.grey[400],
+                          ),
                         ),
-                        const SizedBox(height: 2),
-                        RichText(
-                          overflow: TextOverflow.ellipsis,
-                          text: TextSpan(
+                        const SizedBox(height: 6),
+                        RotationTransition(
+                          turns: _rotateAnim,
+                          child: Icon(
+                            Icons.expand_more_rounded,
+                            size: 20,
+                            color: Colors.grey[400],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // ── Expanded messages ──
+            AnimatedSize(
+              duration: const Duration(milliseconds: 250),
+              curve: Curves.easeInOut,
+              child: _open
+                  ? Column(
+                      children: [
+                        Divider(height: 1, color: Colors.grey.shade200),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                          child: Column(
                             children: [
-                              TextSpan(
-                                text: '${g.serviceCenter}  ·  ',
-                                style: GoogleFonts.prompt(
-                                  fontSize: 12,
-                                  color: AppColors.textHint,
+                              Text(
+                                _formatThaiDate(g.latestDate),
+                                style: GoogleFonts.googleSans(
+                                  fontSize: 11,
+                                  color: Colors.grey[400],
                                 ),
                               ),
-                              TextSpan(
-                                text: latestCfg.label,
-                                style: GoogleFonts.prompt(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: latestCfg.iconColor,
-                                ),
-                              ),
+                              const SizedBox(height: 14),
+                              ...List.generate(g.messages.length, (i) {
+                                return _MessageBubble(
+                                  msg: g.messages[i],
+                                  isLast: i == g.messages.length - 1,
+                                );
+                              }),
                             ],
                           ),
                         ),
                       ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  // Date + chevron
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        _formatThaiDate(g.latestDate),
-                        style: GoogleFonts.prompt(
-                          fontSize: 11,
-                          color: AppColors.textHint,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      RotationTransition(
-                        turns: _rotateAnim,
-                        child: const Icon(
-                          Icons.expand_more_rounded,
-                          size: 18,
-                          color: AppColors.textHint,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+                    )
+                  : const SizedBox.shrink(),
             ),
-          ),
-          // Expanded messages
-          AnimatedSize(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeInOut,
-            child: _open
-                ? Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          _formatThaiDate(g.latestDate),
-                          style: GoogleFonts.prompt(
-                            fontSize: 11,
-                            color: AppColors.textHint,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ...List.generate(g.messages.length, (i) {
-                          return _MessageBubble(
-                            msg: g.messages[i],
-                            isLast: i == g.messages.length - 1,
-                          );
-                        }),
-                      ],
-                    ),
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -828,11 +835,11 @@ class _MessageBubble extends StatelessWidget {
     final cfg = _typeConfigs[msg.type] ?? _typeConfigs[_MsgType.submitted]!;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: isLast ? 0 : 14),
+      padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Icon + timeline line
+          // Icon + timeline connector
           SizedBox(
             width: 36,
             child: Stack(
@@ -842,11 +849,11 @@ class _MessageBubble extends StatelessWidget {
                 if (!isLast)
                   Positioned(
                     top: 36,
-                    bottom: -14,
+                    bottom: -12,
                     left: 17,
-                    child: const SizedBox(
-                      width: 2,
-                      child: ColoredBox(color: Color(0xFFF0F0F0)),
+                    child: Container(
+                      width: 1.5,
+                      color: Colors.grey.shade200,
                     ),
                   ),
                 Container(
@@ -855,10 +862,9 @@ class _MessageBubble extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: cfg.iconBg,
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: msg.isNew ? cfg.iconColor : Colors.transparent,
-                      width: 2,
-                    ),
+                    border: msg.isNew
+                        ? Border.all(color: cfg.iconColor, width: 1.5)
+                        : null,
                   ),
                   child: Icon(cfg.icon, size: 18, color: cfg.iconColor),
                 ),
@@ -871,23 +877,20 @@ class _MessageBubble extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
               decoration: BoxDecoration(
-                color: msg.isNew ? AppColors.white : const Color(0xFFFAFAFA),
-                borderRadius: BorderRadius.circular(14),
+                color: msg.isNew ? AppColors.white : const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: msg.isNew
-                      ? cfg.iconColor.withAlpha(34)
-                      : const Color(0xFFE0E0E0),
-                  width: msg.isNew ? 1.5 : 1,
+                  color: msg.isNew ? cfg.iconColor.withAlpha(40) : Colors.grey.shade200,
                 ),
-                boxShadow: [
-                  BoxShadow(
-                    color: msg.isNew
-                        ? const Color(0x14000000)
-                        : const Color(0x0A000000),
-                    blurRadius: msg.isNew ? 10 : 3,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
+                boxShadow: msg.isNew
+                    ? const [
+                        BoxShadow(
+                          color: AppColors.cardShadow,
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ]
+                    : null,
               ),
               child: Stack(
                 children: [
@@ -896,9 +899,9 @@ class _MessageBubble extends StatelessWidget {
                     children: [
                       Text(
                         cfg.label,
-                        style: GoogleFonts.prompt(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
+                        style: GoogleFonts.googleSans(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
                           color: cfg.iconColor,
                         ),
                       ),
@@ -907,7 +910,7 @@ class _MessageBubble extends StatelessWidget {
                         padding: EdgeInsets.only(right: msg.isNew ? 14 : 0),
                         child: Text(
                           msg.text,
-                          style: GoogleFonts.prompt(
+                          style: GoogleFonts.googleSans(
                             fontSize: 13,
                             color: AppColors.textPrimary,
                             height: 1.5,
@@ -917,20 +920,20 @@ class _MessageBubble extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text(
                         '${_formatTime(msg.createdAt)} น.',
-                        style: GoogleFonts.prompt(
+                        style: GoogleFonts.googleSans(
                           fontSize: 11,
-                          color: AppColors.textHint,
+                          color: Colors.grey[400],
                         ),
                       ),
                     ],
                   ),
                   if (msg.isNew)
                     Positioned(
-                      top: 0,
-                      right: 0,
+                      top: 2,
+                      right: 2,
                       child: Container(
-                        width: 8,
-                        height: 8,
+                        width: 7,
+                        height: 7,
                         decoration: BoxDecoration(
                           color: cfg.iconColor,
                           shape: BoxShape.circle,
