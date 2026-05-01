@@ -236,9 +236,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     final status = _currentData.status;
 
     if (status.isCancelled) {
-      final cancelLabel = status == RequestStatus.cancelledByStaff
-          ? 'ยกเลิกโดยเจ้าหน้าที่'
-          : 'ยกเลิก';
+      const cancelLabel = 'ยกเลิก';
       return Row(
         children: [
           _buildStepNode(
