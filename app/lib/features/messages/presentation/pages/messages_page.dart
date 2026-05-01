@@ -142,6 +142,149 @@ class MessagesPage extends StatefulWidget {
   State<MessagesPage> createState() => _MessagesPageState();
 }
 
+// Set to true to bypass Supabase and show all mock cases
+const bool _kUseMock = true;
+
+List<_RequestGroup> _buildMockGroups() {
+  final now = DateTime.now().toUtc();
+  DateTime d(int daysAgo, int hour, int minute) =>
+      now.subtract(Duration(days: daysAgo)).copyWith(hour: hour, minute: minute, second: 0);
+
+  return [
+    // 1. กำลังดำเนินการ — มีข้อความใหม่ 2 รายการ (preparing + ready)
+    _RequestGroup(
+      requestId: 'mock-1',
+      referenceNumber: 'NK-2568-00145',
+      serviceCenter: 'รพ.โพนพิสัย',
+      messages: [
+        _MsgItem(
+          id: 'm1-3',
+          type: _MsgType.ready,
+          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับตามวันและเวลาที่นัด',
+          createdAt: d(0, 10, 23),
+          isNew: true,
+        ),
+        _MsgItem(
+          id: 'm1-2',
+          type: _MsgType.preparing,
+          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ กรุณารอสักครู่',
+          createdAt: d(0, 9, 14),
+          isNew: true,
+        ),
+        _MsgItem(
+          id: 'm1-1',
+          type: _MsgType.submitted,
+          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          createdAt: d(0, 8, 50),
+          isNew: false,
+        ),
+      ],
+    ),
+    // 2. รับของแล้ว — flow สมบูรณ์ทุกขั้นตอน
+    _RequestGroup(
+      requestId: 'mock-2',
+      referenceNumber: 'NK-2568-00141',
+      serviceCenter: 'รพ.สต.วัดหลวง',
+      messages: [
+        _MsgItem(
+          id: 'm2-4',
+          type: _MsgType.completed,
+          text: 'คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว ขอบคุณที่ใช้บริการ MyCareNK',
+          createdAt: d(7, 14, 35),
+          isNew: false,
+        ),
+        _MsgItem(
+          id: 'm2-3',
+          type: _MsgType.ready,
+          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด',
+          createdAt: d(8, 13, 5),
+          isNew: false,
+        ),
+        _MsgItem(
+          id: 'm2-2',
+          type: _MsgType.preparing,
+          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ กรุณารอสักครู่',
+          createdAt: d(8, 10, 20),
+          isNew: false,
+        ),
+        _MsgItem(
+          id: 'm2-1',
+          type: _MsgType.submitted,
+          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          createdAt: d(8, 9, 30),
+          isNew: false,
+        ),
+      ],
+    ),
+    // 3. ยกเลิกโดยเจ้าหน้าที่
+    _RequestGroup(
+      requestId: 'mock-3',
+      referenceNumber: 'NK-2568-00138',
+      serviceCenter: 'อบต.วัดหลวง',
+      messages: [
+        _MsgItem(
+          id: 'm3-3',
+          type: _MsgType.cancelled,
+          text: 'คำขอถูกยกเลิกโดยเจ้าหน้าที่ หากมีข้อสงสัยกรุณาติดต่อเจ้าหน้าที่โดยตรง',
+          createdAt: d(14, 11, 45),
+          isNew: false,
+        ),
+        _MsgItem(
+          id: 'm3-2',
+          type: _MsgType.preparing,
+          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ กรุณารอสักครู่',
+          createdAt: d(14, 9, 0),
+          isNew: false,
+        ),
+        _MsgItem(
+          id: 'm3-1',
+          type: _MsgType.submitted,
+          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          createdAt: d(14, 8, 30),
+          isNew: false,
+        ),
+      ],
+    ),
+    // 4. ยกเลิกโดยผู้ใช้
+    _RequestGroup(
+      requestId: 'mock-4',
+      referenceNumber: 'NK-2568-00130',
+      serviceCenter: 'สสจ.หนองคาย',
+      messages: [
+        _MsgItem(
+          id: 'm4-2',
+          type: _MsgType.cancelled,
+          text: 'คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว สามารถส่งคำขอใหม่ได้เมื่อต้องการ',
+          createdAt: d(21, 15, 10),
+          isNew: false,
+        ),
+        _MsgItem(
+          id: 'm4-1',
+          type: _MsgType.submitted,
+          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย',
+          createdAt: d(21, 14, 55),
+          isNew: false,
+        ),
+      ],
+    ),
+    // 5. เพิ่งส่งคำขอ — ยังไม่มีการดำเนินการ (1 ข้อความใหม่)
+    _RequestGroup(
+      requestId: 'mock-5',
+      referenceNumber: 'NK-2568-00125',
+      serviceCenter: 'รพ.โพนพิสัย',
+      messages: [
+        _MsgItem(
+          id: 'm5-1',
+          type: _MsgType.submitted,
+          text: 'ส่งคำขอแล้ว ระบบได้รับคำขอของคุณเรียบร้อย กรุณารอเจ้าหน้าที่ดำเนินการ',
+          createdAt: d(30, 16, 5),
+          isNew: true,
+        ),
+      ],
+    ),
+  ];
+}
+
 class _MessagesPageState extends State<MessagesPage> {
   List<_RequestGroup> _groups = [];
   bool _isLoading = true;
@@ -150,8 +293,13 @@ class _MessagesPageState extends State<MessagesPage> {
   @override
   void initState() {
     super.initState();
-    _fetchData();
-    _setupRealtime();
+    if (_kUseMock) {
+      _groups = _buildMockGroups();
+      _isLoading = false;
+    } else {
+      _fetchData();
+      _setupRealtime();
+    }
   }
 
   @override
@@ -256,25 +404,23 @@ class _MessagesPageState extends State<MessagesPage> {
   }
 
   Future<void> _markAllRead() async {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) return;
-    final userId = session.user.id;
-
-    final unreadIds = _groups
-        .expand((g) => g.messages)
-        .where((m) => m.isNew)
-        .map((m) => m.id)
-        .toList();
-
-    if (unreadIds.isEmpty) return;
-
-    await Supabase.instance.client.from('notification_reads').upsert(
-      unreadIds
-          .map((id) => {'notification_id': id, 'user_id': userId})
-          .toList(),
-      onConflict: 'notification_id,user_id',
-    );
-
+    if (!_kUseMock) {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) return;
+      final userId = session.user.id;
+      final unreadIds = _groups
+          .expand((g) => g.messages)
+          .where((m) => m.isNew)
+          .map((m) => m.id)
+          .toList();
+      if (unreadIds.isEmpty) return;
+      await Supabase.instance.client.from('notification_reads').upsert(
+        unreadIds
+            .map((id) => {'notification_id': id, 'user_id': userId})
+            .toList(),
+        onConflict: 'notification_id,user_id',
+      );
+    }
     if (mounted) {
       setState(() {
         for (final g in _groups) {
@@ -287,20 +433,20 @@ class _MessagesPageState extends State<MessagesPage> {
   }
 
   Future<void> _markGroupRead(_RequestGroup group) async {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) return;
-    final userId = session.user.id;
-
-    final unreadIds = group.messages.where((m) => m.isNew).map((m) => m.id).toList();
-    if (unreadIds.isEmpty) return;
-
-    await Supabase.instance.client.from('notification_reads').upsert(
-      unreadIds
-          .map((id) => {'notification_id': id, 'user_id': userId})
-          .toList(),
-      onConflict: 'notification_id,user_id',
-    );
-
+    if (group.messages.every((m) => !m.isNew)) return;
+    if (!_kUseMock) {
+      final session = Supabase.instance.client.auth.currentSession;
+      if (session == null) return;
+      final userId = session.user.id;
+      final unreadIds =
+          group.messages.where((m) => m.isNew).map((m) => m.id).toList();
+      await Supabase.instance.client.from('notification_reads').upsert(
+        unreadIds
+            .map((id) => {'notification_id': id, 'user_id': userId})
+            .toList(),
+        onConflict: 'notification_id,user_id',
+      );
+    }
     if (mounted) {
       setState(() {
         for (final m in group.messages) {
