@@ -79,13 +79,6 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    if (_nationality == 'อื่นๆ' && _customNationalityController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาระบุสัญชาติ'), backgroundColor: Colors.red),
-      );
-      return;
-    }
-
     setState(() => _isLoading = true);
 
     final nationalityValue = _nationality == 'อื่นๆ'
@@ -469,6 +462,13 @@ class _RegisterPageState extends State<RegisterPage> {
                           vertical: 16.0,
                         ),
                       ),
+                      validator: (_) {
+                        if (_nationality == 'อื่นๆ' &&
+                            _customNationalityController.text.trim().isEmpty) {
+                          return 'กรุณาระบุสัญชาติ';
+                        }
+                        return null;
+                      },
                     ),
                   ),
                 ],
