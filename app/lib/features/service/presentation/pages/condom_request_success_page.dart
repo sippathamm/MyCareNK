@@ -211,13 +211,13 @@ class CondomRequestSuccessPage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 20),
                   Text(
                     'หมายเลขอ้างอิง: $referenceNumber',
                     style: GoogleFonts.googleSans(
                         fontSize: 14, color: AppColors.textHint),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
                     height: 52,
