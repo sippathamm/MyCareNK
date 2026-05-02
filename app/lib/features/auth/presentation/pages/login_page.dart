@@ -160,7 +160,7 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
                       hintText: 'ชื่อผู้ใช้งาน',
-                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400]),
+                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -192,7 +192,7 @@ class _LoginPageState extends State<LoginPage> {
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'รหัสผ่าน',
-                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400]),
+                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
