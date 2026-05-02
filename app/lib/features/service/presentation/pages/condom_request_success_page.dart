@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import 'request_history_page.dart';
 
 class CondomRequestSuccessPage extends StatelessWidget {
   final Map<int, int> quantities;
@@ -101,7 +102,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'ส่งข้อมูลสำเร็จ!',
+                    'ส่งคำขอสำเร็จ!',
                     style: GoogleFonts.googleSans(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -230,11 +231,35 @@ class CondomRequestSuccessPage extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                       ),
-                      child: Text('กลับไปบริการ',
+                      child: Text('กลับหน้าบริการ',
                           style: GoogleFonts.googleSans(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.white)),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: () {
+                        Navigator.of(context)
+                            .popUntil((route) => route.isFirst);
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const RequestHistoryPage()),
+                        );
+                      },
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: AppColors.primary),
+                        foregroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: Text('ดูประวัติคำขอ',
+                          style: GoogleFonts.googleSans(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],

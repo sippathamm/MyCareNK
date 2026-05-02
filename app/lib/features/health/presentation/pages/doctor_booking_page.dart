@@ -693,10 +693,20 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         'นัดพบแพทย์',
         () => Navigator.of(context).popUntil((r) => r.isFirst),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
-        child: Column(
-          children: [
+      body: Column(
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
+            ),
+            child: _buildStepIndicator(),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 32, 24, 32),
+              child: Column(
+                children: [
             Container(
               width: 88,
               height: 88,
@@ -813,7 +823,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             ),
             const SizedBox(height: 28),
             _PrimaryBtn(
-              label: 'กลับหน้าหลัก',
+              label: 'กลับหน้าบริการ',
               onPressed: () =>
                   Navigator.of(context).popUntil((r) => r.isFirst),
             ),
@@ -829,8 +839,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 );
               },
             ),
-          ],
-        ),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
