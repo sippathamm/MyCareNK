@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/recovery_service.dart';
 import 'recovery_codes_display_page.dart';
@@ -61,9 +62,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง',
-            ),
+            content: Text(result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง'),
             backgroundColor: Colors.red,
           ),
         );
@@ -83,8 +82,6 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -93,12 +90,12 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'ลืมรหัสผ่าน',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -113,35 +110,55 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+
+                // Icon
                 Container(
-                  width: 72,
-                  height: 72,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!, width: 2),
-                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.primaryBackground,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.primaryLight, width: 1.5),
                   ),
-                  child: Icon(Icons.lock_reset, color: colorScheme.primary, size: 40),
+                  child: const Icon(
+                    Icons.lock_reset,
+                    color: AppColors.primary,
+                    size: 44,
+                  ),
                 ),
-                const SizedBox(height: 24.0),
-                const Text(
-                  'กรอกรหัสผ่านใหม่',
-                  style: TextStyle(
+                const SizedBox(height: 16),
+
+                Text(
+                  'ตั้งรหัสผ่านใหม่',
+                  style: GoogleFonts.googleSans(
                     fontSize: 18,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 32.0),
+                const SizedBox(height: 6),
+                Text(
+                  'รหัสผ่านใหม่ต้องต่างจากรหัสผ่านเดิม',
+                  style: GoogleFonts.googleSans(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                const SizedBox(height: 32),
 
-                // New Password Field
+                // New Password
                 _buildInputBox(
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'รหัสผ่านใหม่ (อย่างน้อย 8 ตัวอักษร)',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintText: 'รหัสผ่านใหม่',
+                      hintStyle: GoogleFonts.googleSans(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -171,16 +188,34 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'ต้องมีทั้งตัวอักษรและตัวเลข อย่างน้อย 8 ตัว',
+                      style: GoogleFonts.googleSans(
+                        fontSize: 12,
+                        color: Colors.grey[500],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
 
-                // Confirm Password Field
+                // Confirm Password
                 _buildInputBox(
                   child: TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'ยืนยันรหัสผ่านใหม่',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: GoogleFonts.googleSans(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -211,15 +246,17 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                   ),
                 ),
 
-                const SizedBox(height: 48.0),
+                const SizedBox(height: 48),
+
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 52,
                   child: FilledButton(
                     onPressed: _isLoading ? null : _onConfirm,
                     style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -233,10 +270,10 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
-                            'ตกลง',
-                            style: TextStyle(
-                              fontSize: 16.0,
+                        : Text(
+                            'ยืนยัน',
+                            style: GoogleFonts.googleSans(
+                              fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -254,7 +291,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: child,
     );

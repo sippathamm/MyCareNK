@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'forgot_password_recovery_code_page.dart';
 
@@ -32,8 +33,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -42,12 +41,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'ลืมรหัสผ่าน',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -62,36 +61,59 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+
+                // Icon
                 Container(
-                  width: 72,
-                  height: 72,
+                  width: 80,
+                  height: 80,
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey[300]!, width: 2),
-                    borderRadius: BorderRadius.circular(16),
+                    color: AppColors.primaryBackground,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.primaryLight, width: 1.5),
                   ),
-                  child: Icon(Icons.person_outline, color: colorScheme.primary, size: 40),
+                  child: const Icon(
+                    Icons.person_outline,
+                    color: AppColors.primary,
+                    size: 44,
+                  ),
                 ),
-                const SizedBox(height: 24.0),
-                const Text(
+                const SizedBox(height: 16),
+
+                Text(
                   'กรอกชื่อผู้ใช้งานของคุณ',
-                  style: TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 18,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
-                const SizedBox(height: 24.0),
+                const SizedBox(height: 6),
+                Text(
+                  'เราจะพาคุณไปยืนยันตัวตนด้วยรหัสกู้คืน',
+                  style: GoogleFonts.googleSans(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+
+                // Username field
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(8.0),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: TextFormField(
                     controller: _usernameController,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       hintText: 'ชื่อผู้ใช้งาน',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: GoogleFonts.googleSans(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
                       prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -113,31 +135,29 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     },
                   ),
                 ),
-                const SizedBox(height: 48.0),
+
+                const SizedBox(height: 48),
+
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 52,
                   child: FilledButton(
                     onPressed: _onNext,
                     style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'ถัดไป',
-                      style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.googleSans(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(height: 16.0),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'ต้องการความช่วยเหลือ?',
-                    style: TextStyle(color: colorScheme.primary),
                   ),
                 ),
               ],

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/recovery_service.dart';
 import 'forgot_password_reset_page.dart';
@@ -79,9 +80,7 @@ class _ForgotPasswordRecoveryCodePageState
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง',
-            ),
+            content: Text(result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง'),
             backgroundColor: Colors.red,
           ),
         );
@@ -101,8 +100,6 @@ class _ForgotPasswordRecoveryCodePageState
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -111,12 +108,12 @@ class _ForgotPasswordRecoveryCodePageState
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'ลืมรหัสผ่าน',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -129,35 +126,54 @@ class _ForgotPasswordRecoveryCodePageState
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              SizedBox(height: MediaQuery.of(context).size.height * 0.05),
+              SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+
+              // Icon
               Container(
-                width: 72,
-                height: 72,
+                width: 80,
+                height: 80,
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey[300]!, width: 2),
-                  borderRadius: BorderRadius.circular(16),
+                  color: AppColors.primaryBackground,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: AppColors.primaryLight, width: 1.5),
                 ),
-                child: Icon(Icons.lock_outline, color: colorScheme.primary, size: 40),
+                child: const Icon(
+                  Icons.key_outlined,
+                  color: AppColors.primary,
+                  size: 44,
+                ),
               ),
-              const SizedBox(height: 24.0),
-              const Text(
-                'กรอกรหัสผ่านกู้คืนบัญชี',
-                style: TextStyle(
+              const SizedBox(height: 16),
+
+              Text(
+                'กรอกรหัสกู้คืนบัญชี',
+                style: GoogleFonts.googleSans(
                   fontSize: 18,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 32.0),
+              const SizedBox(height: 6),
+              Text(
+                'กรอกรหัส 6 หลักที่บันทึกไว้',
+                style: GoogleFonts.googleSans(
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 32),
+
+              // 6-digit code input
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: List.generate(6, (index) {
                   return Container(
-                    width: 45,
-                    height: 55,
+                    width: 46,
+                    height: 56,
                     decoration: BoxDecoration(
                       color: Colors.grey[100],
                       borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: Center(
                       child: TextField(
@@ -171,9 +187,10 @@ class _ForgotPasswordRecoveryCodePageState
                           LengthLimitingTextInputFormatter(1),
                         ],
                         maxLength: 1,
-                        style: const TextStyle(
-                          fontSize: 24,
+                        style: GoogleFonts.googleSans(
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
                         ),
                         decoration: const InputDecoration(
                           counterText: '',
@@ -185,15 +202,18 @@ class _ForgotPasswordRecoveryCodePageState
                   );
                 }),
               ),
-              const SizedBox(height: 48.0),
+
+              const SizedBox(height: 48),
+
               SizedBox(
                 width: double.infinity,
-                height: 48,
+                height: 52,
                 child: FilledButton(
                   onPressed: _isLoading ? null : _onNext,
                   style: FilledButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
+                    backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24),
                     ),
@@ -207,21 +227,13 @@ class _ForgotPasswordRecoveryCodePageState
                             strokeWidth: 2,
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'ถัดไป',
-                          style: TextStyle(
-                            fontSize: 16.0,
+                          style: GoogleFonts.googleSans(
+                            fontSize: 16,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'ต้องการความช่วยเหลือ?',
-                  style: TextStyle(color: colorScheme.primary),
                 ),
               ),
             ],
