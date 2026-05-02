@@ -24,7 +24,7 @@ class ShortcutMenu extends StatelessWidget {
           icon: Icons.menu_book_outlined,
           label: 'คู่มือการใช้',
           iconColor: AppColors.lubricant,
-          iconBg: AppColors.lubricantCardStart,
+          iconBg: AppColors.statusPreparingLight,
         ),
         const SizedBox(width: 16),
         _buildShortcutItem(

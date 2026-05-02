@@ -495,7 +495,7 @@ class _MessagesPageState extends State<MessagesPage> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
-                  color: Colors.red,
+                  color: AppColors.error,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
@@ -703,7 +703,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                                     vertical: 2,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: Colors.red,
+                                    color: AppColors.error,
                                     borderRadius: BorderRadius.circular(10),
                                   ),
                                   child: Text(
