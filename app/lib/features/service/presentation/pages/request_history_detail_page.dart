@@ -84,9 +84,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'รายละเอียดคำขอ',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -333,7 +333,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 ? Icon(icon, color: Colors.white, size: 14)
                 : Text(
                     '${number ?? ''}',
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: (isCurrent || isDone)
@@ -346,7 +346,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         const SizedBox(height: 4),
         Text(
           label,
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             fontSize: 11,
             fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
             color: labelColor ?? AppColors.textMuted,
@@ -416,13 +416,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(label,
-                  style: const TextStyle(
+                  style: GoogleFonts.googleSans(
                       fontSize: 14, color: AppColors.textSecondary)),
               Flexible(
                 child: Text(
                   value,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -443,11 +443,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (totalCondoms == 0) return const SizedBox();
 
     return _buildCard(
-      header: const Row(children: [
-        Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
-        SizedBox(width: 8),
+      header: Row(children: [
+        const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
         Text('ถุงยางอนามัย',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
@@ -458,11 +458,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('รวม',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text('รวม',
+                  style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.bold)),
               Text(
                 '$totalCondoms ชิ้น',
-                style: const TextStyle(
+                style: GoogleFonts.googleSans(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary),
@@ -478,11 +478,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.lubricantQuantity == 0) return const SizedBox();
 
     return _buildCard(
-      header: const Row(children: [
-        Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
-        SizedBox(width: 8),
+      header: Row(children: [
+        const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
         Text('เพิ่มเติม',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: _buildInfoRow('เจลหล่อลื่น', '${_currentData.lubricantQuantity} ชิ้น'),
@@ -509,11 +509,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     }
 
     return _buildCard(
-      header: const Row(children: [
-        Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
-        SizedBox(width: 8),
+      header: Row(children: [
+        const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
         Text('สถานบริการ วันที่และเวลารับ',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
@@ -530,18 +530,18 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.message.isEmpty) return const SizedBox();
 
     return _buildCard(
-      header: const Row(children: [
-        Icon(Icons.comment_outlined, color: Colors.white, size: 18),
-        SizedBox(width: 8),
+      header: Row(children: [
+        const Icon(Icons.comment_outlined, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
         Text('ฝากข้อความ',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Align(
         alignment: Alignment.centerLeft,
         child: Text(
           _currentData.message,
-          style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
+          style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textPrimary),
         ),
       ),
     );
@@ -552,18 +552,18 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.cancelReason == null || _currentData.cancelReason!.isEmpty) return const SizedBox();
 
     return _buildCard(
-      header: const Row(children: [
-        Icon(Icons.info_outline, color: Colors.white, size: 18),
-        SizedBox(width: 8),
+      header: Row(children: [
+        const Icon(Icons.info_outline, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
         Text('เหตุผลที่ยกเลิก',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Align(
         alignment: Alignment.centerLeft,
         child: Text(
           _currentData.cancelReason!,
-          style: const TextStyle(fontSize: 16, color: AppColors.error),
+          style: GoogleFonts.googleSans(fontSize: 16, color: AppColors.error),
         ),
       ),
     );
@@ -636,13 +636,13 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         elevation: 24,
         shadowColor: Colors.black38,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text(
+        title: Text(
           'ยืนยันการยกเลิกคำขอ',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
         ),
-        content: const Text(
+        content: Text(
           'คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?\nการยกเลิกจะคืนสิทธิ์การรับให้กับคุณทันที',
-          style: TextStyle(fontSize: 15, height: 1.6),
+          style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
@@ -656,9 +656,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
-              child: const Text('ยืนยันยกเลิก',
-                  style:
-                      TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              child: Text('ยืนยันยกเลิก',
+                  style: GoogleFonts.googleSans(
+                      fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ),
           const SizedBox(height: 8),
@@ -673,9 +673,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
-              child: const Text('ไม่ยกเลิก',
-                  style:
-                      TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+              child: Text('ไม่ยกเลิก',
+                  style: GoogleFonts.googleSans(
+                      fontSize: 15, fontWeight: FontWeight.bold)),
             ),
           ),
         ],
@@ -691,19 +691,20 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       children: [
         SizedBox(
           width: double.infinity,
-          height: 50,
+          height: 52,
           child: FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.white,
+              elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),
             ),
-            child: const Text(
+            child: Text(
               'ตกลง',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -711,7 +712,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
-            height: 50,
+            height: 52,
             child: OutlinedButton(
               onPressed: _isCancelling ? null : _confirmCancel,
               style: OutlinedButton.styleFrom(
@@ -728,10 +729,10 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppColors.error),
                     )
-                  : const Text(
+                  : Text(
                       'ยกเลิกคำขอ',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.googleSans(
+                          fontSize: 16, fontWeight: FontWeight.bold),
                     ),
             ),
           ),

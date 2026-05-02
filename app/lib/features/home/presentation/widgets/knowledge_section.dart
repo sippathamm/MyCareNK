@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 
 class KnowledgeSection extends StatelessWidget {
@@ -14,9 +15,9 @@ class KnowledgeSection extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'สาระน่ารู้',
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
@@ -28,17 +29,17 @@ class KnowledgeSection extends StatelessWidget {
                     const SnackBar(content: Text('"ดูทั้งหมด" ถูกกด')),
                   );
                 },
-                child: const Row(
+                child: Row(
                   children: [
                     Text(
                       'ดูทั้งหมด',
-                      style: TextStyle(
+                      style: GoogleFonts.googleSans(
                         color: AppColors.primary,
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
+                    const Icon(Icons.chevron_right, size: 16, color: AppColors.primary),
                   ],
                 ),
               ),
@@ -84,7 +85,7 @@ class KnowledgeSection extends StatelessWidget {
                         children: [
                           Text(
                             'บทความที่ ${index + 1}',
-                            style: const TextStyle(
+                            style: GoogleFonts.googleSans(
                               color: AppColors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 16,

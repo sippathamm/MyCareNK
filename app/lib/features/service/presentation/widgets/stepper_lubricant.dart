@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 
 class StepperLubricant extends StatefulWidget {
@@ -75,9 +76,8 @@ class _StepperLubricantState extends State<StepperLubricant> {
         children: [
           Text(
             widget.label,
-            style: const TextStyle(
+            style: GoogleFonts.googleSans(
               fontSize: 16,
-              fontWeight: FontWeight.normal,
               color: AppColors.textPrimary,
             ),
           ),
@@ -103,7 +103,7 @@ class _StepperLubricantState extends State<StepperLubricant> {
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(vertical: 0),
               ),
-              style: const TextStyle(
+              style: GoogleFonts.googleSans(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,

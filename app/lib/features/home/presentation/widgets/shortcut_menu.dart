@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../features/service/presentation/pages/request_history_page.dart';
 
@@ -97,7 +98,7 @@ class ShortcutMenu extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w500,
                       color: AppColors.textPrimary,

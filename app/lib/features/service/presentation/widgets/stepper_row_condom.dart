@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 
 class StepperRowCondom extends StatefulWidget {
@@ -76,11 +77,11 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
           Text.rich(
             TextSpan(
               text: 'ขนาด ',
-              style: const TextStyle(fontSize: 16, color: AppColors.textPrimary),
+              style: GoogleFonts.googleSans(fontSize: 16, color: AppColors.textPrimary),
               children: [
                 TextSpan(
                   text: widget.label,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  style: GoogleFonts.googleSans(fontWeight: FontWeight.bold),
                 ),
                 const TextSpan(text: ' มม.'),
               ],
@@ -108,7 +109,7 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
                 isDense: true,
                 contentPadding: EdgeInsets.symmetric(vertical: 0),
               ),
-              style: const TextStyle(
+              style: GoogleFonts.googleSans(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,

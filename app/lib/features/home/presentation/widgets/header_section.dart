@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import 'emergency_button.dart';
@@ -89,15 +90,15 @@ class _HeaderSectionState extends State<HeaderSection> {
                       value: 'logout',
                       child: Row(
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.logout,
-                            color: Theme.of(context).colorScheme.error,
+                            color: AppColors.error,
                           ),
                           const SizedBox(width: 8),
                           Text(
                             'ออกจากระบบ',
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
+                            style: GoogleFonts.googleSans(
+                              color: AppColors.error,
                             ),
                           ),
                         ],
@@ -128,7 +129,7 @@ class _HeaderSectionState extends State<HeaderSection> {
                         const SizedBox(width: 8),
                         Text(
                           username,
-                          style: const TextStyle(
+                          style: GoogleFonts.googleSans(
                             color: AppColors.avatarIcon,
                             fontWeight: FontWeight.bold,
                           ),

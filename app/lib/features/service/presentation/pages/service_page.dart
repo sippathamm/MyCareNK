@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../widgets/service_card.dart';
 import 'condom_request_page.dart';
@@ -17,10 +18,10 @@ class ServicePage extends StatelessWidget {
         backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleSpacing: 24,
-        title: const Text(
+        centerTitle: true,
+        title: Text(
           'บริการ',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,

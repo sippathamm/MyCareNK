@@ -153,13 +153,12 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              size: 20, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'รับถุงยางอนามัย',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.bold),
@@ -187,24 +186,26 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                   _buildPlaceTimeCard(),
                   if (widget.message.isNotEmpty) _buildMessageCard(),
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E1),
-                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.primaryBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primaryLight),
                     ),
-                    child: const Row(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.info_outline,
-                            color: Color(0xFFFF8F00), size: 18),
-                        SizedBox(width: 10),
+                        const Icon(Icons.info_outline,
+                            color: AppColors.primary, size: 18),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             'กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยัน หากต้องการแก้ไขให้กดปุ่ม "แก้ไข"',
-                            style: TextStyle(
-                                fontSize: 14,
-                                color: Color(0xFF5D4037),
-                                height: 1.6),
+                            style: GoogleFonts.googleSans(
+                                fontSize: 13,
+                                color: AppColors.textPrimary,
+                                height: 1.5),
                           ),
                         ),
                       ],
@@ -221,31 +222,32 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               children: [
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 52,
                   child: FilledButton(
                     onPressed: _isLoading ? null : _submitRequest,
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24)),
                     ),
                     child: _isLoading
                         ? const SizedBox(
-                            width: 22,
-                            height: 22,
+                            width: 24,
+                            height: 24,
                             child: CircularProgressIndicator(
                                 color: AppColors.white, strokeWidth: 2),
                           )
-                        : const Text('ยืนยัน',
-                            style: TextStyle(
+                        : Text('ยืนยัน',
+                            style: GoogleFonts.googleSans(
                                 fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  height: 50,
+                  height: 52,
                   child: OutlinedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: OutlinedButton.styleFrom(
@@ -255,8 +257,8 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24)),
                     ),
-                    child: const Text('แก้ไข',
-                        style: TextStyle(
+                    child: Text('แก้ไข',
+                        style: GoogleFonts.googleSans(
                             fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
                 ),
@@ -307,7 +309,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                   child: isDone
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
                       : Text('${idx + 1}',
-                          style: TextStyle(
+                          style: GoogleFonts.googleSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color:
@@ -317,7 +319,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               const SizedBox(height: 4),
               Text(
                 labels[idx],
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 11,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                   color: active ? AppColors.primary : AppColors.textMuted,
@@ -370,7 +372,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                 Icon(icon, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Text(title,
-                    style: const TextStyle(
+                    style: GoogleFonts.googleSans(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold)),
@@ -392,13 +394,13 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(label,
-                  style: const TextStyle(
+                  style: GoogleFonts.googleSans(
                       fontSize: 14, color: AppColors.textSecondary)),
               Flexible(
                 child: Text(
                   value,
                   textAlign: TextAlign.right,
-                  style: const TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
                     color: AppColors.textPrimary,
@@ -536,12 +538,12 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('รวม',
-                  style:
-                      TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text('รวม',
+                  style: GoogleFonts.googleSans(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
               Text(
                 '$_totalSelected ชิ้น',
-                style: const TextStyle(
+                style: GoogleFonts.googleSans(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary),

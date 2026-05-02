@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -168,7 +169,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
                       : Text(
                           '${idx + 1}',
-                          style: TextStyle(
+                          style: GoogleFonts.googleSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: textColor,
@@ -179,7 +180,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               const SizedBox(height: 4),
               Text(
                 labels[idx],
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 11,
                   fontWeight: (isDone || isCurrent) ? FontWeight.w700 : FontWeight.w400,
                   color: (isDone || isCurrent) ? AppColors.lubricant : AppColors.textMuted,
@@ -246,10 +247,10 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     child: TextField(
                       controller: _noteCtrl,
                       maxLines: 3,
-                      style: const TextStyle(fontSize: 16),
+                      style: GoogleFonts.googleSans(fontSize: 16),
                       decoration: InputDecoration(
                         hintText: 'เช่น อาการที่มี หรือยาที่ใช้อยู่...',
-                        hintStyle: const TextStyle(
+                        hintStyle: GoogleFonts.googleSans(
                             fontSize: 16, color: AppColors.textHint),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -278,7 +279,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             ),
           ),
           Container(
-            color: Colors.white,
+            color: AppColors.white,
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
             child: AnimatedOpacity(
               opacity: _canProceed ? 1.0 : 0.4,
@@ -327,7 +328,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             Expanded(
               child: Text(
                 r.label,
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 16,
                   fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                   color: AppColors.textPrimary,
@@ -371,7 +372,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               child: Center(
                 child: Text(
                   '${index + 1}',
-                  style: TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: sel ? Colors.white : AppColors.textMuted,
@@ -386,14 +387,14 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 children: [
                   Text(
                     loc.label,
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
                   ),
                   Text('${loc.hours} น.',
-                      style: const TextStyle(
+                      style: GoogleFonts.googleSans(
                           fontSize: 14, color: AppColors.textHint)),
                 ],
               ),
@@ -435,7 +436,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 children: [
                   Text(
                     d.dayLabel,
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: sel
@@ -445,7 +446,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   ),
                   Text(
                     '${d.date.day}',
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: sel ? Colors.white : AppColors.textPrimary,
@@ -454,7 +455,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   ),
                   Text(
                     d.monthLabel,
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 11,
                       color: sel
                           ? Colors.white.withValues(alpha: 0.85)
@@ -487,7 +488,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
             fontWeight: FontWeight.w600,
@@ -515,7 +516,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 ),
                 child: Text(
                   '$t น.',
-                  style: TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 15,
                     fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
                     color: sel ? Colors.white : AppColors.textPrimary,
@@ -577,7 +578,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                         const SizedBox(width: 8),
                                         Text(
                                           row.$2,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.googleSans(
                                             fontSize: 14,
                                             color: AppColors.textSecondary,
                                           ),
@@ -587,7 +588,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                         child: Text(
                                           row.$3,
                                           textAlign: TextAlign.right,
-                                          style: const TextStyle(
+                                          style: GoogleFonts.googleSans(
                                             fontSize: 15,
                                             fontWeight: FontWeight.w600,
                                             color: AppColors.textPrimary,
@@ -608,13 +609,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text('บันทึกเพิ่มเติม',
-                                    style: TextStyle(
+                                Text('บันทึกเพิ่มเติม',
+                                    style: GoogleFonts.googleSans(
                                         fontSize: 14,
                                         color: AppColors.textHint)),
                                 const SizedBox(height: 4),
                                 Text(_noteCtrl.text,
-                                    style: const TextStyle(
+                                    style: GoogleFonts.googleSans(
                                         fontSize: 15,
                                         color: AppColors.textPrimary)),
                               ],
@@ -624,24 +625,26 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFFFF8E1),
-                      borderRadius: BorderRadius.circular(14),
+                      color: AppColors.primaryBackground,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: AppColors.primaryLight),
                     ),
-                    child: const Row(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Icon(Icons.info_outline,
-                            color: Color(0xFFFF8F00), size: 18),
-                        SizedBox(width: 10),
+                        const Icon(Icons.info_outline,
+                            color: AppColors.primary, size: 18),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานพยาบาลล่วงหน้าอย่างน้อย 24 ชม.',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Color(0xFF5D4037),
-                              height: 1.6,
+                            style: GoogleFonts.googleSans(
+                              fontSize: 13,
+                              color: AppColors.textPrimary,
+                              height: 1.5,
                             ),
                           ),
                         ),
@@ -653,7 +656,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             ),
           ),
           Container(
-            color: Colors.white,
+            color: AppColors.white,
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
             child: Column(
               children: [
@@ -695,28 +698,28 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         child: Column(
           children: [
             Container(
-              width: 96,
-              height: 96,
+              width: 88,
+              height: 88,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFFE8F5E9),
-                border: Border.all(color: AppColors.success, width: 4),
+                color: AppColors.statusCompletedLight,
+                border: Border.all(color: AppColors.statusCompleted, width: 3),
               ),
-              child: const Icon(Icons.check, color: AppColors.success, size: 52),
+              child: const Icon(Icons.check, color: AppColors.statusCompleted, size: 48),
             ),
             const SizedBox(height: 20),
-            const Text(
+            Text(
               'นัดหมายสำเร็จ!',
-              style: TextStyle(
+              style: GoogleFonts.googleSans(
                 fontSize: 22,
-                fontWeight: FontWeight.w700,
+                fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               'เราได้รับคำขอนัดหมายของคุณแล้ว',
-              style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
+              style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
             _SectionCard(
@@ -743,11 +746,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(row.$2,
-                                      style: const TextStyle(
+                                      style: GoogleFonts.googleSans(
                                           fontSize: 12,
                                           color: AppColors.textHint)),
                                   Text(row.$3,
-                                      style: const TextStyle(
+                                      style: GoogleFonts.googleSans(
                                           fontSize: 15,
                                           fontWeight: FontWeight.w600,
                                           color: AppColors.textPrimary)),
@@ -761,7 +764,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             ),
             Text(
               'หมายเลขอ้างอิง: $_refNum',
-              style: const TextStyle(fontSize: 14, color: AppColors.textHint),
+              style: GoogleFonts.googleSans(fontSize: 14, color: AppColors.textHint),
             ),
             const SizedBox(height: 20),
             Container(
@@ -774,9 +777,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'สิ่งที่ควรทำก่อนวันนัด',
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
                       color: AppColors.textSecondary,
@@ -793,11 +796,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Icon(Icons.check_circle,
-                                color: AppColors.success, size: 15),
+                                color: AppColors.statusCompleted, size: 15),
                             const SizedBox(width: 8),
                             Expanded(
                               child: Text(t,
-                                  style: const TextStyle(
+                                  style: GoogleFonts.googleSans(
                                       fontSize: 14,
                                       color: AppColors.textSecondary,
                                       height: 1.4)),
@@ -836,18 +839,17 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   PreferredSizeWidget _buildAppBar(String title, VoidCallback onBack) {
     return AppBar(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       elevation: 0,
       scrolledUnderElevation: 0,
       leading: IconButton(
-        icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-        color: AppColors.lubricant,
+        icon: const Icon(Icons.arrow_back, color: AppColors.primary),
         onPressed: onBack,
       ),
       title: Text(
         title,
-        style: const TextStyle(
-          fontWeight: FontWeight.w700,
+        style: GoogleFonts.googleSans(
+          fontWeight: FontWeight.bold,
           fontSize: 18,
           color: AppColors.textPrimary,
         ),
@@ -906,7 +908,7 @@ class _SectionCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: GoogleFonts.googleSans(
                       color: Colors.white,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -935,19 +937,19 @@ class _PrimaryBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 50,
+      height: 52,
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor:
               onPressed != null ? AppColors.lubricant : Colors.grey.shade300,
           foregroundColor: Colors.white,
+          elevation: 0,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
         child: Text(label,
-            style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.w700)),
       ),
     );
   }
@@ -962,7 +964,7 @@ class _OutlinedBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 50,
+      height: 52,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -972,8 +974,7 @@ class _OutlinedBtn extends StatelessWidget {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
         child: Text(label,
-            style:
-                const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+            style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.w700)),
       ),
     );
   }

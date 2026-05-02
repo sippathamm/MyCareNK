@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import 'doctor_booking_page.dart';
 
@@ -235,21 +236,20 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     final cur = _current;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          color: AppColors.avatarIcon,
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed:
               _isDone ? () => Navigator.of(context).pop() : _handleBack,
         ),
-        title: const Text(
+        title: Text(
           'ประเมินความเสี่ยงการติดเชื้อ HIV',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
+          style: GoogleFonts.googleSans(
+            fontWeight: FontWeight.bold,
             fontSize: 18,
             color: AppColors.textPrimary,
           ),
@@ -288,7 +288,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
 
   Widget _buildProgress(_Question cur) {
     return Container(
-      color: Colors.white,
+      color: AppColors.white,
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -299,7 +299,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               Flexible(
                 child: Text(
                   cur.sectionLabel,
-                  style: const TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 14,
                     color: AppColors.textSecondary,
                     fontWeight: FontWeight.w600,
@@ -308,7 +308,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               ),
               Text(
                 '${_step + 1}/$_totalQ',
-                style: const TextStyle(
+                style: GoogleFonts.googleSans(
                     fontSize: 14, color: AppColors.textHint),
               ),
             ],
@@ -340,7 +340,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 ),
                 child: Text(
                   'ส่วนที่ $s',
-                  style: TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
                     color: active ? Colors.white : AppColors.textMuted,
@@ -370,11 +370,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               const Icon(Icons.biotech, color: AppColors.avatarIcon, size: 44),
         ),
         const SizedBox(height: 20),
-        const Text(
+        Text(
           'แบบประเมินความเสี่ยงการติดเชื้อ HIV',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             fontSize: 20,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
           textAlign: TextAlign.center,
@@ -382,22 +382,22 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         const SizedBox(height: 10),
         RichText(
           textAlign: TextAlign.center,
-          text: const TextSpan(
-            style: TextStyle(
+          text: TextSpan(
+            style: GoogleFonts.googleSans(
               fontSize: 15,
               color: AppColors.textSecondary,
               height: 1.7,
             ),
             children: [
-              TextSpan(text: 'โปรดพิจารณาพฤติกรรมของคุณในช่วง '),
+              const TextSpan(text: 'โปรดพิจารณาพฤติกรรมของคุณในช่วง '),
               TextSpan(
                 text: '3–6 เดือนที่ผ่านมา',
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   color: AppColors.avatarIcon,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              TextSpan(
+              const TextSpan(
                 text:
                     ' และเลือกคำตอบที่ตรงกับความเป็นจริงมากที่สุด'
                     '\nเพื่อให้ได้ผลการประเมินที่แม่นยำ',
@@ -416,9 +416,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'แบบประเมินประกอบด้วย',
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                   color: AppColors.avatarIcon,
@@ -441,9 +441,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             color: const Color(0xFFF5F5F5),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Text(
+          child: Text(
             'ไม่มีการเก็บข้อมูลของคุณ ใช้เพื่อการประเมินความเสี่ยงเท่านั้น',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
               fontSize: 13,
               color: AppColors.textHint,
               height: 1.6,
@@ -470,7 +470,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             ),
             child: Text(
               count,
-              style: const TextStyle(
+              style: GoogleFonts.googleSans(
                 fontSize: 11,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
@@ -483,7 +483,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             children: [
               Text(
                 name,
-                style: const TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary,
@@ -491,7 +491,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               ),
               Text(
                 desc,
-                style: const TextStyle(
+                style: GoogleFonts.googleSans(
                     fontSize: 13, color: AppColors.textHint),
               ),
             ],
@@ -532,7 +532,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                   children: [
                     Text(
                       'ข้อที่ ${_step + 1}',
-                      style: const TextStyle(
+                      style: GoogleFonts.googleSans(
                         fontSize: 13,
                         color: AppColors.avatarIcon,
                         fontWeight: FontWeight.w700,
@@ -541,9 +541,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                     const SizedBox(height: 4),
                     Text(
                       q.text,
-                      style: const TextStyle(
+                      style: GoogleFonts.googleSans(
                         fontSize: 16,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                         height: 1.4,
                       ),
@@ -613,7 +613,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               child: Center(
                 child: Text(
                   opt.key,
-                  style: TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 13,
                     fontWeight: FontWeight.w700,
                     color:
@@ -629,7 +629,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 children: [
                   Text(
                     opt.label,
-                    style: const TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
                       color: AppColors.textPrimary,
@@ -640,7 +640,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                     const SizedBox(height: 3),
                     Text(
                       opt.sub,
-                      style: const TextStyle(
+                      style: GoogleFonts.googleSans(
                         fontSize: 13,
                         color: AppColors.textHint,
                         height: 1.4,
@@ -687,7 +687,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           ),
           child: Text(
             cfg.label,
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: cfg.color,
@@ -697,9 +697,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         const SizedBox(height: 10),
         Text(
           cfg.headline,
-          style: const TextStyle(
+          style: GoogleFonts.googleSans(
             fontSize: 22,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.bold,
             color: AppColors.textPrimary,
           ),
           textAlign: TextAlign.center,
@@ -714,7 +714,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           ),
           child: Text(
             cfg.advice,
-            style: const TextStyle(
+            style: GoogleFonts.googleSans(
               fontSize: 15,
               color: AppColors.textPrimary,
               height: 1.75,
@@ -737,7 +737,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                   ),
                   child: Text(
                     p,
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: cfg.color,
@@ -780,9 +780,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'ข้อมูลเพิ่มเติม',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w700,
               color: AppColors.textSecondary,
@@ -798,9 +798,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             'ยาป้องกันฉุกเฉิน ต้องรับประทานให้เร็วที่สุดภายใน 72 ชั่วโมง หลังสัมผัสความเสี่ยง เพื่อยับยั้งการติดเชื้อเข้าสู่ร่างกาย',
           ),
           const SizedBox(height: 4),
-          const Text(
+          Text(
             'นอกจากการตรวจ HIV ควรตรวจคัดกรองมะเร็งปากมดลูกและซิฟิลิสเป็นประจำ เนื่องจากรอยโรคเหล่านี้ส่งผลให้เชื้อ HIV เข้าสู่ร่างกายได้ง่ายขึ้นหากเกิดบาดแผล',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
               fontSize: 12,
               color: AppColors.textHint,
               height: 1.5,
@@ -822,7 +822,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               children: [
                 TextSpan(
                   text: '$term ',
-                  style: const TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontWeight: FontWeight.w700,
                     color: AppColors.avatarIcon,
                     fontSize: 13,
@@ -830,7 +830,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 ),
                 TextSpan(
                   text: desc,
-                  style: const TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                   ),
@@ -878,9 +878,9 @@ class _AnswerSummaryState extends State<_AnswerSummary> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Text(
+                Text(
                   'ดูคำตอบของคุณ',
-                  style: TextStyle(
+                  style: GoogleFonts.googleSans(
                       fontSize: 14, color: AppColors.textHint),
                 ),
                 AnimatedRotation(
@@ -931,7 +931,7 @@ class _AnswerSummaryState extends State<_AnswerSummary> {
                     child: Center(
                       child: Text(
                         e.value,
-                        style: const TextStyle(
+                        style: GoogleFonts.googleSans(
                           fontSize: 11,
                           fontWeight: FontWeight.w700,
                           color: Colors.white,
@@ -946,7 +946,7 @@ class _AnswerSummaryState extends State<_AnswerSummary> {
                       children: [
                         Text(
                           q.text,
-                          style: const TextStyle(
+                          style: GoogleFonts.googleSans(
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             color: AppColors.textPrimary,
@@ -954,7 +954,7 @@ class _AnswerSummaryState extends State<_AnswerSummary> {
                         ),
                         Text(
                           opt.label,
-                          style: const TextStyle(
+                          style: GoogleFonts.googleSans(
                             fontSize: 12,
                             color: AppColors.textHint,
                           ),
@@ -985,19 +985,20 @@ class _PrimaryBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 48,
+      height: 52,
       child: FilledButton(
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor:
               onPressed != null ? AppColors.avatarIcon : Colors.grey.shade300,
           foregroundColor: Colors.white,
+          elevation: 0,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24)),
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.googleSans(
               fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),
@@ -1014,7 +1015,7 @@ class _OutlinedBtn extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: double.infinity,
-      height: 48,
+      height: 52,
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
@@ -1025,7 +1026,7 @@ class _OutlinedBtn extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: const TextStyle(
+          style: GoogleFonts.googleSans(
               fontSize: 16, fontWeight: FontWeight.w700),
         ),
       ),

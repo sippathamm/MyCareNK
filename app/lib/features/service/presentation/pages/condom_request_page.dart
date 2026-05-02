@@ -175,13 +175,12 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              size: 20, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'รับถุงยางอนามัย',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -239,7 +238,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
                         hintText: 'พิมพ์ข้อความที่นี่...',
-                        hintStyle: const TextStyle(
+                        hintStyle: GoogleFonts.googleSans(
                             fontSize: 16, color: AppColors.textHint),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -275,17 +274,18 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               duration: const Duration(milliseconds: 200),
               child: SizedBox(
                 width: double.infinity,
-                height: 50,
+                height: 52,
                 child: FilledButton(
                   onPressed: _canProceed ? _navigateToConfirm : null,
                   style: FilledButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,
+                    elevation: 0,
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24)),
                   ),
-                  child: const Text('ถัดไป',
-                      style: TextStyle(
+                  child: Text('ถัดไป',
+                      style: GoogleFonts.googleSans(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                 ),
               ),
@@ -336,7 +336,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
                       : Text(
                           '${idx + 1}',
-                          style: TextStyle(
+                          style: GoogleFonts.googleSans(
                             fontSize: 14,
                             fontWeight: FontWeight.w700,
                             color: active ? Colors.white : AppColors.textMuted,
@@ -347,7 +347,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               const SizedBox(height: 4),
               Text(
                 labels[idx],
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 11,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                   color: active ? AppColors.primary : AppColors.textMuted,
@@ -400,7 +400,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 Icon(icon, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
                 Text(title,
-                    style: const TextStyle(
+                    style: GoogleFonts.googleSans(
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold)),
@@ -443,7 +443,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               child: Center(
                 child: Text(
                   '${index + 1}',
-                  style: TextStyle(
+                  style: GoogleFonts.googleSans(
                     fontSize: 15,
                     fontWeight: FontWeight.w700,
                     color: sel ? Colors.white : AppColors.textMuted,
@@ -458,7 +458,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 children: [
                   Text(
                     center.name,
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                       color: AppColors.textPrimary,
@@ -467,7 +467,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   const SizedBox(height: 2),
                   Text(
                     '${center.hours} น.',
-                    style: const TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 14,
                       color: AppColors.textHint,
                     ),
@@ -515,7 +515,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 children: [
                   Text(
                     d.dayLabel,
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                       color: sel
@@ -525,7 +525,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   ),
                   Text(
                     '${d.date.day}',
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
                       color: sel ? Colors.white : AppColors.textPrimary,
@@ -534,7 +534,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   ),
                   Text(
                     d.monthLabel,
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                       fontSize: 11,
                       color: sel
                           ? Colors.white.withValues(alpha: 0.85)
@@ -572,7 +572,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           ),
           child: Text(
             '$t น.',
-            style: TextStyle(
+            style: GoogleFonts.googleSans(
               fontSize: 15,
               fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
               color: sel ? Colors.white : AppColors.textPrimary,
@@ -585,7 +585,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     Widget label(String text) => Padding(
           padding: const EdgeInsets.only(bottom: 8),
           child: Text(text,
-              style: const TextStyle(
+              style: GoogleFonts.googleSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                   color: AppColors.textSecondary)),
@@ -841,8 +841,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  const Text('รวม',
-                      style: TextStyle(
+                  Text('รวม',
+                      style: GoogleFonts.googleSans(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const Spacer(),
                   const SizedBox(width: 38),
@@ -851,17 +851,17 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     child: Center(
                       child: Text(
                         '$_totalSelected',
-                        style: const TextStyle(
+                        style: GoogleFonts.googleSans(
                             fontSize: 18, fontWeight: FontWeight.bold),
                       ),
                     ),
                   ),
                   const SizedBox(width: 14),
-                  const SizedBox(
+                  SizedBox(
                     width: 26,
                     child: Center(
                       child: Text('ชิ้น',
-                          style: TextStyle(
+                          style: GoogleFonts.googleSans(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),

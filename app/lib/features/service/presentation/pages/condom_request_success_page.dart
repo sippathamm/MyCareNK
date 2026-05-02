@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 
 class CondomRequestSuccessPage extends StatelessWidget {
@@ -59,14 +60,13 @@ class CondomRequestSuccessPage extends StatelessWidget {
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new,
-              size: 20, color: AppColors.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () =>
               Navigator.of(context).popUntil((route) => route.isFirst),
         ),
-        title: const Text(
+        title: Text(
           'รับถุงยางอนามัย',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
               fontWeight: FontWeight.bold),
@@ -88,28 +88,29 @@ class CondomRequestSuccessPage extends StatelessWidget {
               child: Column(
                 children: [
                   Container(
-                    width: 96,
-                    height: 96,
+                    width: 88,
+                    height: 88,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFFE8F5E9),
-                      border: Border.all(color: AppColors.success, width: 4),
+                      color: AppColors.statusCompletedLight,
+                      border: Border.all(
+                          color: AppColors.statusCompleted, width: 3),
                     ),
                     child: const Icon(Icons.check,
-                        color: AppColors.success, size: 52),
+                        color: AppColors.statusCompleted, size: 48),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     'ส่งข้อมูลสำเร็จ!',
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                         fontSize: 22,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary),
                   ),
                   const SizedBox(height: 6),
-                  const Text(
+                  Text(
                     'เราได้รับคำขอถุงยางอนามัยของคุณแล้ว',
-                    style: TextStyle(
+                    style: GoogleFonts.googleSans(
                         fontSize: 15, color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
                   ),
@@ -142,13 +143,13 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                 end: Alignment.centerRight,
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
-                                Icon(Icons.event_note_outlined,
+                                const Icon(Icons.event_note_outlined,
                                     color: Colors.white, size: 18),
-                                SizedBox(width: 8),
+                                const SizedBox(width: 8),
                                 Text('รายละเอียดคำขอ',
-                                    style: TextStyle(
+                                    style: GoogleFonts.googleSans(
                                         color: Colors.white,
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold)),
@@ -185,12 +186,12 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   Text(row.$2,
-                                                      style: const TextStyle(
+                                                      style: GoogleFonts.googleSans(
                                                           fontSize: 12,
                                                           color: AppColors
                                                               .textHint)),
                                                   Text(row.$3,
-                                                      style: const TextStyle(
+                                                      style: GoogleFonts.googleSans(
                                                           fontSize: 15,
                                                           fontWeight:
                                                               FontWeight.w600,
@@ -212,23 +213,25 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   const SizedBox(height: 12),
                   Text(
                     'หมายเลขอ้างอิง: $referenceNumber',
-                    style: const TextStyle(
+                    style: GoogleFonts.googleSans(
                         fontSize: 14, color: AppColors.textHint),
                   ),
                   const SizedBox(height: 28),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 52,
                     child: FilledButton(
                       onPressed: () => Navigator.of(context)
                           .popUntil((route) => route.isFirst),
                       style: FilledButton.styleFrom(
                         backgroundColor: AppColors.primary,
+                        foregroundColor: AppColors.white,
+                        elevation: 0,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                       ),
-                      child: const Text('กลับไปบริการ',
-                          style: TextStyle(
+                      child: Text('กลับไปบริการ',
+                          style: GoogleFonts.googleSans(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.white)),
@@ -280,7 +283,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   child: isDone
                       ? const Icon(Icons.check, color: Colors.white, size: 16)
                       : Text('${idx + 1}',
-                          style: TextStyle(
+                          style: GoogleFonts.googleSans(
                               fontSize: 14,
                               fontWeight: FontWeight.w700,
                               color: active
@@ -291,7 +294,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 labels[idx],
-                style: TextStyle(
+                style: GoogleFonts.googleSans(
                   fontSize: 11,
                   fontWeight: active ? FontWeight.w700 : FontWeight.w400,
                   color: active ? AppColors.primary : AppColors.textMuted,
