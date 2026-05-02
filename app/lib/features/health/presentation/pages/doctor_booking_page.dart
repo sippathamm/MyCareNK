@@ -303,7 +303,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? AppColors.lubricantCardStart : Colors.white,
+          color: sel ? AppColors.statusPreparingLight : Colors.white,
           border: Border.all(
             color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
             width: 1.5,
@@ -351,7 +351,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? AppColors.lubricantCardStart : Colors.white,
+          color: sel ? AppColors.statusPreparingLight : Colors.white,
           border: Border.all(
             color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
             width: 1.5,
@@ -892,8 +892,14 @@ class _SectionCard extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.lubricant,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.lubricantDark, AppColors.statusPreparing],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: Row(
                 children: [
                   Icon(icon, color: Colors.white, size: 18),

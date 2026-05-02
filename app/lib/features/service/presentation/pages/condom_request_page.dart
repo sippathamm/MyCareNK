@@ -388,8 +388,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.primary,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryDark, AppColors.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: Row(children: [
                 Icon(icon, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
@@ -686,7 +692,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'สารหล่อลื่น',
+                    'เจลหล่อลื่น',
                     style: GoogleFonts.googleSans(
                         fontSize: 14, color: AppColors.textSecondary),
                   ),
@@ -705,7 +711,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                               color: AppColors.lubricant),
                         ),
                         TextSpan(
-                          text: 'ซอง',
+                          text: 'ชิ้น',
                           style: GoogleFonts.googleSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
@@ -788,15 +794,21 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.primary,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryDark, AppColors.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: const Row(
                 children: [
                   Icon(Icons.inventory_2_outlined,
                       color: AppColors.white, size: 18),
                   SizedBox(width: 8),
                   Text(
-                    'จำนวนถุงยางอนามัย',
+                    'ถุงยางอนามัย',
                     style: TextStyle(
                         color: AppColors.white,
                         fontSize: 16,
@@ -883,8 +895,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.primary,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryDark, AppColors.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: const Row(
                 children: [
                   Icon(Icons.add_circle_outline,
@@ -911,7 +929,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 final int maxLubricantAllowed =
                     _lubricantQuantity + remainingLubricant;
                 return StepperLubricant(
-                  label: 'สารหล่อลื่น',
+                  label: 'เจลหล่อลื่น',
                   count: _lubricantQuantity,
                   max: maxLubricantAllowed,
                   onChanged: (val) =>

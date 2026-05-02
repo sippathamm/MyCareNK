@@ -286,7 +286,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'สารหล่อลื่น',
+            'เจลหล่อลื่น',
             style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -319,7 +319,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                     ),
                   ),
                   TextSpan(
-                    text: 'ซอง',
+                    text: 'ชิ้น',
                     style: GoogleFonts.googleSans(
                       fontSize: 18,
                       fontWeight: FontWeight.w500,

@@ -823,7 +823,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
 
     return _card(
       header: const Text(
-        'จำนวนถุงยางอนามัย',
+        'ถุงยางอนามัย',
         style: TextStyle(
           color: Colors.black,
           fontSize: 16,
@@ -903,11 +903,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           const Text(
-            'สารหล่อลื่น',
+            'เจลหล่อลื่น',
             style: TextStyle(fontSize: 16, color: Colors.black87),
           ),
           Text(
-            '${request.lubricantQuantity} ซอง',
+            '${request.lubricantQuantity} ชิ้น',
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -940,7 +940,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           Icon(Icons.calendar_today_outlined, color: Colors.black),
           SizedBox(width: 8),
           Text(
-            'สถานบริการ วันและเวลารับ',
+            'สถานบริการ วันที่และเวลารับ',
             style: TextStyle(
               color: Colors.black,
               fontSize: 16,

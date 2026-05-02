@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
-import 'condom_request_detail_page.dart';
 
 class CondomRequestSuccessPage extends StatelessWidget {
   final Map<int, int> quantities;
@@ -9,10 +8,6 @@ class CondomRequestSuccessPage extends StatelessWidget {
   final DateTime? selectedDate;
   final TimeOfDay? selectedTime;
   final String message;
-  final int currentMonthlyUsed;
-  final int maxMonthlyQuota;
-  final int currentMonthlyLubricantUsed;
-  final int maxMonthlyLubricantQuota;
   final String referenceNumber;
 
   const CondomRequestSuccessPage({
@@ -23,10 +18,6 @@ class CondomRequestSuccessPage extends StatelessWidget {
     this.selectedDate,
     this.selectedTime,
     required this.message,
-    required this.currentMonthlyUsed,
-    required this.maxMonthlyQuota,
-    required this.currentMonthlyLubricantUsed,
-    required this.maxMonthlyLubricantQuota,
     required this.referenceNumber,
   });
 
@@ -56,7 +47,9 @@ class CondomRequestSuccessPage extends StatelessWidget {
       if (_totalSelected > 0)
         (Icons.inventory_2_outlined, 'ถุงยางอนามัย', '$_totalSelected ชิ้น'),
       if (lubricantQuantity > 0)
-        (Icons.add_circle_outline, 'สารหล่อลื่น', '$lubricantQuantity ซอง'),
+        (Icons.add_circle_outline, 'เจลหล่อลื่น', '$lubricantQuantity ชิ้น'),
+      if (message.isNotEmpty)
+        (Icons.comment_outlined, 'ฝากข้อความ', message),
     ];
 
     return Scaffold(
@@ -121,7 +114,6 @@ class CondomRequestSuccessPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  // Info card
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -142,8 +134,14 @@ class CondomRequestSuccessPage extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 16, vertical: 12),
-                            color: AppColors.primary,
                             width: double.infinity,
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [AppColors.primaryDark, AppColors.primary],
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                              ),
+                            ),
                             child: const Row(
                               children: [
                                 Icon(Icons.event_note_outlined,
@@ -165,6 +163,8 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                         padding:
                                             const EdgeInsets.only(bottom: 12),
                                         child: Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Container(
                                               width: 36,
@@ -179,23 +179,25 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                                   size: 18),
                                             ),
                                             const SizedBox(width: 12),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(row.$2,
-                                                    style: const TextStyle(
-                                                        fontSize: 12,
-                                                        color:
-                                                            AppColors.textHint)),
-                                                Text(row.$3,
-                                                    style: const TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w600,
-                                                        color: AppColors
-                                                            .textPrimary)),
-                                              ],
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(row.$2,
+                                                      style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: AppColors
+                                                              .textHint)),
+                                                  Text(row.$3,
+                                                      style: const TextStyle(
+                                                          fontSize: 15,
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color: AppColors
+                                                              .textPrimary)),
+                                                ],
+                                              ),
                                             ),
                                           ],
                                         ),
@@ -218,45 +220,10 @@ class CondomRequestSuccessPage extends StatelessWidget {
                     width: double.infinity,
                     height: 50,
                     child: FilledButton(
-                      onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => CondomRequestDetailPage(
-                            quantities: quantities,
-                            lubricantQuantity: lubricantQuantity,
-                            selectedServiceCenter: selectedServiceCenter,
-                            selectedDate: selectedDate,
-                            selectedTime: selectedTime,
-                            message: message,
-                            currentMonthlyUsed: currentMonthlyUsed,
-                            maxMonthlyQuota: maxMonthlyQuota,
-                            currentMonthlyLubricantUsed:
-                                currentMonthlyLubricantUsed,
-                            maxMonthlyLubricantQuota: maxMonthlyLubricantQuota,
-                          ),
-                        ),
-                      ),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                      ),
-                      child: const Text('ดูข้อมูล',
-                          style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.white)),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: OutlinedButton(
                       onPressed: () => Navigator.of(context)
                           .popUntil((route) => route.isFirst),
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(
-                            color: AppColors.primary, width: 1.5),
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                       ),
@@ -264,7 +231,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.primary)),
+                              color: AppColors.white)),
                     ),
                   ),
                 ],

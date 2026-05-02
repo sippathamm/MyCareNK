@@ -381,8 +381,14 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.primary,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryDark, AppColors.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: header,
             ),
             Padding(padding: const EdgeInsets.all(16.0), child: content),
@@ -401,6 +407,37 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     );
   }
 
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 14, color: AppColors.textSecondary)),
+              Flexible(
+                child: Text(
+                  value,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: Color(0xFFF0F0F0)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildQuantityCard() {
     int totalCondoms = _currentData.condomQuantities.values.fold(0, (sum, val) => sum + val);
     if (totalCondoms == 0) return const SizedBox();
@@ -409,54 +446,28 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       header: const Row(children: [
         Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
         SizedBox(width: 8),
-        Text('จำนวนถุงยางอนามัย',
+        Text('ถุงยางอนามัย',
             style: TextStyle(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
-        children: _currentData.condomQuantities.entries
-            .where((e) => e.value > 0)
-            .map((e) => _buildSizeRow('${e.key}', e.value))
-            .toList(),
-      ),
-      showDivider: true,
-      footer: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'รวม',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            '$totalCondoms ชิ้น',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSizeRow(String size, int quantity) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            'ขนาด $size มม.',
-            style: const TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          Text(
-            '$quantity ชิ้น',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: quantity > 0 ? AppColors.primary : Colors.black87,
-            ),
+          ..._currentData.condomQuantities.entries
+              .where((e) => e.value > 0)
+              .map((e) => _buildInfoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('รวม',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              Text(
+                '$totalCondoms ชิ้น',
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textPrimary),
+              ),
+            ],
           ),
         ],
       ),
@@ -474,23 +485,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: TextStyle(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'สารหล่อลื่น',
-            style: TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          Text(
-            '${_currentData.lubricantQuantity} ซอง',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
+      content: _buildInfoRow('เจลหล่อลื่น', '${_currentData.lubricantQuantity} ชิ้น'),
     );
   }
 
@@ -507,66 +502,25 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
     String outputTime = _currentData.selectedTime ?? '-';
     if (_currentData.selectedTime != null && _currentData.selectedTime!.contains(':')) {
-       final splitted = _currentData.selectedTime!.split(':');
-       if(splitted.length >= 2) {
-          outputTime = '${splitted[0]}:${splitted[1]} น.';
-       }
+      final splitted = _currentData.selectedTime!.split(':');
+      if (splitted.length >= 2) {
+        outputTime = '${splitted[0]}:${splitted[1]} น.';
+      }
     }
 
     return _buildCard(
       header: const Row(children: [
         Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
         SizedBox(width: 8),
-        Text('สถานบริการ วันและเวลารับ',
+        Text('สถานบริการ วันที่และเวลารับ',
             style: TextStyle(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('สถานบริการ', style: TextStyle(fontSize: 16)),
-              Text(
-                _currentData.selectedServiceCenter ?? '-',
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('วันที่', style: TextStyle(fontSize: 16)),
-              Text(
-                outputDate,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text('เวลา', style: TextStyle(fontSize: 16)),
-              Text(
-                outputTime,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.primary,
-                ),
-              ),
-            ],
-          ),
+          _buildInfoRow('สถานบริการ', _currentData.selectedServiceCenter ?? '-'),
+          _buildInfoRow('วันที่', outputDate),
+          _buildInfoRow('เวลา', outputTime),
         ],
       ),
     );
@@ -587,7 +541,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         alignment: Alignment.centerLeft,
         child: Text(
           _currentData.message,
-          style: const TextStyle(fontSize: 16, color: AppColors.primary),
+          style: const TextStyle(fontSize: 15, color: AppColors.textPrimary),
         ),
       ),
     );

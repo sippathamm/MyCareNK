@@ -127,10 +127,6 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               selectedDate: widget.selectedDate,
               selectedTime: widget.selectedTime,
               message: widget.message,
-              currentMonthlyUsed: widget.currentMonthlyUsed,
-              maxMonthlyQuota: widget.maxMonthlyQuota,
-              currentMonthlyLubricantUsed: widget.currentMonthlyLubricantUsed,
-              maxMonthlyLubricantQuota: widget.maxMonthlyLubricantQuota,
               referenceNumber: refNumber,
             ),
           ),
@@ -362,8 +358,14 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             Container(
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.primary,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryDark, AppColors.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: Row(children: [
                 Icon(icon, color: Colors.white, size: 18),
                 const SizedBox(width: 8),
@@ -480,7 +482,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('สารหล่อลื่น',
+                  Text('เจลหล่อลื่น',
                       style: GoogleFonts.googleSans(
                           fontSize: 14, color: AppColors.textSecondary)),
                   TweenAnimationBuilder<int>(
@@ -502,7 +504,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                               fontSize: 28),
                         ),
                         TextSpan(
-                          text: 'ซอง',
+                          text: 'ชิ้น',
                           style: GoogleFonts.googleSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
@@ -524,7 +526,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
 
   Widget _buildQuantityCard() {
     return _buildSectionCard(
-      title: 'จำนวนถุงยางอนามัย',
+      title: 'ถุงยางอนามัย',
       icon: Icons.inventory_2_outlined,
       child: Column(
         children: [
@@ -542,7 +544,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                 style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primary),
+                    color: AppColors.textPrimary),
               ),
             ],
           ),
@@ -555,7 +557,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     return _buildSectionCard(
       title: 'เพิ่มเติม',
       icon: Icons.add_circle_outline,
-      child: _buildInfoRow('สารหล่อลื่น', '${widget.lubricantQuantity} ซอง'),
+      child: _buildInfoRow('เจลหล่อลื่น', '${widget.lubricantQuantity} ชิ้น'),
     );
   }
 
@@ -568,7 +570,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         : '-';
 
     return _buildSectionCard(
-      title: 'สถานบริการ วันและเวลารับ',
+      title: 'สถานบริการ วันที่และเวลารับ',
       icon: Icons.calendar_today_outlined,
       child: Column(
         children: [

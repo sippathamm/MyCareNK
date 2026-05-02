@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 abstract final class AppColors {
   // Primary palette
   static const Color primary = Color(0xFFFF9F6B);
+  static const Color primaryDark = Color(0xFFE07A42);
   static const Color primaryLight = Color(0xFFFFC49B);
   static const Color primaryShadow = Color(0x29FF9F6B); // ~16% opacity
   static const Color primaryCardShadow = Color(0x1AFF9F6B); // ~10% opacity
@@ -17,6 +18,7 @@ abstract final class AppColors {
 
   // Lubricant / blue
   static const Color lubricant = Color(0xFF4A9FE8);
+  static const Color lubricantDark = Color(0xFF2E7FC4);
   static const Color lubricantCardStart = Color(0xFFC0DEFB);
   static const Color lubricantCardEnd = Color(0xFF86C0FA);
   static const Color lubricantShadow = Color(0x1A4A9FE8); // ~10% opacity
