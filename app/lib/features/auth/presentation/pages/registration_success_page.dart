@@ -157,12 +157,15 @@ class RegistrationSuccessPage extends StatelessWidget {
                       // Footer text
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                        child: Text(
-                          'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
-                          textAlign: TextAlign.center,
-                          style: GoogleFonts.googleSans(
-                            fontSize: 12,
-                            color: AppColors.textSecondary,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Text(
+                            'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.googleSans(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
                           ),
                         ),
                       ),

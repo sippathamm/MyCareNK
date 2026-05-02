@@ -83,16 +83,16 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 Text(
                   'กรอกชื่อผู้ใช้งานของคุณ',
                   style: GoogleFonts.googleSans(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'เราจะพาคุณไปยืนยันตัวตนด้วยรหัสกู้คืน',
+                  'ยืนยันตัวตนด้วยรหัสกู้ยืน',
                   style: GoogleFonts.googleSans(
-                    fontSize: 13,
+                    fontSize: 14,
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,
