@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../main/presentation/pages/main_page.dart';
-import '../widgets/recovery_codes_grid.dart';
 
 class RegistrationSuccessPage extends StatelessWidget {
   final List<String> recoveryCodes;
@@ -10,94 +11,250 @@ class RegistrationSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [AppColors.primaryBackground, AppColors.white],
+      backgroundColor: AppColors.white,
+      appBar: AppBar(
+        backgroundColor: AppColors.white,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        centerTitle: true,
+        automaticallyImplyLeading: false,
+        title: Text(
+          'สร้างบัญชีใหม่',
+          style: GoogleFonts.googleSans(
+            color: AppColors.textPrimary,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
         ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 40.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'สร้างบัญชีใหม่สำเร็จ!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.primary,
-                  ),
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          child: Column(
+            children: [
+              // Success icon
+              Container(
+                width: 88,
+                height: 88,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.statusCompletedLight,
+                  border: Border.all(color: AppColors.statusCompleted, width: 3),
                 ),
-                const SizedBox(height: 32),
-                Center(
-                  child: Image.asset(
-                    'assets/images/rocket.png',
-                    width: 175,
-                    height: 175,
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Container(
-                        width: 175,
-                        height: 175,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[300],
-                          borderRadius: BorderRadius.circular(12),
+                child: const Icon(Icons.check, color: AppColors.statusCompleted, size: 48),
+              ),
+              const SizedBox(height: 16),
+
+              // Title + subtitle
+              Text(
+                'สร้างบัญชีใหม่สำเร็จ!',
+                style: GoogleFonts.googleSans(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'ยินดีต้อนรับสู่ MyCareNK',
+                style: GoogleFonts.googleSans(
+                  fontSize: 15,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Warning banner
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryBackground,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppColors.primaryLight),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'กรุณาบันทึกรหัสกู้คืนทั้ง 6 ตัวไว้ในที่ปลอดภัย\nใช้สำหรับกู้คืนบัญชีหากลืมรหัสผ่าน',
+                        style: GoogleFonts.googleSans(
+                          fontSize: 13,
+                          color: AppColors.textPrimary,
+                          height: 1.5,
                         ),
-                        child: const Center(
-                          child: Icon(Icons.error_outline, size: 64, color: Colors.grey),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 40),
-                const Text(
-                  'กรุณาเก็บรหัสกู้คืนทั้ง 6 ตัวนี้\nไว้ในที่ปลอดภัย หากคุณลืมรหัสผ่าน',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textPrimary,
-                    height: 1.4,
-                  ),
-                ),
-                const SizedBox(height: 32),
-                RecoveryCodesGrid(
-                  recoveryCodes: recoveryCodes,
-                  footerText: 'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
-                ),
-                const SizedBox(height: 12),
-                SizedBox(
-                  height: 48,
-                  child: OutlinedButton(
-                    onPressed: () {
-                      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const MainScreen()),
-                        (route) => false,
-                      );
-                    },
-                    style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: colorScheme.primary),
-                      foregroundColor: colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    child: const Text(
-                      'ตกลง',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Recovery codes card
+              Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: AppColors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: AppColors.cardShadowMedium,
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Card header
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        width: double.infinity,
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [AppColors.primaryDark, AppColors.primary],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.key_outlined, color: Colors.white, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              'รหัสกู้คืนบัญชี',
+                              style: GoogleFonts.googleSans(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Grid
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                        child: GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 3,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 1.2,
+                          children: recoveryCodes.map(_buildCodeBox).toList(),
+                        ),
+                      ),
+
+                      // Footer text
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                        child: Text(
+                          'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.googleSans(
+                            fontSize: 12,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+
+                      // Copy button
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 48,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Clipboard.setData(
+                                ClipboardData(text: recoveryCodes.join(', ')),
+                              );
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('คัดลอกรหัสทั้งหมดแล้ว')),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppColors.primary),
+                              foregroundColor: AppColors.primary,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                            icon: const Icon(Icons.copy_outlined, size: 18),
+                            label: Text(
+                              'คัดลอกรหัสทั้งหมด',
+                              style: GoogleFonts.googleSans(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // CTA button
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: FilledButton(
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => const MainScreen()),
+                      (route) => false,
+                    );
+                  },
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: Text(
+                    'เริ่มใช้งาน',
+                    style: GoogleFonts.googleSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCodeBox(String code) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.primaryCodeBox,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.primaryCodeBorder),
+      ),
+      child: Center(
+        child: Text(
+          code,
+          style: GoogleFonts.googleSans(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
           ),
         ),
       ),
