@@ -6,6 +6,7 @@ class ServiceCard extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback? onTap;
+  final Color iconBgColor;
 
   const ServiceCard({
     super.key,
@@ -13,6 +14,7 @@ class ServiceCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     this.onTap,
+    this.iconBgColor = AppColors.primary,
   });
 
   @override
@@ -22,6 +24,7 @@ class ServiceCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.grey.shade200),
         boxShadow: const [
           BoxShadow(
             color: AppColors.cardShadow,
@@ -43,8 +46,8 @@ class ServiceCard extends StatelessWidget {
                 Container(
                   width: 50,
                   height: 50,
-                  decoration: const BoxDecoration(
-                    color: AppColors.primary,
+                  decoration: BoxDecoration(
+                    color: iconBgColor,
                     shape: BoxShape.circle,
                   ),
                   child: Icon(icon, color: AppColors.white, size: 28),

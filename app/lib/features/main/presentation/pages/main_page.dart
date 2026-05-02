@@ -4,6 +4,7 @@ import '../../../home/presentation/pages/home_page.dart';
 import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
+import '../../../service/presentation/pages/request_history_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -27,6 +28,15 @@ class _MainScreenState extends State<MainScreen> {
     super.dispose();
   }
 
+  void _navigateToHistory() {
+    setState(() => _currentIndex = 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _serviceNavigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
+      );
+    });
+  }
+
   void _onItemTapped(int index) {
     if (_currentIndex == index && index == 1) {
       _serviceNavigatorKey.currentState?.popUntil((route) => route.isFirst);
@@ -47,7 +57,7 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomePage(visibilityKey: _homeVisibilityKey),
+          HomePage(visibilityKey: _homeVisibilityKey, onNavigateToHistory: _navigateToHistory),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
           MessagesPage(unreadNotifier: _messagesUnreadNotifier),

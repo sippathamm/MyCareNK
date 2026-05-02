@@ -122,7 +122,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'ประวัติการขอ',
+          'ประวัติคำขอ',
           style: TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -156,7 +156,14 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                             return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.5,
                               child: Center(
-                                child: Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.googleSans(fontSize: 18, color: Colors.grey[400])),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
+                                    const SizedBox(height: 16),
+                                    Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
+                                  ],
+                                ),
                               ),
                             );
                           }
@@ -164,7 +171,14 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                             return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.5,
                               child: Center(
-                                child: Text('ยังไม่มีรายการ', style: GoogleFonts.googleSans(fontSize: 18, color: Colors.grey[400])),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[300]),
+                                    const SizedBox(height: 16),
+                                    Text('ยังไม่มีรายการ', style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
+                                  ],
+                                ),
                               ),
                             );
                           }
@@ -172,7 +186,14 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                             return SizedBox(
                               height: MediaQuery.of(context).size.height * 0.5,
                               child: Center(
-                                child: Text('ไม่พบรายการ', style: GoogleFonts.googleSans(fontSize: 18, color: Colors.grey[400])),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.search_off_outlined, size: 64, color: Colors.grey[300]),
+                                    const SizedBox(height: 16),
+                                    Text('ไม่พบรายการ', style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
+                                  ],
+                                ),
                               ),
                             );
                           }
@@ -191,8 +212,16 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     return Container(
       height: 48,
       decoration: BoxDecoration(
-        color: AppColors.primaryBackground,
+        color: AppColors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.grey.shade200),
+        boxShadow: const [
+          BoxShadow(
+            color: AppColors.cardShadow,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
+        ],
       ),
       child: TextField(
         onChanged: (val) {

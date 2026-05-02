@@ -115,7 +115,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'สถานบริการกำลังเตรียมถุงยางอนามัยให้คุณ',
+                    'เราได้รับคำขอถุงยางอนามัยของคุณแล้ว',
                     style: TextStyle(
                         fontSize: 15, color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
@@ -149,7 +149,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                 Icon(Icons.event_note_outlined,
                                     color: Colors.white, size: 18),
                                 SizedBox(width: 8),
-                                Text('รายละเอียดการรับ',
+                                Text('รายละเอียดคำขอ',
                                     style: TextStyle(
                                         color: Colors.white,
                                         fontSize: 16,

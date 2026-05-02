@@ -10,8 +10,9 @@ import '../widgets/campaign_banner.dart';
 class HomePage extends StatefulWidget {
   /// Increments each time the home tab becomes active, used to replay animations.
   final int visibilityKey;
+  final VoidCallback? onNavigateToHistory;
 
-  const HomePage({super.key, this.visibilityKey = 0});
+  const HomePage({super.key, this.visibilityKey = 0, this.onNavigateToHistory});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -73,9 +74,9 @@ class _HomePageState extends State<HomePage> {
               const SizedBox(height: 8),
               MonthlyFreeCard(refreshKey: _cardRefreshKey),
               const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: ShortcutMenu(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: ShortcutMenu(onNavigateToHistory: widget.onNavigateToHistory),
               ),
               const SizedBox(height: 24),
               const KnowledgeSection(),
