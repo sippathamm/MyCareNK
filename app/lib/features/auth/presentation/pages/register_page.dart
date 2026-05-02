@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -25,12 +26,14 @@ class _RegisterPageState extends State<RegisterPage> {
   String? _gender;
   DateTime? _selectedDateOfBirth;
   String _nationality = 'ไทย';
+  final _customNationalityController = TextEditingController();
 
   @override
   void dispose() {
     _usernameController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _customNationalityController.dispose();
     super.dispose();
   }
 
@@ -76,7 +79,18 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
+    if (_nationality == 'อื่นๆ' && _customNationalityController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('กรุณาระบุสัญชาติ'), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
+
+    final nationalityValue = _nationality == 'อื่นๆ'
+        ? _customNationalityController.text.trim()
+        : _nationality;
 
     try {
       final username = _usernameController.text.trim();
@@ -101,7 +115,7 @@ class _RegisterPageState extends State<RegisterPage> {
           'user_id': userId,
           'username': username,
           'gender': _gender,
-          'nationality': _nationality,
+          'nationality': nationalityValue,
           'date_of_birth': _selectedDateOfBirth!.toIso8601String().split('T')[0],
         });
       }
@@ -156,15 +170,13 @@ class _RegisterPageState extends State<RegisterPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         Radio<String>(value: value, activeColor: AppColors.primary),
-        Text(value),
+        Text(value, style: GoogleFonts.googleSans(fontSize: 14)),
       ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -173,12 +185,12 @@ class _RegisterPageState extends State<RegisterPage> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'สร้างบัญชีใหม่',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -197,10 +209,14 @@ class _RegisterPageState extends State<RegisterPage> {
                 _buildInputBox(
                   child: TextFormField(
                     controller: _usernameController,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                      hintText: 'ชื่อผู้ใช้งาน (ตัวอักษรภาษาอังกฤษหรือตัวเลข)',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintText: 'ชื่อผู้ใช้งาน',
+                      hintStyle: GoogleFonts.googleSans(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -222,17 +238,29 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    'ตัวอักษรภาษาอังกฤษหรือตัวเลข (4–20 ตัว)',
+                    style: GoogleFonts.googleSans(fontSize: 12, color: Colors.grey[500]),
+                  ),
+                ),
+                const SizedBox(height: 12.0),
 
                 // Password Field
                 _buildInputBox(
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                      hintText: 'รหัสผ่าน (อย่างน้อย 8 ตัวอักษร)',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintText: 'รหัสผ่าน',
+                      hintStyle: GoogleFonts.googleSans(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -257,17 +285,29 @@ class _RegisterPageState extends State<RegisterPage> {
                     },
                   ),
                 ),
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 4),
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    'ต้องมีทั้งตัวอักษรและตัวเลข อย่างน้อย 8 ตัว',
+                    style: GoogleFonts.googleSans(fontSize: 12, color: Colors.grey[500]),
+                  ),
+                ),
+                const SizedBox(height: 12.0),
 
                 // Confirm Password Field
                 _buildInputBox(
                   child: TextFormField(
                     controller: _confirmPasswordController,
                     obscureText: _obscureConfirmPassword,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'ยืนยันรหัสผ่าน',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: GoogleFonts.googleSans(
+                        color: Colors.grey[400],
+                        fontSize: 14,
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -298,7 +338,7 @@ class _RegisterPageState extends State<RegisterPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
-                      flex: 2,
+                      flex: 3,
                       child: _buildInputBox(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 16.0,
@@ -315,15 +355,24 @@ class _RegisterPageState extends State<RegisterPage> {
                                   isExpanded: true,
                                   hint: Text(
                                     'เพศ',
-                                    style: TextStyle(color: Colors.grey[400]),
+                                    style: GoogleFonts.googleSans(
+                                      color: Colors.grey[400],
+                                      fontSize: 14,
+                                    ),
                                   ),
                                   icon: Icon(
                                     Icons.keyboard_arrow_down,
                                     color: Colors.grey[400],
                                   ),
-                                  items: const [
-                                    DropdownMenuItem(value: 'ชาย', child: Text('ชาย')),
-                                    DropdownMenuItem(value: 'หญิง', child: Text('หญิง')),
+                                  items: [
+                                    DropdownMenuItem(
+                                      value: 'ชาย',
+                                      child: Text('ชาย', style: GoogleFonts.googleSans()),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'หญิง',
+                                      child: Text('หญิง', style: GoogleFonts.googleSans()),
+                                    ),
                                   ],
                                   onChanged: (value) =>
                                       setState(() => _gender = value),
@@ -346,6 +395,7 @@ class _RegisterPageState extends State<RegisterPage> {
                               initialValue: _selectedDateOfBirth == null
                                   ? ''
                                   : '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year + 543}',
+                              style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                               decoration: InputDecoration(
                                 prefixIcon: Icon(
                                   Icons.calendar_today,
@@ -353,7 +403,10 @@ class _RegisterPageState extends State<RegisterPage> {
                                   size: 20,
                                 ),
                                 hintText: 'วัน/เดือน/ปีเกิด',
-                                hintStyle: TextStyle(color: Colors.grey[400]),
+                                hintStyle: GoogleFonts.googleSans(
+                                  color: Colors.grey[400],
+                                  fontSize: 14,
+                                ),
                                 border: InputBorder.none,
                                 contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16.0,
@@ -373,9 +426,9 @@ class _RegisterPageState extends State<RegisterPage> {
                 // Nationality Row
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'สัญชาติ',
-                      style: TextStyle(fontWeight: FontWeight.bold),
+                      style: GoogleFonts.googleSans(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(width: 8),
                     Expanded(
@@ -390,24 +443,48 @@ class _RegisterPageState extends State<RegisterPage> {
                             _buildNationalityOption('ไทย'),
                             _buildNationalityOption('ลาว'),
                             _buildNationalityOption('พม่า'),
+                            _buildNationalityOption('อื่นๆ'),
                           ],
                         ),
                       ),
                     ),
                   ],
                 ),
+                if (_nationality == 'อื่นๆ') ...[
+                  const SizedBox(height: 12),
+                  _buildInputBox(
+                    child: TextFormField(
+                      controller: _customNationalityController,
+                      style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                      decoration: InputDecoration(
+                        prefixIcon: Icon(Icons.public_outlined, color: Colors.grey[400]),
+                        hintText: 'ระบุสัญชาติ',
+                        hintStyle: GoogleFonts.googleSans(
+                          color: Colors.grey[400],
+                          fontSize: 14,
+                        ),
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 16.0,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
 
                 const SizedBox(height: 48.0),
 
                 // Submit Button
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 52,
                   child: FilledButton(
                     onPressed: _isLoading ? null : _register,
                     style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
+                      elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
@@ -421,9 +498,9 @@ class _RegisterPageState extends State<RegisterPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'ตกลง',
-                            style: TextStyle(
+                            style: GoogleFonts.googleSans(
                               fontSize: 16.0,
                               fontWeight: FontWeight.bold,
                             ),
@@ -442,7 +519,7 @@ class _RegisterPageState extends State<RegisterPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12.0),
       ),
       padding: padding,
       child: child,

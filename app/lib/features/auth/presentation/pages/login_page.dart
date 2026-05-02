@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -73,8 +74,6 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -83,12 +82,12 @@ class _LoginPageState extends State<LoginPage> {
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: colorScheme.primary),
+          icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'เข้าสู่ระบบ',
-          style: TextStyle(
+          style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -103,16 +102,65 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
+
+                // Logo + Greeting
+                Center(
+                  child: Column(
+                    children: [
+                      Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryBackground,
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: AppColors.primaryLight, width: 1.5),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(18),
+                          child: Image.asset(
+                            'assets/icon/app_icon.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, e, s) => const Icon(
+                              Icons.health_and_safety_outlined,
+                              color: AppColors.primary,
+                              size: 44,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'ยินดีต้อนรับ',
+                        style: GoogleFonts.googleSans(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'เข้าสู่ระบบเพื่อใช้บริการ MyCareNK',
+                        style: GoogleFonts.googleSans(
+                          fontSize: 15,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 32),
 
                 // Username Field
                 _buildInputBox(
                   child: TextFormField(
                     controller: _usernameController,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
                       hintText: 'ชื่อผู้ใช้งาน',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -140,10 +188,11 @@ class _LoginPageState extends State<LoginPage> {
                   child: TextFormField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
                       hintText: 'รหัสผ่าน',
-                      hintStyle: TextStyle(color: Colors.grey[400]),
+                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400]),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -166,7 +215,7 @@ class _LoginPageState extends State<LoginPage> {
                     },
                   ),
                 ),
-                const SizedBox(height: 8.0),
+                const SizedBox(height: 4.0),
 
                 // Forgot Password
                 Align(
@@ -182,25 +231,26 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: Text(
                       'ลืมรหัสผ่าน?',
-                      style: TextStyle(color: colorScheme.primary),
+                      style: GoogleFonts.googleSans(color: AppColors.primary),
                     ),
                   ),
                 ),
 
-                const SizedBox(height: 48.0),
+                const SizedBox(height: 32.0),
 
                 // Login Button
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 52,
                   child: FilledButton(
                     onPressed: _isLoading ? null : _login,
                     style: FilledButton.styleFrom(
-                      backgroundColor: colorScheme.primary,
+                      backgroundColor: AppColors.primary,
                       foregroundColor: AppColors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
+                      elevation: 0,
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -211,9 +261,9 @@ class _LoginPageState extends State<LoginPage> {
                               strokeWidth: 2,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'เข้าสู่ระบบ',
-                            style: TextStyle(
+                            style: GoogleFonts.googleSans(
                               fontSize: 16.0,
                               fontWeight: FontWeight.bold,
                             ),
@@ -221,12 +271,12 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
 
-                const SizedBox(height: 16.0),
+                const SizedBox(height: 12.0),
 
                 // Create Account Button
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 52,
                   child: OutlinedButton(
                     onPressed: _isLoading
                         ? null
@@ -242,15 +292,15 @@ class _LoginPageState extends State<LoginPage> {
                             }
                           },
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: colorScheme.primary),
-                      foregroundColor: colorScheme.primary,
+                      side: const BorderSide(color: AppColors.primary),
+                      foregroundColor: AppColors.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
                       ),
                     ),
-                    child: const Text(
+                    child: Text(
                       'สร้างบัญชีใหม่',
-                      style: TextStyle(
+                      style: GoogleFonts.googleSans(
                         fontSize: 16.0,
                         fontWeight: FontWeight.bold,
                       ),
@@ -269,7 +319,7 @@ class _LoginPageState extends State<LoginPage> {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(12.0),
       ),
       child: child,
     );
