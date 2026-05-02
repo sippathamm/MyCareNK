@@ -83,7 +83,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 Text(
                   'กรอกชื่อผู้ใช้งานของคุณ',
                   style: GoogleFonts.googleSans(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
@@ -92,7 +92,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 Text(
                   'ยืนยันตัวตนด้วยรหัสกู้ยืน',
                   style: GoogleFonts.googleSans(
-                    fontSize: 14,
+                    fontSize: 15,
                     color: AppColors.textSecondary,
                   ),
                   textAlign: TextAlign.center,

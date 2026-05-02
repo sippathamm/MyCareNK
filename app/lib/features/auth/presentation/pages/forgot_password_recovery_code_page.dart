@@ -148,7 +148,7 @@ class _ForgotPasswordRecoveryCodePageState
               Text(
                 'กรอกรหัสกู้คืนบัญชี',
                 style: GoogleFonts.googleSans(
-                  fontSize: 20,
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
@@ -157,7 +157,7 @@ class _ForgotPasswordRecoveryCodePageState
               Text(
                 'กรอกรหัส 6 หลักที่บันทึกไว้',
                 style: GoogleFonts.googleSans(
-                  fontSize: 14,
+                  fontSize: 15,
                   color: AppColors.textSecondary,
                 ),
               ),

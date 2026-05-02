@@ -132,7 +132,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                 Text(
                   'ตั้งรหัสผ่านใหม่',
                   style: GoogleFonts.googleSans(
-                    fontSize: 20,
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     color: AppColors.textPrimary,
                   ),
@@ -141,7 +141,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                 Text(
                   'รหัสผ่านใหม่ต้องต่างจากรหัสผ่านเดิม',
                   style: GoogleFonts.googleSans(
-                    fontSize: 14,
+                    fontSize: 15,
                     color: AppColors.textSecondary,
                   ),
                 ),
