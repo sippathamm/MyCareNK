@@ -15,8 +15,8 @@ class ShortcutMenu extends StatelessWidget {
           context: context,
           icon: Icons.location_on_outlined,
           label: 'สถานบริการ',
-          iconColor: AppColors.primary,
-          iconBg: AppColors.statusPendingLight,
+          iconColor: AppColors.statusReady,
+          iconBg: AppColors.statusReadyLight,
         ),
         const SizedBox(width: 16),
         _buildShortcutItem(
@@ -31,8 +31,8 @@ class ShortcutMenu extends StatelessWidget {
           context: context,
           icon: Icons.receipt_long_outlined,
           label: 'ประวัติคำขอ',
-          iconColor: const Color(0xFF7C4DFF),
-          iconBg: AppColors.avatarBackground,
+          iconColor: AppColors.statusCompleted,
+          iconBg: AppColors.statusCompletedLight,
         ),
       ],
     );

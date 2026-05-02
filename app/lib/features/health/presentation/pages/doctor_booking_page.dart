@@ -145,7 +145,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 height: 3,
                 margin: const EdgeInsets.only(bottom: 20),
                 decoration: BoxDecoration(
-                  color: done ? AppColors.primary : const Color(0xFFE8E8E8),
+                  color: done ? AppColors.lubricant : const Color(0xFFE8E8E8),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -154,7 +154,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           final idx = i ~/ 2;
           final isDone = idx < _step;
           final isCurrent = idx == _step;
-          final color = (isDone || isCurrent) ? AppColors.primary : const Color(0xFFE8E8E8);
+          final color = (isDone || isCurrent) ? AppColors.lubricant : const Color(0xFFE8E8E8);
           final textColor = (isDone || isCurrent) ? Colors.white : AppColors.textMuted;
           return Column(
             children: [
@@ -182,7 +182,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: (isDone || isCurrent) ? FontWeight.w700 : FontWeight.w400,
-                  color: (isDone || isCurrent) ? AppColors.primary : AppColors.textMuted,
+                  color: (isDone || isCurrent) ? AppColors.lubricant : AppColors.textMuted,
                 ),
               ),
             ],
@@ -264,7 +264,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                              color: AppColors.primary, width: 1.5),
+                              color: AppColors.lubricant, width: 1.5),
                         ),
                         filled: true,
                         fillColor: const Color(0xFFFAFAFA),
@@ -303,9 +303,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? AppColors.primaryCardStart : Colors.white,
+          color: sel ? AppColors.lubricantCardStart : Colors.white,
           border: Border.all(
-            color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
+            color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -317,7 +317,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: sel ? AppColors.primary : const Color(0xFFF5F5F5),
+                color: sel ? AppColors.lubricant : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(r.icon,
@@ -335,7 +335,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               ),
             ),
             if (sel)
-              const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+              const Icon(Icons.check_circle, color: AppColors.lubricant, size: 20),
           ],
         ),
       ),
@@ -351,9 +351,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: sel ? AppColors.primaryCardStart : Colors.white,
+          color: sel ? AppColors.lubricantCardStart : Colors.white,
           border: Border.all(
-            color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
+            color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -365,7 +365,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: sel ? AppColors.primary : const Color(0xFFF5F5F5),
+                color: sel ? AppColors.lubricant : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Center(
@@ -399,7 +399,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               ),
             ),
             if (sel)
-              const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
+              const Icon(Icons.check_circle, color: AppColors.lubricant, size: 20),
           ],
         ),
       ),
@@ -423,9 +423,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               duration: const Duration(milliseconds: 150),
               width: 60,
               decoration: BoxDecoration(
-                color: sel ? AppColors.primary : Colors.white,
+                color: sel ? AppColors.lubricant : Colors.white,
                 border: Border.all(
-                  color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
+                  color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
                   width: 1.5,
                 ),
                 borderRadius: BorderRadius.circular(14),
@@ -506,9 +506,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: sel ? AppColors.primary : Colors.white,
+                  color: sel ? AppColors.lubricant : Colors.white,
                   border: Border.all(
-                    color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
+                    color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
                     width: 1.5,
                   ),
                   borderRadius: BorderRadius.circular(10),
@@ -732,11 +732,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                 width: 36,
                                 height: 36,
                                 decoration: BoxDecoration(
-                                  color: AppColors.primaryCardStart,
+                                  color: AppColors.lubricantCardStart,
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Icon(row.$1,
-                                    color: AppColors.primary, size: 18),
+                                    color: AppColors.lubricant, size: 18),
                               ),
                               const SizedBox(width: 12),
                               Column(
@@ -841,7 +841,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       scrolledUnderElevation: 0,
       leading: IconButton(
         icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-        color: AppColors.primary,
+        color: AppColors.lubricant,
         onPressed: onBack,
       ),
       title: Text(
@@ -892,7 +892,7 @@ class _SectionCard extends StatelessWidget {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.primary,
+              color: AppColors.lubricant,
               width: double.infinity,
               child: Row(
                 children: [
@@ -934,7 +934,7 @@ class _PrimaryBtn extends StatelessWidget {
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor:
-              onPressed != null ? AppColors.primary : Colors.grey.shade300,
+              onPressed != null ? AppColors.lubricant : Colors.grey.shade300,
           foregroundColor: Colors.white,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -960,8 +960,8 @@ class _OutlinedBtn extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.primary, width: 1.5),
-          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.lubricant, width: 1.5),
+          foregroundColor: AppColors.lubricant,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),

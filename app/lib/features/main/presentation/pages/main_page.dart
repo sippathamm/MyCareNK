@@ -106,7 +106,7 @@ class _MainScreenState extends State<MainScreen> {
               valueListenable: _messagesUnreadNotifier,
               builder: (context, count, child) => Badge(
                 isLabelVisible: count > 0,
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.error,
                 label: Text(
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),
@@ -118,7 +118,7 @@ class _MainScreenState extends State<MainScreen> {
               valueListenable: _messagesUnreadNotifier,
               builder: (context, count, child) => Badge(
                 isLabelVisible: count > 0,
-                backgroundColor: Colors.red,
+                backgroundColor: AppColors.error,
                 label: Text(
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),

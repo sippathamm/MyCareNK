@@ -242,7 +242,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-          color: AppColors.primary,
+          color: AppColors.avatarIcon,
           onPressed:
               _isDone ? () => Navigator.of(context).pop() : _handleBack,
         ),
@@ -320,7 +320,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               value: (_step + 1) / _totalQ,
               backgroundColor: const Color(0xFFF0F0F0),
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(AppColors.primary),
+                  const AlwaysStoppedAnimation<Color>(AppColors.avatarIcon),
               minHeight: 6,
             ),
           ),
@@ -334,7 +334,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                     horizontal: 12, vertical: 3),
                 decoration: BoxDecoration(
                   color: active
-                      ? AppColors.primary
+                      ? AppColors.avatarIcon
                       : const Color(0xFFF5F5F5),
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -363,11 +363,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           width: 88,
           height: 88,
           decoration: const BoxDecoration(
-            color: AppColors.primaryCardStart,
+            color: AppColors.avatarBackground,
             shape: BoxShape.circle,
           ),
           child:
-              const Icon(Icons.biotech, color: AppColors.primary, size: 44),
+              const Icon(Icons.biotech, color: AppColors.avatarIcon, size: 44),
         ),
         const SizedBox(height: 20),
         const Text(
@@ -393,7 +393,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               TextSpan(
                 text: '3–6 เดือนที่ผ่านมา',
                 style: TextStyle(
-                  color: AppColors.primary,
+                  color: AppColors.avatarIcon,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -410,7 +410,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppColors.primaryCardStart,
+            color: AppColors.avatarBackground,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
@@ -421,7 +421,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.primary,
+                  color: AppColors.avatarIcon,
                 ),
               ),
               const SizedBox(height: 8),
@@ -465,7 +465,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             padding:
                 const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: AppColors.primary,
+              color: AppColors.avatarIcon,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -510,7 +510,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           width: double.infinity,
           padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: AppColors.primaryCardStart,
+            color: AppColors.avatarBackground,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Row(
@@ -520,7 +520,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 width: 44,
                 height: 44,
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppColors.avatarIcon,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(q.icon, color: Colors.white, size: 22),
@@ -534,7 +534,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                       'ข้อที่ ${_step + 1}',
                       style: const TextStyle(
                         fontSize: 13,
-                        color: AppColors.primary,
+                        color: AppColors.avatarIcon,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -579,10 +579,10 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         margin: const EdgeInsets.only(bottom: 10),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryCardStart : Colors.white,
+          color: isSelected ? AppColors.avatarBackground : Colors.white,
           border: Border.all(
             color: isSelected
-                ? AppColors.primary
+                ? AppColors.avatarIcon
                 : const Color(0xFFE0E0E0),
             width: 2,
           ),
@@ -590,7 +590,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           boxShadow: [
             BoxShadow(
               color: isSelected
-                  ? AppColors.primaryShadow
+                  ? AppColors.avatarIconShadow
                   : const Color(0x0A000000),
               blurRadius: isSelected ? 10 : 4,
               offset: const Offset(0, 2),
@@ -606,7 +606,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               height: 28,
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppColors.primary
+                    ? AppColors.avatarIcon
                     : const Color(0xFFF0F0F0),
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -653,7 +653,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             if (isSelected) ...[
               const SizedBox(width: 8),
               const Icon(Icons.check_circle,
-                  color: AppColors.primary, size: 20),
+                  color: AppColors.avatarIcon, size: 20),
             ],
           ],
         ),
@@ -824,7 +824,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                   text: '$term ',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AppColors.avatarIcon,
                     fontSize: 13,
                   ),
                 ),
@@ -990,7 +990,7 @@ class _PrimaryBtn extends StatelessWidget {
         onPressed: onPressed,
         style: FilledButton.styleFrom(
           backgroundColor:
-              onPressed != null ? AppColors.primary : Colors.grey.shade300,
+              onPressed != null ? AppColors.avatarIcon : Colors.grey.shade300,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24)),
@@ -1018,8 +1018,8 @@ class _OutlinedBtn extends StatelessWidget {
       child: OutlinedButton(
         onPressed: onPressed,
         style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.primary, width: 2),
-          foregroundColor: AppColors.primary,
+          side: const BorderSide(color: AppColors.avatarIcon, width: 2),
+          foregroundColor: AppColors.avatarIcon,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24)),
         ),

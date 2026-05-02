@@ -49,6 +49,7 @@ abstract final class AppColors {
   static const Color avatarBackground = Color(0xFFEFE5FD);
   static const Color avatarCircle = Color(0xFFD1C4E9);
   static const Color avatarIcon = Color(0xFF7C4DFF);
+  static const Color avatarIconShadow = Color(0x297C4DFF); // ~16% opacity
 
   // Neutral
   static const Color white = Color(0xFFFFFFFF);

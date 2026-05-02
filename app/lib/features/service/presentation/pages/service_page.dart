@@ -42,7 +42,8 @@ class ServicePage extends StatelessWidget {
             ),
             ServiceCard(
               icon: Icons.favorite_outline,
-              iconBgColor: const Color(0xFF7C4DFF),
+              iconBgColor: AppColors.avatarBackground,
+              iconColor: AppColors.avatarIcon,
               title: 'ประเมินความเสี่ยงการติดเชื้อ HIV',
               subtitle: 'ทำแบบทดสอบเพื่อประเมินความเสี่ยงการติดเชื้อ HIV',
               onTap: () => Navigator.of(context).push(
@@ -51,7 +52,8 @@ class ServicePage extends StatelessWidget {
             ),
             ServiceCard(
               icon: Icons.calendar_month_outlined,
-              iconBgColor: AppColors.lubricant,
+              iconBgColor: AppColors.lubricantCardStart,
+              iconColor: AppColors.lubricant,
               title: 'นัดพบแพทย์',
               subtitle: 'จองคิวล่วงหน้าเพื่อรับยา PrEP/PEP ตรวจเลือด หรือปรึกษาสุขภาพ',
               onTap: () => Navigator.of(context).push(
@@ -60,7 +62,8 @@ class ServicePage extends StatelessWidget {
             ),
             ServiceCard(
               icon: Icons.receipt_long_outlined,
-              iconBgColor: AppColors.statusCompleted,
+              iconBgColor: AppColors.statusCompletedLight,
+              iconColor: AppColors.statusCompleted,
               title: 'ประวัติคำขอ',
               subtitle: 'ดูสถานะและรายละเอียดคำขอรับถุงยางอนามัยทั้งหมด',
               onTap: () => Navigator.of(context).push(
