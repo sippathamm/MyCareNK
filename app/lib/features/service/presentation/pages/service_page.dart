@@ -52,7 +52,7 @@ class ServicePage extends StatelessWidget {
             ),
             ServiceCard(
               icon: Icons.calendar_month_outlined,
-              iconBgColor: AppColors.lubricantCardStart,
+              iconBgColor: AppColors.statusPreparingLight,
               iconColor: AppColors.lubricant,
               title: 'นัดพบแพทย์',
               subtitle: 'จองคิวล่วงหน้าเพื่อรับยา PrEP/PEP ตรวจเลือด หรือปรึกษาสุขภาพ',

@@ -151,6 +151,13 @@ List<_RequestGroup> _buildMockGroups() {
           id: 'm1-3',
           type: _MsgType.ready,
           text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด (2 พ.ค. 2568 เวลา 10:00 น.)',
+          textSpans: const [
+            TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด '),
+            TextSpan(
+              text: '(2 พ.ค. 2568 เวลา 10:00 น.)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
           createdAt: d(0, 10, 23),
           isNew: true,
         ),
@@ -187,6 +194,13 @@ List<_RequestGroup> _buildMockGroups() {
           id: 'm2-3',
           type: _MsgType.ready,
           text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด (25 เม.ย. 2568 เวลา 14:00 น.)',
+          textSpans: const [
+            TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด '),
+            TextSpan(
+              text: '(25 เม.ย. 2568 เวลา 14:00 น.)',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ],
           createdAt: d(8, 13, 5),
           isNew: false,
         ),
