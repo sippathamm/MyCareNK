@@ -16,7 +16,7 @@ import type { Enums, Tables } from '../lib/database.types';
 // Types
 // ---------------------------------------------------------------------------
 
-export type RequestStatus = Enums<'status'>;
+export type RequestStatus = Enums<'request_status'>;
 
 export type NotificationItem = Tables<'notifications'> & { is_read: boolean };
 
