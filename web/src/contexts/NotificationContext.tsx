@@ -18,7 +18,7 @@ import type { Enums, Tables } from '../lib/database.types';
 
 export type RequestStatus = Enums<'request_status'>;
 
-export type NotificationItem = Tables<'notifications'> & { is_read: boolean };
+export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolean };
 
 interface NotificationContextValue {
   notifications: NotificationItem[];
@@ -126,7 +126,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
       const ids = new Set<string>((readsData ?? []).map(r => r.notification_id));
 
-      let notifData: Tables<'notifications'>[] = [];
+      let notifData: Tables<'staff_notifications'>[] = [];
 
       if (role === 'staff' && serviceCenter) {
         const { data: requests } = await supabase
@@ -139,7 +139,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const requestIds = (requests ?? []).map(r => r.id);
         if (requestIds.length > 0) {
           const { data } = await supabase
-            .from('notifications')
+            .from('staff_notifications')
             .select('id, request_id, reference_number, event_type, created_at')
             .in('request_id', requestIds)
             .order('created_at', { ascending: false })
@@ -148,7 +148,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
       } else {
         const { data } = await supabase
-          .from('notifications')
+          .from('staff_notifications')
           .select('id, request_id, reference_number, event_type, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS);
@@ -172,9 +172,9 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .channel('notification-inserts')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        { event: 'INSERT', schema: 'public', table: 'staff_notifications' },
         async (payload) => {
-          const row = payload.new as Tables<'notifications'>;
+          const row = payload.new as Tables<'staff_notifications'>;
 
           // For staff: only show notifications for their service center
           if (roleRef.current === 'staff' && serviceCenterRef.current) {
@@ -208,7 +208,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .channel('notification-deletes')
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'notifications' },
+        { event: 'DELETE', schema: 'public', table: 'staff_notifications' },
         (payload) => {
           const deletedId = (payload.old as { id?: string }).id;
           if (!deletedId) return;
@@ -290,7 +290,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setNotifications(prev => prev.filter(n => n.id !== id));
     setReadIds(prev => { const next = new Set(prev); next.delete(id); return next; });
     // Delete from DB (cascade deletes notification_reads rows too)
-    await supabase.from('notifications').delete().eq('id', id);
+    await supabase.from('staff_notifications').delete().eq('id', id);
   }, []);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;

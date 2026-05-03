@@ -342,11 +342,11 @@ class _MessagesPageState extends State<MessagesPage> {
     if (session == null) return;
 
     _subscription = Supabase.instance.client
-        .channel('messages:notifications:${session.user.id}')
+        .channel('messages:staff_notifications:${session.user.id}')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
-          table: 'notifications',
+          table: 'staff_notifications',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'user_id',
@@ -370,7 +370,7 @@ class _MessagesPageState extends State<MessagesPage> {
     try {
       final [rawNotifs, rawReads] = await Future.wait([
         Supabase.instance.client
-            .from('notifications')
+            .from('staff_notifications')
             .select(
               'id, type, message, created_at, request_id, '
               'condom_requests!request_id(reference_number, selected_service_center)',
