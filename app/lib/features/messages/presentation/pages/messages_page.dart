@@ -378,9 +378,9 @@ class _MessagesPageState extends State<MessagesPage> {
             .eq('user_id', userId)
             .order('created_at', ascending: false),
         Supabase.instance.client
-            .from('notification_reads')
+            .from('staff_notification_reads')
             .select('notification_id')
-            .eq('user_id', userId),
+            .eq('staff_user_id', userId),
       ]);
 
       final readIds = Set<String>.from(
@@ -441,9 +441,9 @@ class _MessagesPageState extends State<MessagesPage> {
           .map((m) => m.id)
           .toList();
       if (unreadIds.isEmpty) return;
-      await Supabase.instance.client.from('notification_reads').upsert(
-        unreadIds.map((id) => {'notification_id': id, 'user_id': userId}).toList(),
-        onConflict: 'notification_id,user_id',
+      await Supabase.instance.client.from('staff_notification_reads').upsert(
+        unreadIds.map((id) => {'notification_id': id, 'staff_user_id': userId}).toList(),
+        onConflict: 'notification_id,staff_user_id',
       );
     }
     if (mounted) {
@@ -466,9 +466,9 @@ class _MessagesPageState extends State<MessagesPage> {
       final userId = session.user.id;
       final unreadIds =
           group.messages.where((m) => m.isNew).map((m) => m.id).toList();
-      await Supabase.instance.client.from('notification_reads').upsert(
-        unreadIds.map((id) => {'notification_id': id, 'user_id': userId}).toList(),
-        onConflict: 'notification_id,user_id',
+      await Supabase.instance.client.from('staff_notification_reads').upsert(
+        unreadIds.map((id) => {'notification_id': id, 'staff_user_id': userId}).toList(),
+        onConflict: 'notification_id,staff_user_id',
       );
     }
     if (mounted) {
