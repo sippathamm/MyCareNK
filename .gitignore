@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment files (each project has its own)
+.env
+.env.local
+.env.*.local
+
+# CLAUDE.md (local-only AI instructions)
+CLAUDE.md
