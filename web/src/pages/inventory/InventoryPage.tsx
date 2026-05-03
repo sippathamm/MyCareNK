@@ -60,7 +60,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <StorefrontIcon sx={{ color: '#64B5F6', fontSize: 20 }} />
+            <StorefrontIcon sx={{ color: 'info.main', fontSize: 20 }} />
             <Typography variant="h6" fontWeight="bold" noWrap>
               {row.service_center}
             </Typography>
@@ -124,11 +124,12 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
           <Box sx={{ display: 'flex', gap: 1 }}>
             <Button
               variant="contained"
+              color="primary"
               size="small"
               startIcon={<InventoryIcon />}
               onClick={() => onRestock(row)}
               fullWidth
-              sx={{ fontWeight: 600, fontSize: '0.82rem', bgcolor: '#FF9F6B', '&:hover': { bgcolor: '#fb8c4a' } }}
+              sx={{ fontWeight: 600, fontSize: '0.82rem' }}
             >
               เติมสต็อก
             </Button>

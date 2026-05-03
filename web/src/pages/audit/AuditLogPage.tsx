@@ -16,6 +16,8 @@ import {
   AUDIT_ACTION, AUDIT_ACTION_LABEL, AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR,
 } from '../../constants/auditLogActions';
 import type { AuditAction } from '../../constants/auditLogActions';
+import { formatDateTime } from '../../utils/requestUtils';
+import { createThGridLocale } from '../../constants/datagrid';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,26 +34,11 @@ function getDefaultDateFrom(): string {
   return toLocalDateString(d);
 }
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  const datePart = d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-  const timePart = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
-  return `${datePart} เวลา ${timePart} น.`;
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
 
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีข้อมูลในช่วงที่เลือก',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from}–${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
+const thGridLocale = createThGridLocale('ไม่มีข้อมูลในช่วงที่เลือก');
 
 // Staff-related actions (Tab 1)
 const STAFF_AUDIT_ACTIONS = [
@@ -191,7 +178,7 @@ function AuditLogTab() {
 
   return (
     <>
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
+      <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
           <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
             onChange={e => { setDateFrom(e.target.value); resetPage(); }}
@@ -216,7 +203,7 @@ function AuditLogTab() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
 
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+      <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
@@ -291,7 +278,7 @@ function RequestStatusLogTab() {
 
   return (
     <>
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
+      <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
         <Stack spacing={2}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
@@ -319,7 +306,7 @@ function RequestStatusLogTab() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
 
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+      <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
@@ -398,7 +385,7 @@ function InventoryLogTab() {
 
   return (
     <>
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
+      <Paper elevation={1} sx={{ p: 3, mb: 3, borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
           <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
             onChange={e => { setDateFrom(e.target.value); resetPage(); }}
@@ -427,7 +414,7 @@ function InventoryLogTab() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
 
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+      <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
@@ -482,9 +469,9 @@ export default function AuditLogPage() {
   const ActiveComponent = visibleTabs[safeTab]?.Component ?? null;
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>
+    <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>บันทึกการตรวจสอบ</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
         ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ และการจัดการสต็อก
       </Typography>
 

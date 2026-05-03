@@ -12,6 +12,7 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
 import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
+import { createThGridLocale } from '../../constants/datagrid';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -40,15 +41,7 @@ function DeltaChip({ delta, positiveIsGood = true }: { delta: number | null; pos
 
 // ─── Locale ──────────────────────────────────────────────────────────────────
 
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีข้อมูลในช่วงที่เลือก',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from} - ${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
+const thGridLocale = createThGridLocale('ไม่มีข้อมูลในช่วงที่เลือก');
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
