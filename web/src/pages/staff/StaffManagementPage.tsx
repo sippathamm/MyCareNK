@@ -15,6 +15,7 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useAuth } from '../../hooks/useAuth';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
 import { formatDateTime } from '../../utils/requestUtils';
+import { createThGridLocale } from '../../constants/datagrid';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -45,15 +46,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 const ROLE_RANK: Record<string, number> = { staff: 0, admin: 1, superadmin: 2 };
 
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีข้อมูลเจ้าหน้าที่',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from} - ${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
+const thGridLocale = createThGridLocale('ไม่มีข้อมูลเจ้าหน้าที่');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -467,7 +460,7 @@ export default function StaffManagementPage() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 2 }}>
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
         <Box sx={{ height: 500, width: '100%' }}>
           <DataGrid
             rows={staff}

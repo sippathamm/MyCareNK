@@ -119,7 +119,7 @@ export default function NotificationsPage() {
         )}
       </Box>
 
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+      <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         {notifications.length === 0 ? (
           <Box sx={{ py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, color: 'text.secondary' }}>
             <NotificationsNoneIcon sx={{ fontSize: 56, opacity: 0.3 }} />

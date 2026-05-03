@@ -12,19 +12,11 @@ import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 import { useRequests } from '../../hooks/useRequests';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { supabase } from '../../lib/supabase';
+import { createThGridLocale } from '../../constants/datagrid';
 
 const SERVICE_CENTERS = ['รพ.โพนพิสัย', 'รพ.สต.วัดหลวง', 'อบต.วัดหลวง', 'สสจ.หนองคาย'] as const;
 
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีรายการคำขอ',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  footerRowSelected: (count: number) => `เลือกแล้ว ${count} แถว`,
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from} - ${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
+const thGridLocale = createThGridLocale('ไม่มีรายการคำขอ');
 
 export default function RequestsPage() {
   const location = useLocation();
@@ -58,8 +50,8 @@ export default function RequestsPage() {
       case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
       case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
-      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+      case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: 'grey.200', color: 'text.secondary', fontWeight: 'bold' }} />;
+      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: 'grey.200', color: 'text.secondary', fontWeight: 'bold' }} />;
       default: return <Chip label={status} size="small" />;
     }
   };
@@ -198,7 +190,7 @@ export default function RequestsPage() {
         จัดการรายการคำขอ
       </Typography>
 
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 3, boxShadow: 2 }}>
+      <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
           <TextField
             label="ค้นหาหมายเลขอ้างอิง"
