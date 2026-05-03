@@ -118,32 +118,6 @@ export type Database = {
           },
         ]
       }
-      notification_reads: {
-        Row: {
-          notification_id: string
-          read_at: string
-          staff_user_id: string
-        }
-        Insert: {
-          notification_id: string
-          read_at?: string
-          staff_user_id: string
-        }
-        Update: {
-          notification_id?: string
-          read_at?: string
-          staff_user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notification_reads_notification_id_fkey"
-            columns: ["notification_id"]
-            isOneToOne: false
-            referencedRelation: "staff_notifications"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       recovery_attempts: {
         Row: {
           attempted_at: string | null
@@ -262,6 +236,32 @@ export type Database = {
           target_table?: string
         }
         Relationships: []
+      }
+      staff_notification_reads: {
+        Row: {
+          notification_id: string
+          read_at: string
+          staff_user_id: string
+        }
+        Insert: {
+          notification_id: string
+          read_at?: string
+          staff_user_id: string
+        }
+        Update: {
+          notification_id?: string
+          read_at?: string
+          staff_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "staff_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_notifications: {
         Row: {

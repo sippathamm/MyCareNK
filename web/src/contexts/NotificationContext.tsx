@@ -118,7 +118,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     (async () => {
       const { data: readsData } = await supabase
-        .from('notification_reads')
+        .from('staff_notification_reads')
         .select('notification_id')
         .eq('staff_user_id', userId);
 
@@ -232,7 +232,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'notification_reads',
+          table: 'staff_notification_reads',
           filter: `staff_user_id=eq.${userId}`,
         },
         (payload) => {
@@ -262,7 +262,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setReadIds(prev => new Set([...prev, id]));
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
     // Persist to DB
-    await supabase.from('notification_reads').upsert(
+    await supabase.from('staff_notification_reads').upsert(
       { notification_id: id, staff_user_id: userId },
       { onConflict: 'notification_id,staff_user_id' }
     );
@@ -277,7 +277,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setReadIds(newIds);
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
     // Batch persist
-    await supabase.from('notification_reads').upsert(
+    await supabase.from('staff_notification_reads').upsert(
       unread.map(n => ({ notification_id: n.id, staff_user_id: userId })),
       { onConflict: 'notification_id,staff_user_id' }
     );
@@ -289,7 +289,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     // Optimistic update
     setNotifications(prev => prev.filter(n => n.id !== id));
     setReadIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-    // Delete from DB (cascade deletes notification_reads rows too)
+    // Delete from DB (cascade deletes staff_notification_reads rows too)
     await supabase.from('staff_notifications').delete().eq('id', id);
   }, []);
 
