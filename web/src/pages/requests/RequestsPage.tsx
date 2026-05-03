@@ -83,7 +83,7 @@ export default function RequestsPage() {
     setStatusUpdating(true);
     setUpdateError(null);
 
-    const updatePayload: { request_status: string; cancel_reason?: string | null } = { request_status: newStatus };
+    const updatePayload: { request_status: RequestData['request_status']; cancel_reason?: string | null } = { request_status: newStatus as RequestData['request_status'] };
     if (reason !== undefined) {
       updatePayload.cancel_reason = reason;
     } else {

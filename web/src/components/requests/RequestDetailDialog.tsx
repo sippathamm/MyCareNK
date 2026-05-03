@@ -19,7 +19,7 @@ export interface RequestData {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
-  request_status: Enums<'status'>;
+  request_status: Enums<'request_status'>;
 }
 
 interface RequestDetailDialogProps {

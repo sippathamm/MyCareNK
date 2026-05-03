@@ -59,7 +59,7 @@ export type Database = {
           lubricant_quantity: number
           message: string | null
           reference_number: string
-          request_status: Database["public"]["Enums"]["status"]
+          request_status: Database["public"]["Enums"]["request_status"]
           selected_date: string | null
           selected_service_center: Database["public"]["Enums"]["service_center"]
           selected_time: string | null
@@ -77,7 +77,7 @@ export type Database = {
           lubricant_quantity?: number
           message?: string | null
           reference_number: string
-          request_status?: Database["public"]["Enums"]["status"]
+          request_status?: Database["public"]["Enums"]["request_status"]
           selected_date?: string | null
           selected_service_center?: Database["public"]["Enums"]["service_center"]
           selected_time?: string | null
@@ -95,7 +95,7 @@ export type Database = {
           lubricant_quantity?: number
           message?: string | null
           reference_number?: string
-          request_status?: Database["public"]["Enums"]["status"]
+          request_status?: Database["public"]["Enums"]["request_status"]
           selected_date?: string | null
           selected_service_center?: Database["public"]["Enums"]["service_center"]
           selected_time?: string | null
@@ -133,21 +133,21 @@ export type Database = {
       notifications: {
         Row: {
           created_at: string
-          event_type: Database["public"]["Enums"]["status"]
+          event_type: Database["public"]["Enums"]["request_status"]
           id: string
           reference_number: string
           request_id: string | null
         }
         Insert: {
           created_at?: string
-          event_type: Database["public"]["Enums"]["status"]
+          event_type: Database["public"]["Enums"]["request_status"]
           id?: string
           reference_number?: string
           request_id?: string | null
         }
         Update: {
           created_at?: string
-          event_type?: Database["public"]["Enums"]["status"]
+          event_type?: Database["public"]["Enums"]["request_status"]
           id?: string
           reference_number?: string
           request_id?: string | null
@@ -187,26 +187,26 @@ export type Database = {
         Row: {
           changed_at: string
           changed_by: string | null
-          from_status: Database["public"]["Enums"]["status"] | null
+          from_status: Database["public"]["Enums"]["request_status"] | null
           id: string
           request_id: string
-          to_status: Database["public"]["Enums"]["status"]
+          to_status: Database["public"]["Enums"]["request_status"]
         }
         Insert: {
           changed_at?: string
           changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["status"] | null
+          from_status?: Database["public"]["Enums"]["request_status"] | null
           id?: string
           request_id: string
-          to_status: Database["public"]["Enums"]["status"]
+          to_status: Database["public"]["Enums"]["request_status"]
         }
         Update: {
           changed_at?: string
           changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["status"] | null
+          from_status?: Database["public"]["Enums"]["request_status"] | null
           id?: string
           request_id?: string
-          to_status?: Database["public"]["Enums"]["status"]
+          to_status?: Database["public"]["Enums"]["request_status"]
         }
         Relationships: [
           {
@@ -586,7 +586,7 @@ export type Database = {
         | "รพ.สต.วัดหลวง"
         | "อบต.วัดหลวง"
         | "สสจ.หนองคาย"
-      status:
+      request_status:
         | "pending"
         | "preparing"
         | "ready"
@@ -738,7 +738,7 @@ export const Constants = {
         "อบต.วัดหลวง",
         "สสจ.หนองคาย",
       ],
-      status: [
+      request_status: [
         "pending",
         "preparing",
         "ready",
