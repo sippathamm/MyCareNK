@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../data/models/doctor_appointment_model.dart';
+import 'appointment_history_page.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -927,11 +928,10 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             _OutlinedBtn(
               label: 'ดูประวัติการนัด',
               onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('ประวัติการนัดหมาย — เร็วๆ นี้'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
+                Navigator.of(context).popUntil((r) => r.isFirst);
+                Navigator.of(context, rootNavigator: true).push(
+                  MaterialPageRoute(
+                      builder: (_) => const AppointmentHistoryPage()),
                 );
               },
             ),
