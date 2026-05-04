@@ -1,7 +1,7 @@
 {
   "name": "mycarenk-staff",
   "private": true,
-  "version": "0.16.7-dev.1",
+  "version": "0.16.8-dev.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
