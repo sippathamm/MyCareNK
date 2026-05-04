@@ -342,9 +342,6 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
             _infoRow(Icons.event_outlined, dateStr),
             const SizedBox(height: 8),
             _infoRow(Icons.local_hospital_outlined, data.selectedServiceCenter),
-            const SizedBox(height: 8),
-            _infoRow(Icons.medical_services_outlined,
-                DoctorAppointmentModel.reasonLabel(data.reason)),
             // ── Detail button ──
             const Padding(
                 padding: EdgeInsets.symmetric(vertical: 12),
