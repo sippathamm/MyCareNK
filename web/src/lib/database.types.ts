@@ -465,6 +465,17 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_doctor_appointment: {
+        Args: {
+          p_date: string
+          p_note?: string
+          p_reason: string
+          p_service_center: Database["public"]["Enums"]["service_center"]
+          p_time: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       dearmor: { Args: { "": string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
