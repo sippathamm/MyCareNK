@@ -353,7 +353,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                style: TextButton.styleFrom(overlayColor: AppColors.primaryLight),
+                style: TextButton.styleFrom(overlayColor: cfg.iconColor.withValues(alpha: 0.12)),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => AppointmentHistoryDetailPage(data: data),
@@ -364,11 +364,11 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                   children: [
                     Text('รายละเอียด',
                         style: GoogleFonts.googleSans(
-                            color: AppColors.primary,
+                            color: cfg.iconColor,
                             fontSize: 14,
                             fontWeight: FontWeight.w500)),
-                    const Icon(Icons.chevron_right,
-                        size: 16, color: AppColors.primary),
+                    Icon(Icons.chevron_right,
+                        size: 16, color: cfg.iconColor),
                   ],
                 ),
               ),
