@@ -6,6 +6,7 @@ import 'condom_request_page.dart';
 import 'request_history_page.dart';
 import '../../../health/presentation/pages/hiv_assessment_page.dart';
 import '../../../health/presentation/pages/doctor_booking_page.dart';
+import '../../../health/presentation/pages/appointment_history_page.dart';
 
 class ServicePage extends StatelessWidget {
   const ServicePage({super.key});
@@ -69,6 +70,16 @@ class ServicePage extends StatelessWidget {
               subtitle: 'ดูสถานะและรายละเอียดคำขอรับถุงยางอนามัยทั้งหมด',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
+              ),
+            ),
+            ServiceCard(
+              icon: Icons.event_note_outlined,
+              iconBgColor: AppColors.statusPreparingLight,
+              iconColor: AppColors.lubricant,
+              title: 'ประวัติการนัดหมาย',
+              subtitle: 'ดูสถานะและรายละเอียดการนัดพบแพทย์ทั้งหมด',
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AppointmentHistoryPage()),
               ),
             ),
           ],
