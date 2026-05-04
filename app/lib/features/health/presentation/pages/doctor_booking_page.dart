@@ -1,7 +1,9 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../auth/presentation/pages/login_page.dart';
+import '../../data/models/doctor_appointment_model.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -90,7 +92,8 @@ class DoctorBookingPage extends StatefulWidget {
 
 class _DoctorBookingPageState extends State<DoctorBookingPage> {
   final List<_BookingDate> _dates = _getAvailableDates();
-  late final String _refNum;
+  String _refNum = '';
+  bool _isSubmitting = false;
 
   int _step = 0;
   String? _reason;
@@ -103,7 +106,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   void initState() {
     super.initState();
     _reason = widget.initialReason;
-    _refNum = 'NK-APT-${10000 + Random().nextInt(90000)}';
   }
 
   @override
@@ -662,12 +664,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               children: [
                 _PrimaryBtn(
                   label: 'ยืนยันการนัดหมาย',
-                  onPressed: () => setState(() => _step = 2),
+                  onPressed: _isSubmitting ? null : _submitBooking,
+                  isLoading: _isSubmitting,
                 ),
                 const SizedBox(height: 10),
                 _OutlinedBtn(
                   label: 'แก้ไข',
-                  onPressed: () => setState(() => _step = 0),
+                  onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
                 ),
               ],
             ),
@@ -675,6 +678,84 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         ],
       ),
     );
+  }
+
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
+  Future<void> _submitBooking() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          icon: const Icon(Icons.lock_outline, color: AppColors.error, size: 40),
+          title: Text('กรุณาเข้าสู่ระบบ',
+              style: GoogleFonts.googleSans(
+                  fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+          content: Text('คุณต้องเข้าสู่ระบบก่อนจึงจะนัดพบแพทย์ได้',
+              style: GoogleFonts.googleSans(
+                  fontSize: 14, color: AppColors.textSecondary)),
+          actionsAlignment: MainAxisAlignment.center,
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: AppColors.lubricant),
+                foregroundColor: AppColors.lubricant,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              child: Text('ยกเลิก', style: GoogleFonts.googleSans()),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context, rootNavigator: true).push(
+                  MaterialPageRoute(builder: (_) => const LoginPage()),
+                );
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24)),
+              ),
+              child: Text('เข้าสู่ระบบ', style: GoogleFonts.googleSans()),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final ref = await Supabase.instance.client.rpc(
+        'create_doctor_appointment',
+        params: {
+          'p_user_id': userId,
+          'p_reason': _reason,
+          'p_service_center': DoctorAppointmentModel.locationKeyToServiceCenter[_location]!,
+          'p_date': _dateKey,
+          'p_time': _timeSlot,
+          'p_note': _noteCtrl.text.isEmpty ? null : _noteCtrl.text,
+        },
+      ) as String;
+
+      if (mounted) setState(() { _refNum = ref; _step = 2; });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+              style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
   }
 
   // ── Success ─────────────────────────────────────────────────────────────────
@@ -944,7 +1025,8 @@ class _SectionCard extends StatelessWidget {
 class _PrimaryBtn extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
-  const _PrimaryBtn({required this.label, this.onPressed});
+  final bool isLoading;
+  const _PrimaryBtn({required this.label, this.onPressed, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
@@ -961,8 +1043,16 @@ class _PrimaryBtn extends StatelessWidget {
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
         ),
-        child: Text(label,
-            style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.w700)),
+        child: isLoading
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                    color: Colors.white, strokeWidth: 2),
+              )
+            : Text(label,
+                style: GoogleFonts.googleSans(
+                    fontSize: 16, fontWeight: FontWeight.w700)),
       ),
     );
   }
