@@ -71,6 +71,54 @@ export type Database = {
         }
         Relationships: []
       }
+      doctor_appointments: {
+        Row: {
+          appointment_status: Database["public"]["Enums"]["appointment_status"]
+          cancel_reason: string | null
+          created_at: string
+          handled_by: string | null
+          id: string
+          note: string | null
+          reason: string
+          reference_number: string
+          selected_date: string
+          selected_service_center: Database["public"]["Enums"]["service_center"]
+          selected_time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_status?: Database["public"]["Enums"]["appointment_status"]
+          cancel_reason?: string | null
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          reason: string
+          reference_number: string
+          selected_date: string
+          selected_service_center: Database["public"]["Enums"]["service_center"]
+          selected_time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_status?: Database["public"]["Enums"]["appointment_status"]
+          cancel_reason?: string | null
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          reason?: string
+          reference_number?: string
+          selected_date?: string
+          selected_service_center?: Database["public"]["Enums"]["service_center"]
+          selected_time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       inventory_logs: {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
