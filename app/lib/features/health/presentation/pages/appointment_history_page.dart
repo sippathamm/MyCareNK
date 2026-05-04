@@ -34,7 +34,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
   bool _isLoggedIn = true;
   String _searchQuery = '';
   String? _selectedStatus; // null = all; 'cancelled' = both cancelled values
-  RealtimeChannel? _channel;
+  RealtimeChannel? _subscription;
 
   @override
   void initState() {
@@ -45,18 +45,18 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
 
   @override
   void dispose() {
-    _channel?.unsubscribe();
+    _subscription?.unsubscribe();
     super.dispose();
   }
 
   // ── Realtime ────────────────────────────────────────────────────────────────
 
   void _setupRealtime() {
-    final userId = Supabase.instance.client.auth.currentSession?.user.id;
-    if (userId == null) return;
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) return;
 
-    _channel = Supabase.instance.client
-        .channel('public:doctor_appointments:user_id=eq.$userId')
+    _subscription = Supabase.instance.client
+        .channel('public:doctor_appointments:user_id=eq.${session.user.id}')
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
@@ -64,9 +64,13 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'user_id',
-            value: userId,
+            value: session.user.id,
           ),
-          callback: (payload) { if (mounted) _fetchData(); },
+          callback: (payload) {
+            if (mounted) {
+              _fetchData();
+            }
+          },
         )
         .subscribe();
   }

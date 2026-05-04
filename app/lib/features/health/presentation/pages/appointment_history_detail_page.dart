@@ -18,7 +18,7 @@ class _AppointmentHistoryDetailPageState
     extends State<AppointmentHistoryDetailPage> {
   bool _isCancelling = false;
   late DoctorAppointmentModel _data;
-  RealtimeChannel? _channel;
+  RealtimeChannel? _subscription;
 
   @override
   void initState() {
@@ -29,17 +29,17 @@ class _AppointmentHistoryDetailPageState
 
   @override
   void dispose() {
-    _channel?.unsubscribe();
+    _subscription?.unsubscribe();
     super.dispose();
   }
 
   // ── Realtime ────────────────────────────────────────────────────────────────
 
   void _setupRealtime() {
-    _channel = Supabase.instance.client
-        .channel('public:doctor_appointments:id=eq.${_data.id}')
+    _subscription = Supabase.instance.client
+        .channel('public:doctor_appointments:${_data.id}')
         .onPostgresChanges(
-          event: PostgresChangeEvent.all,
+          event: PostgresChangeEvent.update,
           schema: 'public',
           table: 'doctor_appointments',
           filter: PostgresChangeFilter(
@@ -48,7 +48,9 @@ class _AppointmentHistoryDetailPageState
             value: _data.id,
           ),
           callback: (payload) {
-            if (mounted) _fetchData();
+            if (mounted) {
+              _fetchData();
+            }
           },
         )
         .subscribe();
