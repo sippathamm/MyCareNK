@@ -688,41 +688,55 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       if (!mounted) return;
       showDialog<void>(
         context: context,
+        barrierColor: Colors.black.withValues(alpha: 0.6),
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.white,
+          elevation: 24,
+          shadowColor: Colors.black38,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          icon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 40),
           title: Text('กรุณาเข้าสู่ระบบ',
               style: GoogleFonts.googleSans(
-                  fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
+                  fontSize: 18, fontWeight: FontWeight.bold)),
           content: Text('คุณต้องเข้าสู่ระบบก่อนจึงจะนัดพบแพทย์ได้',
-              style: GoogleFonts.googleSans(
-                  fontSize: 14, color: AppColors.textSecondary)),
-          actionsAlignment: MainAxisAlignment.center,
+              style: GoogleFonts.googleSans(fontSize: 15, height: 1.6)),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.primary),
-                foregroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: FilledButton(
+                onPressed: () async {
+                  Navigator.of(ctx).pop();
+                  final loggedIn = await Navigator.of(context, rootNavigator: true)
+                      .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+                  if (loggedIn == true && mounted) _submitBooking();
+                },
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text('เข้าสู่ระบบ',
+                    style: GoogleFonts.googleSans(
+                        fontSize: 15, fontWeight: FontWeight.bold)),
               ),
-              child: Text('ยกเลิก', style: GoogleFonts.googleSans()),
             ),
-            FilledButton(
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                final loggedIn = await Navigator.of(context, rootNavigator: true)
-                    .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
-                if (loggedIn == true && mounted) _submitBooking();
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  foregroundColor: AppColors.textPrimary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text('ยกเลิก',
+                    style: GoogleFonts.googleSans(
+                        fontSize: 15, fontWeight: FontWeight.bold)),
               ),
-              child: Text('เข้าสู่ระบบ', style: GoogleFonts.googleSans()),
             ),
           ],
         ),
