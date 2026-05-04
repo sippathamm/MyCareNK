@@ -43,13 +43,7 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('เข้าสู่ระบบสำเร็จ'),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(true);
     } on AuthException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
