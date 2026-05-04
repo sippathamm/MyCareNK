@@ -689,8 +689,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       showDialog<void>(
         context: context,
         builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.white,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          icon: const Icon(Icons.lock_outline, color: AppColors.error, size: 40),
+          icon: const Icon(Icons.lock_outline, color: AppColors.primary, size: 40),
           title: Text('กรุณาเข้าสู่ระบบ',
               style: GoogleFonts.googleSans(
                   fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
@@ -702,19 +703,19 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             OutlinedButton(
               onPressed: () => Navigator.of(ctx).pop(),
               style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: AppColors.lubricant),
-                foregroundColor: AppColors.lubricant,
+                side: const BorderSide(color: AppColors.primary),
+                foregroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
               child: Text('ยกเลิก', style: GoogleFonts.googleSans()),
             ),
             FilledButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(ctx).pop();
-                Navigator.of(context, rootNavigator: true).push(
-                  MaterialPageRoute(builder: (_) => const LoginPage()),
-                );
+                final loggedIn = await Navigator.of(context, rootNavigator: true)
+                    .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+                if (loggedIn == true && mounted) _submitBooking();
               },
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.primary,
