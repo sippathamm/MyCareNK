@@ -37,9 +37,9 @@ class _AppointmentHistoryDetailPageState
 
   void _setupRealtime() {
     _channel = Supabase.instance.client
-        .channel('public:doctor_appointments:${_data.id}')
+        .channel('public:doctor_appointments:id=eq.${_data.id}')
         .onPostgresChanges(
-          event: PostgresChangeEvent.update,
+          event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'doctor_appointments',
           filter: PostgresChangeFilter(
@@ -198,7 +198,8 @@ class _AppointmentHistoryDetailPageState
                 const SizedBox(height: 24),
                 _buildStatusTracker(),
                 const SizedBox(height: 32),
-                _buildDetailsCard(),
+                _buildReasonCard(),
+                _buildLocationCard(),
                 if (_data.note != null && _data.note!.isNotEmpty)
                   _buildNoteCard(),
                 if ((_data.appointmentStatus == 'cancelled_by_staff') &&
@@ -478,16 +479,13 @@ class _AppointmentHistoryDetailPageState
     );
   }
 
-  Widget _buildDetailsCard() {
-    final date = _data.selectedDate;
-    final dateStr =
-        '${date.day} ${_monthTH(date.month)} ${date.year + 543}';
-
+  Widget _buildReasonCard() {
     return _buildCard(
       header: Row(children: [
-        const Icon(Icons.event_note_outlined, color: Colors.white, size: 18),
+        const Icon(Icons.medical_services_outlined,
+            color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('รายละเอียดการนัดหมาย',
+        Text('เรื่องที่ต้องการพบแพทย์',
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -495,6 +493,26 @@ class _AppointmentHistoryDetailPageState
         children: [
           _buildInfoRow(
               'เรื่อง', DoctorAppointmentModel.reasonLabel(_data.reason)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLocationCard() {
+    final date = _data.selectedDate;
+    final dateStr =
+        '${date.day} ${_monthTH(date.month)} ${date.year + 543}';
+
+    return _buildCard(
+      header: Row(children: [
+        const Icon(Icons.local_hospital_outlined, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Text('สถานพยาบาล วันที่ และเวลารับ',
+            style: GoogleFonts.googleSans(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
+      content: Column(
+        children: [
           _buildInfoRow('สถานพยาบาล', _data.selectedServiceCenter),
           _buildInfoRow('วันที่', dateStr),
           _buildInfoRow('เวลา', '${_data.selectedTime} น.'),
@@ -550,7 +568,7 @@ class _AppointmentHistoryDetailPageState
           child: FilledButton(
             onPressed: () => Navigator.of(context).pop(),
             style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: AppColors.lubricant,
               foregroundColor: AppColors.white,
               elevation: 0,
               shape: RoundedRectangleBorder(
