@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/doctor_appointment_model.dart';
+import 'appointment_history_detail_page.dart';
 
 // ─── Filter descriptor ────────────────────────────────────────────────────────
 
@@ -51,13 +52,13 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
   // ── Realtime ────────────────────────────────────────────────────────────────
 
   void _setupRealtime() {
-    final userId = Supabase.instance.client.auth.currentUser?.id;
+    final userId = Supabase.instance.client.auth.currentSession?.user.id;
     if (userId == null) return;
 
     _channel = Supabase.instance.client
-        .channel('appointment_history:$userId')
+        .channel('public:doctor_appointments:user_id=eq.$userId')
         .onPostgresChanges(
-          event: PostgresChangeEvent.update,
+          event: PostgresChangeEvent.all,
           schema: 'public',
           table: 'doctor_appointments',
           filter: PostgresChangeFilter(
@@ -65,7 +66,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
             column: 'user_id',
             value: userId,
           ),
-          callback: (payload) => _fetchData(),
+          callback: (payload) { if (mounted) _fetchData(); },
         )
         .subscribe();
   }
@@ -86,8 +87,8 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           .eq('user_id', session.user.id)
           .order('created_at', ascending: false);
 
-      final appointments = (response as List)
-          .map((e) => DoctorAppointmentModel.fromMap(e as Map<String, dynamic>))
+      final appointments = response
+          .map((e) => DoctorAppointmentModel.fromMap(e))
           .toList();
 
       if (mounted) {
@@ -122,90 +123,6 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
       }
       return true;
     }).toList();
-  }
-
-  // ── Cancel ──────────────────────────────────────────────────────────────────
-
-  Future<void> _confirmCancel(DoctorAppointmentModel data) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.white,
-        elevation: 24,
-        shadowColor: Colors.black38,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('ยืนยันการยกเลิกนัดหมาย',
-            style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold)),
-        content: Text(
-          'คุณต้องการยกเลิกการนัดหมายนี้ใช่หรือไม่?\nการยกเลิกไม่สามารถเปลี่ยนแปลงได้',
-          style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
-        ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        actions: [
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text('ยืนยันยกเลิก',
-                  style: GoogleFonts.googleSans(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-            ),
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEEEEEE),
-                foregroundColor: AppColors.textPrimary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text('ไม่ยกเลิก',
-                  style: GoogleFonts.googleSans(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmed != true) return;
-
-    try {
-      await Supabase.instance.client
-          .from('doctor_appointments')
-          .update({'appointment_status': 'cancelled_by_user'})
-          .eq('id', data.id);
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('ยกเลิกนัดหมายเรียบร้อยแล้ว',
-              style: GoogleFonts.googleSans()),
-          backgroundColor: AppColors.statusCompleted,
-          behavior: SnackBarBehavior.floating,
-        ));
-        _fetchData();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('เกิดข้อผิดพลาดในการยกเลิกนัดหมาย',
-              style: GoogleFonts.googleSans()),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ));
-      }
-    }
   }
 
   // ── Build ────────────────────────────────────────────────────────────────────
@@ -428,31 +345,33 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
             const SizedBox(height: 8),
             _infoRow(Icons.medical_services_outlined,
                 DoctorAppointmentModel.reasonLabel(data.reason)),
-            // ── Cancel button (pending only) ──
-            if (data.appointmentStatus == 'pending') ...[
-              const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(height: 1)),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  style: TextButton.styleFrom(overlayColor: AppColors.error),
-                  onPressed: () => _confirmCancel(data),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text('ยกเลิกนัด',
-                          style: GoogleFonts.googleSans(
-                              color: AppColors.error,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500)),
-                      const Icon(Icons.chevron_right,
-                          size: 16, color: AppColors.error),
-                    ],
+            // ── Detail button ──
+            const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Divider(height: 1)),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                style: TextButton.styleFrom(overlayColor: AppColors.primaryLight),
+                onPressed: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => AppointmentHistoryDetailPage(data: data),
                   ),
                 ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('รายละเอียด',
+                        style: GoogleFonts.googleSans(
+                            color: AppColors.primary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500)),
+                    const Icon(Icons.chevron_right,
+                        size: 16, color: AppColors.primary),
+                  ],
+                ),
               ),
-            ],
+            ),
           ],
         ),
       ),
