@@ -711,6 +711,12 @@ export type Database = {
       }
     }
     Enums: {
+      appointment_status:
+        | "pending"
+        | "confirmed"
+        | "cancelled_by_user"
+        | "cancelled_by_staff"
+        | "completed"
       audit_action:
         | "role_updated"
         | "staff_profile_updated"
@@ -861,6 +867,13 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      appointment_status: [
+        "pending",
+        "confirmed",
+        "cancelled_by_user",
+        "cancelled_by_staff",
+        "completed",
+      ],
       audit_action: [
         "role_updated",
         "staff_profile_updated",
