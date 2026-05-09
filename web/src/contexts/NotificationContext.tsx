@@ -23,7 +23,7 @@ export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolea
 
 export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
   pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
-  confirmed:          { label: 'ยืนยันนัดหมายแล้ว',      color: '#BA68C8', bg: '#F5EAF9' },
+  confirmed:          { label: 'ยืนยันนัดหมาย',           color: '#BA68C8', bg: '#F5EAF9' },
   completed:          { label: 'นัดหมายเสร็จสิ้น',        color: '#81C784', bg: '#EBF7EC' },
   cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',        color: '#9E9E9E', bg: '#F5F5F5' },
   cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่',   color: '#9E9E9E', bg: '#F5F5F5' },
