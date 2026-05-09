@@ -71,6 +71,7 @@ class _HeaderSectionState extends State<HeaderSection> {
                     'User';
 
                 return PopupMenuButton<String>(
+                  tooltip: 'บัญชีผู้ใช้',
                   onSelected: (value) async {
                     if (value == 'logout') {
                       await Supabase.instance.client.auth.signOut();

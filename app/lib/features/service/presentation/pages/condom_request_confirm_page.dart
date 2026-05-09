@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import 'condom_request_success_page.dart';
+import 'request_history_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 
 class CondomRequestConfirmPage extends StatefulWidget {
@@ -168,6 +169,15 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history, color: AppColors.primary),
+            tooltip: 'ประวัติคำขอ',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
