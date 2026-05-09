@@ -17,8 +17,21 @@ import type { Enums, Tables } from '../lib/database.types';
 // ---------------------------------------------------------------------------
 
 export type RequestStatus = Enums<'request_status'>;
+export type AppointmentEventType = Enums<'appointment_status'>;
 
 export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolean };
+
+export function isAppointmentNotification(item: NotificationItem): boolean {
+  return item.source_type === 'doctor_appointment';
+}
+
+export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
+  pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
+  confirmed:          { label: 'ยืนยันนัดหมาย',           color: '#BA68C8', bg: '#F5EAF9' },
+  completed:          { label: 'นัดหมายเสร็จสิ้น',        color: '#81C784', bg: '#EBF7EC' },
+  cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',        color: '#9E9E9E', bg: '#F5F5F5' },
+  cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่',   color: '#9E9E9E', bg: '#F5F5F5' },
+};
 
 interface NotificationContextValue {
   notifications: NotificationItem[];
@@ -26,6 +39,8 @@ interface NotificationContextValue {
   toastOpen: boolean;
   toastMessage: string;
   toastEventType: RequestStatus | null;
+  toastIsAppointment: boolean;
+  toastAppointmentEventType: AppointmentEventType | null;
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -90,6 +105,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastEventType, setToastEventType] = useState<RequestStatus | null>(null);
+  const [toastIsAppointment, setToastIsAppointment] = useState(false);
+  const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
 
   // Keep refs in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
@@ -129,27 +146,32 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       let notifData: Tables<'staff_notifications'>[] = [];
 
       if (role === 'staff' && serviceCenter) {
-        const { data: requests } = await supabase
-          .from('condom_requests')
-          .select('id')
-          .eq('selected_service_center', serviceCenter);
+        const [{ data: requests }, { data: appointments }] = await Promise.all([
+          supabase.from('condom_requests').select('id').eq('selected_service_center', serviceCenter),
+          supabase.from('doctor_appointments').select('id').eq('selected_service_center', serviceCenter),
+        ]);
 
         if (cancelled) return;
 
         const requestIds = (requests ?? []).map(r => r.id);
-        if (requestIds.length > 0) {
+        const appointmentIds = (appointments ?? []).map(r => r.id);
+        const allSourceIds = [...requestIds, ...appointmentIds];
+
+        if (allSourceIds.length > 0) {
           const { data } = await supabase
             .from('staff_notifications')
-            .select('id, request_id, reference_number, event_type, created_at')
-            .in('request_id', requestIds)
+            .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
+            .in('source_id', allSourceIds)
             .order('created_at', { ascending: false })
             .limit(MAX_NOTIFICATIONS);
+
+          if (cancelled) return;
           notifData = data ?? [];
         }
       } else {
         const { data } = await supabase
           .from('staff_notifications')
-          .select('id, request_id, reference_number, event_type, created_at')
+          .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS);
         notifData = data ?? [];
@@ -178,19 +200,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
           // For staff: only show notifications for their service center
           if (roleRef.current === 'staff' && serviceCenterRef.current) {
-            if (!row.request_id) return;
-            const { data: req } = await supabase
-              .from('condom_requests')
+            const table = row.source_type === 'doctor_appointment' ? 'doctor_appointments' : 'condom_requests';
+            const { data: src } = await supabase
+              .from(table)
               .select('selected_service_center')
-              .eq('id', row.request_id)
+              .eq('id', row.source_id)
               .single();
-            if (req?.selected_service_center !== serviceCenterRef.current) return;
+            if (src?.selected_service_center !== serviceCenterRef.current) return;
           }
 
+          const isAppointment = row.source_type === 'doctor_appointment';
+          const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
-          setToastEventType(row.event_type);
-          setToastMessage(buildToastMessage(row.event_type, row.reference_number));
+          setToastIsAppointment(isAppointment);
+          setToastAppointmentEventType(aptEventType);
+          setToastEventType(isAppointment ? null : row.event_type as RequestStatus);
+          setToastMessage(buildToastMessage(row.event_type, row.reference_number, isAppointment, aptEventType));
           setToastOpen(true);
           playNotificationSound();
         }
@@ -283,7 +309,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     );
   }, [userId, notifications]);
 
-  const closeToast = useCallback(() => setToastOpen(false), []);
+  const closeToast = useCallback(() => {
+    setToastOpen(false);
+    setToastIsAppointment(false);
+    setToastAppointmentEventType(null);
+  }, []);
 
   const deleteNotification = useCallback(async (id: string) => {
     // Optimistic update
@@ -297,7 +327,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -323,7 +353,14 @@ export const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string
   cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่', color: '#9E9E9E', bg: '#F5F5F5' },
 };
 
-function buildToastMessage(eventType: RequestStatus, referenceNumber: string): string {
-  const label = STATUS_CONFIG[eventType]?.label ?? eventType;
+function buildToastMessage(
+  eventType: RequestStatus,
+  referenceNumber: string,
+  isAppointment = false,
+  appointmentEventType: AppointmentEventType | null = null,
+): string {
+  const label = isAppointment
+    ? (APPOINTMENT_STATUS_CONFIG[appointmentEventType ?? 'pending']?.label ?? 'นัดหมาย')
+    : (STATUS_CONFIG[eventType]?.label ?? eventType);
   return `${label}: ${referenceNumber}`;
 }

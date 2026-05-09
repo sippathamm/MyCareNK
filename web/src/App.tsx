@@ -14,6 +14,7 @@ import StaffWorkloadPage from './pages/staff/StaffWorkloadPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import AuditLogPage from './pages/audit/AuditLogPage';
+import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -62,6 +63,7 @@ function App() {
                 <Routes>
                   <Route path="dashboard" element={<DashboardPage session={session!} />} />
                   <Route path="requests" element={<RequestsPage />} />
+                  <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="staff" element={<StaffManagementPage />} />
                   <Route path="staff-workload" element={<StaffWorkloadPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />

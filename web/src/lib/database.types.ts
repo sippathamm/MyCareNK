@@ -314,34 +314,32 @@ export type Database = {
       staff_notifications: {
         Row: {
           created_at: string
-          event_type: Database["public"]["Enums"]["request_status"]
+          event_type: string
           id: string
+          metadata: Json
           reference_number: string
-          request_id: string | null
+          source_id: string
+          source_type: string
         }
         Insert: {
           created_at?: string
-          event_type: Database["public"]["Enums"]["request_status"]
+          event_type: string
           id?: string
+          metadata?: Json
           reference_number?: string
-          request_id?: string | null
+          source_id: string
+          source_type: string
         }
         Update: {
           created_at?: string
-          event_type?: Database["public"]["Enums"]["request_status"]
+          event_type?: string
           id?: string
+          metadata?: Json
           reference_number?: string
-          request_id?: string | null
+          source_id?: string
+          source_type?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "condom_requests"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       staff_profiles: {
         Row: {
