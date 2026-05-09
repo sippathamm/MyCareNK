@@ -7,16 +7,28 @@ import '../../../../../core/constants/app_colors.dart';
 // Local data models
 // ---------------------------------------------------------------------------
 
-enum _MsgType { submitted, preparing, ready, completed, cancelled }
+enum _MsgType {
+  submitted, preparing, ready, completed, cancelled,
+  apptPending, apptConfirmed, apptCompleted, apptCancelled,
+}
 
-_MsgType _parseMsgType(String? type) {
-  switch (type) {
-    case 'preparing':        return _MsgType.preparing;
-    case 'ready':            return _MsgType.ready;
-    case 'completed':        return _MsgType.completed;
+_MsgType _parseMsgType(String? sourceType, String? eventType) {
+  if (sourceType == 'doctor_appointment') {
+    switch (eventType) {
+      case 'confirmed':          return _MsgType.apptConfirmed;
+      case 'completed':          return _MsgType.apptCompleted;
+      case 'cancelled_by_user':
+      case 'cancelled_by_staff': return _MsgType.apptCancelled;
+      default:                   return _MsgType.apptPending;
+    }
+  }
+  switch (eventType) {
+    case 'preparing':          return _MsgType.preparing;
+    case 'ready':              return _MsgType.ready;
+    case 'completed':          return _MsgType.completed;
     case 'cancelled_by_staff':
-    case 'cancelled_by_user': return _MsgType.cancelled;
-    default:                 return _MsgType.submitted;
+    case 'cancelled_by_user':  return _MsgType.cancelled;
+    default:                   return _MsgType.submitted;
   }
 }
 
@@ -126,16 +138,82 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
     iconBg: Color(0xFFEEEEEE),
     label: 'ยกเลิก',
   ),
+  _MsgType.apptPending: _TypeConfig(
+    icon: Icons.calendar_today_outlined,
+    iconColor: AppColors.primary,
+    iconBg: AppColors.statusPendingLight,
+    label: 'รอยืนยัน',
+  ),
+  _MsgType.apptConfirmed: _TypeConfig(
+    icon: Icons.event_available_outlined,
+    iconColor: AppColors.statusCompleted,
+    iconBg: AppColors.statusCompletedLight,
+    label: 'ยืนยันแล้ว',
+  ),
+  _MsgType.apptCompleted: _TypeConfig(
+    icon: Icons.check_circle_outline,
+    iconColor: AppColors.statusCompleted,
+    iconBg: AppColors.statusCompletedLight,
+    label: 'เสร็จสิ้น',
+  ),
+  _MsgType.apptCancelled: _TypeConfig(
+    icon: Icons.cancel_outlined,
+    iconColor: Colors.grey,
+    iconBg: Color(0xFFEEEEEE),
+    label: 'ยกเลิก',
+  ),
 };
 
 // ---------------------------------------------------------------------------
 // Build message text from event_type + metadata
 // ---------------------------------------------------------------------------
 
-(String, List<InlineSpan>?) _buildMessage(
+(String, List<InlineSpan>?) _buildAppointmentMessage(
   String eventType,
   Map<String, dynamic> metadata,
 ) {
+  switch (eventType) {
+    case 'confirmed':
+      final dateRaw = metadata['selected_date'] as String? ?? '';
+      final timeRaw = metadata['selected_time'] as String? ?? '';
+      String datePart = '';
+      if (dateRaw.isNotEmpty) {
+        try {
+          final d = DateTime.parse(dateRaw);
+          datePart = '${d.day} ${_thaiMonths[d.month - 1]} ${d.year + 543}';
+        } catch (_) {}
+      }
+      final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
+      final dateTimeLabel = '$datePart เวลา $timePart น.';
+      return (
+        'การนัดหมายของคุณได้รับการยืนยันแล้ว นัด: $dateTimeLabel',
+        <InlineSpan>[
+          const TextSpan(text: 'การนัดหมายของคุณได้รับการยืนยันแล้ว นัด: '),
+          TextSpan(
+            text: dateTimeLabel,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    case 'completed':
+      return ('การนัดหมายของคุณเสร็จสิ้นแล้ว', null);
+    case 'cancelled_by_user':
+      return ('คุณได้ยกเลิกการนัดหมายนี้แล้ว', null);
+    case 'cancelled_by_staff':
+      return ('การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่', null);
+    default: // pending
+      return ('ระบบได้รับการนัดหมายของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน', null);
+  }
+}
+
+(String, List<InlineSpan>?) _buildMessage(
+  String sourceType,
+  String eventType,
+  Map<String, dynamic> metadata,
+) {
+  if (sourceType == 'doctor_appointment') {
+    return _buildAppointmentMessage(eventType, metadata);
+  }
   switch (eventType) {
     case 'preparing':
       return ('เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ', null);
@@ -276,7 +354,6 @@ class _MessagesPageState extends State<MessagesPage> {
               'id, source_type, source_id, reference_number, event_type, metadata, created_at',
             )
             .eq('user_id', userId)
-            .eq('source_type', 'condom_request')
             .order('created_at', ascending: false),
         Supabase.instance.client
             .from('user_notification_reads')
@@ -291,14 +368,15 @@ class _MessagesPageState extends State<MessagesPage> {
       final groupMap = <String, _RequestGroup>{};
       for (final n in rawNotifs as List) {
         final sourceId = n['source_id'] as String? ?? '';
+        final sourceType = n['source_type'] as String? ?? '';
         final refNum = n['reference_number'] as String? ?? sourceId;
         final eventType = n['event_type'] as String? ?? '';
         final metadata = (n['metadata'] as Map<String, dynamic>?) ?? {};
-        final (text, textSpans) = _buildMessage(eventType, metadata);
+        final (text, textSpans) = _buildMessage(sourceType, eventType, metadata);
 
         final item = _MsgItem(
           id: n['id'] as String,
-          type: _parseMsgType(eventType),
+          type: _parseMsgType(sourceType, eventType),
           text: text,
           textSpans: textSpans,
           createdAt: DateTime.parse(n['created_at'] as String),
