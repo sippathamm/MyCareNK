@@ -6,15 +6,15 @@ import {
   useNotification,
   STATUS_CONFIG,
   APPOINTMENT_STATUS_CONFIG,
+  isAppointmentNotification,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
 } from '../../contexts/NotificationContext';
 
 function getNotifConfig(item: NotificationItem) {
-  if (item.appointment_id != null) {
-    const eventType = (item.appointment_event_type ?? 'pending') as AppointmentEventType;
-    return APPOINTMENT_STATUS_CONFIG[eventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  if (isAppointmentNotification(item)) {
+    return APPOINTMENT_STATUS_CONFIG[item.event_type as AppointmentEventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
   }
   return STATUS_CONFIG[item.event_type as RequestStatus];
 }
@@ -101,10 +101,10 @@ export default function NotificationsPage() {
 
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
-    if (item.appointment_id != null) {
-      navigate('/appointments', { state: { openAppointmentId: item.appointment_id } });
+    if (isAppointmentNotification(item)) {
+      navigate('/appointments', { state: { openAppointmentId: item.source_id } });
     } else {
-      navigate('/requests', { state: { openRequestId: item.request_id } });
+      navigate('/requests', { state: { openRequestId: item.source_id } });
     }
   };
 

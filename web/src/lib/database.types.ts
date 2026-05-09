@@ -313,48 +313,33 @@ export type Database = {
       }
       staff_notifications: {
         Row: {
-          appointment_event_type: Database["public"]["Enums"]["appointment_status"] | null
-          appointment_id: string | null
           created_at: string
-          event_type: Database["public"]["Enums"]["request_status"]
+          event_type: string
           id: string
+          metadata: Json
           reference_number: string
-          request_id: string | null
+          source_id: string
+          source_type: string
         }
         Insert: {
-          appointment_event_type?: Database["public"]["Enums"]["appointment_status"] | null
-          appointment_id?: string | null
           created_at?: string
-          event_type: Database["public"]["Enums"]["request_status"]
+          event_type: string
           id?: string
+          metadata?: Json
           reference_number?: string
-          request_id?: string | null
+          source_id: string
+          source_type: string
         }
         Update: {
-          appointment_event_type?: Database["public"]["Enums"]["appointment_status"] | null
-          appointment_id?: string | null
           created_at?: string
-          event_type?: Database["public"]["Enums"]["request_status"]
+          event_type?: string
           id?: string
+          metadata?: Json
           reference_number?: string
-          request_id?: string | null
+          source_id?: string
+          source_type?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "condom_requests"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "staff_notifications_appointment_id_fkey"
-            columns: ["appointment_id"]
-            isOneToOne: false
-            referencedRelation: "doctor_appointments"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       staff_profiles: {
         Row: {
