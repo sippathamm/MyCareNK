@@ -12,9 +12,11 @@ import { useAppointments } from '../../hooks/useAppointments';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
-import AppointmentDetailDialog from '../../components/appointments/AppointmentDetailDialog';
+import AppointmentDetailDialog, { REASON_LABELS } from '../../components/appointments/AppointmentDetailDialog';
 import type { AppointmentData } from '../../components/appointments/AppointmentDetailDialog';
 import type { Enums } from '../../lib/database.types';
+
+const SERVICE_CENTERS = ['รพ.โพนพิสัย', 'รพ.สต.วัดหลวง', 'อบต.วัดหลวง', 'สสจ.หนองคาย'] as const;
 
 const thGridLocale = createThGridLocale('ไม่มีรายการนัดหมาย');
 
@@ -40,9 +42,11 @@ export default function AppointmentsPage() {
   const navigate = useNavigate();
   const { appointments, setAppointments, loading } = useAppointments();
   const { role, loading: roleLoading } = useRoleAccess();
+  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -104,7 +108,9 @@ export default function AppointmentsPage() {
     const matchStatus = statusFilter === 'all'
       || a.appointment_status === statusFilter
       || (statusFilter === 'cancelled' && (a.appointment_status === 'cancelled_by_user' || a.appointment_status === 'cancelled_by_staff'));
-    return matchSearch && matchStatus;
+    const matchServiceCenter = !isAdminOrSuperadmin || serviceCenterFilter === 'all'
+      || a.selected_service_center === serviceCenterFilter;
+    return matchSearch && matchStatus && matchServiceCenter;
   });
 
   const columns: GridColDef[] = [
@@ -132,7 +138,7 @@ export default function AppointmentsPage() {
       headerName: 'เรื่อง',
       flex: 2,
       minWidth: 160,
-      valueGetter: (_, row) => (row as AppointmentData).reason,
+      valueGetter: (_, row) => REASON_LABELS[(row as AppointmentData).reason] ?? (row as AppointmentData).reason,
     },
     {
       field: 'appointment_status',
@@ -183,6 +189,21 @@ export default function AppointmentsPage() {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
+          {isAdminOrSuperadmin && (
+            <TextField
+              select
+              label="สถานบริการ"
+              size="small"
+              value={serviceCenterFilter}
+              onChange={(e) => setServiceCenterFilter(e.target.value)}
+              sx={{ minWidth: 200 }}
+            >
+              <MenuItem value="all">ทั้งหมด</MenuItem>
+              {SERVICE_CENTERS.map(sc => (
+                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+              ))}
+            </TextField>
+          )}
           <TextField
             select
             label="สถานะ"

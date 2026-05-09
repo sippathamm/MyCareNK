@@ -5,13 +5,18 @@ import { useNavigate } from 'react-router-dom';
 import {
   useNotification,
   STATUS_CONFIG,
-  APPOINTMENT_NOTIFICATION_CONFIG,
+  APPOINTMENT_STATUS_CONFIG,
   type NotificationItem,
   type RequestStatus,
+  type AppointmentEventType,
 } from '../../contexts/NotificationContext';
 
 function getNotifConfig(item: NotificationItem) {
-  return item.appointment_id != null ? APPOINTMENT_NOTIFICATION_CONFIG : STATUS_CONFIG[item.event_type as RequestStatus];
+  if (item.appointment_id != null) {
+    const eventType = (item.appointment_event_type ?? 'pending') as AppointmentEventType;
+    return APPOINTMENT_STATUS_CONFIG[eventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  }
+  return STATUS_CONFIG[item.event_type as RequestStatus];
 }
 
 function formatRelativeTime(dateStr: string): string {
