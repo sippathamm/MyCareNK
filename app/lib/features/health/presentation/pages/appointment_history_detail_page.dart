@@ -320,7 +320,7 @@ class _AppointmentHistoryDetailPageState
 
     final steps = [
       (label: 'รอยืนยัน',   value: 'pending',   color: AppColors.primary),
-      (label: 'ยืนยันแล้ว',  value: 'confirmed', color: AppColors.lubricant),
+      (label: 'ยืนยันแล้ว',  value: 'confirmed', color: AppColors.statusReady),
       (label: 'เสร็จสิ้น',   value: 'completed', color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.value == status);
@@ -606,8 +606,8 @@ class _AppointmentHistoryDetailPageState
         );
       case 'confirmed':
         return (
-          iconBg: AppColors.statusPreparingLight,
-          iconColor: AppColors.lubricant,
+          iconBg: AppColors.statusReadyLight,
+          iconColor: AppColors.statusReady,
           icon: Icons.event_available_outlined,
         );
       case 'completed':
