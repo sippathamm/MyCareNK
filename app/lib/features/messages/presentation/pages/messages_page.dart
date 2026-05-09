@@ -152,14 +152,16 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
         } catch (_) {}
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
-      final dateTimeLabel = '($datePart เวลา $timePart น.)';
-      final centerPart = serviceCenter.isNotEmpty ? '$serviceCenter ' : '';
+      final dateTimeLabel = '$datePart เวลา $timePart น.';
       return (
-        'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $centerPartภายในวันที่กำหนด $dateTimeLabel',
+        'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
         <InlineSpan>[
+          const TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ '),
           TextSpan(
-            text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $centerPartภายในวันที่กำหนด ',
+            text: serviceCenter,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
+          const TextSpan(text: ' ภายในวันที่ '),
           TextSpan(
             text: dateTimeLabel,
             style: const TextStyle(fontWeight: FontWeight.bold),
