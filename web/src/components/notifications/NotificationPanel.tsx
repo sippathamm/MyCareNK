@@ -14,9 +14,14 @@ import { useNavigate } from 'react-router-dom';
 import {
   useNotification,
   STATUS_CONFIG,
+  APPOINTMENT_NOTIFICATION_CONFIG,
   type NotificationItem,
   type RequestStatus,
 } from '../../contexts/NotificationContext';
+
+function getNotifConfig(item: NotificationItem) {
+  return item.appointment_id != null ? APPOINTMENT_NOTIFICATION_CONFIG : STATUS_CONFIG[item.event_type as RequestStatus];
+}
 
 const PANEL_LIMIT = 15;
 
@@ -31,8 +36,8 @@ function formatRelativeTime(dateStr: string): string {
   return `${Math.floor(hours / 24)} วันที่แล้ว`;
 }
 
-function StatusDot({ eventType }: { eventType: RequestStatus }) {
-  const { color } = STATUS_CONFIG[eventType] ?? { color: '#9E9E9E' };
+function StatusDot({ item }: { item: NotificationItem }) {
+  const { color } = getNotifConfig(item) ?? { color: '#9E9E9E' };
   return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.4 }} />;
 }
 
@@ -48,7 +53,11 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
     onClose();
-    navigate('/requests', { state: { openRequestId: item.request_id } });
+    if (item.appointment_id != null) {
+      navigate('/appointments', { state: { openAppointmentId: item.appointment_id } });
+    } else {
+      navigate('/requests', { state: { openRequestId: item.request_id } });
+    }
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -92,7 +101,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
         <>
           <List disablePadding sx={{ overflowY: 'auto', maxHeight: 420 }}>
             {displayed.map((item, idx) => {
-              const cfg = STATUS_CONFIG[item.event_type];
+              const cfg = getNotifConfig(item);
               return (
                 <Box key={item.id}>
                   <ListItemButton
@@ -107,7 +116,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                     }}
                   >
                     {/* Status color dot */}
-                    <StatusDot eventType={item.event_type} />
+                    <StatusDot item={item} />
 
                     {/* Content */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>

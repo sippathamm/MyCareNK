@@ -15,9 +15,10 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useNotification, STATUS_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
+import { useNotification, STATUS_CONFIG, APPOINTMENT_NOTIFICATION_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
 import NotificationPanel from '../notifications/NotificationPanel';
 
 const DRAWER_OPEN_WIDTH = 260;
@@ -38,8 +39,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { role, profile, loading } = useRoleAccess();
-  const { unreadCount, toastOpen, toastMessage, toastEventType, closeToast } = useNotification();
-  const toastCfg = toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null;
+  const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, closeToast } = useNotification();
+  const toastCfg = toastIsAppointment
+    ? APPOINTMENT_NOTIFICATION_CONFIG
+    : (toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null);
 
   const bellRef = useRef<HTMLButtonElement>(null);
   const [panelOpen, setPanelOpen] = useState(false);
@@ -58,6 +61,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navItems = [
     { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: '/dashboard', show: true },
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
+    { text: 'รายการนัดหมาย', icon: <CalendarMonthIcon />, path: '/appointments', show: true },
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
     { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
