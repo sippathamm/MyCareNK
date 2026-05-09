@@ -74,6 +74,15 @@ class CondomRequestSuccessPage extends StatelessWidget {
               fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history, color: AppColors.primary),
+            tooltip: 'ประวัติคำขอ',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [

@@ -457,7 +457,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
             Row(
               children: [
                 Icon(
-                  Icons.calendar_today_outlined,
+                  Icons.event_outlined,
                   size: 16,
                   color: Colors.grey[400],
                 ),
