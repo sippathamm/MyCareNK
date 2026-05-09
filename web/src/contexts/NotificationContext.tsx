@@ -21,6 +21,10 @@ export type AppointmentEventType = Enums<'appointment_status'>;
 
 export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolean };
 
+export function isAppointmentNotification(item: NotificationItem): boolean {
+  return item.source_type === 'doctor_appointment';
+}
+
 export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
   pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
   confirmed:          { label: 'ยืนยันนัดหมาย',           color: '#BA68C8', bg: '#F5EAF9' },
@@ -151,35 +155,23 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
         const requestIds = (requests ?? []).map(r => r.id);
         const appointmentIds = (appointments ?? []).map(r => r.id);
+        const allSourceIds = [...requestIds, ...appointmentIds];
 
-        const [reqNotifs, aptNotifs] = await Promise.all([
-          requestIds.length > 0
-            ? supabase
-                .from('staff_notifications')
-                .select('id, request_id, appointment_id, appointment_event_type, reference_number, event_type, created_at')
-                .in('request_id', requestIds)
-                .order('created_at', { ascending: false })
-                .limit(MAX_NOTIFICATIONS)
-            : { data: [] },
-          appointmentIds.length > 0
-            ? supabase
-                .from('staff_notifications')
-                .select('id, request_id, appointment_id, appointment_event_type, reference_number, event_type, created_at')
-                .in('appointment_id', appointmentIds)
-                .order('created_at', { ascending: false })
-                .limit(MAX_NOTIFICATIONS)
-            : { data: [] },
-        ]);
+        if (allSourceIds.length > 0) {
+          const { data } = await supabase
+            .from('staff_notifications')
+            .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
+            .in('source_id', allSourceIds)
+            .order('created_at', { ascending: false })
+            .limit(MAX_NOTIFICATIONS);
 
-        if (cancelled) return;
-
-        notifData = [...(reqNotifs.data ?? []), ...(aptNotifs.data ?? [])]
-          .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-          .slice(0, MAX_NOTIFICATIONS);
+          if (cancelled) return;
+          notifData = data ?? [];
+        }
       } else {
         const { data } = await supabase
           .from('staff_notifications')
-          .select('id, request_id, appointment_id, appointment_event_type, reference_number, event_type, created_at')
+          .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS);
         notifData = data ?? [];
@@ -208,32 +200,22 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
           // For staff: only show notifications for their service center
           if (roleRef.current === 'staff' && serviceCenterRef.current) {
-            if (row.appointment_id) {
-              const { data: apt } = await supabase
-                .from('doctor_appointments')
-                .select('selected_service_center')
-                .eq('id', row.appointment_id)
-                .single();
-              if (apt?.selected_service_center !== serviceCenterRef.current) return;
-            } else if (row.request_id) {
-              const { data: req } = await supabase
-                .from('condom_requests')
-                .select('selected_service_center')
-                .eq('id', row.request_id)
-                .single();
-              if (req?.selected_service_center !== serviceCenterRef.current) return;
-            } else {
-              return;
-            }
+            const table = row.source_type === 'doctor_appointment' ? 'doctor_appointments' : 'condom_requests';
+            const { data: src } = await supabase
+              .from(table)
+              .select('selected_service_center')
+              .eq('id', row.source_id)
+              .single();
+            if (src?.selected_service_center !== serviceCenterRef.current) return;
           }
 
-          const isAppointment = row.appointment_id != null;
-          const aptEventType = (row.appointment_event_type ?? null) as AppointmentEventType | null;
+          const isAppointment = row.source_type === 'doctor_appointment';
+          const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
-          setToastAppointmentEventType(isAppointment ? aptEventType : null);
-          setToastEventType(isAppointment ? null : row.event_type);
+          setToastAppointmentEventType(aptEventType);
+          setToastEventType(isAppointment ? null : row.event_type as RequestStatus);
           setToastMessage(buildToastMessage(row.event_type, row.reference_number, isAppointment, aptEventType));
           setToastOpen(true);
           playNotificationSound();
