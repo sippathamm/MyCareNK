@@ -146,8 +146,8 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
   ),
   _MsgType.apptConfirmed: _TypeConfig(
     icon: Icons.event_available_outlined,
-    iconColor: AppColors.statusCompleted,
-    iconBg: AppColors.statusCompletedLight,
+    iconColor: AppColors.statusReady,
+    iconBg: AppColors.statusReadyLight,
     label: 'ยืนยันแล้ว',
   ),
   _MsgType.apptCompleted: _TypeConfig(
@@ -176,6 +176,7 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
     case 'confirmed':
       final dateRaw = metadata['selected_date'] as String? ?? '';
       final timeRaw = metadata['selected_time'] as String? ?? '';
+      final serviceCenter = metadata['selected_service_center'] as String? ?? '';
       String datePart = '';
       if (dateRaw.isNotEmpty) {
         try {
@@ -186,9 +187,14 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
       final dateTimeLabel = '$datePart เวลา $timePart น.';
       return (
-        'การนัดหมายของคุณได้รับการยืนยันแล้ว นัด: $dateTimeLabel',
+        'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
         <InlineSpan>[
-          const TextSpan(text: 'การนัดหมายของคุณได้รับการยืนยันแล้ว นัด: '),
+          const TextSpan(text: 'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ '),
+          TextSpan(
+            text: serviceCenter,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const TextSpan(text: ' ภายในวันที่ '),
           TextSpan(
             text: dateTimeLabel,
             style: const TextStyle(fontWeight: FontWeight.bold),
