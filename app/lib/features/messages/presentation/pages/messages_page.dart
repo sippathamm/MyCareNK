@@ -196,8 +196,9 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
 
 class MessagesPage extends StatefulWidget {
   final ValueNotifier<int>? unreadNotifier;
+  final int refreshKey;
 
-  const MessagesPage({super.key, this.unreadNotifier});
+  const MessagesPage({super.key, this.unreadNotifier, this.refreshKey = 0});
 
   @override
   State<MessagesPage> createState() => _MessagesPageState();
@@ -213,6 +214,14 @@ class _MessagesPageState extends State<MessagesPage> {
     super.initState();
     _fetchData();
     _setupRealtime();
+  }
+
+  @override
+  void didUpdateWidget(MessagesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshKey != widget.refreshKey) {
+      _fetchData();
+    }
   }
 
   @override
