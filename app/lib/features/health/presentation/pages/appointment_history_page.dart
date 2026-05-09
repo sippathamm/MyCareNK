@@ -12,7 +12,7 @@ typedef _Filter = ({String? key, String label, Color color});
 const _kFilters = <_Filter>[
   (key: null,        label: 'ทั้งหมด',             color: AppColors.primary),
   (key: 'pending',   label: 'รอยืนยัน',            color: AppColors.primary),
-  (key: 'confirmed', label: 'ยืนยันแล้ว',           color: AppColors.lubricant),
+  (key: 'confirmed', label: 'ยืนยันแล้ว',           color: AppColors.statusReady),
   (key: 'completed', label: 'เสร็จสิ้น',            color: AppColors.statusCompleted),
   (key: 'cancelled', label: 'ยกเลิก',              color: _kCancelledColor),
 ];
@@ -408,9 +408,9 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
         );
       case 'confirmed':
         return (
-          iconBg: AppColors.statusPreparingLight,
-          iconColor: AppColors.lubricant,
-          badgeColor: AppColors.lubricant,
+          iconBg: AppColors.statusReadyLight,
+          iconColor: AppColors.statusReady,
+          badgeColor: AppColors.statusReady,
           label: 'ยืนยันแล้ว',
           icon: Icons.event_available_outlined,
         );
