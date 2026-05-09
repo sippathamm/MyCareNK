@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 import 'request_history_page.dart';
 
 class CondomRequestSuccessPage extends StatelessWidget {
@@ -213,30 +214,15 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'หมายเลขอ้างอิง: $referenceNumber',
+                    'รหัสอ้างอิง: $referenceNumber',
                     style: GoogleFonts.googleSans(
                         fontSize: 14, color: AppColors.textHint),
                   ),
                   const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: FilledButton(
-                      onPressed: () => Navigator.of(context)
-                          .popUntil((route) => route.isFirst),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: AppColors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24)),
-                      ),
-                      child: Text('กลับหน้าบริการ',
-                          style: GoogleFonts.googleSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.white)),
-                    ),
+                  GradientButton(
+                    onPressed: () => Navigator.of(context)
+                        .popUntil((route) => route.isFirst),
+                    label: 'กลับหน้าบริการ',
                   ),
                   const SizedBox(height: 10),
                   SizedBox(

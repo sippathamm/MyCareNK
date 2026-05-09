@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../widgets/recovery_codes_grid.dart';
 import 'login_page.dart';
 
@@ -151,32 +152,14 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
               ),
               const SizedBox(height: 24),
 
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const LoginPage()),
-                      (route) => route.isFirst,
-                    );
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: Text(
-                    'กลับไปเข้าสู่ระบบ',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+              GradientButton(
+                onPressed: () {
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const LoginPage()),
+                    (route) => route.isFirst,
+                  );
+                },
+                label: 'กลับไปเข้าสู่ระบบ',
               ),
             ],
           ),

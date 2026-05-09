@@ -78,7 +78,10 @@ class ShortcutMenu extends StatelessWidget {
                   }
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('"$label" ถูกกด')),
+                    SnackBar(
+                      content: Text('"$label" ถูกกด'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
                 }
               },

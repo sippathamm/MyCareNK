@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 import 'condom_request_success_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 
@@ -47,7 +48,11 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเข้าสู่ระบบก่อนทำรายการ')),
+        SnackBar(
+          content: Text('กรุณาเข้าสู่ระบบก่อนทำรายการ', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       Navigator.of(context, rootNavigator: true)
           .push(MaterialPageRoute(builder: (context) => const LoginPage()));
@@ -136,7 +141,11 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       debugPrint('Error saving condom request: $error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล')),
+          SnackBar(
+            content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล', style: GoogleFonts.googleSans()),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -220,29 +229,10 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
             child: Column(
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _submitRequest,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                                color: AppColors.white, strokeWidth: 2),
-                          )
-                        : Text('ยืนยัน',
-                            style: GoogleFonts.googleSans(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                GradientButton(
+                  onPressed: _isLoading ? null : _submitRequest,
+                  label: 'ยืนยัน',
+                  isLoading: _isLoading,
                 ),
                 const SizedBox(height: 10),
                 SizedBox(

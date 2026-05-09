@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../../data/recovery_service.dart';
 import 'registration_success_page.dart';
 
@@ -67,14 +68,22 @@ class _RegisterPageState extends State<RegisterPage> {
 
     if (_gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเลือกเพศ'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('กรุณาเลือกเพศ', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
 
     if (_selectedDateOfBirth == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเลือกวันเกิด'), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text('กรุณาเลือกวันเกิด', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -142,15 +151,20 @@ class _RegisterPageState extends State<RegisterPage> {
         errorMessage = 'ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว';
       }
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(errorMessage), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(errorMessage, style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } catch (e) {
       debugPrint('Error during registration: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('เกิดข้อผิดพลาดในการสร้างบัญชี'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการสร้างบัญชี', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {
@@ -476,36 +490,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(height: 48.0),
 
                 // Submit Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _register,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              color: AppColors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'ตกลง',
-                            style: GoogleFonts.googleSans(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                GradientButton(
+                  onPressed: _isLoading ? null : _register,
+                  label: 'ตกลง',
+                  isLoading: _isLoading,
                 ),
               ],
             ),

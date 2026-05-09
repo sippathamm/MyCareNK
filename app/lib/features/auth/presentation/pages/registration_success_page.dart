@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../../../main/presentation/pages/main_page.dart';
 
 class RegistrationSuccessPage extends StatelessWidget {
@@ -182,7 +183,10 @@ class RegistrationSuccessPage extends StatelessWidget {
                                 ClipboardData(text: recoveryCodes.join(', ')),
                               );
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('คัดลอกรหัสทั้งหมดแล้ว')),
+                                SnackBar(
+                                  content: Text('คัดลอกรหัสทั้งหมดแล้ว', style: GoogleFonts.googleSans()),
+                                  behavior: SnackBarBehavior.floating,
+                                ),
                               );
                             },
                             style: OutlinedButton.styleFrom(
@@ -210,32 +214,14 @@ class RegistrationSuccessPage extends StatelessWidget {
               const SizedBox(height: 24),
 
               // CTA button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: () {
-                    Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => const MainScreen()),
-                      (route) => false,
-                    );
-                  },
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                  ),
-                  child: Text(
-                    'เริ่มใช้งาน',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+              GradientButton(
+                onPressed: () {
+                  Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const MainScreen()),
+                    (route) => false,
+                  );
+                },
+                label: 'เริ่มใช้งาน',
               ),
             ],
           ),

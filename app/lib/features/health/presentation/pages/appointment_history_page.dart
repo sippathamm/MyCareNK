@@ -147,7 +147,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'ประวัติการนัดหมาย',
+          'ประวัติการนัด',
           style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -210,7 +210,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
       child: TextField(
         onChanged: (val) => setState(() => _searchQuery = val),
         decoration: InputDecoration(
-          hintText: 'ค้นหาหมายเลขอ้างอิง',
+          hintText: 'ค้นหารหัสอ้างอิง',
           hintStyle: GoogleFonts.googleSans(color: Colors.grey[600], fontSize: 14),
           suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
@@ -314,7 +314,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('หมายเลขอ้างอิง',
+                      Text('รหัสอ้างอิง',
                           style: GoogleFonts.googleSans(
                               color: Colors.grey[500], fontSize: 12)),
                       Text(data.referenceNumber,

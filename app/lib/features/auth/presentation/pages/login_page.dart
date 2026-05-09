@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
 
@@ -47,18 +48,20 @@ class _LoginPageState extends State<LoginPage> {
     } on AuthException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } catch (e) {
       debugPrint('Error during login: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {
@@ -233,36 +236,10 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 32.0),
 
                 // Login Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _login,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              color: AppColors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'เข้าสู่ระบบ',
-                            style: GoogleFonts.googleSans(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                GradientButton(
+                  onPressed: _isLoading ? null : _login,
+                  label: 'เข้าสู่ระบบ',
+                  isLoading: _isLoading,
                 ),
 
                 const SizedBox(height: 12.0),

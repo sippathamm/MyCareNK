@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../../data/models/doctor_appointment_model.dart';
 
 class AppointmentHistoryDetailPage extends StatefulWidget {
@@ -96,20 +97,12 @@ class _AppointmentHistoryDetailPageState
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          SizedBox(
-            width: double.infinity,
+          GradientButton(
             height: 46,
-            child: FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text('ยืนยันยกเลิก',
-                  style: GoogleFonts.googleSans(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            label: 'ยืนยันยกเลิก',
+            gradientColors: GradientButton.errorGradient,
+            fontSize: 15,
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -146,7 +139,7 @@ class _AppointmentHistoryDetailPageState
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text('ยกเลิกนัดหมายเรียบร้อยแล้ว',
             style: GoogleFonts.googleSans()),
-        backgroundColor: AppColors.statusCompleted,
+        backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ));
       Navigator.of(context).pop();
@@ -236,7 +229,7 @@ class _AppointmentHistoryDetailPageState
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('หมายเลขอ้างอิง',
+            Text('รหัสอ้างอิง',
                 style: GoogleFonts.googleSans(
                     color: Colors.grey[500], fontSize: 12)),
             Row(
@@ -257,9 +250,10 @@ class _AppointmentHistoryDetailPageState
                     Clipboard.setData(
                         ClipboardData(text: _data.referenceNumber));
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('คัดลอกหมายเลขอ้างอิงแล้ว',
+                      content: Text('คัดลอกรหัสอ้างอิงแล้ว',
                           style: GoogleFonts.googleSans()),
                       duration: const Duration(seconds: 2),
+                      behavior: SnackBarBehavior.floating,
                     ));
                   },
                 ),
@@ -564,22 +558,10 @@ class _AppointmentHistoryDetailPageState
 
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.lubricant,
-              foregroundColor: AppColors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24)),
-            ),
-            child: Text('ตกลง',
-                style: GoogleFonts.googleSans(
-                    fontSize: 16, fontWeight: FontWeight.bold)),
-          ),
+        GradientButton(
+          onPressed: () => Navigator.of(context).pop(),
+          label: 'ตกลง',
+          gradientColors: GradientButton.lubricantGradient,
         ),
         if (canCancel) ...[
           const SizedBox(height: 10),

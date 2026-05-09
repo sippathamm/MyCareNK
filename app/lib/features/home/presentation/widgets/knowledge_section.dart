@@ -26,7 +26,10 @@ class KnowledgeSection extends StatelessWidget {
               TextButton(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('"ดูทั้งหมด" ถูกกด')),
+                    const SnackBar(
+                      content: Text('"ดูทั้งหมด" ถูกกด'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
                 },
                 child: Row(
@@ -58,7 +61,10 @@ class KnowledgeSection extends StatelessWidget {
               return InkWell(
                 onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('"บทความที่ ${index + 1}" ถูกกด')),
+                    SnackBar(
+                      content: Text('"บทความที่ ${index + 1}" ถูกกด'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
                 },
                 borderRadius: BorderRadius.circular(16),

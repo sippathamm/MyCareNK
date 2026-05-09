@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../data/models/doctor_appointment_model.dart';
 import 'appointment_history_page.dart';
@@ -702,25 +703,16 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               style: GoogleFonts.googleSans(fontSize: 15, height: 1.6)),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
-            SizedBox(
-              width: double.infinity,
+            GradientButton(
               height: 46,
-              child: FilledButton(
-                onPressed: () async {
-                  Navigator.of(ctx).pop();
-                  final loggedIn = await Navigator.of(context, rootNavigator: true)
-                      .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
-                  if (loggedIn == true && mounted) _submitBooking();
-                },
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24)),
-                ),
-                child: Text('เข้าสู่ระบบ',
-                    style: GoogleFonts.googleSans(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
-              ),
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                final loggedIn = await Navigator.of(context, rootNavigator: true)
+                    .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+                if (loggedIn == true && mounted) _submitBooking();
+              },
+              label: 'เข้าสู่ระบบ',
+              fontSize: 15,
             ),
             const SizedBox(height: 8),
             SizedBox(
@@ -870,7 +862,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               ),
             ),
             Text(
-              'หมายเลขอ้างอิง: $_refNum',
+              'รหัสอ้างอิง: $_refNum',
               style: GoogleFonts.googleSans(fontSize: 14, color: AppColors.textHint),
             ),
             const SizedBox(height: 20),
@@ -964,6 +956,15 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         ),
       ),
       centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.history, color: AppColors.primary),
+          tooltip: 'ประวัติการนัด',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AppointmentHistoryPage()),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -1045,30 +1046,11 @@ class _PrimaryBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor:
-              onPressed != null ? AppColors.lubricant : Colors.grey.shade300,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        ),
-        child: isLoading
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                    color: Colors.white, strokeWidth: 2),
-              )
-            : Text(label,
-                style: GoogleFonts.googleSans(
-                    fontSize: 16, fontWeight: FontWeight.w700)),
-      ),
+    return GradientButton(
+      onPressed: onPressed,
+      label: label,
+      isLoading: isLoading,
+      gradientColors: GradientButton.lubricantGradient,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../../data/recovery_service.dart';
 import 'recovery_codes_display_page.dart';
 
@@ -62,17 +63,19 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง'),
-            backgroundColor: Colors.red,
+            content: Text(result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง', style: GoogleFonts.googleSans()),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
         ),
       );
     } finally {
@@ -248,36 +251,10 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
 
                 const SizedBox(height: 48),
 
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _onConfirm,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: CircularProgressIndicator(
-                              color: AppColors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'ยืนยัน',
-                            style: GoogleFonts.googleSans(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                  ),
+                GradientButton(
+                  onPressed: _isLoading ? null : _onConfirm,
+                  label: 'ยืนยัน',
+                  isLoading: _isLoading,
                 ),
               ],
             ),

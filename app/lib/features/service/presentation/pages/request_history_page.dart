@@ -230,7 +230,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           });
         },
         decoration: InputDecoration(
-          hintText: 'ค้นหาหมายเลขอ้างอิง',
+          hintText: 'ค้นหารหัสอ้างอิง',
           hintStyle: GoogleFonts.googleSans(color: Colors.grey[600], fontSize: 14),
           suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
@@ -312,7 +312,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
       iconColor = Colors.grey[600]!;
       statusBgColor = Colors.grey[600]!;
       statusTextColor = AppColors.white;
-      statusText = data.status == RequestStatus.cancelledByStaff ? 'ยกเลิกโดยเจ้าหน้าที่' : 'ยกเลิกโดยผู้ใช้';
+      statusText = data.status == RequestStatus.cancelledByStaff ? 'ยกเลิกโดยเจ้าหน้าที่' : 'ยกเลิกโดยคุณ';
       statusIcon = Icons.cancel_outlined;
     } else {
       switch (data.status) {
@@ -413,7 +413,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'หมายเลขอ้างอิง',
+                        'รหัสอ้างอิง',
                         style: GoogleFonts.googleSans(
                           color: Colors.grey[500],
                           fontSize: 12,

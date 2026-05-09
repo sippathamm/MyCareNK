@@ -76,7 +76,10 @@ class _HeaderSectionState extends State<HeaderSection> {
                       await Supabase.instance.client.auth.signOut();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('ออกจากระบบแล้ว')),
+                          SnackBar(
+                            content: Text('ออกจากระบบแล้ว', style: GoogleFonts.googleSans()),
+                            behavior: SnackBarBehavior.floating,
+                          ),
                         );
                       }
                     }

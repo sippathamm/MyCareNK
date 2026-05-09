@@ -3,10 +3,8 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../widgets/service_card.dart';
 import 'condom_request_page.dart';
-import 'request_history_page.dart';
 import '../../../health/presentation/pages/hiv_assessment_page.dart';
 import '../../../health/presentation/pages/doctor_booking_page.dart';
-import '../../../health/presentation/pages/appointment_history_page.dart';
 
 class ServicePage extends StatelessWidget {
   const ServicePage({super.key});
@@ -19,7 +17,7 @@ class ServicePage extends StatelessWidget {
         backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
+        titleSpacing: 24,
         title: Text(
           'บริการ',
           style: GoogleFonts.googleSans(
@@ -60,26 +58,6 @@ class ServicePage extends StatelessWidget {
               subtitle: 'จองคิวล่วงหน้าเพื่อรับยา PrEP/PEP ตรวจเลือด หรือปรึกษาสุขภาพ',
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const DoctorBookingPage()),
-              ),
-            ),
-            ServiceCard(
-              icon: Icons.receipt_long_outlined,
-              iconBgColor: AppColors.statusCompletedLight,
-              iconColor: AppColors.statusCompleted,
-              title: 'ประวัติคำขอ',
-              subtitle: 'ดูสถานะและรายละเอียดคำขอรับถุงยางอนามัยทั้งหมด',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
-              ),
-            ),
-            ServiceCard(
-              icon: Icons.event_note_outlined,
-              iconBgColor: AppColors.statusPreparingLight,
-              iconColor: AppColors.lubricant,
-              title: 'ประวัติการนัดหมาย',
-              subtitle: 'ดูสถานะและรายละเอียดการนัดพบแพทย์ทั้งหมด',
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AppointmentHistoryPage()),
               ),
             ),
           ],

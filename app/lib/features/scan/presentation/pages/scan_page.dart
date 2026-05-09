@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
 
@@ -649,38 +650,12 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         _buildLocationCard(request),
         _buildMessageCard(request),
         const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
+        GradientButton(
           height: 48,
-          child: FilledButton(
-            onPressed: _isConfirming ? null : _confirmReceive,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.statusCompleted,
-              disabledBackgroundColor: AppColors.statusCompleted.withValues(
-                alpha: 0.5,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: _isConfirming
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: AppColors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    'ยืนยันการรับ',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.white,
-                    ),
-                  ),
-          ),
+          onPressed: _isConfirming ? null : _confirmReceive,
+          label: 'ยืนยันการรับ',
+          isLoading: _isConfirming,
+          gradientColors: GradientButton.completedGradient,
         ),
       ],
     );
@@ -699,7 +674,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'หมายเลขอ้างอิง',
+              'รหัสอ้างอิง',
               style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Text(
@@ -1082,7 +1057,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         ),
         const SizedBox(height: 6),
         Text(
-          'หมายเลขอ้างอิง: $refNumber',
+          'รหัสอ้างอิง: $refNumber',
           style: GoogleFonts.googleSans(
             fontSize: 12,
             color: AppColors.textSecondary,
@@ -1108,7 +1083,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           chipColor = AppColors.statusPreparing;
           break;
         case RequestStatus.cancelledByUser:
-          chipLabel = 'ยกเลิกโดยผู้ใช้';
+          chipLabel = 'ยกเลิกโดยคุณ';
           chipColor = Colors.grey[600]!;
           break;
         case RequestStatus.cancelledByStaff:
@@ -1159,7 +1134,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         if (_requestData != null) ...[
           const SizedBox(height: 6),
           Text(
-            'หมายเลขอ้างอิง: ${_requestData!.referenceNumber}',
+            'รหัสอ้างอิง: ${_requestData!.referenceNumber}',
             style: GoogleFonts.googleSans(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -1242,32 +1217,16 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           ),
         ),
         const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
+        GradientButton(
           height: 48,
-          child: FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(
-                context,
-                rootNavigator: true,
-              ).push(MaterialPageRoute(builder: (_) => const LoginPage()));
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: Text(
-              'เข้าสู่ระบบ',
-              style: GoogleFonts.googleSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-            ),
-          ),
+          onPressed: () {
+            Navigator.of(context).pop();
+            Navigator.of(
+              context,
+              rootNavigator: true,
+            ).push(MaterialPageRoute(builder: (_) => const LoginPage()));
+          },
+          label: 'เข้าสู่ระบบ',
         ),
       ],
     );
@@ -1343,26 +1302,10 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _rescanButton() {
-    return SizedBox(
-      width: double.infinity,
+    return GradientButton(
       height: 48,
-      child: FilledButton(
-        onPressed: widget.onRescan,
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ),
-        child: Text(
-          'สแกนอีกครั้ง',
-          style: GoogleFonts.googleSans(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.white,
-          ),
-        ),
-      ),
+      onPressed: widget.onRescan,
+      label: 'สแกนอีกครั้ง',
     );
   }
 

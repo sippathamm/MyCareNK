@@ -4,10 +4,12 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
 import 'condom_request_confirm_page.dart';
+import 'request_history_page.dart';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -135,7 +137,11 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเข้าสู่ระบบ')),
+        SnackBar(
+          content: Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       Navigator.of(context, rootNavigator: true).push(
         MaterialPageRoute(builder: (context) => const LoginPage()),
@@ -144,7 +150,11 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     }
     if (_totalSelected == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเลือกถุงยางอนามัยอย่างน้อย 1 ชิ้น')),
+        SnackBar(
+          content: Text('กรุณาเลือกถุงยางอนามัยอย่างน้อย 1 ชิ้น', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -187,6 +197,15 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history, color: AppColors.primary),
+            tooltip: 'ประวัติคำขอ',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -272,22 +291,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             child: AnimatedOpacity(
               opacity: _canProceed ? 1.0 : 0.4,
               duration: const Duration(milliseconds: 200),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: _canProceed ? _navigateToConfirm : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                  ),
-                  child: Text('ถัดไป',
-                      style: GoogleFonts.googleSans(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
+              child: GradientButton(
+                onPressed: _canProceed ? _navigateToConfirm : null,
+                label: 'ถัดไป',
               ),
             ),
           ),
