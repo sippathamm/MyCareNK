@@ -33,7 +33,7 @@ export function useRestockHistory() {
           .limit(200),
         supabase
           .from('staff_profiles')
-          .select('user_id, first_name, last_name'),
+          .select('staff_user_id, first_name, last_name'),
       ]);
 
     if (logsErr || profileErr) {
@@ -44,7 +44,7 @@ export function useRestockHistory() {
 
     const profileMap = new Map(
       (profiles ?? []).map((p) => [
-        p.user_id,
+        p.staff_user_id,
         [p.first_name, p.last_name].filter(Boolean).join(' ') || 'ไม่ทราบชื่อ',
       ]),
     );

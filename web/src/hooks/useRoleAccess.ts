@@ -33,7 +33,7 @@ export function useRoleAccess() {
         const { data, error } = await supabase
           .from('staff_profiles')
           .select('first_name, last_name, service_center, role')
-          .eq('user_id', userId)
+          .eq('staff_user_id', userId)
           .single();
 
         if (error) throw error;

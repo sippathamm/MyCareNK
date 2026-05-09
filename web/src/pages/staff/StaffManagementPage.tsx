@@ -235,7 +235,7 @@ interface EditStaffDialogProps {
   staff: StaffMember | null;
   currentUserId: string;
   onClose: () => void;
-  onUpdate: (payload: { user_id: string; first_name: string; last_name: string; service_center: string; role: string; email?: string }) => Promise<string | null>;
+  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: string; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
@@ -276,7 +276,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
     setSubmitting(true);
     setError(null);
     const emailChanged = email !== staff.email;
-    const err = await onUpdate({ user_id: staff.user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role, ...(emailChanged && { email }) });
+    const err = await onUpdate({ staff_user_id: staff.staff_user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role, ...(emailChanged && { email }) });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -286,7 +286,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
     if (!staff) return;
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setDeleting(true);
-    const err = await onDelete(staff.user_id);
+    const err = await onDelete(staff.staff_user_id);
     setDeleting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -346,7 +346,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
           startIcon={deleting ? undefined : <DeleteIcon />}
           endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
           onClick={handleDelete}
-          disabled={deleting || (staff?.user_id === currentUserId)}
+          disabled={deleting || (staff?.staff_user_id === currentUserId)}
           sx={{ mr: 'auto' }}
         >
           {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
@@ -388,7 +388,7 @@ export default function StaffManagementPage() {
   }
 
   const columns: GridColDef[] = [
-    { field: 'user_id', headerName: 'UUID', flex: 1.8, minWidth: 280 },
+    { field: 'staff_user_id', headerName: 'UUID', flex: 1.8, minWidth: 280 },
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 100 },
     { field: 'last_name', headerName: 'นามสกุล', flex: 1, minWidth: 100 },
     {
@@ -464,7 +464,7 @@ export default function StaffManagementPage() {
         <Box sx={{ height: 500, width: '100%' }}>
           <DataGrid
             rows={staff}
-            getRowId={(row) => row.user_id}
+            getRowId={(row) => row.staff_user_id}
             columns={columns}
             loading={loading}
             localeText={thGridLocale}

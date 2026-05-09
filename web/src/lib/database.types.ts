@@ -352,7 +352,7 @@ export type Database = {
           role: Database["public"]["Enums"]["role"]
           service_center: Database["public"]["Enums"]["service_center"] | null
           updated_at: string | null
-          user_id: string
+          staff_user_id: string
         }
         Insert: {
           created_at?: string | null
@@ -362,7 +362,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["role"]
           service_center?: Database["public"]["Enums"]["service_center"] | null
           updated_at?: string | null
-          user_id: string
+          staff_user_id: string
         }
         Update: {
           created_at?: string | null
@@ -372,7 +372,7 @@ export type Database = {
           role?: Database["public"]["Enums"]["role"]
           service_center?: Database["public"]["Enums"]["service_center"] | null
           updated_at?: string | null
-          user_id?: string
+          staff_user_id?: string
         }
         Relationships: []
       }
