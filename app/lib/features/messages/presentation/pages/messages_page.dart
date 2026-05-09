@@ -143,6 +143,7 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
     case 'ready':
       final dateRaw = metadata['selected_date'] as String? ?? '';
       final timeRaw = metadata['selected_time'] as String? ?? '';
+      final serviceCenter = metadata['selected_service_center'] as String? ?? '';
       String datePart = '';
       if (dateRaw.isNotEmpty) {
         try {
@@ -152,11 +153,12 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
       final dateTimeLabel = '($datePart เวลา $timePart น.)';
+      final centerPart = serviceCenter.isNotEmpty ? '$serviceCenter ' : '';
       return (
-        'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด $dateTimeLabel',
+        'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $centerPartภายในวันที่กำหนด $dateTimeLabel',
         <InlineSpan>[
-          const TextSpan(
-            text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด ',
+          TextSpan(
+            text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $centerPartภายในวันที่กำหนด ',
           ),
           TextSpan(
             text: dateTimeLabel,
@@ -170,13 +172,13 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
 
     case 'cancelled_by_staff':
       return (
-        'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ประวัติคำขอ › รายละเอียด › เหตุผล',
+        'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
         <InlineSpan>[
           const TextSpan(
             text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
           ),
           const TextSpan(
-            text: 'ประวัติคำขอ › รายละเอียด › เหตุผล',
+            text: 'บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
