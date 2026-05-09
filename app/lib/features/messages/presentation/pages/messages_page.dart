@@ -480,7 +480,7 @@ class _MessagesPageState extends State<MessagesPage> {
         itemCount: _groups.length,
         itemBuilder: (context, i) => _RequestGroupTile(
           group: _groups[i],
-          defaultOpen: i == 0,
+          defaultOpen: false,
           onExpand: _markGroupRead,
         ),
       ),
