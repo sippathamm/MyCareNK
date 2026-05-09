@@ -313,6 +313,7 @@ export type Database = {
       }
       staff_notifications: {
         Row: {
+          appointment_event_type: Database["public"]["Enums"]["appointment_status"] | null
           appointment_id: string | null
           created_at: string
           event_type: Database["public"]["Enums"]["request_status"]
@@ -321,6 +322,7 @@ export type Database = {
           request_id: string | null
         }
         Insert: {
+          appointment_event_type?: Database["public"]["Enums"]["appointment_status"] | null
           appointment_id?: string | null
           created_at?: string
           event_type: Database["public"]["Enums"]["request_status"]
@@ -329,6 +331,7 @@ export type Database = {
           request_id?: string | null
         }
         Update: {
+          appointment_event_type?: Database["public"]["Enums"]["appointment_status"] | null
           appointment_id?: string | null
           created_at?: string
           event_type?: Database["public"]["Enums"]["request_status"]

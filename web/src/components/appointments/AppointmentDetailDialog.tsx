@@ -5,6 +5,13 @@ import {
 } from '@mui/material';
 import type { Enums } from '../../lib/database.types';
 
+export const REASON_LABELS: Record<string, string> = {
+  pep:     'รับยา PEP',
+  prep:    'รับยา PrEP',
+  hiv:     'ตรวจเลือด HIV',
+  consult: 'ปรึกษาทั่วไป',
+};
+
 export interface AppointmentData {
   id: string;
   reference_number: string;
@@ -102,7 +109,7 @@ export default function AppointmentDetailDialog({
           <DialogContent dividers>
             {isConfirming ? (
               <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
-                <Typography variant="h6" color="secondary.main" fontWeight="bold">ยืนยันนัดหมาย</Typography>
+                <Typography variant="h6" color="primary.main" fontWeight="bold">ยืนยันนัดหมาย</Typography>
                 <Typography variant="body1" color="text.secondary">
                   คุณต้องการยืนยันนัดหมายนี้ใช่หรือไม่?
                 </Typography>
@@ -145,7 +152,7 @@ export default function AppointmentDetailDialog({
 
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">เรื่องที่ต้องการพบแพทย์</Typography>
-                  <Typography variant="body1">{appointment.reason}</Typography>
+                  <Typography variant="body1">{REASON_LABELS[appointment.reason] ?? appointment.reason}</Typography>
                 </Box>
 
                 {appointment.note && (
@@ -193,7 +200,7 @@ export default function AppointmentDetailDialog({
                 <Button
                   onClick={handleConfirm}
                   variant="contained"
-                  color="secondary"
+                  color="primary"
                   disabled={statusUpdating}
                   endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
                 >
@@ -235,7 +242,7 @@ export default function AppointmentDetailDialog({
                   </Button>
                 )}
                 {appointment.appointment_status === 'pending' && (
-                  <Button onClick={() => setIsConfirming(true)} color="secondary" variant="contained">
+                  <Button onClick={() => setIsConfirming(true)} color="primary" variant="contained">
                     ยืนยันนัดหมาย
                   </Button>
                 )}

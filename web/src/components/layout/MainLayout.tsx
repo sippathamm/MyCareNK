@@ -18,7 +18,7 @@ import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useNotification, STATUS_CONFIG, APPOINTMENT_NOTIFICATION_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
+import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
 import NotificationPanel from '../notifications/NotificationPanel';
 
 const DRAWER_OPEN_WIDTH = 260;
@@ -39,9 +39,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { role, profile, loading } = useRoleAccess();
-  const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, closeToast } = useNotification();
+  const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast } = useNotification();
   const toastCfg = toastIsAppointment
-    ? APPOINTMENT_NOTIFICATION_CONFIG
+    ? APPOINTMENT_STATUS_CONFIG[(toastAppointmentEventType ?? 'pending') as AppointmentEventType]
     : (toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null);
 
   const bellRef = useRef<HTMLButtonElement>(null);

@@ -17,13 +17,16 @@ import type { Enums, Tables } from '../lib/database.types';
 // ---------------------------------------------------------------------------
 
 export type RequestStatus = Enums<'request_status'>;
+export type AppointmentEventType = Enums<'appointment_status'>;
 
 export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolean };
 
-export const APPOINTMENT_NOTIFICATION_CONFIG = {
-  label: 'นัดหมายใหม่',
-  color: '#FF9F6B',
-  bg: '#FFF0E6',
+export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
+  pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
+  confirmed:          { label: 'ยืนยันนัดหมายแล้ว',      color: '#BA68C8', bg: '#F5EAF9' },
+  completed:          { label: 'นัดหมายเสร็จสิ้น',        color: '#81C784', bg: '#EBF7EC' },
+  cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',        color: '#9E9E9E', bg: '#F5F5F5' },
+  cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่',   color: '#9E9E9E', bg: '#F5F5F5' },
 };
 
 interface NotificationContextValue {
@@ -33,6 +36,7 @@ interface NotificationContextValue {
   toastMessage: string;
   toastEventType: RequestStatus | null;
   toastIsAppointment: boolean;
+  toastAppointmentEventType: AppointmentEventType | null;
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -98,6 +102,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastMessage, setToastMessage] = useState('');
   const [toastEventType, setToastEventType] = useState<RequestStatus | null>(null);
   const [toastIsAppointment, setToastIsAppointment] = useState(false);
+  const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
 
   // Keep refs in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
@@ -151,7 +156,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           requestIds.length > 0
             ? supabase
                 .from('staff_notifications')
-                .select('id, request_id, appointment_id, reference_number, event_type, created_at')
+                .select('id, request_id, appointment_id, appointment_event_type, reference_number, event_type, created_at')
                 .in('request_id', requestIds)
                 .order('created_at', { ascending: false })
                 .limit(MAX_NOTIFICATIONS)
@@ -159,7 +164,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           appointmentIds.length > 0
             ? supabase
                 .from('staff_notifications')
-                .select('id, request_id, appointment_id, reference_number, event_type, created_at')
+                .select('id, request_id, appointment_id, appointment_event_type, reference_number, event_type, created_at')
                 .in('appointment_id', appointmentIds)
                 .order('created_at', { ascending: false })
                 .limit(MAX_NOTIFICATIONS)
@@ -174,7 +179,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       } else {
         const { data } = await supabase
           .from('staff_notifications')
-          .select('id, request_id, appointment_id, reference_number, event_type, created_at')
+          .select('id, request_id, appointment_id, appointment_event_type, reference_number, event_type, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS);
         notifData = data ?? [];
@@ -223,11 +228,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           }
 
           const isAppointment = row.appointment_id != null;
+          const aptEventType = (row.appointment_event_type ?? null) as AppointmentEventType | null;
           const item: NotificationItem = { ...row, is_read: false };
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
+          setToastAppointmentEventType(isAppointment ? aptEventType : null);
           setToastEventType(isAppointment ? null : row.event_type);
-          setToastMessage(buildToastMessage(row.event_type, row.reference_number, isAppointment));
+          setToastMessage(buildToastMessage(row.event_type, row.reference_number, isAppointment, aptEventType));
           setToastOpen(true);
           playNotificationSound();
         }
@@ -320,7 +327,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     );
   }, [userId, notifications]);
 
-  const closeToast = useCallback(() => { setToastOpen(false); setToastIsAppointment(false); }, []);
+  const closeToast = useCallback(() => {
+    setToastOpen(false);
+    setToastIsAppointment(false);
+    setToastAppointmentEventType(null);
+  }, []);
 
   const deleteNotification = useCallback(async (id: string) => {
     // Optimistic update
@@ -334,7 +345,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -360,7 +371,14 @@ export const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string
   cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่', color: '#9E9E9E', bg: '#F5F5F5' },
 };
 
-function buildToastMessage(eventType: RequestStatus, referenceNumber: string, isAppointment = false): string {
-  const label = isAppointment ? APPOINTMENT_NOTIFICATION_CONFIG.label : (STATUS_CONFIG[eventType]?.label ?? eventType);
+function buildToastMessage(
+  eventType: RequestStatus,
+  referenceNumber: string,
+  isAppointment = false,
+  appointmentEventType: AppointmentEventType | null = null,
+): string {
+  const label = isAppointment
+    ? (APPOINTMENT_STATUS_CONFIG[appointmentEventType ?? 'pending']?.label ?? 'นัดหมาย')
+    : (STATUS_CONFIG[eventType]?.label ?? eventType);
   return `${label}: ${referenceNumber}`;
 }
