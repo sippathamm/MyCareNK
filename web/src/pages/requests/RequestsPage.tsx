@@ -105,7 +105,7 @@ export default function RequestsPage() {
   });
 
   const columns: GridColDef[] = [
-    { field: 'reference_number', headerName: 'หมายเลขอ้างอิง', flex: 1, minWidth: 120 },
+    { field: 'reference_number', headerName: 'รหัสอ้างอิง', flex: 1, minWidth: 120 },
     {
       field: 'selected_date',
       headerName: 'วันเดือนปีรับ',
@@ -193,7 +193,7 @@ export default function RequestsPage() {
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
           <TextField
-            label="ค้นหาหมายเลขอ้างอิง"
+            label="ค้นหารหัสอ้างอิง"
             variant="outlined"
             size="small"
             value={search}

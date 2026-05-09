@@ -253,7 +253,7 @@ function RequestStatusLogTab() {
 
   const columns = useMemo<GridColDef<RequestStatusLogRow>[]>(() => [
     {
-      field: 'reference_number', headerName: 'หมายเลขอ้างอิง', width: 160, minWidth: 140,
+      field: 'reference_number', headerName: 'รหัสอ้างอิง', width: 160, minWidth: 140,
       renderCell: (p) => (
         <Typography variant="body2">{p.value ?? '—'}</Typography>
       ),
@@ -300,7 +300,7 @@ function RequestStatusLogTab() {
           </Stack>
           <TextField size="small" value={refNumFilter}
             onChange={e => { setRefNumFilter(e.target.value); resetPage(); }}
-            sx={{ maxWidth: 320 }} placeholder="ค้นหาหมายเลขอ้างอิง" />
+            sx={{ maxWidth: 320 }} placeholder="ค้นหารหัสอ้างอิง" />
         </Stack>
       </Paper>
 

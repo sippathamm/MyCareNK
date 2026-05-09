@@ -121,7 +121,7 @@ export default function StaffWorkloadDetailDialog({
   const columns = useMemo<GridColDef<StaffRequestRow>[]>(() => [
     {
       field: 'reference_number',
-      headerName: 'หมายเลขอ้างอิง',
+      headerName: 'รหัสอ้างอิง',
       flex: 1, minWidth: 120,
     },
     {
