@@ -22,8 +22,8 @@ export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolea
 
 export const APPOINTMENT_NOTIFICATION_CONFIG = {
   label: 'นัดหมายใหม่',
-  color: '#26A69A',
-  bg: '#E0F2F1',
+  color: '#FF9F6B',
+  bg: '#FFF0E6',
 };
 
 interface NotificationContextValue {
