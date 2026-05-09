@@ -1219,12 +1219,22 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         const SizedBox(height: 24),
         GradientButton(
           height: 48,
-          onPressed: () {
+          onPressed: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            final rootNav = Navigator.of(context, rootNavigator: true);
             Navigator.of(context).pop();
-            Navigator.of(
-              context,
-              rootNavigator: true,
-            ).push(MaterialPageRoute(builder: (_) => const LoginPage()));
+            final loggedIn = await rootNav
+                .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+            if (loggedIn == true) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text('เข้าสู่ระบบแล้ว',
+                      style: GoogleFonts.googleSans()),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
           },
           label: 'เข้าสู่ระบบ',
         ),

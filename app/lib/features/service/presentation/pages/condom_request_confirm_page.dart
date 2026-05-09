@@ -47,15 +47,17 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   Future<void> _submitRequest() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('กรุณาเข้าสู่ระบบก่อนทำรายการ', style: GoogleFonts.googleSans()),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      Navigator.of(context, rootNavigator: true)
-          .push(MaterialPageRoute(builder: (context) => const LoginPage()));
+      final loggedIn = await Navigator.of(context, rootNavigator: true)
+          .push<bool>(MaterialPageRoute(builder: (context) => const LoginPage()));
+      if (loggedIn == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('เข้าสู่ระบบแล้ว', style: GoogleFonts.googleSans()),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 

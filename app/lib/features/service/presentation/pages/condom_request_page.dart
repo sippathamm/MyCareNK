@@ -5,7 +5,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
 import '../../../../../core/widgets/gradient_button.dart';
-import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
 import 'condom_request_confirm_page.dart';
@@ -134,20 +133,6 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   }
 
   void _navigateToConfirm() {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.googleSans()),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-      return;
-    }
     if (_totalSelected == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
