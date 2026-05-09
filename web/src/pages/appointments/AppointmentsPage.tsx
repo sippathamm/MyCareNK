@@ -108,7 +108,7 @@ export default function AppointmentsPage() {
     const matchStatus = statusFilter === 'all'
       || a.appointment_status === statusFilter
       || (statusFilter === 'cancelled' && (a.appointment_status === 'cancelled_by_user' || a.appointment_status === 'cancelled_by_staff'));
-    const matchServiceCenter = serviceCenterFilter === 'all'
+    const matchServiceCenter = !isAdminOrSuperadmin || serviceCenterFilter === 'all'
       || a.selected_service_center === serviceCenterFilter;
     return matchSearch && matchStatus && matchServiceCenter;
   });
@@ -189,19 +189,21 @@ export default function AppointmentsPage() {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
-          <TextField
-            select
-            label="สถานพยาบาล"
-            size="small"
-            value={serviceCenterFilter}
-            onChange={(e) => setServiceCenterFilter(e.target.value)}
-            sx={{ minWidth: 200 }}
-          >
-            <MenuItem value="all">ทั้งหมด</MenuItem>
-            {SERVICE_CENTERS.map(sc => (
-              <MenuItem key={sc} value={sc}>{sc}</MenuItem>
-            ))}
-          </TextField>
+          {isAdminOrSuperadmin && (
+            <TextField
+              select
+              label="สถานพยาบาล"
+              size="small"
+              value={serviceCenterFilter}
+              onChange={(e) => setServiceCenterFilter(e.target.value)}
+              sx={{ minWidth: 200 }}
+            >
+              <MenuItem value="all">ทั้งหมด</MenuItem>
+              {SERVICE_CENTERS.map(sc => (
+                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+              ))}
+            </TextField>
+          )}
           <TextField
             select
             label="สถานะ"
