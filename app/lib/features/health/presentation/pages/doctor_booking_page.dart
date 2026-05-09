@@ -919,13 +919,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             const SizedBox(height: 10),
             _OutlinedBtn(
               label: 'ดูประวัติการนัด',
-              onPressed: () {
-                Navigator.of(context).popUntil((r) => r.isFirst);
-                Navigator.of(context, rootNavigator: true).push(
-                  MaterialPageRoute(
-                      builder: (_) => const AppointmentHistoryPage()),
-                );
-              },
+              onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (_) => const AppointmentHistoryPage()),
+                (route) => route.isFirst,
+              ),
             ),
                 ],
               ),
