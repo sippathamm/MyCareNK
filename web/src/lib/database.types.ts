@@ -313,6 +313,7 @@ export type Database = {
       }
       staff_notifications: {
         Row: {
+          appointment_id: string | null
           created_at: string
           event_type: Database["public"]["Enums"]["request_status"]
           id: string
@@ -320,6 +321,7 @@ export type Database = {
           request_id: string | null
         }
         Insert: {
+          appointment_id?: string | null
           created_at?: string
           event_type: Database["public"]["Enums"]["request_status"]
           id?: string
@@ -327,6 +329,7 @@ export type Database = {
           request_id?: string | null
         }
         Update: {
+          appointment_id?: string | null
           created_at?: string
           event_type?: Database["public"]["Enums"]["request_status"]
           id?: string
@@ -339,6 +342,13 @@ export type Database = {
             columns: ["request_id"]
             isOneToOne: false
             referencedRelation: "condom_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "staff_notifications_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_appointments"
             referencedColumns: ["id"]
           },
         ]
