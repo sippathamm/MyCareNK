@@ -16,6 +16,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
   int _homeVisibilityKey = 0;
+  int _messagesRefreshKey = 0;
   final GlobalKey<NavigatorState> _serviceNavigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -45,6 +46,9 @@ class _MainScreenState extends State<MainScreen> {
         if (index == 0 && _currentIndex != 0) {
           _homeVisibilityKey++;
         }
+        if (index == 3 && _currentIndex != 3) {
+          _messagesRefreshKey++;
+        }
         _currentIndex = index;
       });
     }
@@ -60,7 +64,7 @@ class _MainScreenState extends State<MainScreen> {
           HomePage(visibilityKey: _homeVisibilityKey, onNavigateToHistory: _navigateToHistory),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
-          MessagesPage(unreadNotifier: _messagesUnreadNotifier),
+          MessagesPage(unreadNotifier: _messagesUnreadNotifier, refreshKey: _messagesRefreshKey),
           const Center(child: Text('Settings Screen Placeholder')),
         ],
       ),
