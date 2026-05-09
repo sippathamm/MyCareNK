@@ -206,7 +206,18 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
     case 'cancelled_by_user':
       return ('คุณได้ยกเลิกการนัดหมายนี้แล้ว', null);
     case 'cancelled_by_staff':
-      return ('การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่', null);
+      return (
+        'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
+        <InlineSpan>[
+          const TextSpan(
+            text: 'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
+          ),
+          const TextSpan(
+            text: 'บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
     default: // pending
       return ('ระบบได้รับการนัดหมายของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน', null);
   }
