@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -81,22 +80,18 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             '${widget.selectedTime!.minute.toString().padLeft(2, '0')}:00';
       }
 
-      const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      final Random random = Random();
-      final String refNumber =
-          List.generate(8, (_) => chars[random.nextInt(chars.length)]).join();
-
-      await Supabase.instance.client.from('condom_requests').insert({
-        'user_id': userId,
-        'condom_quantities': quantitiesJson,
-        'lubricant_quantity': widget.lubricantQuantity,
-        'selected_service_center': widget.selectedServiceCenter,
-        'selected_date': dateString,
-        'selected_time': timeString,
-        'message': widget.message,
-        'reference_number': refNumber,
-        'request_status': 'pending',
-      });
+      final String refNumber = await Supabase.instance.client.rpc(
+        'create_condom_request',
+        params: {
+          'p_user_id': userId,
+          'p_condom_quantities': quantitiesJson,
+          'p_lubricant_quantity': widget.lubricantQuantity,
+          'p_selected_service_center': widget.selectedServiceCenter,
+          'p_selected_date': dateString,
+          'p_selected_time': timeString,
+          'p_message': widget.message.isNotEmpty ? widget.message : null,
+        },
+      ) as String;
 
       final now = DateTime.now();
       final monthStart =
