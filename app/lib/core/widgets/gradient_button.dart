@@ -25,6 +25,7 @@ class GradientButton extends StatelessWidget {
   static const List<Color> errorGradient = [AppColors.errorDark, AppColors.error];
   static const List<Color> lubricantGradient = [AppColors.lubricantDark, AppColors.lubricant];
   static const List<Color> completedGradient = [AppColors.success, AppColors.statusCompleted];
+  static const List<Color> healthGradient = [Color(0xFF5E35B1), AppColors.avatarIcon];
 
   @override
   Widget build(BuildContext context) {

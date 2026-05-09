@@ -987,6 +987,7 @@ class _PrimaryBtn extends StatelessWidget {
     return GradientButton(
       onPressed: onPressed,
       label: label,
+      gradientColors: GradientButton.healthGradient,
     );
   }
 }
