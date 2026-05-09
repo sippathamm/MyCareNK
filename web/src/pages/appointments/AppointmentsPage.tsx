@@ -16,8 +16,6 @@ import AppointmentDetailDialog from '../../components/appointments/AppointmentDe
 import type { AppointmentData } from '../../components/appointments/AppointmentDetailDialog';
 import type { Enums } from '../../lib/database.types';
 
-const SERVICE_CENTERS = ['รพ.โพนพิสัย', 'รพ.สต.วัดหลวง', 'อบต.วัดหลวง', 'สสจ.หนองคาย'] as const;
-
 const thGridLocale = createThGridLocale('ไม่มีรายการนัดหมาย');
 
 function formatDate(dateStr: string): string {
@@ -28,8 +26,8 @@ function formatDate(dateStr: string): string {
 
 function getStatusChip(status: Enums<'appointment_status'>) {
   switch (status) {
-    case 'pending':           return <Chip label="รอยืนยัน"            color="warning"   size="small" sx={{ fontWeight: 'bold' }} />;
-    case 'confirmed':         return <Chip label="ยืนยันแล้ว"           color="info"      size="small" sx={{ fontWeight: 'bold' }} />;
+    case 'pending':           return <Chip label="รอยืนยัน"            color="warning"     size="small" sx={{ fontWeight: 'bold' }} />;
+    case 'confirmed':         return <Chip label="ยืนยันแล้ว"           color="secondary"   size="small" sx={{ fontWeight: 'bold' }} />;
     case 'completed':         return <Chip label="เสร็จสิ้น"            color="success"   size="small" sx={{ fontWeight: 'bold' }} />;
     case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้"      size="small" sx={{ bgcolor: 'grey.200', color: 'text.secondary', fontWeight: 'bold' }} />;
     case 'cancelled_by_staff':return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: 'grey.200', color: 'text.secondary', fontWeight: 'bold' }} />;
@@ -42,11 +40,9 @@ export default function AppointmentsPage() {
   const navigate = useNavigate();
   const { appointments, setAppointments, loading } = useAppointments();
   const { role, loading: roleLoading } = useRoleAccess();
-  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -108,16 +104,14 @@ export default function AppointmentsPage() {
     const matchStatus = statusFilter === 'all'
       || a.appointment_status === statusFilter
       || (statusFilter === 'cancelled' && (a.appointment_status === 'cancelled_by_user' || a.appointment_status === 'cancelled_by_staff'));
-    const matchServiceCenter = !isAdminOrSuperadmin || serviceCenterFilter === 'all'
-      || a.selected_service_center === serviceCenterFilter;
-    return matchSearch && matchStatus && matchServiceCenter;
+    return matchSearch && matchStatus;
   });
 
   const columns: GridColDef[] = [
     { field: 'reference_number', headerName: 'รหัสอ้างอิง', flex: 1, minWidth: 140 },
     {
       field: 'selected_date',
-      headerName: 'วันนัดหมาย',
+      headerName: 'วัน',
       flex: 1,
       minWidth: 140,
       renderCell: (params) => (
@@ -135,18 +129,11 @@ export default function AppointmentsPage() {
     },
     {
       field: 'reason',
-      headerName: 'เหตุผล',
+      headerName: 'เรื่อง',
       flex: 2,
-      minWidth: 180,
+      minWidth: 160,
       valueGetter: (_, row) => (row as AppointmentData).reason,
     },
-    ...(isAdminOrSuperadmin ? [{
-      field: 'selected_service_center',
-      headerName: 'สถานบริการ',
-      flex: 1.2,
-      minWidth: 150,
-      valueGetter: (_: unknown, row: unknown) => (row as AppointmentData).selected_service_center,
-    } as GridColDef] : []),
     {
       field: 'appointment_status',
       headerName: 'สถานะ',
@@ -196,21 +183,6 @@ export default function AppointmentsPage() {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
-          {isAdminOrSuperadmin && (
-            <TextField
-              select
-              label="สถานบริการ"
-              size="small"
-              value={serviceCenterFilter}
-              onChange={(e) => setServiceCenterFilter(e.target.value)}
-              sx={{ minWidth: 200 }}
-            >
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              {SERVICE_CENTERS.map(sc => (
-                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
-              ))}
-            </TextField>
-          )}
           <TextField
             select
             label="สถานะ"
