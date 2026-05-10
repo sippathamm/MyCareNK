@@ -563,7 +563,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           duration: const Duration(milliseconds: 150),
           child: _PrimaryBtn(
             label:
-                _step == _totalQ - 1 ? 'ดูผลประเมิน' : 'ถัดไป →',
+                _step == _totalQ - 1 ? 'ดูผลประเมิน' : 'ถัดไป',
             onPressed: _selected != null ? _handleNext : null,
           ),
         ),
