@@ -277,9 +277,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         const SizedBox(height: 4),
         Row(children: [
           label('รอดำเนินการ', TextAlign.left,  AppColors.textSecondary, false),
-          const SizedBox(width: gap),
           const Expanded(child: SizedBox()),
-          const SizedBox(width: gap),
           label('ยกเลิก',      TextAlign.right, Colors.grey.shade600,    true),
         ]),
       ]);
@@ -323,7 +321,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       if (!isLast) {
         final connColor = isDone ? step.color : const Color(0xFFE8E8E8);
         iconItems.addAll([const SizedBox(width: gap), connector(connColor), const SizedBox(width: gap)]);
-        labelItems.addAll([const SizedBox(width: gap), const Expanded(child: SizedBox()), const SizedBox(width: gap)]);
+        labelItems.add(const Expanded(child: SizedBox()));
       }
     }
 
