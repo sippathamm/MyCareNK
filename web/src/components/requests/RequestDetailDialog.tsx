@@ -265,7 +265,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                 <Button
                   onClick={handleFinishPrepare}
                   variant="contained"
-                  color="info"
+                  color="primary"
                   disabled={statusUpdating}
                   endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
                 >
@@ -278,7 +278,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                 <Button
                   onClick={handleConfirmComplete}
                   variant="contained"
-                  color="success"
+                  color="primary"
                   disabled={statusUpdating}
                   endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
                 >
@@ -324,7 +324,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                       <span>
                         <Button
                           onClick={() => setIsConfirmingComplete(true)}
-                          color="success"
+                          color="primary"
                           variant="contained"
                           disabled={daysPast <= 7}
                         >
@@ -345,7 +345,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   </>
                 )}
                 {request.request_status === 'preparing' && (
-                  <Button onClick={() => setIsConfirmingFinish(true)} color="info" variant="contained">
+                  <Button onClick={() => setIsConfirmingFinish(true)} color="primary" variant="contained">
                     เตรียมการเสร็จสิ้น
                   </Button>
                 )}
