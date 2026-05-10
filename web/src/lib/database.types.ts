@@ -349,8 +349,8 @@ export type Database = {
           last_name: string | null
           role: Database["public"]["Enums"]["role"]
           service_center: Database["public"]["Enums"]["service_center"] | null
-          updated_at: string | null
           staff_user_id: string
+          updated_at: string | null
         }
         Insert: {
           created_at?: string | null
@@ -359,8 +359,8 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
           service_center?: Database["public"]["Enums"]["service_center"] | null
-          updated_at?: string | null
           staff_user_id: string
+          updated_at?: string | null
         }
         Update: {
           created_at?: string | null
@@ -369,8 +369,8 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
           service_center?: Database["public"]["Enums"]["service_center"] | null
-          updated_at?: string | null
           staff_user_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -397,6 +397,65 @@ export type Database = {
           updated_at?: string | null
           used_condoms?: number | null
           used_lubricants?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_notification_reads: {
+        Row: {
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "user_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          reference_number: string
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          reference_number?: string
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          reference_number?: string
+          source_id?: string
+          source_type?: string
           user_id?: string
         }
         Relationships: []
@@ -463,6 +522,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      create_condom_request: {
+        Args: {
+          p_condom_quantities: Json
+          p_lubricant_quantity: number
+          p_message?: string
+          p_selected_date: string
+          p_selected_service_center: Database["public"]["Enums"]["service_center"]
+          p_selected_time?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       create_doctor_appointment: {
         Args: {
           p_date: string
@@ -525,6 +596,30 @@ export type Database = {
               target_table: string
             }[]
           }
+        | {
+            Args: {
+              p_action?: string
+              p_date_from?: string
+              p_date_to?: string
+              p_limit?: number
+              p_offset?: number
+              p_performed_by?: string
+              p_target_id?: string
+              p_target_table?: string
+            }
+            Returns: {
+              action: Database["public"]["Enums"]["audit_action"]
+              created_at: string
+              full_name: string
+              id: string
+              new_value: Json
+              old_value: Json
+              performed_by: string
+              target_full_name: string
+              target_id: string
+              target_table: string
+            }[]
+          }
       get_average_lead_time: {
         Args: {
           p_date_from: string
@@ -562,7 +657,7 @@ export type Database = {
       }
       get_inventory_log: {
         Args: {
-          p_action?: Database["public"]["Enums"]["audit_action"]
+          p_action?: string
           p_date_from?: string
           p_date_to?: string
           p_limit?: number
@@ -570,7 +665,7 @@ export type Database = {
           p_service_center?: string
         }
         Returns: {
-          action: Database["public"]["Enums"]["audit_action"]
+          action: Database["public"]["Enums"]["transaction_type"]
           condom_delta: number
           created_at: string
           full_name: string
@@ -594,49 +689,28 @@ export type Database = {
           count: number
         }[]
       }
-      get_request_status_log:
-        | {
-            Args: {
-              p_date_from?: string
-              p_date_to?: string
-              p_from_status?: string
-              p_limit?: number
-              p_offset?: number
-              p_performed_by?: string
-              p_to_status?: string
-            }
-            Returns: {
-              changed_at: string
-              from_status: string
-              full_name: string
-              id: string
-              performed_by: string
-              request_id: string
-              to_status: string
-            }[]
-          }
-        | {
-            Args: {
-              p_date_from?: string
-              p_date_to?: string
-              p_from_status?: string
-              p_limit?: number
-              p_offset?: number
-              p_performed_by?: string
-              p_reference_number?: string
-              p_to_status?: string
-            }
-            Returns: {
-              changed_at: string
-              from_status: string
-              full_name: string
-              id: string
-              performed_by: string
-              reference_number: string
-              request_id: string
-              to_status: string
-            }[]
-          }
+      get_request_status_log: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_from_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_reference_number?: string
+          p_to_status?: string
+        }
+        Returns: {
+          changed_at: string
+          from_status: string
+          full_name: string
+          id: string
+          performed_by: string
+          reference_number: string
+          request_id: string
+          to_status: string
+        }[]
+      }
       get_service_center_demand: {
         Args: { p_date_from: string; p_date_to: string }
         Returns: {
@@ -656,7 +730,7 @@ export type Database = {
       }
       get_staff_audit_log: {
         Args: {
-          p_action?: Database["public"]["Enums"]["audit_action"]
+          p_action?: string
           p_date_from?: string
           p_date_to?: string
           p_limit?: number
@@ -705,22 +779,39 @@ export type Database = {
               staff_user_id: string
             }[]
           }
-      get_staff_workload_trend: {
-        Args: {
-          p_date_from: string
-          p_date_to: string
-          p_service_center?: string
-          p_staff_user_id?: string
-        }
-        Returns: {
-          cancelled_count: number
-          completed_count: number
-          first_name: string
-          last_name: string
-          staff_user_id: string
-          week_start: string
-        }[]
-      }
+      get_staff_workload_trend:
+        | {
+            Args: {
+              p_date_from: string
+              p_date_to: string
+              p_service_center?: string
+              p_staff_user_id?: string
+            }
+            Returns: {
+              cancelled_count: number
+              completed_count: number
+              first_name: string
+              last_name: string
+              staff_user_id: string
+              week_start: string
+            }[]
+          }
+        | {
+            Args: {
+              p_date_from?: string
+              p_date_to?: string
+              p_service_center?: string
+              p_staff_user_id?: string
+            }
+            Returns: {
+              cancelled_count: number
+              completed_count: number
+              first_name: string
+              last_name: string
+              staff_user_id: string
+              week_start: string
+            }[]
+          }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
