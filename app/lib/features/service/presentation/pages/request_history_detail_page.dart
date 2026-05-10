@@ -292,8 +292,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       final isCurrent = idx == currentIdx;
       iconItems.add(_buildStepCircle(
         color: (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
-        icon: isDone ? Icons.check : null,
-        number: isDone ? null : idx + 1,
+        icon: (isDone || (isCurrent && idx == n - 1)) ? Icons.check : null,
+        number: (isDone || (isCurrent && idx == n - 1)) ? null : idx + 1,
         isDone: isDone,
         isCurrent: isCurrent,
       ));

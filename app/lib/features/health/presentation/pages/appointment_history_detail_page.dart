@@ -285,126 +285,129 @@ class _AppointmentHistoryDetailPageState
     final status = _data.appointmentStatus;
     final isCancelled =
         status == 'cancelled_by_user' || status == 'cancelled_by_staff';
+    const double nodeSize = 28;
+    const double gap = 6;
 
-    if (isCancelled) {
-      return Row(
-        children: [
-          _buildStepNode(
-              color: AppColors.primary,
-              icon: Icons.check,
-              label: 'รอยืนยัน',
-              isCurrent: false,
-              isDone: true),
-          Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(2),
-              ),
+    Widget connector(Color color) => Expanded(
+          child: Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          _buildStepNode(
-              color: Colors.grey,
-              icon: Icons.close,
-              label: status == 'cancelled_by_staff'
-                  ? 'ยกเลิกโดยเจ้าหน้าที่'
-                  : 'ยกเลิกโดยคุณ',
-              isCurrent: true,
-              isDone: false,
-              labelColor: Colors.grey[600]),
-        ],
-      );
-    }
-
-    final steps = [
-      (label: 'รอยืนยัน',   value: 'pending',   color: AppColors.primary),
-      (label: 'ยืนยันแล้ว',  value: 'confirmed', color: AppColors.statusReady),
-      (label: 'เสร็จสิ้น',   value: 'completed', color: AppColors.statusCompleted),
-    ];
-    final currentIdx = steps.indexWhere((s) => s.value == status);
-
-    return Row(
-      children: List.generate(steps.length * 2 - 1, (i) {
-        if (i.isOdd) {
-          final leftIdx = i ~/ 2;
-          final done = leftIdx < currentIdx;
-          return Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: done ? steps[leftIdx].color : const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          );
-        }
-        final idx = i ~/ 2;
-        final isDone = idx < currentIdx;
-        final isCurrent = idx == currentIdx;
-        return _buildStepNode(
-          color: (isDone || isCurrent)
-              ? steps[idx].color
-              : const Color(0xFFE8E8E8),
-          icon: isDone ? Icons.check : null,
-          number: isDone ? null : idx + 1,
-          label: steps[idx].label,
-          isCurrent: isCurrent,
-          isDone: isDone,
-          labelColor: isCurrent
-              ? steps[idx].color
-              : isDone
-                  ? AppColors.textSecondary
-                  : AppColors.textMuted,
         );
-      }),
-    );
-  }
 
-  Widget _buildStepNode({
-    required Color color,
-    IconData? icon,
-    int? number,
-    required String label,
-    required bool isCurrent,
-    required bool isDone,
-    Color? labelColor,
-  }) {
-    return Column(
-      children: [
+    Widget circle(Color color, IconData? icon, int? number, bool active) =>
         AnimatedContainer(
           duration: const Duration(milliseconds: 250),
-          width: 28,
-          height: 28,
+          width: nodeSize,
+          height: nodeSize,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           child: Center(
             child: icon != null
                 ? Icon(icon, color: Colors.white, size: 14)
-                : Text(
-                    '${number ?? ''}',
+                : Text('${number ?? ''}',
                     style: GoogleFonts.googleSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: (isCurrent || isDone)
-                          ? Colors.white
-                          : AppColors.textMuted,
-                    ),
-                  ),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: active ? Colors.white : AppColors.textMuted)),
           ),
-        ),
+        );
+
+    if (isCancelled) {
+      final cancelLabel =
+          status == 'cancelled_by_staff' ? 'ยกเลิกโดยเจ้าหน้าที่' : 'ยกเลิกโดยคุณ';
+      return Column(children: [
+        Row(children: [
+          circle(AppColors.primary, Icons.check, null, true),
+          const SizedBox(width: gap),
+          connector(const Color(0xFFE8E8E8)),
+          const SizedBox(width: gap),
+          circle(Colors.grey, Icons.close, null, true),
+        ]),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.googleSans(
+        Row(children: [
+          Text('รอยืนยัน',
+              style: GoogleFonts.googleSans(
+                  fontSize: 11, color: AppColors.textSecondary)),
+          const Expanded(child: SizedBox()),
+          Text(cancelLabel,
+              style: GoogleFonts.googleSans(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Colors.grey.shade600)),
+        ]),
+      ]);
+    }
+
+    final steps = [
+      (label: 'รอยืนยัน',  value: 'pending',   color: AppColors.primary),
+      (label: 'ยืนยันแล้ว', value: 'confirmed', color: AppColors.statusReady),
+      (label: 'เสร็จสิ้น',  value: 'completed', color: AppColors.statusCompleted),
+    ];
+    final currentIdx = steps.indexWhere((s) => s.value == status);
+    final n = steps.length;
+
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final step = steps[idx];
+      final isDone = idx < currentIdx;
+      final isCurrent = idx == currentIdx;
+      final isLast = idx == n - 1;
+      final showCheck = isDone || (isCurrent && isLast);
+      iconItems.add(circle(
+        (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
+        showCheck ? Icons.check : null,
+        showCheck ? null : idx + 1,
+        isDone || isCurrent,
+      ));
+      if (!isLast) {
+        iconItems.addAll([
+          const SizedBox(width: gap),
+          connector(isDone ? step.color : const Color(0xFFE8E8E8)),
+          const SizedBox(width: gap),
+        ]);
+      }
+    }
+
+    return Column(children: [
+      Row(children: iconItems),
+      const SizedBox(height: 4),
+      LayoutBuilder(builder: (context, constraints) {
+        final W = constraints.maxWidth;
+        final slotSpacing = (W - nodeSize) / (n - 1);
+        TextStyle labelStyle(int idx) {
+          final isDone = idx < currentIdx;
+          final isCurrent = idx == currentIdx;
+          return GoogleFonts.googleSans(
             fontSize: 11,
             fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-            color: labelColor ?? AppColors.textMuted,
-          ),
-        ),
-      ],
-    );
+            color: isCurrent
+                ? steps[idx].color
+                : isDone
+                    ? AppColors.textSecondary
+                    : AppColors.textMuted,
+          );
+        }
+        return SizedBox(
+          height: 16,
+          child: Stack(clipBehavior: Clip.none, children: [
+            Positioned(left: 0, top: 0, child: Text(steps[0].label, style: labelStyle(0))),
+            Positioned(right: 0, top: 0, child: Text(steps[n - 1].label, style: labelStyle(n - 1))),
+            for (int i = 1; i < n - 1; i++)
+              Positioned(
+                left: nodeSize / 2 + i * slotSpacing,
+                top: 0,
+                child: FractionalTranslation(
+                  translation: const Offset(-0.5, 0),
+                  child: Text(steps[i].label, style: labelStyle(i)),
+                ),
+              ),
+          ]),
+        );
+      }),
+    ]);
   }
 
   Widget _buildCard({

@@ -716,90 +716,82 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
 
   Widget _buildStatusTracker(CondomRequestModel request) {
     final steps = [
-      (label: 'รอดำเนินการ', status: RequestStatus.pending, color: AppColors.primary),
-      (label: 'กำลังเตรียม', status: RequestStatus.preparing, color: AppColors.statusPreparing),
-      (label: 'พร้อมรับ', status: RequestStatus.ready, color: AppColors.statusReady),
-      (label: 'เสร็จสิ้น', status: RequestStatus.completed, color: AppColors.statusCompleted),
+      (label: 'รอดำเนินการ', status: RequestStatus.pending,   color: AppColors.primary),
+      (label: 'กำลังเตรียม', status: RequestStatus.preparing,  color: AppColors.statusPreparing),
+      (label: 'พร้อมรับ',    status: RequestStatus.ready,      color: AppColors.statusReady),
+      (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
     ];
-    final status = request.status;
-    final currentIdx = steps.indexWhere((s) => s.status == status);
+    final currentIdx = steps.indexWhere((s) => s.status == request.status);
+    const double nodeSize = 28;
+    const double gap = 6;
+    final n = steps.length;
 
-    return Row(
-      children: List.generate(steps.length * 2 - 1, (i) {
-        if (i.isOdd) {
-          final leftIdx = i ~/ 2;
-          final done = leftIdx < currentIdx;
-          return Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: done ? steps[leftIdx].color : const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          );
-        }
-        final idx = i ~/ 2;
-        final isDone = idx < currentIdx;
-        final isCurrent = idx == currentIdx;
-        return _buildStepNode(
-          color: (isDone || isCurrent) ? steps[idx].color : const Color(0xFFE8E8E8),
-          icon: isDone ? Icons.check : null,
-          number: isDone ? null : idx + 1,
-          label: steps[idx].label,
-          isCurrent: isCurrent,
-          isDone: isDone,
-          labelColor: isCurrent
-              ? steps[idx].color
-              : isDone
-                  ? AppColors.textSecondary
-                  : AppColors.textMuted,
-        );
-      }),
-    );
-  }
-
-  Widget _buildStepNode({
-    required Color color,
-    IconData? icon,
-    int? number,
-    required String label,
-    required bool isCurrent,
-    required bool isDone,
-    Color? labelColor,
-  }) {
-    return Column(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          child: Center(
-            child: icon != null
-                ? Icon(icon, color: Colors.white, size: 14)
-                : Text(
-                    '${number ?? ''}',
-                    style: GoogleFonts.googleSans(
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final step = steps[idx];
+      final isDone = idx < currentIdx;
+      final isCurrent = idx == currentIdx;
+      final isLast = idx == n - 1;
+      final showCheck = isDone || (isCurrent && isLast);
+      iconItems.add(AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: nodeSize, height: nodeSize,
+        decoration: BoxDecoration(
+          color: (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: showCheck
+              ? const Icon(Icons.check, color: Colors.white, size: 14)
+              : Text('${idx + 1}',
+                  style: GoogleFonts.googleSans(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
-                      color: (isCurrent || isDone) ? Colors.white : AppColors.textMuted,
-                    ),
-                  ),
-          ),
+                      color: (isDone || isCurrent) ? Colors.white : AppColors.textMuted)),
         ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.googleSans(
+      ));
+      if (!isLast) {
+        iconItems.addAll([
+          const SizedBox(width: gap),
+          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: isDone ? step.color : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(width: gap),
+        ]);
+      }
+    }
+
+    return Column(children: [
+      Row(children: iconItems),
+      const SizedBox(height: 4),
+      LayoutBuilder(builder: (context, constraints) {
+        final W = constraints.maxWidth;
+        final slotSpacing = (W - nodeSize) / (n - 1);
+        TextStyle labelStyle(int idx) {
+          final isDone = idx < currentIdx;
+          final isCurrent = idx == currentIdx;
+          return GoogleFonts.googleSans(
             fontSize: 11,
             fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-            color: labelColor ?? AppColors.textMuted,
-          ),
-        ),
-      ],
-    );
+            color: isCurrent ? steps[idx].color : isDone ? AppColors.textSecondary : AppColors.textMuted,
+          );
+        }
+        return SizedBox(
+          height: 16,
+          child: Stack(clipBehavior: Clip.none, children: [
+            Positioned(left: 0, top: 0, child: Text(steps[0].label, style: labelStyle(0))),
+            Positioned(right: 0, top: 0, child: Text(steps[n - 1].label, style: labelStyle(n - 1))),
+            for (int i = 1; i < n - 1; i++)
+              Positioned(
+                left: nodeSize / 2 + i * slotSpacing,
+                top: 0,
+                child: FractionalTranslation(
+                  translation: const Offset(-0.5, 0),
+                  child: Text(steps[i].label, style: labelStyle(i)),
+                ),
+              ),
+          ]),
+        );
+      }),
+    ]);
   }
 
   Widget _buildQuantityCard(CondomRequestModel request) {

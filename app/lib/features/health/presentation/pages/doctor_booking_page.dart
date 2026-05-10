@@ -138,62 +138,61 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   Widget _buildStepIndicator() {
     const labels = ['เลือกบริการ', 'ยืนยัน', 'สำเร็จ'];
+    const double nodeSize = 34;
+    const double gap = 6;
+    final n = labels.length;
+
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final isDone = idx < _step;
+      final isCurrent = idx == _step;
+      final active = isDone || isCurrent;
+      final isLast = idx == n - 1;
+      final showCheck = isDone || (isCurrent && isLast);
+      iconItems.add(AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: nodeSize, height: nodeSize,
+        decoration: BoxDecoration(color: active ? AppColors.lubricant : const Color(0xFFE8E8E8), shape: BoxShape.circle),
+        child: Center(child: showCheck
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : Text('${idx + 1}', style: GoogleFonts.googleSans(fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textMuted))),
+      ));
+      if (!isLast) {
+        iconItems.addAll([
+          const SizedBox(width: gap),
+          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: idx < _step ? AppColors.lubricant : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(width: gap),
+        ]);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: Row(
-        children: List.generate(labels.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            final leftIdx = i ~/ 2;
-            final done = leftIdx < _step;
-            return Expanded(
-              child: Container(
-                height: 3,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: done ? AppColors.lubricant : const Color(0xFFE8E8E8),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            );
+      child: Column(children: [
+        Row(children: iconItems),
+        const SizedBox(height: 4),
+        LayoutBuilder(builder: (context, constraints) {
+          final W = constraints.maxWidth;
+          final slotSpacing = (W - nodeSize) / (n - 1);
+          TextStyle labelStyle(int idx) {
+            final active = idx <= _step;
+            return GoogleFonts.googleSans(fontSize: 11, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.lubricant : AppColors.textMuted);
           }
-          final idx = i ~/ 2;
-          final isDone = idx < _step;
-          final isCurrent = idx == _step;
-          final color = (isDone || isCurrent) ? AppColors.lubricant : const Color(0xFFE8E8E8);
-          final textColor = (isDone || isCurrent) ? Colors.white : AppColors.textMuted;
-          return Column(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: Center(
-                  child: isDone
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : Text(
-                          '${idx + 1}',
-                          style: GoogleFonts.googleSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
+          return SizedBox(
+            height: 16,
+            child: Stack(clipBehavior: Clip.none, children: [
+              Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
+              Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
+              for (int i = 1; i < n - 1; i++)
+                Positioned(
+                  left: nodeSize / 2 + i * slotSpacing,
+                  top: 0,
+                  child: FractionalTranslation(translation: const Offset(-0.5, 0), child: Text(labels[i], style: labelStyle(i))),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                labels[idx],
-                style: GoogleFonts.googleSans(
-                  fontSize: 11,
-                  fontWeight: (isDone || isCurrent) ? FontWeight.w700 : FontWeight.w400,
-                  color: (isDone || isCurrent) ? AppColors.lubricant : AppColors.textMuted,
-                ),
-              ),
-            ],
+            ]),
           );
         }),
-      ),
+      ]),
     );
   }
 
