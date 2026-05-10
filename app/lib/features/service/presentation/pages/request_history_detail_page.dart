@@ -236,38 +236,53 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
   Widget _buildStatusTracker() {
     final status = _currentData.status;
+    const double nodeSize = 28;
+    const double gap = 6;
 
-    if (status.isCancelled) {
-      const cancelLabel = 'ยกเลิก';
-      return Row(
-        children: [
-          _buildStepNode(
-            color: AppColors.primary,
-            icon: Icons.check,
-            label: 'รอดำเนินการ',
-            isCurrent: false,
-            isDone: true,
-          ),
-          Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(2),
-              ),
+    Widget connector(Color color) => Expanded(
+          child: Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          _buildStepNode(
-            color: Colors.grey,
-            icon: Icons.close,
-            label: cancelLabel,
-            isCurrent: true,
-            isDone: false,
-            labelColor: Colors.grey[600],
+        );
+
+    Widget label(String text, TextAlign align, Color color, bool bold) =>
+        SizedBox(
+          width: nodeSize,
+          child: Text(
+            text,
+            textAlign: align,
+            softWrap: false,
+            overflow: TextOverflow.visible,
+            style: GoogleFonts.googleSans(
+              fontSize: 11,
+              fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+              color: color,
+            ),
           ),
-        ],
-      );
+        );
+
+    if (status.isCancelled) {
+      return Column(children: [
+        Row(children: [
+          _buildStepCircle(color: AppColors.primary, icon: Icons.check, isDone: true, isCurrent: false),
+          const SizedBox(width: gap),
+          connector(const Color(0xFFE8E8E8)),
+          const SizedBox(width: gap),
+          _buildStepCircle(color: Colors.grey, icon: Icons.close, isDone: false, isCurrent: true),
+        ]),
+        const SizedBox(height: 4),
+        Row(children: [
+          label('รอดำเนินการ', TextAlign.left,  AppColors.textSecondary, false),
+          const SizedBox(width: gap),
+          const Expanded(child: SizedBox()),
+          const SizedBox(width: gap),
+          label('ยกเลิก',      TextAlign.right, Colors.grey.shade600,    true),
+        ]),
+      ]);
     }
 
     final steps = [
@@ -277,84 +292,72 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.status == status);
+    final n = steps.length;
 
-    return Row(
-      children: List.generate(steps.length * 2 - 1, (i) {
-        if (i.isOdd) {
-          final leftIdx = i ~/ 2;
-          final done = leftIdx < currentIdx;
-          return Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: done ? steps[leftIdx].color : const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          );
-        }
-        final idx = i ~/ 2;
-        final isDone = idx < currentIdx;
-        final isCurrent = idx == currentIdx;
-        return _buildStepNode(
-          color: (isDone || isCurrent) ? steps[idx].color : const Color(0xFFE8E8E8),
-          icon: isDone ? Icons.check : null,
-          label: steps[idx].label,
-          number: isDone ? null : idx + 1,
-          isCurrent: isCurrent,
-          isDone: isDone,
-          labelColor: isCurrent
-              ? steps[idx].color
-              : isDone
-                  ? AppColors.textSecondary
-                  : AppColors.textMuted,
-        );
-      }),
-    );
+    final iconItems = <Widget>[];
+    final labelItems = <Widget>[];
+
+    for (int idx = 0; idx < n; idx++) {
+      final step = steps[idx];
+      final isDone = idx < currentIdx;
+      final isCurrent = idx == currentIdx;
+      final isFirst = idx == 0;
+      final isLast = idx == n - 1;
+
+      iconItems.add(_buildStepCircle(
+        color: (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
+        icon: isDone ? Icons.check : null,
+        number: isDone ? null : idx + 1,
+        isDone: isDone,
+        isCurrent: isCurrent,
+      ));
+
+      final labelColor = isCurrent ? step.color : isDone ? AppColors.textSecondary : AppColors.textMuted;
+      labelItems.add(label(
+        step.label,
+        isFirst ? TextAlign.left : isLast ? TextAlign.right : TextAlign.center,
+        labelColor,
+        isCurrent,
+      ));
+
+      if (!isLast) {
+        final connColor = isDone ? step.color : const Color(0xFFE8E8E8);
+        iconItems.addAll([const SizedBox(width: gap), connector(connColor), const SizedBox(width: gap)]);
+        labelItems.addAll([const SizedBox(width: gap), const Expanded(child: SizedBox()), const SizedBox(width: gap)]);
+      }
+    }
+
+    return Column(children: [
+      Row(children: iconItems),
+      const SizedBox(height: 4),
+      Row(children: labelItems),
+    ]);
   }
 
-  Widget _buildStepNode({
+  Widget _buildStepCircle({
     required Color color,
     IconData? icon,
     int? number,
-    required String label,
     required bool isCurrent,
     required bool isDone,
-    Color? labelColor,
   }) {
-    return Column(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          child: Center(
-            child: icon != null
-                ? Icon(icon, color: Colors.white, size: 14)
-                : Text(
-                    '${number ?? ''}',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: (isCurrent || isDone)
-                          ? Colors.white
-                          : AppColors.textMuted,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.googleSans(
-            fontSize: 11,
-            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-            color: labelColor ?? AppColors.textMuted,
-          ),
-        ),
-      ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: Center(
+        child: icon != null
+            ? Icon(icon, color: Colors.white, size: 14)
+            : Text(
+                '${number ?? ''}',
+                style: GoogleFonts.googleSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: (isCurrent || isDone) ? Colors.white : AppColors.textMuted,
+                ),
+              ),
+      ),
     );
   }
 
