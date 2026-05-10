@@ -132,8 +132,8 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               เติมสต็อก
             </Button>
             <Button
-              variant="contained"
-              color="warning"
+              variant="outlined"
+              color="primary"
               startIcon={<TuneIcon />}
               onClick={() => onAdjust(row)}
               fullWidth

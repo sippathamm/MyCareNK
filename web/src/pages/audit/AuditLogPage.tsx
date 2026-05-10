@@ -258,13 +258,7 @@ function RequestStatusLogTab() {
     },
     {
       field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
-      renderCell: (p) => {
-        const row = p.row as RequestStatusLogRow;
-        const label = (row.from_status === 'ready' && row.to_status === 'completed')
-          ? 'ผู้ใช้'
-          : (p.value ?? '—');
-        return <Typography variant="body2">{label}</Typography>;
-      },
+      renderCell: (p) => <Typography variant="body2">{p.value ?? '—'}</Typography>,
     },
     {
       field: 'changed_at', headerName: 'เมื่อวันที่', flex: 1.3, minWidth: 170,
