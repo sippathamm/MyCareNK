@@ -72,15 +72,6 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
 };
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  pending:            { bg: '#FFF0E6', color: '#E65100' },
-  preparing:          { bg: '#EBF4FF', color: '#1565C0' },
-  ready:              { bg: '#F5EAF9', color: '#7B1FA2' },
-  completed:          { bg: '#EBF7EC', color: '#2E7D32' },
-  cancelled_by_staff: { bg: '#F5F5F5', color: '#616161' },
-  cancelled_by_user:  { bg: '#F5F5F5', color: '#616161' },
-};
-
 const STATUS_OPTIONS = [
   { value: '', label: 'ทั้งหมด' },
   ...Object.entries(STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
