@@ -42,32 +42,45 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 8,
+        },
+        containedPrimary: {
           boxShadow: '0px 2px 6px rgba(0,0,0,0.18)',
           '&:hover': {
+            backgroundColor: '#FF9F6B',
             boxShadow: '0px 4px 12px rgba(0,0,0,0.22)',
           },
           '&:active': {
             boxShadow: '0px 1px 4px rgba(0,0,0,0.14)',
           },
         },
-        containedPrimary: {
-          '&:hover': {
-            backgroundColor: '#FF9F6B',
-          },
-        },
         containedInfo: {
+          boxShadow: '0px 2px 6px rgba(0,0,0,0.18)',
           '&:hover': {
             backgroundColor: '#64B5F6',
+            boxShadow: '0px 4px 12px rgba(0,0,0,0.22)',
+          },
+          '&:active': {
+            boxShadow: '0px 1px 4px rgba(0,0,0,0.14)',
           },
         },
         containedSuccess: {
+          boxShadow: '0px 2px 6px rgba(0,0,0,0.18)',
           '&:hover': {
             backgroundColor: '#81C784',
+            boxShadow: '0px 4px 12px rgba(0,0,0,0.22)',
+          },
+          '&:active': {
+            boxShadow: '0px 1px 4px rgba(0,0,0,0.14)',
           },
         },
         containedSecondary: {
+          boxShadow: '0px 2px 6px rgba(0,0,0,0.18)',
           '&:hover': {
             backgroundColor: '#BA68C8',
+            boxShadow: '0px 4px 12px rgba(0,0,0,0.22)',
+          },
+          '&:active': {
+            boxShadow: '0px 1px 4px rgba(0,0,0,0.14)',
           },
         },
       },

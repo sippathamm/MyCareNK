@@ -187,7 +187,7 @@ export default function RequestsPage() {
         รายการคำขอ
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        จัดการรายการคำขอ
+        จัดการรายการคำขอถุงยางอนามัย
       </Typography>
 
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
