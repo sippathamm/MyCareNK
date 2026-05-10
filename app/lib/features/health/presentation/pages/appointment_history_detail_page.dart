@@ -410,6 +410,7 @@ class _AppointmentHistoryDetailPageState
   Widget _buildCard({
     required Widget header,
     required Widget content,
+    List<Color>? headerColors,
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -431,9 +432,9 @@ class _AppointmentHistoryDetailPageState
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               width: double.infinity,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.lubricantDark, AppColors.lubricant],
+                  colors: headerColors ?? [AppColors.lubricantDark, AppColors.lubricant],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -537,6 +538,7 @@ class _AppointmentHistoryDetailPageState
 
   Widget _buildCancelReasonCard() {
     return _buildCard(
+      headerColors: [AppColors.errorDark, AppColors.error],
       header: Row(children: [
         const Icon(Icons.info_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
@@ -548,7 +550,7 @@ class _AppointmentHistoryDetailPageState
         alignment: Alignment.centerLeft,
         child: Text(_data.cancelReason!,
             style: GoogleFonts.googleSans(
-                fontSize: 16, color: AppColors.error)),
+                fontSize: 15, color: AppColors.textPrimary)),
       ),
     );
   }

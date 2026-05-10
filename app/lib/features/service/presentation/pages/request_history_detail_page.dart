@@ -363,6 +363,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     required Widget content,
     bool showDivider = false,
     Widget? footer,
+    List<Color>? headerColors,
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -384,9 +385,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               width: double.infinity,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
+                  colors: headerColors ?? [AppColors.primaryDark, AppColors.primary],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -554,6 +555,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.cancelReason == null || _currentData.cancelReason!.isEmpty) return const SizedBox();
 
     return _buildCard(
+      headerColors: [AppColors.errorDark, AppColors.error],
       header: Row(children: [
         const Icon(Icons.info_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
@@ -565,7 +567,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         alignment: Alignment.centerLeft,
         child: Text(
           _currentData.cancelReason!,
-          style: GoogleFonts.googleSans(fontSize: 16, color: AppColors.error),
+          style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textPrimary),
         ),
       ),
     );
