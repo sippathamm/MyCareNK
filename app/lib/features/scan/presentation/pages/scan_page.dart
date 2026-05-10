@@ -715,82 +715,92 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _buildStatusTracker(CondomRequestModel request) {
-    const Color prepColor = AppColors.lubricant;
-    const Color readyColor = AppColors.statusReady;
-    const Color compColor = AppColors.statusCompleted;
-
+    final steps = [
+      (label: 'รอดำเนินการ', status: RequestStatus.pending, color: AppColors.primary),
+      (label: 'กำลังเตรียม', status: RequestStatus.preparing, color: AppColors.statusPreparing),
+      (label: 'พร้อมรับ', status: RequestStatus.ready, color: AppColors.statusReady),
+      (label: 'เสร็จสิ้น', status: RequestStatus.completed, color: AppColors.statusCompleted),
+    ];
     final status = request.status;
-    final isPrepDone =
-        status == RequestStatus.preparing ||
-        status == RequestStatus.ready ||
-        status == RequestStatus.completed;
-    final isReadyDone =
-        status == RequestStatus.ready || status == RequestStatus.completed;
-    final isFinalDone = status == RequestStatus.completed;
+    final currentIdx = steps.indexWhere((s) => s.status == status);
 
+    return Row(
+      children: List.generate(steps.length * 2 - 1, (i) {
+        if (i.isOdd) {
+          final leftIdx = i ~/ 2;
+          final done = leftIdx < currentIdx;
+          return Expanded(
+            child: Container(
+              height: 3,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: done ? steps[leftIdx].color : const Color(0xFFE8E8E8),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }
+        final idx = i ~/ 2;
+        final isDone = idx < currentIdx;
+        final isCurrent = idx == currentIdx;
+        return _buildStepNode(
+          color: (isDone || isCurrent) ? steps[idx].color : const Color(0xFFE8E8E8),
+          icon: isDone ? Icons.check : null,
+          number: isDone ? null : idx + 1,
+          label: steps[idx].label,
+          isCurrent: isCurrent,
+          isDone: isDone,
+          labelColor: isCurrent
+              ? steps[idx].color
+              : isDone
+                  ? AppColors.textSecondary
+                  : AppColors.textMuted,
+        );
+      }),
+    );
+  }
+
+  Widget _buildStepNode({
+    required Color color,
+    IconData? icon,
+    int? number,
+    required String label,
+    required bool isCurrent,
+    required bool isDone,
+    Color? labelColor,
+  }) {
     return Column(
       children: [
-        Row(
-          children: [
-            _dot(AppColors.primary, filled: true),
-            Expanded(
-              child: _line(isPrepDone ? AppColors.primary : Colors.grey[300]!),
-            ),
-            _dot(prepColor, filled: isPrepDone),
-            Expanded(child: _line(isReadyDone ? prepColor : Colors.grey[300]!)),
-            _dot(readyColor, filled: isReadyDone),
-            Expanded(
-              child: _line(isFinalDone ? readyColor : Colors.grey[300]!),
-            ),
-            _dot(compColor, filled: isFinalDone),
-          ],
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          child: Center(
+            child: icon != null
+                ? Icon(icon, color: Colors.white, size: 14)
+                : Text(
+                    '${number ?? ''}',
+                    style: GoogleFonts.googleSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: (isCurrent || isDone) ? Colors.white : AppColors.textMuted,
+                    ),
+                  ),
+          ),
         ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _statusLabel(
-              'รอดำเนินการ',
-              status == RequestStatus.pending,
-              AppColors.primary,
-            ),
-            _statusLabel(
-              'กำลังเตรียม',
-              status == RequestStatus.preparing,
-              prepColor,
-            ),
-            _statusLabel('พร้อมรับ', status == RequestStatus.ready, readyColor),
-            _statusLabel(
-              'เสร็จสิ้น',
-              status == RequestStatus.completed,
-              compColor,
-            ),
-          ],
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: GoogleFonts.googleSans(
+            fontSize: 11,
+            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+            color: labelColor ?? AppColors.textMuted,
+          ),
         ),
       ],
     );
   }
-
-  Widget _dot(Color color, {required bool filled}) => Container(
-    width: 24,
-    height: 24,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: filled ? color : AppColors.white,
-      border: filled ? null : Border.all(color: color, width: 2),
-    ),
-  );
-
-  Widget _line(Color color) => Container(height: 2, color: color);
-
-  Widget _statusLabel(String label, bool active, Color color) => Text(
-    label,
-    style: GoogleFonts.googleSans(
-      color: active ? color : Colors.black87,
-      fontSize: 12,
-      fontWeight: active ? FontWeight.bold : FontWeight.normal,
-    ),
-  );
 
   Widget _buildQuantityCard(CondomRequestModel request) {
     final total = request.condomQuantities.values.fold(0, (s, v) => s + v);
