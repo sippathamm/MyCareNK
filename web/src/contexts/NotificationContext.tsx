@@ -348,7 +348,7 @@ export const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string
   pending:            { label: 'คำขอใหม่',              color: '#FF9F6B', bg: '#FFF0E6' },
   preparing:          { label: 'กำลังเตรียม',           color: '#64B5F6', bg: '#EBF4FF' },
   ready:              { label: 'รอรับ',               color: '#BA68C8', bg: '#F5EAF9' },
-  completed:          { label: 'เสร็จสิ้น',             color: '#81C784', bg: '#EBF7EC' },
+  completed:          { label: 'คำขอเสร็จสิ้น',          color: '#81C784', bg: '#EBF7EC' },
   cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',       color: '#9E9E9E', bg: '#F5F5F5' },
   cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่', color: '#9E9E9E', bg: '#F5F5F5' },
 };

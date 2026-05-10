@@ -102,21 +102,20 @@ function ActionChip({ action }: { action: string }) {
     <Chip
       label={AUDIT_ACTION_LABEL[action as AuditAction] ?? action}
       size="small"
-      sx={{ bgcolor: cfg.bg, color: cfg.color, fontWeight: 600, fontSize: '0.72rem' }}
+      sx={{ bgcolor: cfg.bg, color: '#fff', fontWeight: 600, fontSize: '0.72rem' }}
     />
   );
 }
 
 function StatusChip({ status }: { status: string | null }) {
   if (!status) return <Typography variant="caption" color="text.disabled">—</Typography>;
-  const cfg = STATUS_COLORS[status] ?? { bg: '#F5F5F5', color: '#616161' };
-  return (
-    <Chip
-      label={STATUS_LABELS[status] ?? status}
-      size="small"
-      sx={{ bgcolor: cfg.bg, color: cfg.color, fontWeight: 600, fontSize: '0.72rem' }}
-    />
-  );
+  switch (status) {
+    case 'pending':            return <Chip label={STATUS_LABELS['pending']}            color="warning"   size="small" sx={{ fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'preparing':          return <Chip label={STATUS_LABELS['preparing']}          color="info"      size="small" sx={{ fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'ready':              return <Chip label={STATUS_LABELS['ready']}              color="secondary" size="small" sx={{ fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'completed':          return <Chip label={STATUS_LABELS['completed']}          color="success"   size="small" sx={{ fontWeight: 600, fontSize: '0.72rem' }} />;
+    default:                   return <Chip label={STATUS_LABELS[status] ?? status}     size="small"      sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
+  }
 }
 
 function InventoryQtyChip({ value }: { value: unknown }) {
@@ -268,7 +267,13 @@ function RequestStatusLogTab() {
     },
     {
       field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
-      renderCell: (p) => <Typography variant="body2">{p.value}</Typography>,
+      renderCell: (p) => {
+        const row = p.row as RequestStatusLogRow;
+        const label = (row.from_status === 'ready' && row.to_status === 'completed')
+          ? 'ผู้ใช้'
+          : (p.value ?? '—');
+        return <Typography variant="body2">{label}</Typography>;
+      },
     },
     {
       field: 'changed_at', headerName: 'เมื่อวันที่', flex: 1.3, minWidth: 170,
