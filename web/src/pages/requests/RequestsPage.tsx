@@ -108,7 +108,7 @@ export default function RequestsPage() {
     { field: 'reference_number', headerName: 'รหัสอ้างอิง', flex: 1, minWidth: 120 },
     {
       field: 'selected_date',
-      headerName: 'วันเดือนปีรับ',
+      headerName: 'วัน',
       flex: 1,
       minWidth: 150,
       renderCell: (params) => {
@@ -134,7 +134,7 @@ export default function RequestsPage() {
     },
     {
       field: 'selected_time',
-      headerName: 'เวลารับ',
+      headerName: 'เวลา',
       flex: 0.8,
       minWidth: 100,
       valueGetter: (_, row) => `${(row as RequestData).selected_time ?? '-'} น.`

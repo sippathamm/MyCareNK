@@ -147,7 +147,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   <Typography variant="body1">{formatDateTime(request.updated_at)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle2" color="text.secondary">วันเดือนปีรับ</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">วันรับ</Typography>
                   {(() => {
                     const days = getOverdueDays(request.selected_date ?? '', request.request_status);
                     if (days > 0) {
@@ -161,11 +161,11 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   })()}
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เวลารับ</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">เวลา</Typography>
                   <Typography variant="body1">{request.selected_time ?? '-'} น.</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">สถานที่รับ</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">สถานที่</Typography>
                   <Typography variant="body1" fontWeight="medium">{request.selected_service_center}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
