@@ -249,19 +249,12 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           ),
         );
 
-    Widget label(String text, TextAlign align, Color color, bool bold) =>
-        SizedBox(
-          width: nodeSize,
-          child: Text(
-            text,
-            textAlign: align,
-            softWrap: false,
-            overflow: TextOverflow.visible,
-            style: GoogleFonts.googleSans(
-              fontSize: 11,
-              fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
-              color: color,
-            ),
+    Text labelText(String text, Color color, bool bold) => Text(
+          text,
+          style: GoogleFonts.googleSans(
+            fontSize: 11,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+            color: color,
           ),
         );
 
@@ -276,9 +269,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         ]),
         const SizedBox(height: 4),
         Row(children: [
-          label('รอดำเนินการ', TextAlign.left,  AppColors.textSecondary, false),
+          labelText('รอดำเนินการ', AppColors.textSecondary, false),
           const Expanded(child: SizedBox()),
-          label('ยกเลิก',      TextAlign.right, Colors.grey.shade600,    true),
+          labelText('ยกเลิก', Colors.grey.shade600, true),
         ]),
       ]);
     }
@@ -293,15 +286,10 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     final n = steps.length;
 
     final iconItems = <Widget>[];
-    final labelItems = <Widget>[];
-
     for (int idx = 0; idx < n; idx++) {
       final step = steps[idx];
       final isDone = idx < currentIdx;
       final isCurrent = idx == currentIdx;
-      final isFirst = idx == 0;
-      final isLast = idx == n - 1;
-
       iconItems.add(_buildStepCircle(
         color: (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
         icon: isDone ? Icons.check : null,
@@ -309,26 +297,53 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         isDone: isDone,
         isCurrent: isCurrent,
       ));
-
-      final labelColor = isCurrent ? step.color : isDone ? AppColors.textSecondary : AppColors.textMuted;
-      labelItems.add(label(
-        step.label,
-        isFirst ? TextAlign.left : isLast ? TextAlign.right : TextAlign.center,
-        labelColor,
-        isCurrent,
-      ));
-
-      if (!isLast) {
+      if (idx < n - 1) {
         final connColor = isDone ? step.color : const Color(0xFFE8E8E8);
         iconItems.addAll([const SizedBox(width: gap), connector(connColor), const SizedBox(width: gap)]);
-        labelItems.add(const Expanded(child: SizedBox()));
       }
     }
 
     return Column(children: [
       Row(children: iconItems),
       const SizedBox(height: 4),
-      Row(children: labelItems),
+      // LayoutBuilder + Stack: pixel-perfect label positioning
+      // icon[i] center = nodeSize/2 + i * (W - nodeSize)/(n-1) with equal Expanded connectors
+      // First label: Positioned(left:0) → left edge flush with icon0 left
+      // Middle labels: Positioned(left: center) + FractionalTranslation(-0.5,0) → centered exactly at icon center
+      // Last label: Positioned(right:0) → right edge flush with iconN right
+      LayoutBuilder(builder: (context, constraints) {
+        final W = constraints.maxWidth;
+        final slotSpacing = (W - nodeSize) / (n - 1);
+
+        TextStyle style(int idx) {
+          final isDone = idx < currentIdx;
+          final isCurrent = idx == currentIdx;
+          return GoogleFonts.googleSans(
+            fontSize: 11,
+            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+            color: isCurrent ? steps[idx].color : isDone ? AppColors.textSecondary : AppColors.textMuted,
+          );
+        }
+
+        final positioned = <Widget>[
+          Positioned(left: 0, top: 0, child: Text(steps[0].label, style: style(0))),
+          Positioned(right: 0, top: 0, child: Text(steps[n - 1].label, style: style(n - 1))),
+          for (int i = 1; i < n - 1; i++)
+            Positioned(
+              left: nodeSize / 2 + i * slotSpacing,
+              top: 0,
+              child: FractionalTranslation(
+                translation: const Offset(-0.5, 0),
+                child: Text(steps[i].label, style: style(i)),
+              ),
+            ),
+        ];
+
+        return SizedBox(
+          height: 16,
+          child: Stack(clipBehavior: Clip.none, children: positioned),
+        );
+      }),
     ]);
   }
 
