@@ -617,7 +617,7 @@ export type Database = {
           p_service_center?: string
         }
         Returns: {
-          action: Database["public"]["Enums"]["transaction_type"]
+          action: Database["public"]["Enums"]["audit_action"]
           condom_delta: number
           created_at: string
           full_name: string
@@ -885,7 +885,7 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {\
+> = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
