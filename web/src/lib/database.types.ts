@@ -548,78 +548,30 @@ export type Database = {
       dearmor: { Args: { "": string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
-      get_audit_log:
-        | {
-            Args: {
-              p_action?: Database["public"]["Enums"]["audit_action"]
-              p_date_from?: string
-              p_date_to?: string
-              p_limit?: number
-              p_offset?: number
-              p_performed_by?: string
-              p_target_table?: string
-            }
-            Returns: {
-              action: Database["public"]["Enums"]["audit_action"]
-              created_at: string
-              full_name: string
-              id: string
-              new_value: Json
-              old_value: Json
-              performed_by: string
-              target_full_name: string
-              target_id: string
-              target_table: string
-            }[]
-          }
-        | {
-            Args: {
-              p_action?: Database["public"]["Enums"]["audit_action"]
-              p_date_from?: string
-              p_date_to?: string
-              p_limit?: number
-              p_offset?: number
-              p_performed_by?: string
-              p_target_id?: string
-              p_target_table?: string
-            }
-            Returns: {
-              action: Database["public"]["Enums"]["audit_action"]
-              created_at: string
-              full_name: string
-              id: string
-              new_value: Json
-              old_value: Json
-              performed_by: string
-              target_full_name: string
-              target_id: string
-              target_table: string
-            }[]
-          }
-        | {
-            Args: {
-              p_action?: string
-              p_date_from?: string
-              p_date_to?: string
-              p_limit?: number
-              p_offset?: number
-              p_performed_by?: string
-              p_target_id?: string
-              p_target_table?: string
-            }
-            Returns: {
-              action: Database["public"]["Enums"]["audit_action"]
-              created_at: string
-              full_name: string
-              id: string
-              new_value: Json
-              old_value: Json
-              performed_by: string
-              target_full_name: string
-              target_id: string
-              target_table: string
-            }[]
-          }
+      get_audit_log: {
+        Args: {
+          p_action?: string
+          p_date_from?: string
+          p_date_to?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_target_id?: string
+          p_target_table?: string
+        }
+        Returns: {
+          action: Database["public"]["Enums"]["audit_action"]
+          created_at: string
+          full_name: string
+          id: string
+          new_value: Json
+          old_value: Json
+          performed_by: string
+          target_full_name: string
+          target_id: string
+          target_table: string
+        }[]
+      }
       get_average_lead_time: {
         Args: {
           p_date_from: string
@@ -750,68 +702,39 @@ export type Database = {
           target_id: string
         }[]
       }
-      get_staff_workload:
-        | {
-            Args: { p_date_from: string; p_date_to: string }
-            Returns: {
-              avg_lead_time_minutes: number
-              cancelled_count: number
-              completed_count: number
-              full_name: string
-              service_center: Database["public"]["Enums"]["service_center"]
-              staff_user_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_date_from: string
-              p_date_to: string
-              p_service_center?: string
-            }
-            Returns: {
-              avg_lead_time_minutes: number
-              cancelled_count: number
-              completed_count: number
-              first_name: string
-              last_name: string
-              overdue_count: number
-              service_center: Database["public"]["Enums"]["service_center"]
-              staff_user_id: string
-            }[]
-          }
-      get_staff_workload_trend:
-        | {
-            Args: {
-              p_date_from: string
-              p_date_to: string
-              p_service_center?: string
-              p_staff_user_id?: string
-            }
-            Returns: {
-              cancelled_count: number
-              completed_count: number
-              first_name: string
-              last_name: string
-              staff_user_id: string
-              week_start: string
-            }[]
-          }
-        | {
-            Args: {
-              p_date_from?: string
-              p_date_to?: string
-              p_service_center?: string
-              p_staff_user_id?: string
-            }
-            Returns: {
-              cancelled_count: number
-              completed_count: number
-              first_name: string
-              last_name: string
-              staff_user_id: string
-              week_start: string
-            }[]
-          }
+      get_staff_workload: {
+        Args: {
+          p_date_from: string
+          p_date_to: string
+          p_service_center?: string
+        }
+        Returns: {
+          avg_lead_time_minutes: number
+          cancelled_count: number
+          completed_count: number
+          first_name: string
+          last_name: string
+          overdue_count: number
+          service_center: Database["public"]["Enums"]["service_center"]
+          staff_user_id: string
+        }[]
+      }
+      get_staff_workload_trend: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_service_center?: string
+          p_staff_user_id?: string
+        }
+        Returns: {
+          cancelled_count: number
+          completed_count: number
+          first_name: string
+          last_name: string
+          staff_user_id: string
+          week_start: string
+        }[]
+      }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
@@ -962,7 +885,7 @@ export type TablesUpdate<
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
+> = DefaultSchemaTableNameOrOptions extends {\
   schema: keyof DatabaseWithoutInternals
 }
   ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
