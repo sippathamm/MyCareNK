@@ -161,7 +161,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   })()}
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เวลา</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">เวลารับ</Typography>
                   <Typography variant="body1">{request.selected_time ?? '-'} น.</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
@@ -265,7 +265,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                 <Button
                   onClick={handleFinishPrepare}
                   variant="contained"
-                  color="primary"
+                  color="info"
                   disabled={statusUpdating}
                   endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
                 >
@@ -278,7 +278,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                 <Button
                   onClick={handleConfirmComplete}
                   variant="contained"
-                  color="primary"
+                  color="success"
                   disabled={statusUpdating}
                   endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
                 >
@@ -324,7 +324,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                       <span>
                         <Button
                           onClick={() => setIsConfirmingComplete(true)}
-                          color="primary"
+                          color="success"
                           variant="contained"
                           disabled={daysPast <= 7}
                         >
@@ -345,7 +345,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   </>
                 )}
                 {request.request_status === 'preparing' && (
-                  <Button onClick={() => setIsConfirmingFinish(true)} color="primary" variant="contained">
+                  <Button onClick={() => setIsConfirmingFinish(true)} color="info" variant="contained">
                     เตรียมการเสร็จสิ้น
                   </Button>
                 )}

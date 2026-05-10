@@ -213,7 +213,7 @@ export default function AppointmentDetailDialog({
                 <Button
                   onClick={handleComplete}
                   variant="contained"
-                  color="primary"
+                  color="success"
                   disabled={statusUpdating}
                   endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
                 >
@@ -247,7 +247,7 @@ export default function AppointmentDetailDialog({
                   </Button>
                 )}
                 {appointment.appointment_status === 'confirmed' && (
-                  <Button onClick={() => setIsCompleting(true)} color="primary" variant="contained">
+                  <Button onClick={() => setIsCompleting(true)} color="success" variant="contained">
                     เสร็จสิ้น
                   </Button>
                 )}
