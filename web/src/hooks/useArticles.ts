@@ -21,22 +21,38 @@ export function getArticleStatus(article: Pick<Article, 'publish_at'>): ArticleS
 
 export function useArticles() {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [staffMap, setStaffMap] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchArticles = useCallback(async () => {
     setLoading(true);
     setError(null);
-    const { data, error } = await supabase
-      .from('articles')
-      .select('id, title, excerpt, cover_image_url, publish_at, created_by, created_at, updated_at')
-      .order('updated_at', { ascending: false });
 
-    if (error) {
-      setError(error.message);
+    const [articlesRes, staffRes] = await Promise.all([
+      supabase
+        .from('articles')
+        .select('id, title, excerpt, cover_image_url, publish_at, created_by, created_at, updated_at')
+        .order('updated_at', { ascending: false }),
+      supabase
+        .from('staff_profiles')
+        .select('staff_user_id, first_name, last_name'),
+    ]);
+
+    if (articlesRes.error) {
+      setError(articlesRes.error.message);
     } else {
-      setArticles(data ?? []);
+      setArticles(articlesRes.data ?? []);
     }
+
+    if (!staffRes.error && staffRes.data) {
+      const map: Record<string, string> = {};
+      for (const s of staffRes.data) {
+        map[s.staff_user_id] = `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim();
+      }
+      setStaffMap(map);
+    }
+
     setLoading(false);
   }, []);
 
@@ -51,5 +67,5 @@ export function useArticles() {
     return null;
   }, []);
 
-  return { articles, loading, error, refetch: fetchArticles, deleteArticle };
+  return { articles, staffMap, loading, error, refetch: fetchArticles, deleteArticle };
 }
