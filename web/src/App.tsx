@@ -15,6 +15,7 @@ import NotificationsPage from './pages/notifications/NotificationsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import AuditLogPage from './pages/audit/AuditLogPage';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
+import ArticlesPage from './pages/articles/ArticlesPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -69,6 +70,7 @@ function App() {
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
                   <Route path="audit-log" element={<AuditLogPage />} />
+                  <Route path="articles" element={<ArticlesPage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </MainLayout>
