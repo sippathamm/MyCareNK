@@ -79,7 +79,7 @@ class _HomePageState extends State<HomePage> {
                 child: ShortcutMenu(onNavigateToHistory: widget.onNavigateToHistory),
               ),
               const SizedBox(height: 24),
-              const KnowledgeSection(),
+              KnowledgeSection(refreshKey: _cardRefreshKey),
               const SizedBox(height: 24),
               const Padding(
                 padding: EdgeInsets.symmetric(horizontal: 24.0),
