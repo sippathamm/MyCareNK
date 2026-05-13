@@ -171,42 +171,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                         ),
                       ),
 
-                      // Copy button
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              Clipboard.setData(
-                                ClipboardData(text: recoveryCodes.join(', ')),
-                              );
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text('คัดลอกรหัสทั้งหมดแล้ว', style: GoogleFonts.googleSans()),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppColors.primary),
-                              foregroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            icon: const Icon(Icons.copy_outlined, size: 18),
-                            label: Text(
-                              'คัดลอกรหัสทั้งหมด',
-                              style: GoogleFonts.googleSans(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
+                      const SizedBox(height: 16),
                     ],
                   ),
                 ),
@@ -222,6 +187,39 @@ class RegistrationSuccessPage extends StatelessWidget {
                   );
                 },
                 label: 'เริ่มใช้งาน',
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    Clipboard.setData(
+                      ClipboardData(text: recoveryCodes.join(', ')),
+                    );
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('คัดลอกรหัสทั้งหมดแล้ว', style: GoogleFonts.googleSans()),
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  },
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: AppColors.primary),
+                    foregroundColor: AppColors.primary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  icon: const Icon(Icons.copy_outlined, size: 18),
+                  label: Text(
+                    'คัดลอกรหัสทั้งหมด',
+                    style: GoogleFonts.googleSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
