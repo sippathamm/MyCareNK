@@ -79,7 +79,7 @@ function CoverThumbnail({ url }: { url: string | null }) {
 
 export default function ArticlesPage() {
   const navigate = useNavigate();
-  const { articles, loading, deleteArticle } = useArticles();
+  const { articles, staffMap, loading, deleteArticle } = useArticles();
   const { role } = useRoleAccess();
   const canManage = role === 'admin' || role === 'superadmin';
 
@@ -132,7 +132,7 @@ export default function ArticlesPage() {
     },
     {
       field: 'title',
-      headerName: 'บทความ',
+      headerName: 'เรื่อง',
       flex: 1,
       minWidth: 220,
       renderCell: (params: GridRenderCellParams<Article>) => (
@@ -146,6 +146,16 @@ export default function ArticlesPage() {
             </Typography>
           )}
         </Box>
+      ),
+    },
+    {
+      field: 'created_by',
+      headerName: 'โดย',
+      width: 150,
+      renderCell: (params: GridRenderCellParams<Article>) => (
+        <Typography variant="body2" color="text.secondary">
+          {params.row.created_by ? (staffMap[params.row.created_by] || '—') : '—'}
+        </Typography>
       ),
     },
     {
@@ -209,25 +219,27 @@ export default function ArticlesPage() {
   // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       {/* Header */}
-      <Stack direction="row" alignItems="center" justifyContent="space-between" mb={3}>
-        <Typography variant="h5" fontWeight="bold">บทความ</Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>บทความ</Typography>
+          <Typography variant="body1" color="text.secondary">จัดการบทความสาระน่ารู้</Typography>
+        </Box>
         {canManage && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
             onClick={() => navigate('/articles/new')}
-            sx={{ bgcolor: '#FF9F6B', '&:hover': { bgcolor: '#E07A42' }, borderRadius: 2 }}
           >
             สร้างบทความ
           </Button>
         )}
-      </Stack>
+      </Box>
 
-      <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflow: 'hidden' }}>
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
         {/* Filter chips */}
-        <Stack direction="row" spacing={1} sx={{ px: 2, pt: 2, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+        <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
           {STATUS_FILTERS.map(f => (
             <Chip
               key={f.value}
@@ -235,7 +247,7 @@ export default function ArticlesPage() {
               onClick={() => setFilter(f.value)}
               variant={filter === f.value ? 'filled' : 'outlined'}
               sx={filter === f.value
-                ? { bgcolor: '#FF9F6B', color: 'white', fontWeight: 'bold', '&:hover': { bgcolor: '#E07A42' } }
+                ? { bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', '&:hover': { bgcolor: 'primary.dark' } }
                 : { fontWeight: 'medium' }
               }
             />
@@ -243,23 +255,18 @@ export default function ArticlesPage() {
         </Stack>
 
         {/* DataGrid */}
-        <DataGrid
-          rows={filtered}
-          columns={columns}
-          loading={loading}
-          rowHeight={64}
-          pageSizeOptions={[25, 50]}
-          initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
-          disableColumnMenu
-          disableRowSelectionOnClick
-          localeText={thGridLocale}
-          sx={{
-            border: 'none',
-            '& .MuiDataGrid-columnHeader': { bgcolor: '#FAFAFA', fontWeight: 'bold' },
-            '& .MuiDataGrid-row:hover': { bgcolor: '#FFF7F0' },
-            '& .MuiDataGrid-cell': { alignContent: 'center' },
-          }}
-        />
+        <Box sx={{ height: 500, width: '100%' }}>
+          <DataGrid
+            rows={filtered}
+            columns={columns}
+            loading={loading}
+            rowHeight={64}
+            pageSizeOptions={[10, 25, 50]}
+            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+            disableRowSelectionOnClick
+            localeText={thGridLocale}
+          />
+        </Box>
       </Paper>
 
       {/* Delete dialog */}
@@ -273,12 +280,7 @@ export default function ArticlesPage() {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setDeleteTarget(null)} disabled={deleting}>ยกเลิก</Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleDeleteConfirm}
-            disabled={deleting}
-          >
+          <Button variant="contained" color="error" onClick={handleDeleteConfirm} disabled={deleting}>
             {deleting ? 'กำลังลบ...' : 'ลบบทความ'}
           </Button>
         </DialogActions>
