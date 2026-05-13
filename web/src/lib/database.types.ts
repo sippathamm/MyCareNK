@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      articles: {
+        Row: {
+          content_html: string
+          content_json: Json
+          cover_image_url: string | null
+          created_at: string | null
+          created_by: string | null
+          excerpt: string | null
+          id: string
+          publish_at: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_html?: string
+          content_json?: Json
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          publish_at?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_html?: string
+          content_json?: Json
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          excerpt?: string | null
+          id?: string
+          publish_at?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       condom_requests: {
         Row: {
           cancel_reason: string | null
@@ -639,6 +678,16 @@ export type Database = {
         Returns: {
           bucket: string
           count: number
+        }[]
+      }
+      get_published_articles: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          cover_image_url: string
+          excerpt: string
+          id: string
+          publish_at: string
+          title: string
         }[]
       }
       get_request_status_log: {
