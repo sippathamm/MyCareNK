@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/gradient_button.dart';
-import '../../data/recovery_service.dart';
-import 'registration_success_page.dart';
+import 'privacy_policy_page.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -22,7 +19,6 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
-  bool _isLoading = false;
 
   String? _gender;
   DateTime? _selectedDateOfBirth;
@@ -63,7 +59,7 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  Future<void> _register() async {
+  void _goToPrivacyPolicy() {
     if (!_formKey.currentState!.validate()) return;
 
     if (_gender == null) {
@@ -88,88 +84,21 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-
     final nationalityValue = _nationality == 'อื่นๆ'
         ? _customNationalityController.text.trim()
         : _nationality;
 
-    try {
-      final username = _usernameController.text.trim();
-      final password = _passwordController.text;
-      final proxyEmail = '$username${AppConstants.proxyEmailDomain}';
-
-      final response = await Supabase.instance.client.auth.signUp(
-        email: proxyEmail,
-        password: password,
-      );
-
-      debugPrint('[Registration] User: $username, ID: ${response.user?.id}');
-
-      await Supabase.instance.client.auth.signInWithPassword(
-        email: proxyEmail,
-        password: password,
-      );
-
-      final userId = response.user?.id;
-      if (userId != null) {
-        await Supabase.instance.client.from('user_profiles').upsert({
-          'user_id': userId,
-          'username': username,
-          'gender': _gender,
-          'nationality': nationalityValue,
-          'date_of_birth': _selectedDateOfBirth!.toIso8601String().split('T')[0],
-        });
-      }
-
-      // Check mounted before any context use after the last await
-      if (!mounted) return;
-
-      final recoveryService = RecoveryService();
-      final recoveryCodes = RecoveryService.generateRecoveryCodes();
-
-      try {
-        await recoveryService.saveRecoveryCodes(recoveryCodes);
-        debugPrint('บันทึกรหัสกู้คืนทั้ง 6 ชุดเรียบร้อยแล้ว');
-      } catch (e) {
-        debugPrint('เกิดข้อผิดพลาดในการบันทึกรหัสกู้คืน: $e');
-      }
-
-      if (!mounted) return;
-
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) =>
-              RegistrationSuccessPage(recoveryCodes: recoveryCodes),
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => PrivacyPolicyPage(
+          username: _usernameController.text.trim(),
+          password: _passwordController.text,
+          gender: _gender,
+          dateOfBirth: _selectedDateOfBirth,
+          nationality: nationalityValue,
         ),
-      );
-    } on AuthException catch (e) {
-      if (!mounted) return;
-      String errorMessage = e.message;
-      if (errorMessage.toLowerCase().contains('already registered') ||
-          errorMessage.toLowerCase().contains('already exists')) {
-        errorMessage = 'ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(errorMessage, style: GoogleFonts.googleSans()),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } catch (e) {
-      debugPrint('Error during registration: $e');
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('เกิดข้อผิดพลาดในการสร้างบัญชี', style: GoogleFonts.googleSans()),
-          backgroundColor: AppColors.error,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+      ),
+    );
   }
 
   Widget _buildNationalityOption(String value) {
@@ -491,9 +420,8 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 // Submit Button
                 GradientButton(
-                  onPressed: _isLoading ? null : _register,
-                  label: 'ตกลง',
-                  isLoading: _isLoading,
+                  onPressed: _goToPrivacyPolicy,
+                  label: 'ถัดไป',
                 ),
               ],
             ),
