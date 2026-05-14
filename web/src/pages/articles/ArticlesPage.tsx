@@ -27,6 +27,7 @@ const STATUS_FILTERS = [
 
 type FilterValue = typeof STATUS_FILTERS[number]['value'];
 
+
 const STATUS_CHIP_PROPS: Record<ArticleStatus, { label: string; sx: object }> = {
   published: {
     label: 'เผยแพร่แล้ว',
@@ -239,19 +240,26 @@ export default function ArticlesPage() {
 
       <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
         {/* Filter chips */}
-        <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
-          {STATUS_FILTERS.map(f => (
-            <Chip
-              key={f.value}
-              label={`${f.label} (${counts[f.value]})`}
-              onClick={() => setFilter(f.value)}
-              variant={filter === f.value ? 'filled' : 'outlined'}
-              sx={filter === f.value
-                ? { bgcolor: 'primary.main', color: 'white', fontWeight: 'bold', '&:hover': { bgcolor: 'primary.dark' } }
-                : { fontWeight: 'medium' }
-              }
-            />
-          ))}
+        <Stack direction="row" spacing={1} sx={{ px: 2, pt: 2, pb: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+          {STATUS_FILTERS.map(f => {
+            const active = filter === f.value;
+            return (
+              <Chip
+                key={f.value}
+                label={`${f.label} (${counts[f.value]})`}
+                onClick={() => setFilter(f.value)}
+                sx={{
+                  fontWeight: active ? 700 : 400,
+                  bgcolor: active ? '#FF9F6B' : 'transparent',
+                  color: active ? 'white' : 'text.secondary',
+                  border: '1px solid',
+                  borderColor: active ? '#FF9F6B' : 'divider',
+                  cursor: 'pointer',
+                  '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
+                }}
+              />
+            );
+          })}
         </Stack>
 
         {/* DataGrid */}
