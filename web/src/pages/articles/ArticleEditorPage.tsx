@@ -87,10 +87,8 @@ export default function ArticleEditorPage() {
   const scheduleAutoSaveRef = useRef<() => void>(() => {});
   const titleRef = useRef(title);
   const coverUrlRef = useRef(coverUrl);
-  const isVisibleRef = useRef(isVisible);
   titleRef.current = title;
   coverUrlRef.current = coverUrl;
-  isVisibleRef.current = isVisible;
 
   // ─── Editor ────────────────────────────────────────────────────────────────
 
@@ -160,7 +158,6 @@ export default function ArticleEditorPage() {
         content_html: currentEditor.getHTML(),
         content_json: currentEditor.getJSON(),
         cover_image_url: coverUrlRef.current || null,
-        is_visible: isVisibleRef.current,
         has_draft: true,
       }).eq('id', articleId);
       if (!error) {
@@ -326,22 +323,26 @@ export default function ArticleEditorPage() {
     setSaving(true);
 
     const isPublish = mode === 'publish';
-    const publishSuccessMsg =
-      publishMode === 'scheduled' ? 'ตั้งเวลาเผยแพร่เรียบร้อยแล้ว' : 'เผยแพร่บทความเรียบร้อยแล้ว';
+    // is_visible is only applied on explicit publish — draft saves preserve the live value
+    const publishSuccessMsg = isEditMode
+      ? 'บันทึกบทความเรียบร้อยแล้ว'
+      : publishMode === 'scheduled'
+      ? 'ตั้งเวลาเผยแพร่เรียบร้อยแล้ว'
+      : 'เผยแพร่บทความเรียบร้อยแล้ว';
     const contentPayload = {
       title: title.trim() || 'ไม่มีหัวเรื่อง',
       content_html: editor.getHTML(),
       content_json: editor.getJSON(),
       cover_image_url: coverUrl || null,
-      is_visible: isVisible,
     };
 
     if (articleId) {
-      // Existing article: draft save keeps publish_at unchanged (preserves published/scheduled status).
-      // Only an explicit publish updates publish_at.
+      // Existing article: draft save keeps publish_at and is_visible unchanged.
+      // Only an explicit publish may update both.
       const updatePayload = isPublish
         ? {
             ...contentPayload,
+            is_visible: isVisible,
             has_draft: false,
             publish_at:
               publishMode === 'immediate'
@@ -359,12 +360,13 @@ export default function ArticleEditorPage() {
         showSnackbar(isPublish ? publishSuccessMsg : 'บันทึกร่างเรียบร้อยแล้ว', 'success');
       }
     } else {
-      // New article: publish_at=null for draft; set it only on explicit publish
+      // New article: is_visible only matters on publish; draft uses DB default (true)
       const userRes = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('articles')
         .insert({
           ...contentPayload,
+          ...(isPublish ? { is_visible: isVisible } : {}),
           has_draft: !isPublish,
           publish_at: !isPublish
             ? null
@@ -438,7 +440,11 @@ export default function ArticleEditorPage() {
     );
   }
 
-  const publishButtonLabel = publishMode === 'scheduled' ? 'เผยแพร่ภายหลัง' : 'เผยแพร่';
+  const publishButtonLabel = isEditMode
+    ? 'บันทึก'
+    : publishMode === 'scheduled'
+    ? 'เผยแพร่ภายหลัง'
+    : 'เผยแพร่';
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
@@ -727,10 +733,7 @@ export default function ArticleEditorPage() {
                 <Switch
                   size="small"
                   checked={isVisible}
-                  onChange={e => {
-                    setIsVisible(e.target.checked);
-                    if (!isInitialLoad.current) setIsDirty(true);
-                  }}
+                  onChange={e => setIsVisible(e.target.checked)}
                 />
               </Box>
 

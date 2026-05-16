@@ -24,8 +24,8 @@ export const ARTICLE_STATUS = {
 export type ArticleStatus = typeof ARTICLE_STATUS[keyof typeof ARTICLE_STATUS];
 
 export function getArticleStatus(article: Pick<Article, 'publish_at' | 'is_visible'>): ArticleStatus {
-  if (!article.is_visible) return ARTICLE_STATUS.hidden;
   if (!article.publish_at) return ARTICLE_STATUS.draft;
+  if (!article.is_visible) return ARTICLE_STATUS.hidden;
   return new Date(article.publish_at) > new Date() ? ARTICLE_STATUS.scheduled : ARTICLE_STATUS.published;
 }
 
