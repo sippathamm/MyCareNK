@@ -8,11 +8,10 @@ import '../widgets/knowledge_section.dart';
 import '../widgets/campaign_banner.dart';
 
 class HomePage extends StatefulWidget {
-  /// Increments each time the home tab becomes active, used to replay animations.
-  final int visibilityKey;
+  final ValueNotifier<int>? visibilityNotifier;
   final VoidCallback? onNavigateToHistory;
 
-  const HomePage({super.key, this.visibilityKey = 0, this.onNavigateToHistory});
+  const HomePage({super.key, this.visibilityNotifier, this.onNavigateToHistory});
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -26,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
+    widget.visibilityNotifier?.addListener(_onVisibilityChanged);
     _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
       data,
     ) {
@@ -37,18 +37,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void didUpdateWidget(HomePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.visibilityNotifier != widget.visibilityNotifier) {
+      oldWidget.visibilityNotifier?.removeListener(_onVisibilityChanged);
+      widget.visibilityNotifier?.addListener(_onVisibilityChanged);
+    }
+  }
+
+  @override
   void dispose() {
+    widget.visibilityNotifier?.removeListener(_onVisibilityChanged);
     _authSubscription?.cancel();
     super.dispose();
   }
 
-  @override
-  void didUpdateWidget(HomePage oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    // Parent (MainScreen) incremented visibilityKey => user switched to home tab
-    if (oldWidget.visibilityKey != widget.visibilityKey) {
-      setState(() => _cardRefreshKey++);
-    }
+  void _onVisibilityChanged() {
+    if (mounted) setState(() => _cardRefreshKey++);
   }
 
   Future<void> _onRefresh() async {

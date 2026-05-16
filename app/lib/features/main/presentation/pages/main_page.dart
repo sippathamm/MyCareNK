@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../home/presentation/pages/home_page.dart';
+import '../../../home/presentation/pages/home_navigator.dart';
 import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
@@ -15,8 +15,9 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  int _homeVisibilityKey = 0;
+  final ValueNotifier<int> _homeVisibilityNotifier = ValueNotifier(0);
   int _messagesRefreshKey = 0;
+  final GlobalKey<NavigatorState> _homeNavigatorKey = GlobalKey<NavigatorState>();
   final GlobalKey<NavigatorState> _serviceNavigatorKey =
       GlobalKey<NavigatorState>();
 
@@ -25,6 +26,7 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
+    _homeVisibilityNotifier.dispose();
     _messagesUnreadNotifier.dispose();
     super.dispose();
   }
@@ -39,16 +41,16 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   void _onItemTapped(int index) {
-    if (_currentIndex == index && index == 1) {
-      _serviceNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+    if (_currentIndex == index) {
+      if (index == 0) {
+        _homeNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+      } else if (index == 1) {
+        _serviceNavigatorKey.currentState?.popUntil((route) => route.isFirst);
+      }
     } else {
       setState(() {
-        if (index == 0 && _currentIndex != 0) {
-          _homeVisibilityKey++;
-        }
-        if (index == 3 && _currentIndex != 3) {
-          _messagesRefreshKey++;
-        }
+        if (index == 0) _homeVisibilityNotifier.value++;
+        if (index == 3) _messagesRefreshKey++;
         _currentIndex = index;
       });
     }
@@ -61,7 +63,7 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomePage(visibilityKey: _homeVisibilityKey, onNavigateToHistory: _navigateToHistory),
+          HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
           MessagesPage(unreadNotifier: _messagesUnreadNotifier, refreshKey: _messagesRefreshKey),
