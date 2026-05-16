@@ -65,36 +65,20 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
       _error = null;
     });
     try {
-      final data = await Supabase.instance.client
-          .from('articles')
-          .select('title, cover_image_url, content_html, publish_at, created_by')
-          .eq('id', widget.articleId)
-          .single();
+      final rows = await Supabase.instance.client.rpc(
+        'get_article_detail',
+        params: {'p_article_id': widget.articleId},
+      );
       if (!mounted) return;
-
-      String? createdByName;
-      final createdBy = data['created_by'] as String?;
-      if (createdBy != null) {
-        final staff = await Supabase.instance.client
-            .from('staff_profiles')
-            .select('first_name, last_name')
-            .eq('staff_user_id', createdBy)
-            .maybeSingle();
-        if (staff != null) {
-          final name =
-              '${staff['first_name'] ?? ''} ${staff['last_name'] ?? ''}'.trim();
-          if (name.isNotEmpty) createdByName = name;
-        }
-      }
-      if (!mounted) return;
-
+      if ((rows as List).isEmpty) throw Exception('not found');
+      final data = rows.first as Map<String, dynamic>;
       setState(() {
         _article = _Article(
           title: data['title'] as String,
           coverImageUrl: data['cover_image_url'] as String?,
           contentHtml: data['content_html'] as String?,
           publishAt: data['publish_at'] as String?,
-          createdByName: createdByName,
+          createdByName: data['created_by_name'] as String?,
         );
         _loading = false;
       });
