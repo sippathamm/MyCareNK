@@ -7,6 +7,7 @@ export interface Article {
   excerpt: string | null;
   cover_image_url: string | null;
   publish_at: string | null;
+  has_draft: boolean;
   created_by: string | null;
   created_at: string | null;
   updated_at: string | null;
@@ -32,7 +33,7 @@ export function useArticles() {
     const [articlesRes, staffRes] = await Promise.all([
       supabase
         .from('articles')
-        .select('id, title, excerpt, cover_image_url, publish_at, created_by, created_at, updated_at')
+        .select('id, title, excerpt, cover_image_url, publish_at, has_draft, created_by, created_at, updated_at')
         .order('updated_at', { ascending: false }),
       supabase
         .from('staff_profiles')
