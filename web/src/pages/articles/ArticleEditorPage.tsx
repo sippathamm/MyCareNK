@@ -58,6 +58,7 @@ export default function ArticleEditorPage() {
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
 
   const [isVisible, setIsVisible] = useState(true);
+  const [savedIsVisible, setSavedIsVisible] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -126,6 +127,7 @@ export default function ArticleEditorPage() {
         if (error || !data) return;
         setTitle(data.title);
         setIsVisible(data.is_visible ?? true);
+        setSavedIsVisible(data.is_visible ?? true);
         setCoverUrl(data.cover_image_url);
         if (data.publish_at) {
           const d = new Date(data.publish_at);
@@ -357,6 +359,7 @@ export default function ArticleEditorPage() {
       } else {
         setIsDirty(false);
         setAutoSaveStatus('idle');
+        if (isPublish) setSavedIsVisible(isVisible);
         showSnackbar(isPublish ? publishSuccessMsg : 'บันทึกร่างเรียบร้อยแล้ว', 'success');
       }
     } else {
@@ -766,7 +769,7 @@ export default function ArticleEditorPage() {
                 <Button
                   variant="outlined"
                   fullWidth
-                  disabled={saving}
+                  disabled={saving || !savedIsVisible}
                   onClick={() => handleSave('draft')}
                 >
                   บันทึกร่าง
