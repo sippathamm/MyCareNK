@@ -21,9 +21,11 @@ export type Database = {
           cover_image_url: string | null
           created_at: string | null
           created_by: string | null
-          excerpt: string | null
+          has_draft: boolean
           id: string
+          is_visible: boolean
           publish_at: string | null
+          status: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at: string | null
         }
@@ -33,9 +35,11 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null
-          excerpt?: string | null
+          has_draft?: boolean
           id?: string
+          is_visible?: boolean
           publish_at?: string | null
+          status?: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at?: string | null
         }
@@ -45,9 +49,11 @@ export type Database = {
           cover_image_url?: string | null
           created_at?: string | null
           created_by?: string | null
-          excerpt?: string | null
+          has_draft?: boolean
           id?: string
+          is_visible?: boolean
           publish_at?: string | null
+          status?: Database["public"]["Enums"]["article_status"]
           title?: string
           updated_at?: string | null
         }
@@ -837,6 +843,7 @@ export type Database = {
         | "cancelled_by_user"
         | "cancelled_by_staff"
         | "completed"
+      article_status: "draft" | "scheduled" | "published" | "hidden"
       audit_action:
         | "role_updated"
         | "staff_profile_updated"
@@ -994,6 +1001,7 @@ export const Constants = {
         "cancelled_by_staff",
         "completed",
       ],
+      article_status: ["draft", "scheduled", "published", "hidden"],
       audit_action: [
         "role_updated",
         "staff_profile_updated",

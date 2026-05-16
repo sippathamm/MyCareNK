@@ -9,7 +9,7 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import ArticleIcon from '@mui/icons-material/Article';
-import { useArticles, getArticleStatus, type Article, type ArticleStatus } from '../../hooks/useArticles';
+import { useArticles, type Article, type ArticleStatus } from '../../hooks/useArticles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
@@ -50,8 +50,7 @@ const thGridLocale = createThGridLocale('ยังไม่มีบทควา
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function StatusChip({ article }: { article: Article }) {
-  const status = getArticleStatus(article);
-  const { label, sx } = STATUS_CHIP_PROPS[status];
+  const { label, sx } = STATUS_CHIP_PROPS[article.status];
   return <Chip label={label} size="small" sx={sx} />;
 }
 
@@ -93,7 +92,7 @@ export default function ArticlesPage() {
 
   const filtered = useMemo(() => {
     let result = articles;
-    if (filter !== 'all') result = result.filter(a => getArticleStatus(a) === filter);
+    if (filter !== 'all') result = result.filter(a => a.status === filter);
     if (titleSearch.trim()) {
       const q = titleSearch.trim().toLowerCase();
       result = result.filter(a => a.title.toLowerCase().includes(q));
@@ -103,10 +102,10 @@ export default function ArticlesPage() {
 
   const counts = useMemo(() => ({
     all: articles.length,
-    published: articles.filter(a => getArticleStatus(a) === 'published').length,
-    scheduled: articles.filter(a => getArticleStatus(a) === 'scheduled').length,
-    draft: articles.filter(a => getArticleStatus(a) === 'draft').length,
-    hidden: articles.filter(a => getArticleStatus(a) === 'hidden').length,
+    published: articles.filter(a => a.status === 'published').length,
+    scheduled: articles.filter(a => a.status === 'scheduled').length,
+    draft: articles.filter(a => a.status === 'draft').length,
+    hidden: articles.filter(a => a.status === 'hidden').length,
   }), [articles]);
 
   // ─── Columns ──────────────────────────────────────────────────────────────
@@ -129,8 +128,7 @@ export default function ArticlesPage() {
       flex: 1,
       minWidth: 220,
       renderCell: (params: GridRenderCellParams<Article>) => {
-        const status = getArticleStatus(params.row);
-        const hasDraft = params.row.has_draft && status === 'published';
+        const hasDraft = params.row.has_draft && params.row.status === 'published';
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
             <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
@@ -177,7 +175,7 @@ export default function ArticlesPage() {
       renderCell: (params: GridRenderCellParams<Article>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography variant="body2">
-            {getArticleStatus(params.row) === 'published' && params.row.publish_at
+            {params.row.status === 'published' && params.row.publish_at
               ? formatDateTime(params.row.publish_at)
               : '—'}
           </Typography>

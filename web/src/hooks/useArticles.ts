@@ -1,19 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
-export interface Article {
-  id: string;
-  title: string;
-  cover_image_url: string | null;
-  publish_at: string | null;
-  has_draft: boolean;
-  is_visible: boolean;
-  created_by: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-}
-
-// Mirrors the article_status PostgreSQL enum in Supabase
 export const ARTICLE_STATUS = {
   draft: 'draft',
   scheduled: 'scheduled',
@@ -23,10 +10,17 @@ export const ARTICLE_STATUS = {
 
 export type ArticleStatus = typeof ARTICLE_STATUS[keyof typeof ARTICLE_STATUS];
 
-export function getArticleStatus(article: Pick<Article, 'publish_at' | 'is_visible'>): ArticleStatus {
-  if (!article.publish_at) return ARTICLE_STATUS.draft;
-  if (!article.is_visible) return ARTICLE_STATUS.hidden;
-  return new Date(article.publish_at) > new Date() ? ARTICLE_STATUS.scheduled : ARTICLE_STATUS.published;
+export interface Article {
+  id: string;
+  title: string;
+  cover_image_url: string | null;
+  publish_at: string | null;
+  has_draft: boolean;
+  is_visible: boolean;
+  status: ArticleStatus;
+  created_by: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 }
 
 export function useArticles() {
@@ -42,7 +36,7 @@ export function useArticles() {
     const [articlesRes, staffRes] = await Promise.all([
       supabase
         .from('articles')
-        .select('id, title, cover_image_url, publish_at, has_draft, is_visible, created_by, created_at, updated_at')
+        .select('id, title, cover_image_url, publish_at, has_draft, is_visible, status, created_by, created_at, updated_at')
         .order('updated_at', { ascending: false }),
       supabase
         .from('staff_profiles')
