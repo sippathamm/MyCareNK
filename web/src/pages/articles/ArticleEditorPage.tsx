@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Typography, Paper, Button, IconButton, Tooltip,
-  Stack, TextField, Divider, RadioGroup, FormControlLabel, Radio,
+  Stack, TextField, Divider, RadioGroup, FormControlLabel, Radio, Switch,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Snackbar, Alert, LinearProgress, CircularProgress,
 } from '@mui/material';
@@ -57,6 +57,7 @@ export default function ArticleEditorPage() {
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
 
+  const [isVisible, setIsVisible] = useState(true);
   const [isDirty, setIsDirty] = useState(false);
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -86,8 +87,10 @@ export default function ArticleEditorPage() {
   const scheduleAutoSaveRef = useRef<() => void>(() => {});
   const titleRef = useRef(title);
   const coverUrlRef = useRef(coverUrl);
+  const isVisibleRef = useRef(isVisible);
   titleRef.current = title;
   coverUrlRef.current = coverUrl;
+  isVisibleRef.current = isVisible;
 
   // ─── Editor ────────────────────────────────────────────────────────────────
 
@@ -124,6 +127,7 @@ export default function ArticleEditorPage() {
       .then(({ data, error }) => {
         if (error || !data) return;
         setTitle(data.title);
+        setIsVisible(data.is_visible ?? true);
         setCoverUrl(data.cover_image_url);
         if (data.publish_at) {
           const d = new Date(data.publish_at);
@@ -156,6 +160,7 @@ export default function ArticleEditorPage() {
         content_html: currentEditor.getHTML(),
         content_json: currentEditor.getJSON(),
         cover_image_url: coverUrlRef.current || null,
+        is_visible: isVisibleRef.current,
         has_draft: true,
       }).eq('id', articleId);
       if (!error) {
@@ -328,6 +333,7 @@ export default function ArticleEditorPage() {
       content_html: editor.getHTML(),
       content_json: editor.getJSON(),
       cover_image_url: coverUrl || null,
+      is_visible: isVisible,
     };
 
     if (articleId) {
@@ -710,6 +716,23 @@ export default function ArticleEditorPage() {
                   label="วันและเวลาเผยแพร่"
                 />
               )}
+
+              <Divider sx={{ my: 1.5 }} />
+
+              {/* Visibility toggle */}
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="body2">
+                  {isVisible ? 'แสดงบทความ' : 'ซ่อนบทความ'}
+                </Typography>
+                <Switch
+                  size="small"
+                  checked={isVisible}
+                  onChange={e => {
+                    setIsVisible(e.target.checked);
+                    if (!isInitialLoad.current) setIsDirty(true);
+                  }}
+                />
+              </Box>
 
               {/* Auto-save status */}
               {isEditMode && autoSaveStatus !== 'idle' && (

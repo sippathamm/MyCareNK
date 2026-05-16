@@ -125,6 +125,7 @@ export default function ArticlesPage() {
       renderCell: (params: GridRenderCellParams<Article>) => {
         const isPublished = getArticleStatus(params.row) === 'published';
         const hasDraft = params.row.has_draft && isPublished;
+        const hidden = !params.row.is_visible;
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
             <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
@@ -133,6 +134,11 @@ export default function ArticlesPage() {
             {hasDraft && (
               <Typography variant="caption" sx={{ color: '#E65100', fontWeight: 600, display: 'block' }}>
                 มีการแก้ไขที่ยังไม่ได้เผยแพร่
+              </Typography>
+            )}
+            {hidden && (
+              <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block' }}>
+                ซ่อนอยู่ (ผู้ใช้ไม่เห็น)
               </Typography>
             )}
           </Box>
