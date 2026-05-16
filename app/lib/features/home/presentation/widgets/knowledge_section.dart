@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../pages/article_detail_page.dart';
-import '../pages/article_list_page.dart';
+import '../../../knowledge/presentation/pages/article_detail_page.dart';
+import '../../../knowledge/presentation/pages/article_list_page.dart';
 
 class _ArticleItem {
   final String id;
