@@ -335,7 +335,7 @@ export default function ArticleEditorPage() {
     const isPublish = mode === 'publish';
     // is_visible is only applied on explicit publish — draft saves preserve the live value
     const publishSuccessMsg = isEditMode
-      ? 'บันทึกบทความเรียบร้อยแล้ว'
+      ? 'บันทึกและเผยแพร่บทความเรียบร้อยแล้ว'
       : publishMode === 'scheduled'
       ? 'ตั้งเวลาเผยแพร่เรียบร้อยแล้ว'
       : 'เผยแพร่บทความเรียบร้อยแล้ว';
