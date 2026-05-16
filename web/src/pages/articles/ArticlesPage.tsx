@@ -122,18 +122,27 @@ export default function ArticlesPage() {
       headerName: 'เรื่อง',
       flex: 1,
       minWidth: 220,
-      renderCell: (params: GridRenderCellParams<Article>) => (
-        <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
-          <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
-            {params.row.title}
-          </Typography>
-          {params.row.excerpt && (
-            <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 320, display: 'block' }}>
-              {params.row.excerpt}
+      renderCell: (params: GridRenderCellParams<Article>) => {
+        const isPublished = getArticleStatus(params.row) === 'published';
+        const hasDraft = params.row.has_draft && isPublished;
+        return (
+          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
+            <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
+              {params.row.title}
             </Typography>
-          )}
-        </Box>
-      ),
+            {params.row.excerpt && (
+              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 320, display: 'block' }}>
+                {params.row.excerpt}
+              </Typography>
+            )}
+            {hasDraft && (
+              <Typography variant="caption" sx={{ color: '#E65100', fontWeight: 600, display: 'block' }}>
+                มีการแก้ไขที่ยังไม่ได้เผยแพร่
+              </Typography>
+            )}
+          </Box>
+        );
+      },
     },
     {
       field: 'created_by',
@@ -161,13 +170,15 @@ export default function ArticlesPage() {
     },
     {
       field: 'publish_at',
-      headerName: 'วันเผยแพร่',
+      headerName: 'เผยแพร่ล่าสุด',
       flex: 0.8,
       minWidth: 160,
       renderCell: (params: GridRenderCellParams<Article>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography variant="body2">
-            {params.row.publish_at ? formatDateTime(params.row.publish_at) : '—'}
+            {getArticleStatus(params.row) === 'published' && params.row.publish_at
+              ? formatDateTime(params.row.publish_at)
+              : '—'}
           </Typography>
         </Box>
       ),
