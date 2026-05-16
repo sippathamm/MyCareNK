@@ -53,10 +53,28 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
   bool _loading = true;
   String? _error;
 
+  final ScrollController _scrollController = ScrollController();
+  bool _titleVisible = false;
+
+  // SliverAppBar collapses after scrolling past expandedHeight - toolbar height.
+  static const double _collapseThreshold = 260.0 - kToolbarHeight;
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
     _fetchArticle();
+  }
+
+  void _onScroll() {
+    final visible = _scrollController.offset > _collapseThreshold;
+    if (visible != _titleVisible) setState(() => _titleVisible = visible);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   Future<void> _fetchArticle() async {
@@ -214,6 +232,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           // ── SliverAppBar with cover ───────────────────────────────────────
           SliverAppBar(
@@ -222,6 +241,21 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
             backgroundColor: AppColors.white,
             automaticallyImplyLeading: false,
             leading: const _BackButton(),
+            centerTitle: true,
+            title: AnimatedOpacity(
+              opacity: _titleVisible ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                article.title,
+                style: GoogleFonts.googleSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -332,11 +366,11 @@ class _BackButton extends StatelessWidget {
       child: GestureDetector(
         onTap: () => Navigator.of(context).pop(),
         child: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: const Color(0x4D000000),
-            borderRadius: BorderRadius.circular(12),
+          width: 36,
+          height: 36,
+          decoration: const BoxDecoration(
+            color: Color(0x4D000000),
+            shape: BoxShape.circle,
           ),
           child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
         ),
