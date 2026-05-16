@@ -81,6 +81,14 @@ export default function ArticleEditorPage() {
   const imageInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
+  // Kept in sync with latest state so auto-save timer never reads stale values
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+  const scheduleAutoSaveRef = useRef<() => void>(() => {});
+  const titleRef = useRef(title);
+  const coverUrlRef = useRef(coverUrl);
+  titleRef.current = title;
+  coverUrlRef.current = coverUrl;
+
   // ─── Editor ────────────────────────────────────────────────────────────────
 
   const editor = useEditor({
@@ -96,8 +104,7 @@ export default function ArticleEditorPage() {
     onUpdate: () => {
       if (isInitialLoad.current) return;
       setIsDirty(true);
-      if (!articleId) return;
-      scheduleAutoSave();
+      scheduleAutoSaveRef.current();
     },
   });
 
@@ -134,25 +141,38 @@ export default function ArticleEditorPage() {
 
   // ─── Auto-save logic ───────────────────────────────────────────────────────
 
+  // Stable callback: deps are only articleId (never changes after mount).
+  // All mutable values (editor, title, coverUrl) are read from refs at timer-fire
+  // time, so the closure is never stale.
   const scheduleAutoSave = useCallback(() => {
+    if (!articleId) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
-      if (!editor || !articleId) return;
+      const currentEditor = editorRef.current;
+      if (!currentEditor) return;
       setAutoSaveStatus('saving');
-      const excerpt = editor.getText().slice(0, 150) || null;
-      await supabase.from('articles').update({
-        title: title.trim() || 'ไม่มีหัวเรื่อง',
-        content_html: editor.getHTML(),
-        content_json: editor.getJSON(),
+      const excerpt = currentEditor.getText().slice(0, 150) || null;
+      const { error } = await supabase.from('articles').update({
+        title: titleRef.current.trim() || 'ไม่มีหัวเรื่อง',
+        content_html: currentEditor.getHTML(),
+        content_json: currentEditor.getJSON(),
         excerpt,
-        cover_image_url: coverUrl || null,
+        cover_image_url: coverUrlRef.current || null,
       }).eq('id', articleId);
-      setIsDirty(false);
-      setAutoSaveStatus('saved');
-      if (autoSaveStatusTimer.current) clearTimeout(autoSaveStatusTimer.current);
-      autoSaveStatusTimer.current = setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      if (!error) {
+        setIsDirty(false);
+        setAutoSaveStatus('saved');
+        if (autoSaveStatusTimer.current) clearTimeout(autoSaveStatusTimer.current);
+        autoSaveStatusTimer.current = setTimeout(() => setAutoSaveStatus('idle'), 3000);
+      } else {
+        setAutoSaveStatus('idle');
+      }
     }, 2000);
-  }, [editor, articleId, title, coverUrl]);
+  }, [articleId]);
+
+  // Keep refs pointing at latest instances
+  useEffect(() => { editorRef.current = editor; }, [editor]);
+  scheduleAutoSaveRef.current = scheduleAutoSave;
 
   useEffect(() => {
     if (isInitialLoad.current || !isEditMode) return;
@@ -203,31 +223,41 @@ export default function ArticleEditorPage() {
 
   async function handleImageFileChange(file: File) {
     setUploadingImage(true);
-    const ext = getFileExtension(file.name);
-    const path = `content/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('article-assets').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
-    setUploadingImage(false);
-    if (error) { showSnackbar(`อัปโหลดรูปไม่สำเร็จ: ${error.message}`, 'error'); return; }
-    const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
-    editor?.chain().focus().setImage({ src: publicUrl }).run();
+    try {
+      const ext = getFileExtension(file.name);
+      const path = `content/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('article-assets').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+      if (error) { showSnackbar(`อัปโหลดรูปไม่สำเร็จ: ${error.message}`, 'error'); return; }
+      const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
+      editor?.chain().focus().setImage({ src: publicUrl }).run();
+    } catch (e) {
+      showSnackbar(`อัปโหลดรูปไม่สำเร็จ: ${e instanceof Error ? e.message : 'ข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`, 'error');
+    } finally {
+      setUploadingImage(false);
+    }
   }
 
   async function handleCoverFileChange(file: File) {
     setUploadingCover(true);
-    const ext = getFileExtension(file.name);
-    const path = `cover/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('article-assets').upload(path, file, {
-      cacheControl: '3600',
-      upsert: false,
-    });
-    setUploadingCover(false);
-    if (error) { showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${error.message}`, 'error'); return; }
-    const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
-    setCoverUrl(publicUrl);
-    if (!isInitialLoad.current) setIsDirty(true);
+    try {
+      const ext = getFileExtension(file.name);
+      const path = `cover/${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage.from('article-assets').upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+      });
+      if (error) { showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${error.message}`, 'error'); return; }
+      const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
+      setCoverUrl(publicUrl);
+      if (!isInitialLoad.current) setIsDirty(true);
+    } catch (e) {
+      showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${e instanceof Error ? e.message : 'ข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`, 'error');
+    } finally {
+      setUploadingCover(false);
+    }
   }
 
   // ─── Video insert ──────────────────────────────────────────────────────────
