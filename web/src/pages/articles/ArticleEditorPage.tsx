@@ -322,26 +322,29 @@ export default function ArticleEditorPage() {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     setSaving(true);
 
-    const excerpt = editor.getText().slice(0, 150) || null;
-
     const isPublish = mode === 'publish';
-    const payload = {
+    const contentPayload = {
       title: title.trim() || 'ไม่มีหัวเรื่อง',
       content_html: editor.getHTML(),
       content_json: editor.getJSON(),
-      excerpt,
       cover_image_url: coverUrl || null,
-      has_draft: !isPublish,
-      publish_at:
-        !isPublish
-          ? null
-          : publishMode === 'immediate'
-          ? new Date().toISOString()
-          : scheduledAt?.toISOString() ?? null,
     };
 
     if (articleId) {
-      const { error } = await supabase.from('articles').update(payload).eq('id', articleId);
+      // Existing article: draft save keeps publish_at unchanged (preserves published/scheduled status).
+      // Only an explicit publish updates publish_at.
+      const updatePayload = isPublish
+        ? {
+            ...contentPayload,
+            has_draft: false,
+            publish_at:
+              publishMode === 'immediate'
+                ? new Date().toISOString()
+                : scheduledAt?.toISOString() ?? null,
+          }
+        : { ...contentPayload, has_draft: true };
+
+      const { error } = await supabase.from('articles').update(updatePayload).eq('id', articleId);
       if (error) {
         showSnackbar(`บันทึกไม่สำเร็จ: ${error.message}`, 'error');
       } else {
@@ -350,10 +353,20 @@ export default function ArticleEditorPage() {
         showSnackbar(isPublish ? 'เผยแพร่บทความเรียบร้อยแล้ว' : 'บันทึกร่างเรียบร้อยแล้ว', 'success');
       }
     } else {
+      // New article: publish_at=null for draft; set it only on explicit publish
       const userRes = await supabase.auth.getUser();
       const { data, error } = await supabase
         .from('articles')
-        .insert({ ...payload, created_by: userRes.data.user?.id ?? null })
+        .insert({
+          ...contentPayload,
+          has_draft: !isPublish,
+          publish_at: !isPublish
+            ? null
+            : publishMode === 'immediate'
+            ? new Date().toISOString()
+            : scheduledAt?.toISOString() ?? null,
+          created_by: userRes.data.user?.id ?? null,
+        })
         .select('id')
         .single();
       if (error) {
@@ -361,7 +374,7 @@ export default function ArticleEditorPage() {
       } else if (data) {
         setIsDirty(false);
         navigate(`/articles/${data.id}/edit`, { replace: true });
-        showSnackbar('สร้างบทความเรียบร้อยแล้ว', 'success');
+        showSnackbar(isPublish ? 'เผยแพร่บทความเรียบร้อยแล้ว' : 'สร้างบทความเรียบร้อยแล้ว', 'success');
       }
     }
 
