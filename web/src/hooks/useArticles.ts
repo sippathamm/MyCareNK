@@ -13,11 +13,20 @@ export interface Article {
   updated_at: string | null;
 }
 
-export type ArticleStatus = 'draft' | 'scheduled' | 'published';
+// Mirrors the article_status PostgreSQL enum in Supabase
+export const ARTICLE_STATUS = {
+  draft: 'draft',
+  scheduled: 'scheduled',
+  published: 'published',
+  hidden: 'hidden',
+} as const;
 
-export function getArticleStatus(article: Pick<Article, 'publish_at'>): ArticleStatus {
-  if (!article.publish_at) return 'draft';
-  return new Date(article.publish_at) > new Date() ? 'scheduled' : 'published';
+export type ArticleStatus = typeof ARTICLE_STATUS[keyof typeof ARTICLE_STATUS];
+
+export function getArticleStatus(article: Pick<Article, 'publish_at' | 'is_visible'>): ArticleStatus {
+  if (!article.is_visible) return ARTICLE_STATUS.hidden;
+  if (!article.publish_at) return ARTICLE_STATUS.draft;
+  return new Date(article.publish_at) > new Date() ? ARTICLE_STATUS.scheduled : ARTICLE_STATUS.published;
 }
 
 export function useArticles() {

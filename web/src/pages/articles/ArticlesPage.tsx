@@ -21,6 +21,7 @@ const STATUS_FILTERS = [
   { value: 'published', label: 'เผยแพร่แล้ว' },
   { value: 'scheduled', label: 'รอเผยแพร่' },
   { value: 'draft', label: 'ร่าง' },
+  { value: 'hidden', label: 'ซ่อน' },
 ] as const;
 
 type FilterValue = typeof STATUS_FILTERS[number]['value'];
@@ -37,6 +38,10 @@ const STATUS_CHIP_PROPS: Record<ArticleStatus, { label: string; sx: object }> = 
   draft: {
     label: 'ร่าง',
     sx: { bgcolor: '#F5F5F5', color: '#616161', fontWeight: 'bold' },
+  },
+  hidden: {
+    label: 'ซ่อน',
+    sx: { bgcolor: '#ECEFF1', color: '#546E7A', fontWeight: 'bold' },
   },
 };
 
@@ -101,6 +106,7 @@ export default function ArticlesPage() {
     published: articles.filter(a => getArticleStatus(a) === 'published').length,
     scheduled: articles.filter(a => getArticleStatus(a) === 'scheduled').length,
     draft: articles.filter(a => getArticleStatus(a) === 'draft').length,
+    hidden: articles.filter(a => getArticleStatus(a) === 'hidden').length,
   }), [articles]);
 
   // ─── Columns ──────────────────────────────────────────────────────────────
@@ -123,9 +129,8 @@ export default function ArticlesPage() {
       flex: 1,
       minWidth: 220,
       renderCell: (params: GridRenderCellParams<Article>) => {
-        const isPublished = getArticleStatus(params.row) === 'published';
-        const hasDraft = params.row.has_draft && isPublished;
-        const hidden = !params.row.is_visible;
+        const status = getArticleStatus(params.row);
+        const hasDraft = params.row.has_draft && status === 'published';
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
             <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
@@ -134,11 +139,6 @@ export default function ArticlesPage() {
             {hasDraft && (
               <Typography variant="caption" sx={{ color: '#E65100', fontWeight: 600, display: 'block' }}>
                 มีการแก้ไขที่ยังไม่ได้เผยแพร่
-              </Typography>
-            )}
-            {hidden && (
-              <Typography variant="caption" sx={{ color: 'text.disabled', display: 'block' }}>
-                ซ่อนอยู่ (ผู้ใช้ไม่เห็น)
               </Typography>
             )}
           </Box>
