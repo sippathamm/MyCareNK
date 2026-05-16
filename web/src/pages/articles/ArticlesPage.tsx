@@ -130,11 +130,6 @@ export default function ArticlesPage() {
             <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
               {params.row.title}
             </Typography>
-            {params.row.excerpt && (
-              <Typography variant="caption" color="text.secondary" noWrap sx={{ maxWidth: 320, display: 'block' }}>
-                {params.row.excerpt}
-              </Typography>
-            )}
             {hasDraft && (
               <Typography variant="caption" sx={{ color: '#E65100', fontWeight: 600, display: 'block' }}>
                 มีการแก้ไขที่ยังไม่ได้เผยแพร่

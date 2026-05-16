@@ -151,12 +151,10 @@ export default function ArticleEditorPage() {
       const currentEditor = editorRef.current;
       if (!currentEditor) return;
       setAutoSaveStatus('saving');
-      const excerpt = currentEditor.getText().slice(0, 150) || null;
       const { error } = await supabase.from('articles').update({
         title: titleRef.current.trim() || 'ไม่มีหัวเรื่อง',
         content_html: currentEditor.getHTML(),
         content_json: currentEditor.getJSON(),
-        excerpt,
         cover_image_url: coverUrlRef.current || null,
         has_draft: true,
       }).eq('id', articleId);
