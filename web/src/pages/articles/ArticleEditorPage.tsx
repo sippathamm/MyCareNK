@@ -202,6 +202,29 @@ export default function ArticleEditorPage() {
       .join('');
   }
 
+  function extractStoragePath(url: string): string | null {
+    const marker = '/article-assets/';
+    const idx = url.indexOf(marker);
+    if (idx === -1) return null;
+    return decodeURIComponent(url.slice(idx + marker.length).split('?')[0]);
+  }
+
+  function extractContentImageUrls(json: unknown): string[] {
+    if (!json || typeof json !== 'object') return [];
+    const urls: string[] = [];
+    function traverse(node: Record<string, unknown>) {
+      if (node.type === 'image' && node.attrs && typeof node.attrs === 'object') {
+        const src = (node.attrs as Record<string, unknown>).src;
+        if (typeof src === 'string') urls.push(src);
+      }
+      if (Array.isArray(node.content)) {
+        (node.content as Record<string, unknown>[]).forEach(traverse);
+      }
+    }
+    traverse(json as Record<string, unknown>);
+    return urls;
+  }
+
   // ─── Navigation with dirty check ──────────────────────────────────────────
 
   function handleBackClick() {
@@ -347,14 +370,39 @@ export default function ArticleEditorPage() {
   async function handleDelete() {
     if (!articleId) return;
     setDeleting(true);
+
+    // Fetch saved image URLs before deletion
+    const { data: saved } = await supabase
+      .from('articles')
+      .select('cover_image_url, content_json')
+      .eq('id', articleId)
+      .single();
+
     const { error } = await supabase.from('articles').delete().eq('id', articleId);
-    setDeleting(false);
     if (error) {
+      setDeleting(false);
       setDeleteDialogOpen(false);
       showSnackbar(`ลบไม่สำเร็จ: ${error.message}`, 'error');
-    } else {
-      navigate('/articles', { replace: true });
+      return;
     }
+
+    // Delete associated storage files (best-effort)
+    if (saved) {
+      const paths: string[] = [];
+      if (saved.cover_image_url) {
+        const p = extractStoragePath(saved.cover_image_url);
+        if (p) paths.push(p);
+      }
+      extractContentImageUrls(saved.content_json).forEach(url => {
+        const p = extractStoragePath(url);
+        if (p) paths.push(p);
+      });
+      if (paths.length > 0) {
+        await supabase.storage.from('article-assets').remove(paths);
+      }
+    }
+
+    navigate('/articles', { replace: true });
   }
 
   // ─── Scheduled datetime local string ──────────────────────────────────────
