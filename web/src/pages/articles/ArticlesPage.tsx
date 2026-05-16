@@ -111,10 +111,8 @@ export default function ArticlesPage() {
       headerName: 'รูปหน้าปก',
       width: 110,
       sortable: false,
-      align: 'center',
-      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams<Article>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <CoverThumbnail url={params.row.cover_image_url} />
         </Box>
       ),
@@ -142,11 +140,9 @@ export default function ArticlesPage() {
       headerName: 'โดย',
       flex: 0.7,
       minWidth: 130,
-      align: 'center',
-      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams<Article>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-          <Typography variant="body2" color="text.secondary">
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography variant="body2">
             {params.row.created_by ? (staffMap[params.row.created_by] || '—') : '—'}
           </Typography>
         </Box>
@@ -157,10 +153,8 @@ export default function ArticlesPage() {
       headerName: 'สถานะ',
       width: 140,
       sortable: false,
-      align: 'center',
-      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams<Article>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <StatusChip article={params.row} />
         </Box>
       ),
@@ -170,11 +164,9 @@ export default function ArticlesPage() {
       headerName: 'วันเผยแพร่',
       flex: 0.8,
       minWidth: 160,
-      align: 'center',
-      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams<Article>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-          <Typography variant="body2" color="text.secondary">
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography variant="body2">
             {params.row.publish_at ? formatDateTime(params.row.publish_at) : '—'}
           </Typography>
         </Box>
@@ -185,11 +177,9 @@ export default function ArticlesPage() {
       headerName: 'แก้ไขล่าสุด',
       flex: 0.8,
       minWidth: 160,
-      align: 'center',
-      headerAlign: 'center',
       renderCell: (params: GridRenderCellParams<Article>) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-          <Typography variant="body2" color="text.secondary">
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography variant="body2">
             {formatDateTime(params.row.updated_at ?? undefined)}
           </Typography>
         </Box>

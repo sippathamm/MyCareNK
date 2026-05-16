@@ -286,26 +286,13 @@ export default function ArticleEditorPage() {
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>
       {/* Page header */}
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <IconButton onClick={() => navigate('/articles')}>
-            <ArrowBackIcon />
-          </IconButton>
-          <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
-            {isEditMode ? 'แก้ไขบทความ' : 'สร้างบทความใหม่'}
-          </Typography>
-        </Box>
-        {isEditMode && (
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteOutlineIcon />}
-            onClick={() => setDeleteDialogOpen(true)}
-            size="small"
-          >
-            ลบบทความ
-          </Button>
-        )}
+      <Box display="flex" alignItems="center" mb={3}>
+        <IconButton onClick={() => navigate('/articles')}>
+          <ArrowBackIcon />
+        </IconButton>
+        <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
+          {isEditMode ? 'แก้ไขบทความ' : 'สร้างบทความใหม่'}
+        </Typography>
       </Box>
 
       {/* 2-column layout */}
@@ -558,11 +545,6 @@ export default function ArticleEditorPage() {
                   fullWidth
                   disabled={saving}
                   onClick={() => handleSave('publish')}
-                  sx={{
-                    bgcolor: '#FF9F6B',
-                    '&:hover': { bgcolor: '#E07A42' },
-                    fontWeight: 'bold',
-                  }}
                 >
                   {saving ? 'กำลังบันทึก...' : publishButtonLabel}
                 </Button>
@@ -625,6 +607,19 @@ export default function ArticleEditorPage() {
                 }}
               />
             </Paper>
+
+            {/* Delete article */}
+            {isEditMode && (
+              <Button
+                variant="contained"
+                color="error"
+                fullWidth
+                startIcon={<DeleteOutlineIcon />}
+                onClick={() => setDeleteDialogOpen(true)}
+              >
+                ลบบทความ
+              </Button>
+            )}
           </Stack>
         </Box>
       </Box>
