@@ -321,6 +321,8 @@ export default function ArticleEditorPage() {
     setSaving(true);
 
     const isPublish = mode === 'publish';
+    const publishSuccessMsg =
+      publishMode === 'scheduled' ? 'ตั้งเวลาเผยแพร่เรียบร้อยแล้ว' : 'เผยแพร่บทความเรียบร้อยแล้ว';
     const contentPayload = {
       title: title.trim() || 'ไม่มีหัวเรื่อง',
       content_html: editor.getHTML(),
@@ -348,7 +350,7 @@ export default function ArticleEditorPage() {
       } else {
         setIsDirty(false);
         setAutoSaveStatus('idle');
-        showSnackbar(isPublish ? 'เผยแพร่บทความเรียบร้อยแล้ว' : 'บันทึกร่างเรียบร้อยแล้ว', 'success');
+        showSnackbar(isPublish ? publishSuccessMsg : 'บันทึกร่างเรียบร้อยแล้ว', 'success');
       }
     } else {
       // New article: publish_at=null for draft; set it only on explicit publish
@@ -372,7 +374,7 @@ export default function ArticleEditorPage() {
       } else if (data) {
         setIsDirty(false);
         navigate(`/articles/${data.id}/edit`, { replace: true });
-        showSnackbar(isPublish ? 'เผยแพร่บทความเรียบร้อยแล้ว' : 'สร้างบทความเรียบร้อยแล้ว', 'success');
+        showSnackbar(isPublish ? publishSuccessMsg : 'สร้างบทความเรียบร้อยแล้ว', 'success');
       }
     }
 
