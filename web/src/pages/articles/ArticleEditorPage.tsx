@@ -158,6 +158,7 @@ export default function ArticleEditorPage() {
         content_json: currentEditor.getJSON(),
         excerpt,
         cover_image_url: coverUrlRef.current || null,
+        has_draft: true,
       }).eq('id', articleId);
       if (!error) {
         setIsDirty(false);
@@ -323,14 +324,16 @@ export default function ArticleEditorPage() {
 
     const excerpt = editor.getText().slice(0, 150) || null;
 
+    const isPublish = mode === 'publish';
     const payload = {
       title: title.trim() || 'ไม่มีหัวเรื่อง',
       content_html: editor.getHTML(),
       content_json: editor.getJSON(),
       excerpt,
       cover_image_url: coverUrl || null,
+      has_draft: !isPublish,
       publish_at:
-        mode === 'draft'
+        !isPublish
           ? null
           : publishMode === 'immediate'
           ? new Date().toISOString()
@@ -344,7 +347,7 @@ export default function ArticleEditorPage() {
       } else {
         setIsDirty(false);
         setAutoSaveStatus('idle');
-        showSnackbar('บันทึกบทความเรียบร้อยแล้ว', 'success');
+        showSnackbar(isPublish ? 'เผยแพร่บทความเรียบร้อยแล้ว' : 'บันทึกร่างเรียบร้อยแล้ว', 'success');
       }
     } else {
       const userRes = await supabase.auth.getUser();
