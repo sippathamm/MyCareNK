@@ -10,6 +10,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
+import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
+import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
+import FormatAlignRightIcon from '@mui/icons-material/FormatAlignRight';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
@@ -22,7 +25,8 @@ import LinkIcon from '@mui/icons-material/Link';
 import UndoIcon from '@mui/icons-material/Undo';
 import RedoIcon from '@mui/icons-material/Redo';
 import ArticleIcon from '@mui/icons-material/Article';
-import { useEditor, EditorContent } from '@tiptap/react';
+import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Link from '@tiptap/extension-link';
@@ -30,6 +34,48 @@ import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { supabase } from '../../lib/supabase';
+
+// ─── Custom image extension (size + alignment) ────────────────────────────────
+
+type ImageAlign = 'left' | 'center' | 'right';
+
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      imgWidth: {
+        default: '100%',
+        parseHTML: (el) => (el as HTMLImageElement).style.width || '100%',
+        renderHTML: () => ({}),
+      },
+      imgAlign: {
+        default: 'left' as ImageAlign,
+        parseHTML: (el) => (el.getAttribute('data-align') as ImageAlign) || 'left',
+        renderHTML: () => ({}),
+      },
+    };
+  },
+
+  renderHTML({ HTMLAttributes, node }) {
+    const width = (node.attrs.imgWidth as string) ?? '100%';
+    const align = (node.attrs.imgAlign as ImageAlign) ?? 'left';
+    const ml = align === 'left' ? '0' : 'auto';
+    const mr = align === 'right' ? '0' : 'auto';
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { style: _s, ...rest } = HTMLAttributes as Record<string, unknown>;
+    return ['img', mergeAttributes(rest as Record<string, unknown>, {
+      style: `width:${width};display:block;margin-left:${ml};margin-right:${mr}`,
+      'data-align': align,
+    })];
+  },
+});
+
+const IMAGE_SIZES = [
+  { width: '25%',  label: 'S',  tooltip: 'เล็ก' },
+  { width: '50%',  label: 'M',  tooltip: 'ปานกลาง' },
+  { width: '75%',  label: 'L',  tooltip: 'ใหญ่' },
+  { width: '100%', label: 'XL', tooltip: 'ต้นฉบับ' },
+] as const;
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -96,7 +142,7 @@ export default function ArticleEditorPage() {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Image,
+      CustomImage,
       Link.configure({ openOnClick: false }),
       Youtube.configure({ width: 640, height: 360, nocookie: true }),
       Placeholder.configure({ placeholder: 'เริ่มเขียนบทความ...' }),
@@ -855,6 +901,48 @@ export default function ArticleEditorPage() {
           </Stack>
         </Box>
       </Box>
+
+      {/* Image bubble menu */}
+      {editor && (
+        <BubbleMenu
+          editor={editor}
+          shouldShow={({ editor: e }) => e.isActive('image')}
+          tippyOptions={{ duration: 100, placement: 'bottom' }}
+        >
+          <Paper elevation={4} sx={{ px: 0.5, py: 0.25, display: 'flex', alignItems: 'center', gap: 0.25, borderRadius: 1 }}>
+            {IMAGE_SIZES.map(({ width, label, tooltip }) => (
+              <Tooltip key={width} title={tooltip}>
+                <IconButton
+                  size="small"
+                  onClick={() => editor.chain().focus().updateAttributes('image', { imgWidth: width }).run()}
+                  sx={{
+                    fontSize: 11, fontWeight: 700, minWidth: 28,
+                    color: (editor.getAttributes('image').imgWidth ?? '100%') === width ? 'primary.main' : 'text.secondary',
+                  }}
+                >
+                  {label}
+                </IconButton>
+              </Tooltip>
+            ))}
+            <Divider orientation="vertical" flexItem />
+            {([
+              { align: 'left'   as const, icon: <FormatAlignLeftIcon fontSize="small" />,   tooltip: 'ซ้าย' },
+              { align: 'center' as const, icon: <FormatAlignCenterIcon fontSize="small" />, tooltip: 'กลาง' },
+              { align: 'right'  as const, icon: <FormatAlignRightIcon fontSize="small" />,  tooltip: 'ขวา' },
+            ]).map(({ align, icon, tooltip }) => (
+              <Tooltip key={align} title={tooltip}>
+                <IconButton
+                  size="small"
+                  onClick={() => editor.chain().focus().updateAttributes('image', { imgAlign: align }).run()}
+                  sx={{ color: (editor.getAttributes('image').imgAlign ?? 'left') === align ? 'primary.main' : 'text.secondary' }}
+                >
+                  {icon}
+                </IconButton>
+              </Tooltip>
+            ))}
+          </Paper>
+        </BubbleMenu>
+      )}
 
       {/* Video dialog */}
       <Dialog open={videoDialogOpen} onClose={() => setVideoDialogOpen(false)} maxWidth="sm" fullWidth>
