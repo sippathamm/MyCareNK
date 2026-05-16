@@ -196,6 +196,12 @@ export default function ArticleEditorPage() {
     return filename.split('.').pop() ?? 'jpg';
   }
 
+  function generateId(): string {
+    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
   // ─── Navigation with dirty check ──────────────────────────────────────────
 
   function handleBackClick() {
@@ -225,7 +231,7 @@ export default function ArticleEditorPage() {
     setUploadingImage(true);
     try {
       const ext = getFileExtension(file.name);
-      const path = `content/${crypto.randomUUID()}.${ext}`;
+      const path = `content/${generateId()}.${ext}`;
       const { error } = await supabase.storage.from('article-assets').upload(path, file, {
         cacheControl: '3600',
         upsert: false,
@@ -244,7 +250,7 @@ export default function ArticleEditorPage() {
     setUploadingCover(true);
     try {
       const ext = getFileExtension(file.name);
-      const path = `cover/${crypto.randomUUID()}.${ext}`;
+      const path = `cover/${generateId()}.${ext}`;
       const { error } = await supabase.storage.from('article-assets').upload(path, file, {
         cacheControl: '3600',
         upsert: false,
