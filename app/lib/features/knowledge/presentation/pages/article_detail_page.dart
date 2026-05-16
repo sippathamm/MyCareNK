@@ -37,6 +37,13 @@ class _YouTubeChunk extends _Chunk {
   _YouTubeChunk(this.videoId);
 }
 
+class _ImageChunk extends _Chunk {
+  final String src;
+  final double widthFraction; // 0.0–1.0, relative to available width
+  final String align; // 'left' | 'center' | 'right'
+  _ImageChunk({required this.src, required this.widthFraction, required this.align});
+}
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 class ArticleDetailPage extends StatefulWidget {
@@ -137,34 +144,49 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     return null;
   }
 
-  // Split html into Html chunks and YouTube chunks.
-  // Also captures the optional <div data-youtube-video> wrapper.
+  // Split html into HtmlChunks, YouTubeChunks, and ImageChunks.
   static List<_Chunk> _parseChunks(String html) {
     final chunks = <_Chunk>[];
-    // Match optional wrapper div + iframe with any YouTube src + optional closing tags
     final re = RegExp(
-      r'(?:<div[^>]*data-youtube-video[^>]*>\s*)?'
+      // Group 1: YouTube iframe (with optional wrapper div)
+      r'(?:(?:<div[^>]*data-youtube-video[^>]*>\s*)?'
       r'<iframe[^>]+\bsrc="([^"]*(?:youtube(?:-nocookie)?\.com|youtu\.be)[^"]*)"[^>]*>'
       r'(?:.*?</iframe>)?'
-      r'(?:\s*</div>)?',
+      r'(?:\s*</div>)?)'
+      r'|'
+      // Group 2: Standalone img with data-align (block-level images from editor)
+      r'(<img\b[^>]*\bdata-align="[^"]*"[^>]*>)',
       caseSensitive: false,
       dotAll: true,
     );
     int lastEnd = 0;
     for (final m in re.allMatches(html)) {
-      final src = m.group(1) ?? '';
-      final videoId = _youTubeId(src);
-      if (videoId == null) continue; // not a YouTube iframe — leave in HTML
-      if (m.start > lastEnd) {
-        chunks.add(_HtmlChunk(html.substring(lastEnd, m.start)));
+      if (m.group(1) != null) {
+        final videoId = _youTubeId(m.group(1)!);
+        if (videoId == null) continue;
+        if (m.start > lastEnd) chunks.add(_HtmlChunk(html.substring(lastEnd, m.start)));
+        chunks.add(_YouTubeChunk(videoId));
+        lastEnd = m.end;
+      } else if (m.group(2) != null) {
+        final imgChunk = _parseImageChunk(m.group(2)!);
+        if (imgChunk == null) continue;
+        if (m.start > lastEnd) chunks.add(_HtmlChunk(html.substring(lastEnd, m.start)));
+        chunks.add(imgChunk);
+        lastEnd = m.end;
       }
-      chunks.add(_YouTubeChunk(videoId));
-      lastEnd = m.end;
     }
-    if (lastEnd < html.length) {
-      chunks.add(_HtmlChunk(html.substring(lastEnd)));
-    }
+    if (lastEnd < html.length) chunks.add(_HtmlChunk(html.substring(lastEnd)));
     return chunks;
+  }
+
+  static _ImageChunk? _parseImageChunk(String imgTag) {
+    final src = RegExp(r'\bsrc="([^"]*)"').firstMatch(imgTag)?.group(1);
+    if (src == null || src.isEmpty) return null;
+    final style = RegExp(r'\bstyle="([^"]*)"').firstMatch(imgTag)?.group(1) ?? '';
+    final widthStr = RegExp(r'width:\s*([\d.]+)%').firstMatch(style)?.group(1);
+    final widthFraction = widthStr != null ? double.parse(widthStr) / 100.0 : 1.0;
+    final align = RegExp(r'\bdata-align="([^"]*)"').firstMatch(imgTag)?.group(1) ?? 'left';
+    return _ImageChunk(src: src, widthFraction: widthFraction, align: align);
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────
@@ -340,6 +362,9 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                   ...chunks.map((chunk) {
                     if (chunk is _YouTubeChunk) {
                       return _YouTubeThumbnail(videoId: chunk.videoId);
+                    }
+                    if (chunk is _ImageChunk) {
+                      return _ImageWidget(chunk: chunk);
                     }
                     return _HtmlBody(html: (chunk as _HtmlChunk).html);
                   }),
@@ -537,6 +562,40 @@ class _YouTubeThumbnail extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+// ─── Sized + aligned image ────────────────────────────────────────────────────
+
+class _ImageWidget extends StatelessWidget {
+  final _ImageChunk chunk;
+
+  const _ImageWidget({required this.chunk});
+
+  @override
+  Widget build(BuildContext context) {
+    final alignment = switch (chunk.align) {
+      'center' => Alignment.center,
+      'right'  => Alignment.centerRight,
+      _        => Alignment.centerLeft,
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth * chunk.widthFraction;
+          return Align(
+            alignment: alignment,
+            child: Image.network(
+              chunk.src,
+              width: width,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          );
+        },
       ),
     );
   }
