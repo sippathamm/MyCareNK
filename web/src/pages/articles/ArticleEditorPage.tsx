@@ -4,10 +4,11 @@ import {
   Box, Typography, Paper, Button, IconButton, Tooltip,
   Stack, TextField, Divider, RadioGroup, FormControlLabel, Radio,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
-  Snackbar, Alert,
+  Snackbar, Alert, LinearProgress, CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
@@ -38,6 +39,8 @@ interface SnackbarState {
   severity: 'success' | 'error';
 }
 
+type AutoSaveStatus = 'idle' | 'saving' | 'saved';
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ArticleEditorPage() {
@@ -54,6 +57,11 @@ export default function ArticleEditorPage() {
   const [saving, setSaving] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
 
+  const [isDirty, setIsDirty] = useState(false);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
+  const [uploadingCover, setUploadingCover] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+
   // ─── Dialog state ──────────────────────────────────────────────────────────
 
   const [videoDialogOpen, setVideoDialogOpen] = useState(false);
@@ -62,14 +70,14 @@ export default function ArticleEditorPage() {
   const [linkUrl, setLinkUrl] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [exitDialogOpen, setExitDialogOpen] = useState(false);
+  const [exitSaving, setExitSaving] = useState(false);
 
-  // ─── Auto-save ─────────────────────────────────────────────────────────────
+  // ─── Refs ──────────────────────────────────────────────────────────────────
 
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSaveStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoad = useRef(true);
-
-  // ─── File input refs ───────────────────────────────────────────────────────
-
   const imageInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
@@ -86,7 +94,9 @@ export default function ArticleEditorPage() {
     ],
     content: '',
     onUpdate: () => {
-      if (isInitialLoad.current || !isEditMode) return;
+      if (isInitialLoad.current) return;
+      setIsDirty(true);
+      if (!articleId) return;
       scheduleAutoSave();
     },
   });
@@ -94,11 +104,15 @@ export default function ArticleEditorPage() {
   // ─── Load existing article ─────────────────────────────────────────────────
 
   useEffect(() => {
-    if (!articleId || !editor) return;
+    if (!isEditMode) {
+      setTimeout(() => { isInitialLoad.current = false; }, 100);
+      return;
+    }
+    if (!editor) return;
     supabase
       .from('articles')
       .select('*')
-      .eq('id', articleId)
+      .eq('id', articleId!)
       .single()
       .then(({ data, error }) => {
         if (error || !data) return;
@@ -116,7 +130,7 @@ export default function ArticleEditorPage() {
         editor.commands.setContent(data.content_json as object);
         setTimeout(() => { isInitialLoad.current = false; }, 300);
       });
-  }, [articleId, editor]);
+  }, [articleId, isEditMode, editor]);
 
   // ─── Auto-save logic ───────────────────────────────────────────────────────
 
@@ -124,6 +138,7 @@ export default function ArticleEditorPage() {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     autoSaveTimer.current = setTimeout(async () => {
       if (!editor || !articleId) return;
+      setAutoSaveStatus('saving');
       const excerpt = editor.getText().slice(0, 150) || null;
       await supabase.from('articles').update({
         title: title.trim() || 'ไม่มีหัวเรื่อง',
@@ -132,6 +147,10 @@ export default function ArticleEditorPage() {
         excerpt,
         cover_image_url: coverUrl || null,
       }).eq('id', articleId);
+      setIsDirty(false);
+      setAutoSaveStatus('saved');
+      if (autoSaveStatusTimer.current) clearTimeout(autoSaveStatusTimer.current);
+      autoSaveStatusTimer.current = setTimeout(() => setAutoSaveStatus('idle'), 3000);
     }, 2000);
   }, [editor, articleId, title, coverUrl]);
 
@@ -141,7 +160,10 @@ export default function ArticleEditorPage() {
   }, [title, scheduleAutoSave, isEditMode]);
 
   useEffect(() => {
-    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      if (autoSaveStatusTimer.current) clearTimeout(autoSaveStatusTimer.current);
+    };
   }, []);
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -154,30 +176,58 @@ export default function ArticleEditorPage() {
     return filename.split('.').pop() ?? 'jpg';
   }
 
+  // ─── Navigation with dirty check ──────────────────────────────────────────
+
+  function handleBackClick() {
+    if (isDirty) {
+      setExitDialogOpen(true);
+    } else {
+      navigate('/articles');
+    }
+  }
+
+  async function handleExitSaveDraft() {
+    setExitSaving(true);
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    await handleSave('draft');
+    setExitSaving(false);
+    navigate('/articles');
+  }
+
+  function handleExitDiscard() {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    navigate('/articles');
+  }
+
   // ─── Image upload ──────────────────────────────────────────────────────────
 
   async function handleImageFileChange(file: File) {
+    setUploadingImage(true);
     const ext = getFileExtension(file.name);
     const path = `content/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from('article-assets').upload(path, file, {
       cacheControl: '3600',
       upsert: false,
     });
+    setUploadingImage(false);
     if (error) { showSnackbar(`อัปโหลดรูปไม่สำเร็จ: ${error.message}`, 'error'); return; }
     const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
     editor?.chain().focus().setImage({ src: publicUrl }).run();
   }
 
   async function handleCoverFileChange(file: File) {
+    setUploadingCover(true);
     const ext = getFileExtension(file.name);
     const path = `cover/${crypto.randomUUID()}.${ext}`;
     const { error } = await supabase.storage.from('article-assets').upload(path, file, {
       cacheControl: '3600',
       upsert: false,
     });
+    setUploadingCover(false);
     if (error) { showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${error.message}`, 'error'); return; }
     const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
     setCoverUrl(publicUrl);
+    if (!isInitialLoad.current) setIsDirty(true);
   }
 
   // ─── Video insert ──────────────────────────────────────────────────────────
@@ -233,6 +283,8 @@ export default function ArticleEditorPage() {
       if (error) {
         showSnackbar(`บันทึกไม่สำเร็จ: ${error.message}`, 'error');
       } else {
+        setIsDirty(false);
+        setAutoSaveStatus('idle');
         showSnackbar('บันทึกบทความเรียบร้อยแล้ว', 'success');
       }
     } else {
@@ -245,6 +297,7 @@ export default function ArticleEditorPage() {
       if (error) {
         showSnackbar(`สร้างบทความไม่สำเร็จ: ${error.message}`, 'error');
       } else if (data) {
+        setIsDirty(false);
         navigate(`/articles/${data.id}/edit`, { replace: true });
         showSnackbar('สร้างบทความเรียบร้อยแล้ว', 'success');
       }
@@ -287,7 +340,7 @@ export default function ArticleEditorPage() {
     <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>
       {/* Page header */}
       <Box display="flex" alignItems="center" mb={3}>
-        <IconButton onClick={() => navigate('/articles')}>
+        <IconButton onClick={handleBackClick}>
           <ArrowBackIcon />
         </IconButton>
         <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
@@ -305,7 +358,10 @@ export default function ArticleEditorPage() {
             placeholder="หัวเรื่อง"
             variant="standard"
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={e => {
+              setTitle(e.target.value);
+              if (!isInitialLoad.current) setIsDirty(true);
+            }}
             slotProps={{
               input: { disableUnderline: true },
               htmlInput: { style: { fontSize: 28, fontWeight: 700 } },
@@ -430,9 +486,17 @@ export default function ArticleEditorPage() {
 
             {/* Insert image */}
             <Tooltip title="แทรกรูปภาพ">
-              <IconButton size="small" onClick={() => imageInputRef.current?.click()}>
-                <ImageIcon fontSize="small" />
-              </IconButton>
+              <span>
+                <IconButton
+                  size="small"
+                  onClick={() => imageInputRef.current?.click()}
+                  disabled={uploadingImage}
+                >
+                  {uploadingImage
+                    ? <CircularProgress size={16} />
+                    : <ImageIcon fontSize="small" />}
+                </IconButton>
+              </span>
             </Tooltip>
             <input
               ref={imageInputRef}
@@ -480,6 +544,14 @@ export default function ArticleEditorPage() {
               </IconButton>
             </Tooltip>
           </Stack>
+
+          {/* Uploading image indicator */}
+          {uploadingImage && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              <CircularProgress size={12} />
+              <Typography variant="caption" color="text.secondary">กำลังอัปโหลดรูปภาพ...</Typography>
+            </Box>
+          )}
 
           {/* Editor content */}
           <Box
@@ -539,6 +611,23 @@ export default function ArticleEditorPage() {
                 />
               )}
 
+              {/* Auto-save status */}
+              {isEditMode && autoSaveStatus !== 'idle' && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5 }}>
+                  {autoSaveStatus === 'saving' ? (
+                    <>
+                      <CircularProgress size={12} />
+                      <Typography variant="caption" color="text.secondary">กำลังบันทึกอัตโนมัติ...</Typography>
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircleOutlineIcon sx={{ fontSize: 14, color: 'success.main' }} />
+                      <Typography variant="caption" color="success.main">บันทึกอัตโนมัติแล้ว</Typography>
+                    </>
+                  )}
+                </Box>
+              )}
+
               <Stack spacing={1.5} sx={{ mt: 2 }}>
                 <Button
                   variant="contained"
@@ -591,10 +680,14 @@ export default function ArticleEditorPage() {
               <Button
                 variant="outlined"
                 fullWidth
+                disabled={uploadingCover}
                 onClick={() => coverInputRef.current?.click()}
               >
-                อัปโหลดรูปหน้าปก
+                {uploadingCover ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปหน้าปก'}
               </Button>
+              {uploadingCover && (
+                <LinearProgress sx={{ mt: 1, borderRadius: 1 }} />
+              )}
               <input
                 ref={coverInputRef}
                 type="file"
@@ -640,10 +733,7 @@ export default function ArticleEditorPage() {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => { setVideoUrl(''); setVideoDialogOpen(false); }}>ยกเลิก</Button>
-          <Button variant="contained" onClick={handleVideoConfirm}
-            sx={{ bgcolor: '#FF9F6B', '&:hover': { bgcolor: '#E07A42' } }}>
-            แทรก
-          </Button>
+          <Button variant="contained" onClick={handleVideoConfirm}>แทรก</Button>
         </DialogActions>
       </Dialog>
 
@@ -664,10 +754,7 @@ export default function ArticleEditorPage() {
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => { setLinkUrl(''); setLinkDialogOpen(false); }}>ยกเลิก</Button>
-          <Button variant="contained" onClick={handleLinkConfirm}
-            sx={{ bgcolor: '#FF9F6B', '&:hover': { bgcolor: '#E07A42' } }}>
-            แทรก
-          </Button>
+          <Button variant="contained" onClick={handleLinkConfirm}>แทรก</Button>
         </DialogActions>
       </Dialog>
 
@@ -684,6 +771,28 @@ export default function ArticleEditorPage() {
           <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>ยกเลิก</Button>
           <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
             {deleting ? 'กำลังลบ...' : 'ลบบทความ'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Exit dialog */}
+      <Dialog open={exitDialogOpen} onClose={() => !exitSaving && setExitDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle fontWeight="bold">ออกจากบทความ</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการบันทึกร่างก่อนออกหรือไม่?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={handleExitDiscard} disabled={exitSaving} color="error">
+            ละทิ้ง
+          </Button>
+          <Box sx={{ flex: 1 }} />
+          <Button onClick={() => setExitDialogOpen(false)} disabled={exitSaving}>
+            อยู่ต่อ
+          </Button>
+          <Button variant="contained" onClick={handleExitSaveDraft} disabled={exitSaving}>
+            {exitSaving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
           </Button>
         </DialogActions>
       </Dialog>
