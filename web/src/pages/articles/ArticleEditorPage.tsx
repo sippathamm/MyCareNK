@@ -1,12 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Typography, Paper, Button, IconButton, Tooltip,
   Stack, TextField, Divider, RadioGroup, FormControlLabel, Radio,
-  Dialog, DialogTitle, DialogContent, DialogActions,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Snackbar, Alert,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatItalicIcon from '@mui/icons-material/FormatItalic';
 import StrikethroughSIcon from '@mui/icons-material/StrikethroughS';
@@ -47,7 +48,6 @@ export default function ArticleEditorPage() {
   // ─── State ─────────────────────────────────────────────────────────────────
 
   const [title, setTitle] = useState('');
-  const [excerpt, setExcerpt] = useState('');
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [publishMode, setPublishMode] = useState<'immediate' | 'scheduled'>('immediate');
   const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
@@ -60,6 +60,13 @@ export default function ArticleEditorPage() {
   const [videoUrl, setVideoUrl] = useState('');
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
+  // ─── Auto-save ─────────────────────────────────────────────────────────────
+
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitialLoad = useRef(true);
 
   // ─── File input refs ───────────────────────────────────────────────────────
 
@@ -78,6 +85,10 @@ export default function ArticleEditorPage() {
       CharacterCount,
     ],
     content: '',
+    onUpdate: () => {
+      if (isInitialLoad.current || !isEditMode) return;
+      scheduleAutoSave();
+    },
   });
 
   // ─── Load existing article ─────────────────────────────────────────────────
@@ -92,7 +103,6 @@ export default function ArticleEditorPage() {
       .then(({ data, error }) => {
         if (error || !data) return;
         setTitle(data.title);
-        setExcerpt(data.excerpt ?? '');
         setCoverUrl(data.cover_image_url);
         if (data.publish_at) {
           const d = new Date(data.publish_at);
@@ -104,8 +114,35 @@ export default function ArticleEditorPage() {
           }
         }
         editor.commands.setContent(data.content_json as object);
+        setTimeout(() => { isInitialLoad.current = false; }, 300);
       });
   }, [articleId, editor]);
+
+  // ─── Auto-save logic ───────────────────────────────────────────────────────
+
+  const scheduleAutoSave = useCallback(() => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    autoSaveTimer.current = setTimeout(async () => {
+      if (!editor || !articleId) return;
+      const excerpt = editor.getText().slice(0, 150) || null;
+      await supabase.from('articles').update({
+        title: title.trim() || 'ไม่มีหัวเรื่อง',
+        content_html: editor.getHTML(),
+        content_json: editor.getJSON(),
+        excerpt,
+        cover_image_url: coverUrl || null,
+      }).eq('id', articleId);
+    }, 2000);
+  }, [editor, articleId, title, coverUrl]);
+
+  useEffect(() => {
+    if (isInitialLoad.current || !isEditMode) return;
+    scheduleAutoSave();
+  }, [title, scheduleAutoSave, isEditMode]);
+
+  useEffect(() => {
+    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
+  }, []);
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
 
@@ -121,8 +158,11 @@ export default function ArticleEditorPage() {
 
   async function handleImageFileChange(file: File) {
     const ext = getFileExtension(file.name);
-    const path = `${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('article-assets').upload(path, file);
+    const path = `content/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('article-assets').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
     if (error) { showSnackbar(`อัปโหลดรูปไม่สำเร็จ: ${error.message}`, 'error'); return; }
     const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
     editor?.chain().focus().setImage({ src: publicUrl }).run();
@@ -130,8 +170,11 @@ export default function ArticleEditorPage() {
 
   async function handleCoverFileChange(file: File) {
     const ext = getFileExtension(file.name);
-    const path = `cover-${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from('article-assets').upload(path, file);
+    const path = `cover/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from('article-assets').upload(path, file, {
+      cacheControl: '3600',
+      upsert: false,
+    });
     if (error) { showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${error.message}`, 'error'); return; }
     const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
     setCoverUrl(publicUrl);
@@ -166,13 +209,16 @@ export default function ArticleEditorPage() {
 
   async function handleSave(mode: 'draft' | 'publish') {
     if (!editor) return;
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     setSaving(true);
+
+    const excerpt = editor.getText().slice(0, 150) || null;
 
     const payload = {
       title: title.trim() || 'ไม่มีหัวเรื่อง',
       content_html: editor.getHTML(),
       content_json: editor.getJSON(),
-      excerpt: excerpt || null,
+      excerpt,
       cover_image_url: coverUrl || null,
       publish_at:
         mode === 'draft'
@@ -207,6 +253,21 @@ export default function ArticleEditorPage() {
     setSaving(false);
   }
 
+  // ─── Delete ────────────────────────────────────────────────────────────────
+
+  async function handleDelete() {
+    if (!articleId) return;
+    setDeleting(true);
+    const { error } = await supabase.from('articles').delete().eq('id', articleId);
+    setDeleting(false);
+    if (error) {
+      setDeleteDialogOpen(false);
+      showSnackbar(`ลบไม่สำเร็จ: ${error.message}`, 'error');
+    } else {
+      navigate('/articles', { replace: true });
+    }
+  }
+
   // ─── Scheduled datetime local string ──────────────────────────────────────
 
   function toDatetimeLocalString(date: Date | null): string {
@@ -218,6 +279,8 @@ export default function ArticleEditorPage() {
     );
   }
 
+  const publishButtonLabel = publishMode === 'scheduled' ? 'เผยแพร่ภายหลัง' : 'เผยแพร่';
+
   // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -228,16 +291,27 @@ export default function ArticleEditorPage() {
           <IconButton onClick={() => navigate('/articles')}>
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" fontWeight="bold">
+          <Typography variant="subtitle1" fontWeight={600} color="text.secondary">
             {isEditMode ? 'แก้ไขบทความ' : 'สร้างบทความใหม่'}
           </Typography>
         </Box>
+        {isEditMode && (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<DeleteOutlineIcon />}
+            onClick={() => setDeleteDialogOpen(true)}
+            size="small"
+          >
+            ลบบทความ
+          </Button>
+        )}
       </Box>
 
       {/* 2-column layout */}
       <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
         {/* ── Left column ───────────────────────────────────────────── */}
-        <Box sx={{ flex: 2, minWidth: 0 }}>
+        <Paper elevation={1} sx={{ flex: 2, minWidth: 0, p: 3, borderRadius: 2 }}>
           {/* Title */}
           <TextField
             fullWidth
@@ -447,7 +521,7 @@ export default function ArticleEditorPage() {
           >
             <EditorContent editor={editor} />
           </Box>
-        </Box>
+        </Paper>
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
         <Box sx={{ width: 320, flexShrink: 0 }}>
@@ -480,21 +554,25 @@ export default function ArticleEditorPage() {
 
               <Stack spacing={1.5} sx={{ mt: 2 }}>
                 <Button
+                  variant="contained"
+                  fullWidth
+                  disabled={saving}
+                  onClick={() => handleSave('publish')}
+                  sx={{
+                    bgcolor: '#FF9F6B',
+                    '&:hover': { bgcolor: '#E07A42' },
+                    fontWeight: 'bold',
+                  }}
+                >
+                  {saving ? 'กำลังบันทึก...' : publishButtonLabel}
+                </Button>
+                <Button
                   variant="outlined"
                   fullWidth
                   disabled={saving}
                   onClick={() => handleSave('draft')}
                 >
                   บันทึกร่าง
-                </Button>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={saving}
-                  onClick={() => handleSave('publish')}
-                  sx={{ bgcolor: '#FF9F6B', '&:hover': { bgcolor: '#E07A42' } }}
-                >
-                  เผยแพร่
                 </Button>
               </Stack>
             </Paper>
@@ -547,26 +625,6 @@ export default function ArticleEditorPage() {
                 }}
               />
             </Paper>
-
-            {/* Excerpt */}
-            <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
-              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                สรุปบทความ
-              </Typography>
-              <TextField
-                multiline
-                rows={3}
-                fullWidth
-                size="small"
-                placeholder="สรุปเนื้อหาบทความ..."
-                value={excerpt}
-                onChange={e => setExcerpt(e.target.value)}
-                slotProps={{ htmlInput: { maxLength: 200 } }}
-              />
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block', textAlign: 'right' }}>
-                {excerpt.length}/200
-              </Typography>
-            </Paper>
           </Stack>
         </Box>
       </Box>
@@ -618,6 +676,23 @@ export default function ArticleEditorPage() {
         </DialogActions>
       </Dialog>
 
+      {/* Delete dialog */}
+      <Dialog open={deleteDialogOpen} onClose={() => !deleting && setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle fontWeight="bold">ยืนยันการลบบทความ</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            คุณต้องการลบบทความ <strong>"{title || 'ไม่มีหัวเรื่อง'}"</strong> ใช่หรือไม่?
+            การกระทำนี้ไม่สามารถย้อนกลับได้
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>ยกเลิก</Button>
+          <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
+            {deleting ? 'กำลังลบ...' : 'ลบบทความ'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Snackbar */}
       <Snackbar
         open={snackbar.open}
@@ -625,7 +700,11 @@ export default function ArticleEditorPage() {
         onClose={() => setSnackbar(s => ({ ...s, open: false }))}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert severity={snackbar.severity} onClose={() => setSnackbar(s => ({ ...s, open: false }))}>
+        <Alert
+          severity={snackbar.severity}
+          variant="filled"
+          onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        >
           {snackbar.message}
         </Alert>
       </Snackbar>
