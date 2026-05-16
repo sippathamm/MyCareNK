@@ -450,7 +450,7 @@ export default function ArticleEditorPage() {
             <input
               ref={imageInputRef}
               type="file"
-              accept="image/*"
+              accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/avif,image/bmp,image/tiff,image/svg+xml"
               style={{ display: 'none' }}
               onChange={e => {
                 const file = e.target.files?.[0];
@@ -616,7 +616,7 @@ export default function ArticleEditorPage() {
               <input
                 ref={coverInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/avif,image/bmp,image/tiff"
                 style={{ display: 'none' }}
                 onChange={e => {
                   const file = e.target.files?.[0];
