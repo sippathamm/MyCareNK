@@ -248,7 +248,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
               child: Text(
                 article.title,
                 style: GoogleFonts.googleSans(
-                  fontSize: 16,
+                  fontSize: 18,
                   fontWeight: FontWeight.bold,
                   color: AppColors.textPrimary,
                 ),
