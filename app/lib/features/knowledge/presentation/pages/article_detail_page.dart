@@ -12,12 +12,14 @@ class _Article {
   final String? coverImageUrl;
   final String? contentHtml;
   final String? publishAt;
+  final String? createdByName;
 
   const _Article({
     required this.title,
     this.coverImageUrl,
     this.contentHtml,
     this.publishAt,
+    this.createdByName,
   });
 }
 
@@ -65,16 +67,34 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     try {
       final data = await Supabase.instance.client
           .from('articles')
-          .select('title, cover_image_url, content_html, publish_at')
+          .select('title, cover_image_url, content_html, publish_at, created_by')
           .eq('id', widget.articleId)
           .single();
       if (!mounted) return;
+
+      String? createdByName;
+      final createdBy = data['created_by'] as String?;
+      if (createdBy != null) {
+        final staff = await Supabase.instance.client
+            .from('staff_profiles')
+            .select('first_name, last_name')
+            .eq('staff_user_id', createdBy)
+            .maybeSingle();
+        if (staff != null) {
+          final name =
+              '${staff['first_name'] ?? ''} ${staff['last_name'] ?? ''}'.trim();
+          if (name.isNotEmpty) createdByName = name;
+        }
+      }
+      if (!mounted) return;
+
       setState(() {
         _article = _Article(
           title: data['title'] as String,
           coverImageUrl: data['cover_image_url'] as String?,
           contentHtml: data['content_html'] as String?,
           publishAt: data['publish_at'] as String?,
+          createdByName: createdByName,
         );
         _loading = false;
       });
@@ -87,30 +107,56 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     }
   }
 
-  static String _formatDate(String isoDate) {
+  static String _formatDateTime(String isoDate) {
     final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
     const months = [
       '',
       'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
       'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
     ];
-    return '${dt.day} ${months[dt.month]} ${dt.year + 543}';
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '${dt.day} ${months[dt.month]} ${dt.year + 543} $h:$m น.';
+  }
+
+  // Extract YouTube video ID from any common URL format.
+  static String? _youTubeId(String src) {
+    // youtube.com/embed/ID or youtube-nocookie.com/embed/ID
+    var m = RegExp(r'youtube(?:-nocookie)?\.com/embed/([a-zA-Z0-9_-]+)')
+        .firstMatch(src);
+    if (m != null) return m.group(1);
+    // youtube.com/watch?v=ID
+    m = RegExp(r'youtube\.com/watch\?[^"]*[?&]v=([a-zA-Z0-9_-]+)')
+        .firstMatch(src);
+    if (m != null) return m.group(1);
+    // youtu.be/ID
+    m = RegExp(r'youtu\.be/([a-zA-Z0-9_-]+)').firstMatch(src);
+    if (m != null) return m.group(1);
+    return null;
   }
 
   // Split html into Html chunks and YouTube chunks.
+  // Also captures the optional <div data-youtube-video> wrapper.
   static List<_Chunk> _parseChunks(String html) {
     final chunks = <_Chunk>[];
+    // Match optional wrapper div + iframe with any YouTube src + optional closing tags
     final re = RegExp(
-      r'<iframe[^>]+src="[^"]*(?:youtube\.com/embed/|youtu\.be/)([a-zA-Z0-9_-]+)[^"]*"[^>]*>(?:.*?</iframe>)?',
+      r'(?:<div[^>]*data-youtube-video[^>]*>\s*)?'
+      r'<iframe[^>]+\bsrc="([^"]*(?:youtube(?:-nocookie)?\.com|youtu\.be)[^"]*)"[^>]*>'
+      r'(?:.*?</iframe>)?'
+      r'(?:\s*</div>)?',
       caseSensitive: false,
       dotAll: true,
     );
     int lastEnd = 0;
     for (final m in re.allMatches(html)) {
+      final src = m.group(1) ?? '';
+      final videoId = _youTubeId(src);
+      if (videoId == null) continue; // not a YouTube iframe — leave in HTML
       if (m.start > lastEnd) {
         chunks.add(_HtmlChunk(html.substring(lastEnd, m.start)));
       }
-      chunks.add(_YouTubeChunk(m.group(1)!));
+      chunks.add(_YouTubeChunk(videoId));
       lastEnd = m.end;
     }
     if (lastEnd < html.length) {
@@ -242,14 +288,36 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  if (article.publishAt != null)
-                    Text(
-                      _formatDate(article.publishAt!),
-                      style: GoogleFonts.googleSans(
-                        fontSize: 12,
-                        color: AppColors.textMuted,
-                      ),
+                  if (article.createdByName != null)
+                    Row(
+                      children: [
+                        const Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
+                        const SizedBox(width: 4),
+                        Text(
+                          article.createdByName!,
+                          style: GoogleFonts.googleSans(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
                     ),
+                  if (article.publishAt != null) ...[
+                    if (article.createdByName != null) const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
+                        const SizedBox(width: 4),
+                        Text(
+                          _formatDateTime(article.publishAt!),
+                          style: GoogleFonts.googleSans(
+                            fontSize: 12,
+                            color: AppColors.textMuted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   ...chunks.map((chunk) {
                     if (chunk is _YouTubeChunk) {
@@ -336,25 +404,34 @@ class _HtmlBody extends StatelessWidget {
           margin: Margins.zero,
           padding: HtmlPaddings.zero,
         ),
+        'p': Style(
+          margin: Margins.only(top: 0, bottom: 8),
+          padding: HtmlPaddings.zero,
+        ),
+        'div': Style(
+          margin: Margins.zero,
+          padding: HtmlPaddings.zero,
+        ),
+        'hr': Style(
+          margin: Margins.symmetric(vertical: 8),
+        ),
         'h1': Style(
           fontSize: FontSize(22),
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
+          margin: Margins.only(top: 16, bottom: 8),
         ),
         'h2': Style(
           fontSize: FontSize(18),
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
+          margin: Margins.only(top: 14, bottom: 6),
         ),
         'h3': Style(
           fontSize: FontSize(16),
           fontWeight: FontWeight.bold,
           color: AppColors.textPrimary,
-        ),
-        'p': Style(
-          fontSize: FontSize(15),
-          lineHeight: LineHeight(1.6),
-          color: AppColors.textPrimary,
+          margin: Margins.only(top: 12, bottom: 4),
         ),
         'a': Style(color: AppColors.primary),
         'blockquote': Style(
