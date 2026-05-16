@@ -171,7 +171,7 @@ export default function ArticlesPage() {
     },
     {
       field: 'publish_at',
-      headerName: 'เผยแพร่ล่าสุด',
+      headerName: 'วันที่เผยแพร่',
       flex: 0.8,
       minWidth: 160,
       renderCell: (params: GridRenderCellParams<Article>) => (
