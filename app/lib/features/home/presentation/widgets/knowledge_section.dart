@@ -119,11 +119,11 @@ class _KnowledgeSectionState extends State<KnowledgeSection> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 180,
+          height: 192,
           child: _loading
               ? _ShimmerList()
               : ListView.separated(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  padding: const EdgeInsets.fromLTRB(24.0, 4.0, 24.0, 8.0),
                   scrollDirection: Axis.horizontal,
                   itemCount: _articles.length,
                   separatorBuilder: (context, index) => const SizedBox(width: 16),
