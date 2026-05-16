@@ -73,7 +73,7 @@ export default function ArticleEditorPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [exitDialogOpen, setExitDialogOpen] = useState(false);
-  const [exitSaving, setExitSaving] = useState(false);
+  const [exitSaveMode, setExitSaveMode] = useState<'draft' | 'publish' | null>(null);
 
   // ─── Refs ──────────────────────────────────────────────────────────────────
 
@@ -239,10 +239,18 @@ export default function ArticleEditorPage() {
   }
 
   async function handleExitSaveDraft() {
-    setExitSaving(true);
+    setExitSaveMode('draft');
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     await handleSave('draft');
-    setExitSaving(false);
+    setExitSaveMode(null);
+    navigate('/articles');
+  }
+
+  async function handleExitSaveAndPublish() {
+    setExitSaveMode('publish');
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    await handleSave('publish');
+    setExitSaveMode(null);
     navigate('/articles');
   }
 
@@ -443,8 +451,10 @@ export default function ArticleEditorPage() {
     );
   }
 
+  const exitSaving = exitSaveMode !== null;
+
   const publishButtonLabel = isEditMode
-    ? 'บันทึก'
+    ? 'บันทึกและเผยแพร่'
     : publishMode === 'scheduled'
     ? 'เผยแพร่ภายหลัง'
     : 'เผยแพร่';
@@ -909,7 +919,7 @@ export default function ArticleEditorPage() {
         <DialogTitle fontWeight="bold">ออกจากบทความ</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการบันทึกร่างก่อนออกหรือไม่?
+            มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการบันทึกก่อนออกหรือไม่?
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -920,8 +930,11 @@ export default function ArticleEditorPage() {
           <Button onClick={() => setExitDialogOpen(false)} disabled={exitSaving}>
             อยู่ต่อ
           </Button>
-          <Button variant="contained" onClick={handleExitSaveDraft} disabled={exitSaving}>
-            {exitSaving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
+          <Button variant="outlined" onClick={handleExitSaveDraft} disabled={exitSaving}>
+            {exitSaveMode === 'draft' ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
+          </Button>
+          <Button variant="contained" onClick={handleExitSaveAndPublish} disabled={exitSaving}>
+            {exitSaveMode === 'publish' ? 'กำลังบันทึก...' : 'บันทึกและเผยแพร่'}
           </Button>
         </DialogActions>
       </Dialog>
