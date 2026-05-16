@@ -94,13 +94,15 @@ class _ArticleListPageState extends State<ArticleListPage> {
     }
   }
 
-  static String _formatDate(String isoDate) {
+  static String _formatDateTime(String isoDate) {
     final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
     const months = [
       '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
       'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
     ];
-    return '${dt.day} ${months[dt.month]} ${dt.year + 543}';
+    final h = dt.hour.toString().padLeft(2, '0');
+    final m = dt.minute.toString().padLeft(2, '0');
+    return '${dt.day} ${months[dt.month]} ${dt.year + 543} $h:$m น.';
   }
 
   @override
@@ -202,6 +204,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
           excerpt: a['excerpt'] as String?,
           coverImageUrl: a['cover_image_url'] as String?,
           publishAt: a['publish_at'] as String?,
+          createdByName: a['created_by_name'] as String?,
         );
       },
     );
@@ -214,6 +217,7 @@ class _ArticleCard extends StatelessWidget {
   final String? excerpt;
   final String? coverImageUrl;
   final String? publishAt;
+  final String? createdByName;
 
   const _ArticleCard({
     required this.id,
@@ -221,6 +225,7 @@ class _ArticleCard extends StatelessWidget {
     this.excerpt,
     this.coverImageUrl,
     this.publishAt,
+    this.createdByName,
   });
 
   @override
@@ -289,14 +294,36 @@ class _ArticleCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 8),
-                      if (publishAt != null)
-                        Text(
-                          _ArticleListPageState._formatDate(publishAt!),
-                          style: GoogleFonts.googleSans(
-                            fontSize: 12,
-                            color: AppColors.textMuted,
-                          ),
+                      if (createdByName != null && createdByName!.isNotEmpty)
+                        Row(
+                          children: [
+                            const Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
+                            const SizedBox(width: 4),
+                            Text(
+                              createdByName!,
+                              style: GoogleFonts.googleSans(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
                         ),
+                      if (publishAt != null) ...[
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
+                            const SizedBox(width: 4),
+                            Text(
+                              _ArticleListPageState._formatDateTime(publishAt!),
+                              style: GoogleFonts.googleSans(
+                                fontSize: 12,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
