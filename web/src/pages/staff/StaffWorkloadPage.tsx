@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  Box, Typography, Paper, TextField, Stack,
+  Box, Typography, Paper, TextField, MenuItem, Stack,
   Chip, Alert, Switch, FormControlLabel, Divider, IconButton, Tooltip,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -204,11 +204,14 @@ export default function StaffWorkloadPage() {
 
       {/* Filter + Table */}
       <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
-        <Stack spacing={2} sx={{ mb: 3 }}>
-          {/* Date + compare row */}
+        <Box sx={{ mb: 3 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom} onChange={e => setDateFrom(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
             <TextField label="ถึงวันที่" type="date" size="small" value={dateTo} onChange={e => setDateTo(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+            <TextField label="สถานบริการ" select size="small" value={serviceCenter} onChange={e => setServiceCenter(e.target.value)} sx={{ minWidth: 180 }}>
+              <MenuItem value="all">ทั้งหมด</MenuItem>
+              {SERVICE_CENTERS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+            </TextField>
             <FormControlLabel
               control={<Switch size="small" checked={compareEnabled} onChange={e => handleCompareToggle(e.target.checked)} />}
               label={<Typography variant="body2">เปรียบเทียบช่วงเวลา</Typography>}
@@ -216,32 +219,9 @@ export default function StaffWorkloadPage() {
             />
           </Stack>
 
-          {/* Service center chip filter */}
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {[{ value: 'all', label: 'ทั้งหมด' }, ...SERVICE_CENTERS.map(sc => ({ value: sc, label: sc }))].map(item => {
-              const active = serviceCenter === item.value;
-              return (
-                <Chip
-                  key={item.value}
-                  label={item.label}
-                  onClick={() => setServiceCenter(item.value)}
-                  sx={{
-                    fontWeight: active ? 700 : 400,
-                    bgcolor: active ? '#FF9F6B' : 'transparent',
-                    color: active ? 'white' : 'text.secondary',
-                    border: '1px solid',
-                    borderColor: active ? '#FF9F6B' : 'divider',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
-                  }}
-                />
-              );
-            })}
-          </Stack>
-
           {compareEnabled && (
             <>
-              <Divider />
+              <Divider sx={{ my: 1.5 }} />
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
                 <Typography variant="caption" color="text.secondary" sx={{ minWidth: 90, fontWeight: 600 }}>
                   ช่วงเปรียบเทียบ
@@ -251,7 +231,7 @@ export default function StaffWorkloadPage() {
               </Stack>
             </>
           )}
-        </Stack>
+        </Box>
 
         <Box sx={{ height: 500 }}>
           <DataGrid

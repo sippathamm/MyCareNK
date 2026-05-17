@@ -29,11 +29,11 @@ function toRequestData(r: StaffRequestRow): RequestData {
 
 type ReqFilter = 'all' | 'completed' | 'cancelled' | 'overdue';
 
-const FILTER_CONFIG: Record<ReqFilter, { label: string; color: string; bg: string; border: string }> = {
-  all:       { label: 'ทั้งหมด',  color: 'white',   bg: '#FF9F6B', border: '#FF9F6B' },
-  completed: { label: 'เสร็จสิ้น', color: '#2E7D32', bg: '#EBF7EC', border: '#2E7D32' },
-  cancelled: { label: 'ยกเลิก',   color: '#616161', bg: '#E0E0E0', border: '#9E9E9E' },
-  overdue:   { label: 'ล่าช้า',   color: '#E65100', bg: '#FFF8E1', border: '#E65100' },
+const FILTER_LABELS: Record<ReqFilter, string> = {
+  all:       'ทั้งหมด',
+  completed: 'เสร็จสิ้น',
+  cancelled: 'ยกเลิก',
+  overdue:   'ล่าช้า',
 };
 
 const thGridLocale = {
@@ -252,23 +252,23 @@ export default function StaffWorkloadDetailDialog({
             {/* ── Request list ── */}
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="subtitle1" fontWeight="bold">รายการคำขอ</Typography>
-              <Stack direction="row" spacing={0.75}>
-                {(Object.entries(FILTER_CONFIG) as [ReqFilter, typeof FILTER_CONFIG[ReqFilter]][]).map(([key, cfg]) => {
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {(Object.entries(FILTER_LABELS) as [ReqFilter, string][]).map(([key, label]) => {
                   const active = reqFilter === key;
                   return (
                     <Chip
                       key={key}
-                      label={cfg.label}
+                      label={label}
                       size="small"
                       onClick={() => setReqFilter(key)}
                       sx={{
                         fontWeight: active ? 700 : 400,
-                        bgcolor: active ? cfg.bg : 'transparent',
-                        color: active ? cfg.color : 'text.secondary',
+                        bgcolor: active ? '#FF9F6B' : 'transparent',
+                        color: active ? 'white' : 'text.secondary',
                         border: '1px solid',
-                        borderColor: active ? cfg.border : 'divider',
+                        borderColor: active ? '#FF9F6B' : 'divider',
                         cursor: 'pointer',
-                        '&:hover': { bgcolor: active ? cfg.bg : 'action.hover' },
+                        '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
                       }}
                     />
                   );
