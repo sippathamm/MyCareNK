@@ -495,7 +495,7 @@ class _MessagesPageState extends State<MessagesPage> {
         title: Row(
           children: [
             const Text(
-              'ข้อความ',
+              'แจ้งเตือน',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
@@ -561,7 +561,7 @@ class _MessagesPageState extends State<MessagesPage> {
           Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
           const SizedBox(height: 12),
           Text(
-            'ยังไม่มีข้อความ',
+            'ยังไม่มีการแจ้งเตือน',
             style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
