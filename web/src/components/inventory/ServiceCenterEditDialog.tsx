@@ -11,6 +11,7 @@ import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import MapIcon from '@mui/icons-material/Map';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { supabase } from '../../lib/supabase';
 import type { ServiceCenterRow } from '../../hooks/useServiceCenters';
 
@@ -203,11 +204,9 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
   const canDelete = center !== null && !center.is_active;
 
-  if (!open) return null;
-
   return (
     <>
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+    <Dialog open={open && !addedName} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
           {isAddMode ? 'เพิ่มสถานบริการ' : 'แก้ไขสถานบริการ'}
@@ -222,17 +221,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       <Divider />
 
       <DialogContent sx={{ pt: 2.5 }}>
-        {addedName ? (
-          <Alert severity="success" sx={{ borderRadius: 1.5 }}>
-            <Typography variant="body2" fontWeight={600}>
-              เพิ่มสถานบริการ "{addedName}" เรียบร้อยแล้ว
-            </Typography>
-            <Typography variant="body2" sx={{ mt: 0.5 }}>
-              กรุณา refresh หน้า "สต็อกและพยากรณ์"
-            </Typography>
-          </Alert>
-        ) : (
-          <>
+        <>
             {/* Image upload — 16:9 */}
             <Box
               sx={{
@@ -402,45 +391,57 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
               </Alert>
             )}
           </>
-        )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        {addedName ? (
-          <Button onClick={onSuccess} variant="contained">ปิด</Button>
-        ) : (
-          <>
-            {/* Delete button — edit mode only, superadmin only, bottom-left */}
-            {!isAddMode && isSuperadmin && (
-              <Tooltip title={canDelete ? '' : 'ปิดใช้งานสถานบริการก่อนจึงจะสามารถลบได้'}>
-                <span style={{ marginRight: 'auto' }}>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    startIcon={deleting ? undefined : <DeleteIcon />}
-                    endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
-                    onClick={handleDelete}
-                    disabled={!canDelete || saving || deleting}
-                  >
-                    {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
-                  </Button>
-                </span>
-              </Tooltip>
-            )}
+        <>
+          {/* Delete button — edit mode only, superadmin only, bottom-left */}
+          {!isAddMode && isSuperadmin && (
+            <Tooltip title={canDelete ? '' : 'ปิดใช้งานสถานบริการก่อนจึงจะสามารถลบได้'}>
+              <span style={{ marginRight: 'auto' }}>
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={deleting ? undefined : <DeleteIcon />}
+                  endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                  onClick={handleDelete}
+                  disabled={!canDelete || saving || deleting}
+                >
+                  {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
+                </Button>
+              </span>
+            </Tooltip>
+          )}
 
-            <Button onClick={handleClose} disabled={saving || uploading || deleting} color="inherit">
-              ยกเลิก
-            </Button>
-            <Button
-              onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
-              variant="contained"
-              disabled={saving || uploading || deleting}
-              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-            >
-              {saving ? 'กำลังบันทึก...' : 'บันทึก'}
-            </Button>
-          </>
-        )}
+          <Button onClick={handleClose} disabled={saving || uploading || deleting} color="inherit">
+            ยกเลิก
+          </Button>
+          <Button
+            onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
+            variant="contained"
+            disabled={saving || uploading || deleting}
+            startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+            {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+          </Button>
+        </>
+      </DialogActions>
+    </Dialog>
+
+    {/* Add success dialog */}
+    <Dialog open={open && !!addedName} onClose={onSuccess} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+        <CheckCircleOutlineIcon color="success" />
+        <Typography component="div" variant="h6" fontWeight="bold">เพิ่มสถานบริการสำเร็จ</Typography>
+      </DialogTitle>
+      <Divider />
+      <DialogContent sx={{ pt: 2.5 }}>
+        <Typography variant="body2" color="text.secondary">
+          เพิ่มสถานบริการ <strong>{addedName}</strong> เรียบร้อยแล้ว กรุณา refresh หน้า <strong>สต็อกและพยากรณ์</strong>
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onSuccess} variant="contained">ปิด</Button>
       </DialogActions>
     </Dialog>
 
