@@ -32,10 +32,10 @@ const SERVICE_CENTER_OPTIONS = [
   'สสจ.หนองคาย',
 ] as const;
 
-const ROLE_COLOR: Record<string, 'error' | 'primary' | 'default'> = {
-  superadmin: 'error',
-  admin: 'primary',
-  staff: 'default',
+const ROLE_CHIP_SX: Record<string, { bgcolor: string; color: string }> = {
+  superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
+  admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
+  staff:      { bgcolor: '#F5F5F5', color: '#616161' },
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -183,7 +183,7 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle2" color="text.secondary">ระดับสิทธิ์</Typography>
-                <Chip label={ROLE_LABEL[role]} color={ROLE_COLOR[role] ?? 'default'} size="small" />
+                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...(ROLE_CHIP_SX[role] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }} />
               </Box>
             </Box>
           </Box>
@@ -376,7 +376,7 @@ export default function StaffManagementPage() {
       field: 'staff_user_id', headerName: 'UUID', flex: 1.8, minWidth: 280,
       renderCell: (params) => (
         <Tooltip title={params.value as string} placement="top">
-          <Typography variant="body2" fontFamily="monospace" noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+          <Typography variant="body2" noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
             {params.value}
           </Typography>
         </Tooltip>
@@ -392,8 +392,8 @@ export default function StaffManagementPage() {
       renderCell: (params) => (
         <Chip
           label={ROLE_LABEL[params.value as string] ?? params.value}
-          color={ROLE_COLOR[params.value as string] ?? 'default'}
           size="small"
+          sx={{ ...(ROLE_CHIP_SX[params.value as string] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }}
         />
       ),
     },

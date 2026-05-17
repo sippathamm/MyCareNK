@@ -46,12 +46,12 @@ export default function RequestsPage() {
 
   const getStatusChip = (status: string) => {
     switch (status) {
-      case 'pending': return <Chip label="รอดำเนินการ" color="warning" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: 'grey.200', color: 'text.secondary', fontWeight: 'bold' }} />;
-      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: 'grey.200', color: 'text.secondary', fontWeight: 'bold' }} />;
+      case 'pending':            return <Chip label="รอดำเนินการ"        size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
+      case 'preparing':          return <Chip label="กำลังเตรียม"        size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
+      case 'ready':              return <Chip label="รอรับ"              size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
+      case 'completed':          return <Chip label="เสร็จสิ้น"          size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
+      case 'cancelled_by_user':  return <Chip label="ยกเลิกโดยผู้ใช้"    size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
+      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
       default: return <Chip label={status} size="small" />;
     }
   };

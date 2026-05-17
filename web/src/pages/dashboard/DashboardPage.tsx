@@ -18,9 +18,9 @@ const STATUS_COLORS = {
 } as const;
 
 const LEAD_TIME_COLORS = {
-  pending_to_preparing: '#FF9F6B',
-  preparing_to_ready: '#64B5F6',
-  ready_to_completed: '#BA68C8',
+  pending_to_preparing: '#64B5F6',
+  preparing_to_ready: '#BA68C8',
+  ready_to_completed: '#81C784',
 } as const;
 
 const SERVICE_CENTERS: Enums<'service_center'>[] = [
