@@ -571,7 +571,7 @@ export default function AuditLogPage() {
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>บันทึกการตรวจสอบ</Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ และการจัดการสต็อก
+        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ การเปลี่ยนแปลงสถานะนัดหมาย และการจัดการสต็อก
       </Typography>
 
       <Tabs
