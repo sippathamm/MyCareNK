@@ -7,6 +7,7 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useLeadTime } from '../../hooks/useLeadTime';
 import { usePeakTime } from '../../hooks/usePeakTime';
 import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 
 const STATUS_COLORS = {
   pending: '#FF9F6B',
@@ -21,13 +22,6 @@ const LEAD_TIME_COLORS = {
   preparing_to_ready: '#BA68C8',
   ready_to_completed: '#81C784',
 } as const;
-
-const SERVICE_CENTERS: string[] = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
-];
 
 interface DashboardPageProps {
   session: Session;
@@ -124,6 +118,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
   const [serviceCenter, setServiceCenter] = useState<string>('all');
 
   const isSuperadmin = role === 'superadmin';
+  const { centers } = useServiceCenters(isSuperadmin);
   const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
 
   const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedSC);
@@ -325,8 +320,8 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                 sx={{ minWidth: 180 }}
               >
                 <MenuItem value="all">ทั้งหมด</MenuItem>
-                {SERVICE_CENTERS.map(sc => (
-                  <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+                {centers.map(c => (
+                  <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
                 ))}
               </TextField>
             )}

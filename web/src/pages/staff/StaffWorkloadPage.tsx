@@ -8,6 +8,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
 import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
@@ -42,19 +43,11 @@ function DeltaChip({ delta, positiveIsGood = true }: { delta: number | null; pos
 
 const thGridLocale = createThGridLocale('ไม่มีข้อมูลในช่วงที่เลือก');
 
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const SERVICE_CENTERS: string[] = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
-];
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffWorkloadPage() {
   const { role, loading: roleLoading } = useRoleAccess();
+  const { centers } = useServiceCenters(role === 'superadmin');
 
   // Main filter
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
@@ -209,7 +202,7 @@ export default function StaffWorkloadPage() {
             <TextField label="ถึงวันที่" type="date" size="small" value={dateTo} onChange={e => setDateTo(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
             <TextField label="สถานบริการ" select size="small" value={serviceCenter} onChange={e => setServiceCenter(e.target.value)} sx={{ minWidth: 180 }}>
               <MenuItem value="all">ทั้งหมด</MenuItem>
-              {SERVICE_CENTERS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              {centers.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
             </TextField>
             <FormControlLabel
               control={<Switch size="small" checked={compareEnabled} onChange={e => handleCompareToggle(e.target.checked)} />}

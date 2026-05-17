@@ -7,6 +7,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess, type StaffRole } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
@@ -55,13 +56,6 @@ const INVENTORY_AUDIT_ACTIONS = [
   AUDIT_ACTION.RESTOCK,
   AUDIT_ACTION.FULFILLMENT,
   AUDIT_ACTION.ADJUSTMENT,
-] as const;
-
-const SERVICE_CENTER_OPTIONS = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
 ] as const;
 
 const STATUS_LABELS: Record<string, string> = {
@@ -436,6 +430,7 @@ function AppointmentStatusLogTab() {
 // ─── Tab 4: Inventory Log ─────────────────────────────────────────────────────
 
 function InventoryLogTab() {
+  const { centers } = useServiceCenters();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
@@ -508,8 +503,8 @@ function InventoryLogTab() {
             onChange={e => { setServiceCenterFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">ทั้งหมด</MenuItem>
-            {SERVICE_CENTER_OPTIONS.map(sc => (
-              <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+            {centers.map(c => (
+              <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
             ))}
           </TextField>
         </Stack>

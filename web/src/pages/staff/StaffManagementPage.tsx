@@ -14,6 +14,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useAuth } from '../../hooks/useAuth';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 
@@ -23,13 +24,6 @@ const ROLE_OPTIONS = [
   { value: 'staff', label: 'เจ้าหน้าที่' },
   { value: 'admin', label: 'ผู้ดูแล' },
   { value: 'superadmin', label: 'ผู้ดูแลสูงสุด' },
-] as const;
-
-const SERVICE_CENTER_OPTIONS = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
 ] as const;
 
 const ROLE_CHIP_SX: Record<string, { bgcolor: string; color: string }> = {
@@ -70,6 +64,7 @@ function generatePassword(): string {
 
 interface AddStaffDialogProps {
   open: boolean;
+  centerNames: string[];
   onClose: () => void;
   onSuccess: () => void;
   onCreate: (payload: {
@@ -78,7 +73,7 @@ interface AddStaffDialogProps {
   }) => Promise<string | null>;
 }
 
-function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
+function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -142,7 +137,7 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
               select label="สถานบริการ" value={serviceCenter}
               onChange={e => setServiceCenter(e.target.value)} fullWidth required
             >
-              {SERVICE_CENTER_OPTIONS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
             </TextField>
             <TextField
               select label="ระดับสิทธิ์" value={role}
@@ -216,13 +211,14 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
 interface EditStaffDialogProps {
   open: boolean;
   staff: StaffMember | null;
+  centerNames: string[];
   currentUserId: string;
   onClose: () => void;
   onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: string; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
-function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
+function EditStaffDialog({ open, staff, centerNames, currentUserId, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -290,7 +286,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
             select label="สถานบริการ" value={serviceCenter}
             onChange={e => setServiceCenter(e.target.value)} fullWidth
           >
-            {SERVICE_CENTER_OPTIONS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+            {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
           </TextField>
           <TextField
             select label="ระดับสิทธิ์" value={role}
@@ -356,6 +352,8 @@ export default function StaffManagementPage() {
   const { session } = useAuth();
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
+  const { centers } = useServiceCenters();
+  const centerNames = centers.map(c => c.name);
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
 
@@ -463,6 +461,7 @@ export default function StaffManagementPage() {
 
       <AddStaffDialog
         open={addOpen}
+        centerNames={centerNames}
         onClose={() => setAddOpen(false)}
         onSuccess={fetchStaff}
         onCreate={createStaff}
@@ -471,6 +470,7 @@ export default function StaffManagementPage() {
       <EditStaffDialog
         open={!!editTarget}
         staff={editTarget}
+        centerNames={centerNames}
         currentUserId={currentUserId}
         onClose={() => setEditTarget(null)}
         onUpdate={updateStaff}

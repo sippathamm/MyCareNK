@@ -10,13 +10,12 @@ import type { GridColDef } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useAppointments } from '../../hooks/useAppointments';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
 import AppointmentDetailDialog, { REASON_LABELS } from '../../components/appointments/AppointmentDetailDialog';
 import type { AppointmentData } from '../../components/appointments/AppointmentDetailDialog';
 import type { Enums } from '../../lib/database.types';
-
-const SERVICE_CENTERS = ['รพ.โพนพิสัย', 'รพ.สต.วัดหลวง', 'อบต.วัดหลวง', 'สสจ.หนองคาย'] as const;
 
 const thGridLocale = createThGridLocale('ไม่มีรายการนัดหมาย');
 
@@ -43,6 +42,7 @@ export default function AppointmentsPage() {
   const { appointments, setAppointments, loading } = useAppointments();
   const { role, loading: roleLoading } = useRoleAccess();
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
+  const { centers } = useServiceCenters(isAdminOrSuperadmin);
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -199,8 +199,8 @@ export default function AppointmentsPage() {
               sx={{ minWidth: 200 }}
             >
               <MenuItem value="all">ทั้งหมด</MenuItem>
-              {SERVICE_CENTERS.map(sc => (
-                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+              {centers.map(c => (
+                <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
               ))}
             </TextField>
           )}

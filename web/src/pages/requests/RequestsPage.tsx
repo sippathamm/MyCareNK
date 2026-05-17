@@ -11,10 +11,9 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 import { useRequests } from '../../hooks/useRequests';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
-
-const SERVICE_CENTERS = ['รพ.โพนพิสัย', 'รพ.สต.วัดหลวง', 'อบต.วัดหลวง', 'สสจ.หนองคาย'] as const;
 
 const thGridLocale = createThGridLocale('ไม่มีรายการคำขอ');
 
@@ -24,6 +23,7 @@ export default function RequestsPage() {
   const { requests, setRequests, loading } = useRequests();
   const { role, loading: roleLoading } = useRoleAccess();
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
+  const { centers } = useServiceCenters(isAdminOrSuperadmin);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
@@ -210,8 +210,8 @@ export default function RequestsPage() {
               sx={{ minWidth: 200 }}
             >
               <MenuItem value="all">ทั้งหมด</MenuItem>
-              {SERVICE_CENTERS.map(sc => (
-                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+              {centers.map(c => (
+                <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
               ))}
             </TextField>
           )}
