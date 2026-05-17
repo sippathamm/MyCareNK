@@ -31,6 +31,7 @@ class _LanguageSwitcherState extends State<LanguageSwitcher> {
       tooltip: 'เปลี่ยนภาษา',
       onSelected: (lang) => setState(() => _selected = lang),
       offset: const Offset(0, 50),
+      color: AppColors.avatarBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       itemBuilder: (context) => _languages
           .map(
@@ -52,10 +53,11 @@ class _LanguageSwitcherState extends State<LanguageSwitcher> {
                           : AppColors.textPrimary,
                     ),
                   ),
-                  if (_selected.code == lang.code) ...[
-                    const Spacer(),
-                    const Icon(Icons.check, color: AppColors.primary, size: 18),
-                  ],
+                      const Spacer(),
+                  Opacity(
+                    opacity: _selected.code == lang.code ? 1.0 : 0.0,
+                    child: const Icon(Icons.check, color: AppColors.primary, size: 18),
+                  ),
                 ],
               ),
             ),
@@ -70,21 +72,21 @@ class _LanguageSwitcherState extends State<LanguageSwitcher> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(_selected.flag, style: const TextStyle(fontSize: 20)),
-            const SizedBox(width: 6),
-            Text(
-              _selected.name,
-              style: GoogleFonts.googleSans(
-                color: AppColors.avatarIcon,
-                fontWeight: FontWeight.bold,
+              Text(_selected.flag, style: const TextStyle(fontSize: 20)),
+              const SizedBox(width: 6),
+              Text(
+                _selected.name,
+                style: GoogleFonts.googleSans(
+                  color: AppColors.avatarIcon,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(width: 4),
-            const Icon(
-              Icons.keyboard_arrow_down,
-              color: AppColors.avatarIcon,
-              size: 18,
-            ),
+              const SizedBox(width: 4),
+              const Icon(
+                Icons.keyboard_arrow_down,
+                color: AppColors.avatarIcon,
+                size: 18,
+              ),
           ],
         ),
       ),
