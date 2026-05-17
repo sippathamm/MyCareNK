@@ -7,7 +7,6 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useLeadTime } from '../../hooks/useLeadTime';
 import { usePeakTime } from '../../hooks/usePeakTime';
 import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
-import type { Enums } from '../../lib/database.types';
 
 const STATUS_COLORS = {
   pending: '#FF9F6B',
@@ -23,7 +22,7 @@ const LEAD_TIME_COLORS = {
   ready_to_completed: '#81C784',
 } as const;
 
-const SERVICE_CENTERS: Enums<'service_center'>[] = [
+const SERVICE_CENTERS: string[] = [
   'รพ.โพนพิสัย',
   'รพ.สต.วัดหลวง',
   'อบต.วัดหลวง',

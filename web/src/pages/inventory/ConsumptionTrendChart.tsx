@@ -5,7 +5,6 @@ import {
   CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import type { ConsumptionTrendPoint } from '../../hooks/useInventoryForecast';
-import type { Enums } from '../../lib/database.types';
 
 interface ConsumptionTrendChartProps {
   trend: ConsumptionTrendPoint[];
@@ -27,7 +26,7 @@ function buildChartData(
   product: ProductType,
 ): Record<string, unknown>[] {
   const days = [...new Set(trend.map((t) => t.day))].sort();
-  const centers = [...new Set(trend.map((t) => t.service_center))] as Enums<'service_center'>[];
+  const centers = [...new Set(trend.map((t) => t.service_center))] as string[];
 
   return days.map((day) => {
     const entry: Record<string, unknown> = {
@@ -50,7 +49,7 @@ function TrendPanel({
 }: {
   title: string;
   data: Record<string, unknown>[];
-  centers: Enums<'service_center'>[];
+  centers: string[];
 }) {
   return (
     <Box>
@@ -103,7 +102,7 @@ function TrendPanel({
 
 export default function ConsumptionTrendChart({ trend, loading }: ConsumptionTrendChartProps) {
   const centers = useMemo(
-    () => [...new Set(trend.map((t) => t.service_center))] as Enums<'service_center'>[],
+    () => [...new Set(trend.map((t) => t.service_center))] as string[],
     [trend],
   );
 

@@ -1,16 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Enums } from '../lib/database.types';
 
 export interface ServiceCenterDemandRow {
-  service_center: Enums<'service_center'>;
+  service_center: string;
   total_requests: number;
   total_condoms: number;
   total_lubricants: number;
 }
 
 export interface ServiceCenterTrendPoint {
-  service_center: Enums<'service_center'>;
+  service_center: string;
   day: string;
   request_count: number;
 }
