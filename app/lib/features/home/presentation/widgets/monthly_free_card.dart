@@ -243,7 +243,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             )
           else
             Text(
-              '--',
+              '–',
               style: GoogleFonts.googleSans(
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
@@ -262,7 +262,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             _isLoggedIn
                 ? (_daysUntilReset != null
                     ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
-                    : 'จะรีเซ็ตในอีก -- วัน')
+                    : 'จะรีเซ็ตในอีก – วัน')
                 : 'เข้าสู่ระบบเพื่อดูสิทธิ์ของคุณ',
             style: GoogleFonts.googleSans(
               fontSize: 12,
@@ -346,7 +346,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             )
           else
             Text(
-              '--',
+              '–',
               style: GoogleFonts.googleSans(
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
@@ -365,7 +365,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             _isLoggedIn
                 ? (_daysUntilReset != null
                     ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
-                    : 'จะรีเซ็ตในอีก -- วัน')
+                    : 'จะรีเซ็ตในอีก – วัน')
                 : 'เข้าสู่ระบบเพื่อดูสิทธิ์ของคุณ',
             style: GoogleFonts.googleSans(
               fontSize: 12,
