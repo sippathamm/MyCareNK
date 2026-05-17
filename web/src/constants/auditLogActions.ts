@@ -41,14 +41,14 @@ export const AUDIT_ACTION_LABEL: Record<AuditAction, string> = {
 // ─── Chip color mapping ───────────────────────────────────────────────────────
 
 export const AUDIT_ACTION_COLOR: Record<AuditAction, { bg: string; color: string }> = {
-  [AUDIT_ACTION.STAFF_CREATED]:         { bg: '#2E7D32', color: '#fff' },
-  [AUDIT_ACTION.STAFF_DELETED]:         { bg: '#B71C1C', color: '#fff' },
-  [AUDIT_ACTION.ROLE_UPDATED]:          { bg: '#7B1FA2', color: '#fff' },
-  [AUDIT_ACTION.STAFF_PROFILE_UPDATED]: { bg: '#E65100', color: '#fff' },
-  [AUDIT_ACTION.EMAIL_UPDATED]:         { bg: '#1565C0', color: '#fff' },
-  [AUDIT_ACTION.RESTOCK]:               { bg: '#2E7D32', color: '#fff' },
-  [AUDIT_ACTION.FULFILLMENT]:           { bg: '#1565C0', color: '#fff' },
-  [AUDIT_ACTION.ADJUSTMENT]:            { bg: '#E65100', color: '#fff' },
+  [AUDIT_ACTION.STAFF_CREATED]:         { bg: '#E8F5E9', color: '#2E7D32' },
+  [AUDIT_ACTION.STAFF_DELETED]:         { bg: '#FFEBEE', color: '#B71C1C' },
+  [AUDIT_ACTION.ROLE_UPDATED]:          { bg: '#F3E5F5', color: '#7B1FA2' },
+  [AUDIT_ACTION.STAFF_PROFILE_UPDATED]: { bg: '#FFF3E0', color: '#E65100' },
+  [AUDIT_ACTION.EMAIL_UPDATED]:         { bg: '#E3F2FD', color: '#1565C0' },
+  [AUDIT_ACTION.RESTOCK]:               { bg: '#E8F5E9', color: '#2E7D32' },
+  [AUDIT_ACTION.FULFILLMENT]:           { bg: '#E3F2FD', color: '#1565C0' },
+  [AUDIT_ACTION.ADJUSTMENT]:            { bg: '#FFF3E0', color: '#E65100' },
 };
 
-export const AUDIT_ACTION_FALLBACK_COLOR = { bg: '#616161', color: '#fff' };
+export const AUDIT_ACTION_FALLBACK_COLOR = { bg: '#F5F5F5', color: '#616161' };

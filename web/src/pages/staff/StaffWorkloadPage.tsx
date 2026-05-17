@@ -200,8 +200,10 @@ export default function StaffWorkloadPage() {
         สรุปจำนวนคำขอที่แต่ละคนดำเนินการในช่วงเวลาที่เลือก
       </Typography>
 
-      {/* Filter Card */}
-      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
+      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
+
+      {/* Filter + Table Card */}
+      <Card sx={{ borderRadius: 2 }} elevation={1}>
         <CardContent>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom} onChange={e => setDateFrom(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
@@ -230,30 +232,27 @@ export default function StaffWorkloadPage() {
             </>
           )}
         </CardContent>
-      </Card>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
-
-      {/* Leaderboard Table */}
-      <Card sx={{ borderRadius: 2 }} elevation={1}>
-        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-          <Box sx={{ height: 500 }}>
-            <DataGrid
-              rows={enrichedRows}
-              columns={columns}
-              loading={loading}
-              localeText={thGridLocale}
-              getRowHeight={() => compareEnabled ? 64 : 52}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25, page: 0 } },
-                sorting: { sortModel: [{ field: 'completed_count', sort: 'desc' }] },
-              }}
-              pageSizeOptions={[25, 50]}
-              disableRowSelectionOnClick
-              sx={{ border: 'none', borderRadius: 2, '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' } }}
-            />
-          </Box>
-        </CardContent>
+        <Divider />
+        <Box sx={{ height: 500 }}>
+          <DataGrid
+            rows={enrichedRows}
+            columns={columns}
+            loading={loading}
+            localeText={thGridLocale}
+            getRowHeight={() => compareEnabled ? 64 : 52}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 25, page: 0 } },
+              sorting: { sortModel: [{ field: 'completed_count', sort: 'desc' }] },
+            }}
+            pageSizeOptions={[25, 50]}
+            disableRowSelectionOnClick
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+            }}
+          />
+        </Box>
       </Card>
 
       {/* Detail Dialog */}

@@ -261,6 +261,11 @@ export default function RequestsPage() {
               }}
               pageSizeOptions={[10, 25, 50]}
               disableRowSelectionOnClick
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+              }}
             />
           </Box>
         )}

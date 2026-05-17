@@ -111,7 +111,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
               aria-label="การแจ้งเตือน"
               color="inherit"
             >
-              <Badge badgeContent={unreadCount > 0 ? unreadCount : undefined} color="error">
+              <Badge
+                badgeContent={unreadCount > 0 ? unreadCount : undefined}
+                sx={{ '& .MuiBadge-badge': { bgcolor: '#FFCDD2', color: '#C62828' } }}
+              >
                 <NotificationsIcon />
               </Badge>
             </IconButton>

@@ -66,23 +66,6 @@ function generatePassword(): string {
   return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
 }
 
-function formatRelative(dateStr: string | null): string {
-  if (!dateStr) return 'ยังไม่เคยเข้าสู่ระบบ';
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  const secs = Math.floor(diffMs / 1000);
-  if (secs < 60) return `${secs} วินาทีที่แล้ว`;
-  const mins = Math.floor(secs / 60);
-  if (mins < 60) return `${mins} นาทีที่แล้ว`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} ชั่วโมงที่แล้ว`;
-  return `${Math.floor(hrs / 24)} วันที่แล้ว`;
-}
-
-function formatLastSignIn(dateStr: string | null): string {
-  if (!dateStr) return 'ยังไม่เคยเข้าสู่ระบบ';
-  return `${formatDateTime(dateStr)} (${formatRelative(dateStr)})`;
-}
-
 // ─── Add Staff Dialog ─────────────────────────────────────────────────────────
 
 interface AddStaffDialogProps {
@@ -342,6 +325,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button
+          variant="contained"
           color="error"
           startIcon={deleting ? undefined : <DeleteIcon />}
           endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
@@ -388,7 +372,16 @@ export default function StaffManagementPage() {
   }
 
   const columns: GridColDef[] = [
-    { field: 'staff_user_id', headerName: 'UUID', flex: 1.8, minWidth: 280 },
+    {
+      field: 'staff_user_id', headerName: 'UUID', flex: 1.8, minWidth: 280,
+      renderCell: (params) => (
+        <Tooltip title={params.value as string} placement="top">
+          <Typography variant="body2" fontFamily="monospace" noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+            {params.value}
+          </Typography>
+        </Tooltip>
+      ),
+    },
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 100 },
     { field: 'last_name', headerName: 'นามสกุล', flex: 1, minWidth: 100 },
     {
@@ -405,19 +398,6 @@ export default function StaffManagementPage() {
       ),
     },
     { field: 'service_center', headerName: 'สถานบริการ', flex: 1.5, minWidth: 160 },
-    {
-      field: 'last_sign_in_at',
-      headerName: 'เข้าสู่ระบบล่าสุดเมื่อ',
-      flex: 2,
-      minWidth: 220,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', width: '100%' }}>
-          <Typography variant="body2">
-            {formatLastSignIn(params.value as string | null)}
-          </Typography>
-        </Box>
-      ),
-    },
     {
       field: 'actions',
       headerName: '',
@@ -472,6 +452,11 @@ export default function StaffManagementPage() {
             pageSizeOptions={[10]}
             disableRowSelectionOnClick
             getRowHeight={() => 56}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+            }}
           />
         </Box>
       </Paper>

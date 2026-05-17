@@ -39,7 +39,7 @@ function formatAbsoluteDateTime(dateStr: string): string {
 }
 
 function StatusDot({ item }: { item: NotificationItem }) {
-  const { color } = getNotifConfig(item) ?? { color: '#9E9E9E' };
+  const color = item.is_read ? (getNotifConfig(item)?.color ?? '#9E9E9E') : '#FF9F6B';
   return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.5 }} />;
 }
 
@@ -57,7 +57,7 @@ function NotificationRow({ item, onItemClick, onDelete }: {
         py: 1.5,
         alignItems: 'flex-start',
         gap: 2,
-        backgroundColor: item.is_read ? 'transparent' : cfg.bg,
+        backgroundColor: item.is_read ? 'transparent' : '#FFF0E6',
         '&:hover': { filter: 'brightness(0.97)' },
       }}
     >
@@ -68,12 +68,12 @@ function NotificationRow({ item, onItemClick, onDelete }: {
           <Typography
             variant="body2"
             fontWeight={item.is_read ? 400 : 600}
-            sx={{ color: item.is_read ? 'text.primary' : cfg.color }}
+            sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
           >
             {cfg.label}
           </Typography>
           {!item.is_read && (
-            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: cfg.color, flexShrink: 0 }} />
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#FF9F6B', flexShrink: 0 }} />
           )}
         </Box>
         <Typography variant="body2" color="text.secondary">
