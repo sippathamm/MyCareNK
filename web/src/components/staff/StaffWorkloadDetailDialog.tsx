@@ -259,7 +259,6 @@ export default function StaffWorkloadDetailDialog({
                     <Chip
                       key={key}
                       label={label}
-                      size="small"
                       onClick={() => setReqFilter(key)}
                       sx={{
                         fontWeight: active ? 700 : 400,
