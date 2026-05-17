@@ -10,6 +10,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import MapIcon from '@mui/icons-material/Map';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import { supabase } from '../../lib/supabase';
 import type { ServiceCenterRow } from '../../hooks/useServiceCenters';
 
@@ -50,6 +51,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [staffBlockDialog, setStaffBlockDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addedName, setAddedName] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -59,6 +61,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setError(null);
     setAddedName(null);
     setConfirmDelete(false);
+    setStaffBlockDialog(false);
     if (center) {
       setName('');
       setDescription(center.description ?? '');
@@ -182,8 +185,16 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setError(null);
     const { error: deleteError } = await supabase.rpc('delete_service_center', { p_name: center.name });
     setDeleting(false);
+    setConfirmDelete(false);
 
-    if (deleteError) { setError(deleteError.message); setConfirmDelete(false); return; }
+    if (deleteError) {
+      if (deleteError.message.includes('ยังมีเจ้าหน้าที่')) {
+        setStaffBlockDialog(true);
+      } else {
+        setError(deleteError.message);
+      }
+      return;
+    }
     onSuccess();
   };
 
@@ -429,6 +440,26 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             </Button>
           </>
         )}
+      </DialogActions>
+    </Dialog>
+
+    {/* Staff-still-assigned warning dialog */}
+    <Dialog open={staffBlockDialog} onClose={() => setStaffBlockDialog(false)} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+        <PeopleOutlineIcon color="warning" />
+        <Typography component="div" variant="h6" fontWeight="bold">ยังมีเจ้าหน้าที่อยู่</Typography>
+      </DialogTitle>
+      <Divider />
+      <DialogContent sx={{ pt: 2.5 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+          ไม่สามารถลบสถานบริการ <strong>{center?.name}</strong> ได้ เนื่องจากยังมีบัญชีเจ้าหน้าที่ที่ผูกกับสถานบริการนี้อยู่
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          กรุณาไปที่หน้า <strong>จัดการเจ้าหน้าที่</strong> และย้ายหรือลบเจ้าหน้าที่ทุกคนออกจากสถานบริการนี้ก่อน จึงจะสามารถลบได้
+        </Typography>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={() => setStaffBlockDialog(false)} variant="contained">รับทราบ</Button>
       </DialogActions>
     </Dialog>
   );
