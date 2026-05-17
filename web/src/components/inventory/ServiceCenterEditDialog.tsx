@@ -206,6 +206,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   if (!open) return null;
 
   return (
+    <>
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
@@ -462,5 +463,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         <Button onClick={() => setStaffBlockDialog(false)} variant="contained">รับทราบ</Button>
       </DialogActions>
     </Dialog>
+    </>
   );
 }
