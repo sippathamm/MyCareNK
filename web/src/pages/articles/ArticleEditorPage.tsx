@@ -523,27 +523,43 @@ export default function ArticleEditorPage() {
       {/* 2-column layout */}
       <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
         {/* ── Left column ───────────────────────────────────────────── */}
-        <Paper elevation={1} sx={{ flex: 2, minWidth: 0, p: 3, borderRadius: 2 }}>
-          {/* Title */}
-          <TextField
-            fullWidth
-            placeholder="หัวเรื่อง"
-            variant="standard"
-            value={title}
-            onChange={e => {
-              setTitle(e.target.value);
-              if (!isInitialLoad.current) setIsDirty(true);
-            }}
-            slotProps={{
-              input: { disableUnderline: true },
-              htmlInput: { style: { fontSize: 28, fontWeight: 700 } },
-            }}
-            sx={{ mb: 2 }}
-          />
-          <Divider sx={{ mb: 1 }} />
+        <Box sx={{ flex: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
 
-          {/* Toolbar */}
-          <Stack direction="row" spacing={0.5} flexWrap="wrap" sx={{ mb: 1 }}>
+          {/* Title card */}
+          <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+            <TextField
+              fullWidth
+              placeholder="หัวเรื่อง"
+              variant="standard"
+              value={title}
+              onChange={e => {
+                setTitle(e.target.value);
+                if (!isInitialLoad.current) setIsDirty(true);
+              }}
+              slotProps={{
+                input: { disableUnderline: true },
+                htmlInput: { style: { fontSize: 28, fontWeight: 700 } },
+              }}
+            />
+          </Paper>
+
+          {/* Content card */}
+          <Paper elevation={1} sx={{ borderRadius: 2 }}>
+
+          {/* Sticky toolbar */}
+          <Box sx={{
+            position: 'sticky',
+            top: 64,
+            zIndex: 10,
+            bgcolor: 'background.paper',
+            borderRadius: '8px 8px 0 0',
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+            px: 1.5,
+            pt: 1,
+            pb: 0.5,
+          }}>
+          <Stack direction="row" spacing={0.5} flexWrap="wrap">
             {/* Bold */}
             <Tooltip title="ตัวหนา">
               <IconButton
@@ -715,22 +731,21 @@ export default function ArticleEditorPage() {
                 <RedoIcon fontSize="small" />
               </IconButton>
             </Tooltip>
+
           </Stack>
 
           {/* Uploading image indicator */}
           {uploadingImage && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pt: 0.5 }}>
               <CircularProgress size={12} />
               <Typography variant="caption" color="text.secondary">กำลังอัปโหลดรูปภาพ...</Typography>
             </Box>
           )}
+          </Box>{/* end sticky toolbar */}
 
           {/* Editor content */}
           <Box
             sx={{
-              border: '1px solid',
-              borderColor: 'divider',
-              borderRadius: 1,
               p: 2,
               minHeight: 400,
               '& .ProseMirror': { outline: 'none', minHeight: 360 },
@@ -752,7 +767,8 @@ export default function ArticleEditorPage() {
           >
             <EditorContent editor={editor} />
           </Box>
-        </Paper>
+          </Paper>{/* end content card */}
+        </Box>{/* end left column */}
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
         <Box sx={{ width: 320, flexShrink: 0 }}>
@@ -908,7 +924,6 @@ export default function ArticleEditorPage() {
         <BubbleMenu
           editor={editor}
           shouldShow={({ editor: e }) => e.isActive('image')}
-          tippyOptions={{ duration: 100, placement: 'bottom' }}
         >
           <Paper elevation={4} sx={{ px: 0.5, py: 0.25, display: 'flex', alignItems: 'center', gap: 0.25, borderRadius: 1 }}>
             {IMAGE_SIZES.map(({ width, label, tooltip }) => (

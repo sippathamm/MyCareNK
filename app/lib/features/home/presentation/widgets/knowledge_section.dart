@@ -88,7 +88,7 @@ class _KnowledgeSectionState extends State<KnowledgeSection> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'สาระน่ารู้',
+                'บทความ',
                 style: GoogleFonts.googleSans(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
