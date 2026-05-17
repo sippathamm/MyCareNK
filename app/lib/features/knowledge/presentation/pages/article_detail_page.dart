@@ -244,7 +244,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
             pinned: true,
             backgroundColor: AppColors.white,
             automaticallyImplyLeading: false,
-            leading: const _BackButton(),
+            leading: _BackButton(scrolled: _titleVisible),
             centerTitle: true,
             title: AnimatedOpacity(
               opacity: _titleVisible ? 1.0 : 0.0,
@@ -361,7 +361,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 // ─── Back button ──────────────────────────────────────────────────────────────
 
 class _BackButton extends StatelessWidget {
-  const _BackButton();
+  final bool scrolled;
+  const _BackButton({this.scrolled = false});
 
   @override
   Widget build(BuildContext context) {
@@ -369,14 +370,29 @@ class _BackButton extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       child: GestureDetector(
         onTap: () => Navigator.of(context).pop(),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           width: 36,
           height: 36,
-          decoration: const BoxDecoration(
-            color: Color(0x4D000000),
+          decoration: BoxDecoration(
+            color: scrolled ? Colors.transparent : const Color(0x4D000000),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedOpacity(
+                opacity: scrolled ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              ),
+              AnimatedOpacity(
+                opacity: scrolled ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
