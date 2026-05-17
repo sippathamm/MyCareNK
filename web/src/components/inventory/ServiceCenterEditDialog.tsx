@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import DeleteIcon from '@mui/icons-material/Delete';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import MapIcon from '@mui/icons-material/Map';
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -46,6 +47,8 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addedName, setAddedName] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
@@ -54,6 +57,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
     if (!open) return;
     setError(null);
     setAddedName(null);
+    setConfirmDelete(false);
     if (center) {
       setName('');
       setDescription(center.description ?? '');
@@ -72,7 +76,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
   }, [open, center]);
 
   const handleClose = () => {
-    if (saving || uploading) return;
+    if (saving || uploading || deleting) return;
     if (addedName) { onSuccess(); return; }
     onClose();
   };
@@ -115,7 +119,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
     const lngStr = longitude.trim();
     const lat = latStr ? parseFloat(latStr) : null;
     const lng = lngStr ? parseFloat(lngStr) : null;
-
     if (latStr && (lat === null || isNaN(lat))) { setError('ละติจูดต้องเป็นตัวเลข'); return null; }
     if (lngStr && (lng === null || isNaN(lng))) { setError('ลองจิจูดต้องเป็นตัวเลข'); return null; }
     if ((latStr && !lngStr) || (!latStr && lngStr)) {
@@ -149,12 +152,10 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
 
   const handleSaveEdit = async () => {
     if (!center) return;
-
     const coords = validateLatLng();
     if (coords === null) return;
 
     const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
-
     setSaving(true);
     setError(null);
 
@@ -172,9 +173,23 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
     onSuccess();
   };
 
+  const handleDelete = async () => {
+    if (!center) return;
+    if (!confirmDelete) { setConfirmDelete(true); return; }
+
+    setDeleting(true);
+    setError(null);
+    const { error: deleteError } = await supabase.rpc('delete_service_center', { p_name: center.name });
+    setDeleting(false);
+
+    if (deleteError) { setError(deleteError.message); setConfirmDelete(false); return; }
+    onSuccess();
+  };
+
   const lat = parseFloat(latitude.trim());
   const lng = parseFloat(longitude.trim());
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
+  const canDelete = center !== null && !center.is_active;
 
   if (!open) return null;
 
@@ -200,7 +215,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
               เพิ่มสถานบริการ "{addedName}" เรียบร้อยแล้ว
             </Typography>
             <Typography variant="body2" sx={{ mt: 0.5 }}>
-              กรุณา refresh หน้า "สต็อกและพยากรณ์" เพื่อให้ inventory card ใหม่ปรากฏ
+              กรุณา refresh หน้า "สต็อกและพยากรณ์"
             </Typography>
           </Alert>
         ) : (
@@ -258,6 +273,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
               value={isAddMode ? name : center?.name ?? ''}
               onChange={isAddMode ? (e) => setName(e.target.value) : undefined}
               fullWidth
+              required={isAddMode}
               disabled={!isAddMode || saving}
               sx={{ mb: 2 }}
             />
@@ -349,7 +365,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
 
             {canShowMap && (
               <Button
-                size="small"
+                variant="outlined"
                 startIcon={<MapIcon />}
                 component="a"
                 href={`https://www.google.com/maps?q=${lat},${lng}`}
@@ -359,6 +375,12 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
               >
                 ดูบน Google Maps
               </Button>
+            )}
+
+            {confirmDelete && (
+              <Alert severity="warning" sx={{ mt: 2, borderRadius: 1.5 }}>
+                คุณแน่ใจหรือไม่ว่าต้องการลบสถานบริการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้ กดปุ่ม "ลบ" อีกครั้งเพื่อยืนยัน
+              </Alert>
             )}
 
             {error && (
@@ -375,13 +397,31 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
           <Button onClick={onSuccess} variant="contained">ปิด</Button>
         ) : (
           <>
-            <Button onClick={handleClose} disabled={saving || uploading} color="inherit">
+            {/* Delete button — edit mode only, bottom-left */}
+            {!isAddMode && (
+              <Tooltip title={canDelete ? '' : 'ปิดใช้งานสถานบริการก่อนจึงจะสามารถลบได้'}>
+                <span style={{ marginRight: 'auto' }}>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    startIcon={deleting ? undefined : <DeleteIcon />}
+                    endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+                    onClick={handleDelete}
+                    disabled={!canDelete || saving || deleting}
+                  >
+                    {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
+                  </Button>
+                </span>
+              </Tooltip>
+            )}
+
+            <Button onClick={handleClose} disabled={saving || uploading || deleting} color="inherit">
               ยกเลิก
             </Button>
             <Button
               onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
               variant="contained"
-              disabled={saving || uploading}
+              disabled={saving || uploading || deleting}
               startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
             >
               {saving ? 'กำลังบันทึก...' : 'บันทึก'}

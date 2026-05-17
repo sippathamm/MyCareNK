@@ -45,11 +45,25 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
       </Box>
 
       <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-          <Typography variant="subtitle1" fontWeight="bold" sx={{ flex: 1, mr: 1 }}>
-            {center.name}
-          </Typography>
+        {/* Header: name + status chip + edit icon */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, mr: 1, minWidth: 0 }}>
+            <Typography variant="subtitle1" fontWeight="bold" noWrap>
+              {center.name}
+            </Typography>
+            {isSuperadmin && (
+              <Chip
+                size="small"
+                label={center.is_active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
+                sx={{
+                  flexShrink: 0,
+                  bgcolor: center.is_active ? '#E8F5E9' : '#F5F5F5',
+                  color: center.is_active ? '#2E7D32' : '#9E9E9E',
+                  fontSize: '0.7rem',
+                }}
+              />
+            )}
+          </Box>
           <Tooltip title="แก้ไข">
             <IconButton size="small" onClick={onEdit} sx={{ color: 'primary.main', flexShrink: 0 }}>
               <EditIcon fontSize="small" />
@@ -74,6 +88,7 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
         )}
 
         <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+          {/* Location chip */}
           <Chip
             size="small"
             icon={<LocationOnIcon />}
@@ -87,25 +102,15 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
             }}
           />
 
+          {/* Toggle button — superadmin only */}
           {isSuperadmin && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Chip
-                size="small"
-                label={center.is_active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
-                sx={{
-                  bgcolor: center.is_active ? '#E8F5E9' : '#F5F5F5',
-                  color: center.is_active ? '#2E7D32' : '#9E9E9E',
-                  fontSize: '0.7rem',
-                }}
-              />
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
               <Button
-                size="small"
                 variant="outlined"
                 color={center.is_active ? 'error' : 'success'}
                 disabled={toggling}
                 onClick={() => onToggleActive(!center.is_active)}
-                startIcon={toggling ? <CircularProgress size={12} color="inherit" /> : null}
-                sx={{ fontSize: '0.7rem', py: 0.25 }}
+                endIcon={toggling ? <CircularProgress size={14} color="inherit" /> : null}
               >
                 {center.is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
               </Button>
@@ -187,7 +192,6 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => setAddOpen(true)}
-                size="small"
                 sx={{ flexShrink: 0, ml: 2, mt: 0.5 }}
               >
                 เพิ่มสถานบริการ
@@ -209,7 +213,7 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
                   <Grid key={i} size={{ xs: 12, sm: 6 }}>
-                    <Skeleton variant="rounded" height={260} />
+                    <Skeleton variant="rounded" height={280} />
                   </Grid>
                 ))
               : centers.map((center) => (

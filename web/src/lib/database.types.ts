@@ -671,6 +671,7 @@ export type Database = {
         }
         Returns: string
       }
+      delete_service_center: { Args: { p_name: string }; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
