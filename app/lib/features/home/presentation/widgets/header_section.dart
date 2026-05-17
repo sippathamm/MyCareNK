@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
-import 'emergency_button.dart';
+import 'language_switcher.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 
 class HeaderSection extends StatefulWidget {
@@ -21,7 +21,7 @@ class _HeaderSectionState extends State<HeaderSection> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const EmergencyButton(),
+        const LanguageSwitcher(),
         StreamBuilder<AuthState>(
           stream: Supabase.instance.client.auth.onAuthStateChange,
           builder: (context, snapshot) {
