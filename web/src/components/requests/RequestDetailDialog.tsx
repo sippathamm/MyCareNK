@@ -10,7 +10,7 @@ export interface RequestData {
   reference_number: string;
   selected_date: string | null;
   selected_time: string | null;
-  selected_service_center: Enums<'service_center'>;
+  selected_service_center: string;
   condom_quantities: Record<string, number>;
   lubricant_quantity: number;
   message: string | null;

@@ -4,7 +4,6 @@ import {
   Chip, Alert, Switch, FormControlLabel, Divider, IconButton, Tooltip,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import type { Enums } from '../../lib/database.types';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -45,7 +44,7 @@ const thGridLocale = createThGridLocale('ไม่มีข้อมูลใน
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const SERVICE_CENTERS: Enums<'service_center'>[] = [
+const SERVICE_CENTERS: string[] = [
   'รพ.โพนพิสัย',
   'รพ.สต.วัดหลวง',
   'อบต.วัดหลวง',

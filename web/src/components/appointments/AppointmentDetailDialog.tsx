@@ -17,7 +17,7 @@ export interface AppointmentData {
   reference_number: string;
   user_id: string;
   reason: string;
-  selected_service_center: Enums<'service_center'>;
+  selected_service_center: string;
   selected_date: string;
   selected_time: string;
   note: string | null;

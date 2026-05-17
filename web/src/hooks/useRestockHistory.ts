@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Enums } from '../lib/database.types';
-
 export interface RestockHistoryRow {
   id: string;
-  service_center: Enums<'service_center'>;
+  service_center: string;
   action: 'restock' | 'adjustment';
   condom_delta: number;
   lubricant_delta: number;
   created_at: string;
-  performed_by: string;
+  performed_by: string | null;
   performer_name: string;
   note: string | null;
 }
@@ -53,7 +51,7 @@ export function useRestockHistory() {
       (logs ?? []).map((t) => ({
         ...t,
         action: t.action as 'restock' | 'adjustment',
-        performer_name: profileMap.get(t.performed_by) ?? 'ไม่ทราบชื่อ',
+        performer_name: profileMap.get(t.performed_by ?? '') ?? 'ไม่ทราบชื่อ',
       })),
     );
     setLoading(false);

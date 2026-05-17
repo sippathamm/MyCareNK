@@ -37,8 +37,8 @@ export function useStaffWorkloadTrend(
       const { data: rows, error: rpcError } = await supabase.rpc('get_staff_workload_trend', {
         p_date_from:      from.toISOString(),
         p_date_to:        to.toISOString(),
-        p_service_center: serviceCenter ?? null,
-        p_staff_user_id:  staffUserId   ?? null,
+        p_service_center: serviceCenter ?? undefined,
+        p_staff_user_id:  staffUserId   ?? undefined,
       });
       if (rpcError) throw rpcError;
       setData((rows as WorkloadTrendRow[]) ?? []);

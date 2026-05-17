@@ -114,7 +114,7 @@ export type Database = {
           reference_number: string
           request_status: Database["public"]["Enums"]["request_status"]
           selected_date: string | null
-          selected_service_center: Database["public"]["Enums"]["service_center"]
+          selected_service_center: string
           selected_time: string | null
           updated_at: string
           user_id: string
@@ -132,7 +132,7 @@ export type Database = {
           reference_number: string
           request_status?: Database["public"]["Enums"]["request_status"]
           selected_date?: string | null
-          selected_service_center?: Database["public"]["Enums"]["service_center"]
+          selected_service_center: string
           selected_time?: string | null
           updated_at?: string
           user_id: string
@@ -150,12 +150,20 @@ export type Database = {
           reference_number?: string
           request_status?: Database["public"]["Enums"]["request_status"]
           selected_date?: string | null
-          selected_service_center?: Database["public"]["Enums"]["service_center"]
+          selected_service_center?: string
           selected_time?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_condom_requests_service_center"
+            columns: ["selected_service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       doctor_appointments: {
         Row: {
@@ -168,7 +176,7 @@ export type Database = {
           reason: string
           reference_number: string
           selected_date: string
-          selected_service_center: Database["public"]["Enums"]["service_center"]
+          selected_service_center: string
           selected_time: string
           updated_at: string
           user_id: string
@@ -183,7 +191,7 @@ export type Database = {
           reason: string
           reference_number: string
           selected_date: string
-          selected_service_center: Database["public"]["Enums"]["service_center"]
+          selected_service_center: string
           selected_time: string
           updated_at?: string
           user_id: string
@@ -198,12 +206,20 @@ export type Database = {
           reason?: string
           reference_number?: string
           selected_date?: string
-          selected_service_center?: Database["public"]["Enums"]["service_center"]
+          selected_service_center?: string
           selected_time?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_doctor_appointments_service_center"
+            columns: ["selected_service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       inventory_logs: {
         Row: {
@@ -216,7 +232,7 @@ export type Database = {
           performed_by: string | null
           reason: string | null
           reference_request_id: string | null
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }
         Insert: {
           action: Database["public"]["Enums"]["audit_action"]
@@ -228,7 +244,7 @@ export type Database = {
           performed_by?: string | null
           reason?: string | null
           reference_request_id?: string | null
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }
         Update: {
           action?: Database["public"]["Enums"]["audit_action"]
@@ -240,9 +256,16 @@ export type Database = {
           performed_by?: string | null
           reason?: string | null
           reference_request_id?: string | null
-          service_center?: Database["public"]["Enums"]["service_center"]
+          service_center?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "fk_inventory_logs_service_center"
+            columns: ["service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
           {
             foreignKeyName: "inventory_logs_reference_request_id_fkey"
             columns: ["reference_request_id"]
@@ -314,7 +337,7 @@ export type Database = {
           id: string
           last_restocked_at: string | null
           lubricant_qty: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
           updated_at: string
           updated_by: string | null
         }
@@ -323,7 +346,7 @@ export type Database = {
           id?: string
           last_restocked_at?: string | null
           lubricant_qty?: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
           updated_at?: string
           updated_by?: string | null
         }
@@ -332,11 +355,19 @@ export type Database = {
           id?: string
           last_restocked_at?: string | null
           lubricant_qty?: number
-          service_center?: Database["public"]["Enums"]["service_center"]
+          service_center?: string
           updated_at?: string
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_service_center_inventory_service_center"
+            columns: ["service_center"]
+            isOneToOne: true
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       service_centers: {
         Row: {
@@ -473,7 +504,7 @@ export type Database = {
           id: string
           last_name: string | null
           role: Database["public"]["Enums"]["role"]
-          service_center: Database["public"]["Enums"]["service_center"] | null
+          service_center: string | null
           staff_user_id: string
           updated_at: string | null
         }
@@ -483,7 +514,7 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: Database["public"]["Enums"]["service_center"] | null
+          service_center?: string | null
           staff_user_id: string
           updated_at?: string | null
         }
@@ -493,11 +524,19 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: Database["public"]["Enums"]["service_center"] | null
+          service_center?: string | null
           staff_user_id?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_staff_profiles_service_center"
+            columns: ["service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       user_monthly_quotas: {
         Row: {
@@ -654,7 +693,7 @@ export type Database = {
           p_lubricant_quantity: number
           p_message?: string
           p_selected_date: string
-          p_selected_service_center: Database["public"]["Enums"]["service_center"]
+          p_selected_service_center: string
           p_selected_time?: string
           p_user_id: string
         }
@@ -665,14 +704,14 @@ export type Database = {
           p_date: string
           p_note?: string
           p_reason: string
-          p_service_center: Database["public"]["Enums"]["service_center"]
+          p_service_center: string
           p_time: string
           p_user_id: string
         }
         Returns: string
       }
-      delete_service_center: { Args: { p_name: string }; Returns: undefined }
       dearmor: { Args: { "": string }; Returns: string }
+      delete_service_center: { Args: { p_name: string }; Returns: undefined }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
       get_appointment_status_log: {
@@ -736,7 +775,7 @@ export type Database = {
         Args: {
           p_date_from: string
           p_date_to: string
-          p_service_center?: Database["public"]["Enums"]["service_center"]
+          p_service_center?: string
         }
         Returns: {
           overall_avg_minutes: number
@@ -751,7 +790,7 @@ export type Database = {
           condom_used: number
           day: string
           lubricant_used: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }[]
       }
       get_days_until_reset: { Args: never; Returns: number }
@@ -764,7 +803,7 @@ export type Database = {
           lubricant_daily_burn: number
           lubricant_days_left: number
           lubricant_qty: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }[]
       }
       get_inventory_log: {
@@ -786,7 +825,7 @@ export type Database = {
           note: string
           performed_by: string
           reason: string
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }[]
       }
       get_peak_time_stats: {
@@ -837,7 +876,7 @@ export type Database = {
       get_service_center_demand: {
         Args: { p_date_from: string; p_date_to: string }
         Returns: {
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
           total_condoms: number
           total_lubricants: number
           total_requests: number
@@ -848,7 +887,7 @@ export type Database = {
         Returns: {
           day: string
           request_count: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }[]
       }
       get_service_centers: {
@@ -865,6 +904,12 @@ export type Database = {
           name: string
           updated_at: string
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "service_centers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_staff_audit_log: {
         Args: {
@@ -901,7 +946,7 @@ export type Database = {
           first_name: string
           last_name: string
           overdue_count: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
           staff_user_id: string
         }[]
       }
@@ -1010,11 +1055,6 @@ export type Database = {
         | "cancelled_by_user"
         | "cancelled_by_staff"
       role: "staff" | "admin" | "superadmin"
-      service_center:
-        | "รพ.โพนพิสัย"
-        | "รพ.สต.วัดหลวง"
-        | "อบต.วัดหลวง"
-        | "สสจ.หนองคาย"
       transaction_type: "restock" | "fulfillment" | "adjustment"
     }
     CompositeTypes: {
@@ -1170,12 +1210,6 @@ export const Constants = {
         "cancelled_by_staff",
       ],
       role: ["staff", "admin", "superadmin"],
-      service_center: [
-        "รพ.โพนพิสัย",
-        "รพ.สต.วัดหลวง",
-        "อบต.วัดหลวง",
-        "สสจ.หนองคาย",
-      ],
       transaction_type: ["restock", "fulfillment", "adjustment"],
     },
   },
