@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
+import '../../../auth/presentation/pages/login_page.dart';
 import 'article_detail_page.dart';
 
 class ArticleListPage extends StatefulWidget {
@@ -26,8 +28,74 @@ class _ArticleListPageState extends State<ArticleListPage> {
   @override
   void initState() {
     super.initState();
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showLoginRequired());
+      return;
+    }
     _fetchArticles();
     _scrollController.addListener(_onScroll);
+  }
+
+  void _showLoginRequired() {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.white,
+        elevation: 24,
+        shadowColor: Colors.black38,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'กรุณาเข้าสู่ระบบ',
+          style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'คุณต้องเข้าสู่ระบบก่อนจึงจะดูบทความได้',
+          style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          GradientButton(
+            height: 46,
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final loggedIn = await Navigator.of(context, rootNavigator: true)
+                  .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+              if (!mounted) return;
+              if (loggedIn == true) {
+                _fetchArticles();
+                _scrollController.addListener(_onScroll);
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+            label: 'เข้าสู่ระบบ',
+            fontSize: 15,
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFEEEEEE),
+                foregroundColor: AppColors.textPrimary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              ),
+              child: Text(
+                'ยกเลิก',
+                style: GoogleFonts.googleSans(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -119,7 +187,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'สาระน่ารู้',
+          'บทความ',
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,

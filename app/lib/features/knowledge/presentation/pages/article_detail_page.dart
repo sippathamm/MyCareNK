@@ -1,47 +1,28 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_html/flutter_html.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
+import '../../../auth/presentation/pages/login_page.dart';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 class _Article {
   final String title;
   final String? coverImageUrl;
-  final String? contentHtml;
+  final Map<String, dynamic>? contentJson;
   final String? publishAt;
   final String? createdByName;
 
   const _Article({
     required this.title,
     this.coverImageUrl,
-    this.contentHtml,
+    this.contentJson,
     this.publishAt,
     this.createdByName,
   });
-}
-
-// ─── Content chunk models (for YouTube parsing) ───────────────────────────────
-
-abstract class _Chunk {}
-
-class _HtmlChunk extends _Chunk {
-  final String html;
-  _HtmlChunk(this.html);
-}
-
-class _YouTubeChunk extends _Chunk {
-  final String videoId;
-  _YouTubeChunk(this.videoId);
-}
-
-class _ImageChunk extends _Chunk {
-  final String src;
-  final double widthFraction; // 0.0–1.0, relative to available width
-  final String align; // 'left' | 'center' | 'right'
-  _ImageChunk({required this.src, required this.widthFraction, required this.align});
 }
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -63,14 +44,79 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
   final ScrollController _scrollController = ScrollController();
   bool _titleVisible = false;
 
-  // SliverAppBar collapses after scrolling past expandedHeight - toolbar height.
   static const double _collapseThreshold = 260.0 - kToolbarHeight;
 
   @override
   void initState() {
     super.initState();
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _showLoginRequired());
+      return;
+    }
     _scrollController.addListener(_onScroll);
     _fetchArticle();
+  }
+
+  void _showLoginRequired() {
+    showDialog<void>(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.6),
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.white,
+        elevation: 24,
+        shadowColor: Colors.black38,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'กรุณาเข้าสู่ระบบ',
+          style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          'คุณต้องเข้าสู่ระบบก่อนจึงจะอ่านบทความได้',
+          style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
+        ),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        actions: [
+          GradientButton(
+            height: 46,
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              final loggedIn = await Navigator.of(context, rootNavigator: true)
+                  .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+              if (!mounted) return;
+              if (loggedIn == true) {
+                _scrollController.addListener(_onScroll);
+                _fetchArticle();
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+            label: 'เข้าสู่ระบบ',
+            fontSize: 15,
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: FilledButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                Navigator.of(context).pop();
+              },
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFEEEEEE),
+                foregroundColor: AppColors.textPrimary,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              ),
+              child: Text(
+                'ยกเลิก',
+                style: GoogleFonts.googleSans(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onScroll() {
@@ -101,7 +147,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
         _article = _Article(
           title: data['title'] as String,
           coverImageUrl: data['cover_image_url'] as String?,
-          contentHtml: data['content_html'] as String?,
+          contentJson: data['content_json'] as Map<String, dynamic>?,
           publishAt: data['publish_at'] as String?,
           createdByName: data['created_by_name'] as String?,
         );
@@ -128,77 +174,16 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     return '${dt.day} ${months[dt.month]} ${dt.year + 543} $h:$m น.';
   }
 
-  // Extract YouTube video ID from any common URL format.
-  static String? _youTubeId(String src) {
-    // youtube.com/embed/ID or youtube-nocookie.com/embed/ID
-    var m = RegExp(r'youtube(?:-nocookie)?\.com/embed/([a-zA-Z0-9_-]+)')
-        .firstMatch(src);
-    if (m != null) return m.group(1);
-    // youtube.com/watch?v=ID
-    m = RegExp(r'youtube\.com/watch\?[^"]*[?&]v=([a-zA-Z0-9_-]+)')
-        .firstMatch(src);
-    if (m != null) return m.group(1);
-    // youtu.be/ID
-    m = RegExp(r'youtu\.be/([a-zA-Z0-9_-]+)').firstMatch(src);
-    if (m != null) return m.group(1);
-    return null;
-  }
-
-  // Split html into HtmlChunks, YouTubeChunks, and ImageChunks.
-  static List<_Chunk> _parseChunks(String html) {
-    final chunks = <_Chunk>[];
-    final re = RegExp(
-      // Group 1: YouTube iframe (with optional wrapper div)
-      r'(?:(?:<div[^>]*data-youtube-video[^>]*>\s*)?'
-      r'<iframe[^>]+\bsrc="([^"]*(?:youtube(?:-nocookie)?\.com|youtu\.be)[^"]*)"[^>]*>'
-      r'(?:.*?</iframe>)?'
-      r'(?:\s*</div>)?)'
-      r'|'
-      // Group 2: Standalone img with data-align (block-level images from editor)
-      r'(<img\b[^>]*\bdata-align="[^"]*"[^>]*>)',
-      caseSensitive: false,
-      dotAll: true,
-    );
-    int lastEnd = 0;
-    for (final m in re.allMatches(html)) {
-      if (m.group(1) != null) {
-        final videoId = _youTubeId(m.group(1)!);
-        if (videoId == null) continue;
-        if (m.start > lastEnd) chunks.add(_HtmlChunk(html.substring(lastEnd, m.start)));
-        chunks.add(_YouTubeChunk(videoId));
-        lastEnd = m.end;
-      } else if (m.group(2) != null) {
-        final imgChunk = _parseImageChunk(m.group(2)!);
-        if (imgChunk == null) continue;
-        if (m.start > lastEnd) chunks.add(_HtmlChunk(html.substring(lastEnd, m.start)));
-        chunks.add(imgChunk);
-        lastEnd = m.end;
-      }
-    }
-    if (lastEnd < html.length) chunks.add(_HtmlChunk(html.substring(lastEnd)));
-    return chunks;
-  }
-
-  static _ImageChunk? _parseImageChunk(String imgTag) {
-    final src = RegExp(r'\bsrc="([^"]*)"').firstMatch(imgTag)?.group(1);
-    if (src == null || src.isEmpty) return null;
-    final style = RegExp(r'\bstyle="([^"]*)"').firstMatch(imgTag)?.group(1) ?? '';
-    final widthStr = RegExp(r'width:\s*([\d.]+)%').firstMatch(style)?.group(1);
-    final widthFraction = widthStr != null ? double.parse(widthStr) / 100.0 : 1.0;
-    final align = RegExp(r'\bdata-align="([^"]*)"').firstMatch(imgTag)?.group(1) ?? 'left';
-    return _ImageChunk(src: src, widthFraction: widthFraction, align: align);
-  }
-
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return _buildLoading(context);
-    if (_error != null) return _buildError(context);
-    return _buildContent(context);
+    if (_loading) return _buildLoading();
+    if (_error != null) return _buildError();
+    return _buildContent();
   }
 
-  Widget _buildLoading(BuildContext context) {
+  Widget _buildLoading() {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: CustomScrollView(
@@ -219,7 +204,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     );
   }
 
-  Widget _buildError(BuildContext context) {
+  Widget _buildError() {
     return Scaffold(
       backgroundColor: AppColors.white,
       body: SafeArea(
@@ -246,11 +231,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     );
   }
 
-  Widget _buildContent(BuildContext context) {
+  Widget _buildContent() {
     final article = _article!;
-    final chunks =
-        article.contentHtml != null ? _parseChunks(article.contentHtml!) : <_Chunk>[];
-
     return Scaffold(
       backgroundColor: AppColors.white,
       body: CustomScrollView(
@@ -262,7 +244,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
             pinned: true,
             backgroundColor: AppColors.white,
             automaticallyImplyLeading: false,
-            leading: const _BackButton(),
+            leading: _BackButton(scrolled: _titleVisible),
             centerTitle: true,
             title: AnimatedOpacity(
               opacity: _titleVisible ? 1.0 : 0.0,
@@ -289,7 +271,6 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                           errorBuilder: (_, _, _) => const _GradientCover(),
                         )
                       : const _GradientCover(),
-                  // Bottom gradient overlay + title
                   Positioned(
                     bottom: 0,
                     left: 0,
@@ -328,10 +309,12 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  if (article.createdByName != null)
+                  if (article.createdByName != null &&
+                      article.createdByName!.isNotEmpty)
                     Row(
                       children: [
-                        const Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
+                        const Icon(Icons.person_outline,
+                            size: 14, color: AppColors.textMuted),
                         const SizedBox(width: 4),
                         Text(
                           article.createdByName!,
@@ -343,10 +326,13 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                       ],
                     ),
                   if (article.publishAt != null) ...[
-                    if (article.createdByName != null) const SizedBox(height: 4),
+                    if (article.createdByName != null &&
+                        article.createdByName!.isNotEmpty)
+                      const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
+                        const Icon(Icons.access_time,
+                            size: 14, color: AppColors.textMuted),
                         const SizedBox(width: 4),
                         Text(
                           _formatDateTime(article.publishAt!),
@@ -359,15 +345,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  ...chunks.map((chunk) {
-                    if (chunk is _YouTubeChunk) {
-                      return _YouTubeThumbnail(videoId: chunk.videoId);
-                    }
-                    if (chunk is _ImageChunk) {
-                      return _ImageWidget(chunk: chunk);
-                    }
-                    return _HtmlBody(html: (chunk as _HtmlChunk).html);
-                  }),
+                  if (article.contentJson != null)
+                    _TipTapRenderer(doc: article.contentJson!),
                   const SizedBox(height: 48),
                 ],
               ),
@@ -382,7 +361,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 // ─── Back button ──────────────────────────────────────────────────────────────
 
 class _BackButton extends StatelessWidget {
-  const _BackButton();
+  final bool scrolled;
+  const _BackButton({this.scrolled = false});
 
   @override
   Widget build(BuildContext context) {
@@ -390,14 +370,29 @@ class _BackButton extends StatelessWidget {
       padding: const EdgeInsets.all(8),
       child: GestureDetector(
         onTap: () => Navigator.of(context).pop(),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           width: 36,
           height: 36,
-          decoration: const BoxDecoration(
-            color: Color(0x4D000000),
+          decoration: BoxDecoration(
+            color: scrolled ? Colors.transparent : const Color(0x4D000000),
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              AnimatedOpacity(
+                opacity: scrolled ? 0.0 : 1.0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+              ),
+              AnimatedOpacity(
+                opacity: scrolled ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 200),
+                child: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -423,70 +418,312 @@ class _GradientCover extends StatelessWidget {
   }
 }
 
-// ─── Html content ─────────────────────────────────────────────────────────────
+// ─── TipTap JSON renderer ─────────────────────────────────────────────────────
 
-class _HtmlBody extends StatelessWidget {
-  final String html;
+class _TipTapRenderer extends StatelessWidget {
+  final Map<String, dynamic> doc;
 
-  const _HtmlBody({required this.html});
+  const _TipTapRenderer({required this.doc});
 
   @override
   Widget build(BuildContext context) {
-    return Html(
-      data: html,
-      onLinkTap: (url, _, _) {
-        if (url != null) {
-          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        }
-      },
-      style: {
-        'body': Style(
-          fontFamily: 'GoogleSans',
-          fontSize: FontSize(15),
-          lineHeight: LineHeight(1.6),
-          margin: Margins.zero,
-          padding: HtmlPaddings.zero,
+    final nodes =
+        (doc['content'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    if (nodes.isEmpty) return const SizedBox.shrink();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [for (final node in nodes) _buildNode(node)],
+    );
+  }
+
+  // ─── Block node dispatcher ─────────────────────────────────────────────────
+
+  Widget _buildNode(Map<String, dynamic> node) {
+    return switch (node['type'] as String?) {
+      'heading'        => _buildHeading(node),
+      'paragraph'      => _buildParagraph(node),
+      'bulletList'     => _buildList(node, ordered: false),
+      'orderedList'    => _buildList(node, ordered: true),
+      'blockquote'     => _buildBlockquote(node),
+      'codeBlock'      => _buildCodeBlock(node),
+      'image'          => _buildImage(node),
+      'youtube'        => _buildYouTube(node),
+      'horizontalRule' => _buildHorizontalRule(),
+      _                => const SizedBox.shrink(),
+    };
+  }
+
+  // ─── Block builders ────────────────────────────────────────────────────────
+
+  Widget _buildHeading(Map<String, dynamic> node) {
+    final level =
+        ((node['attrs'] as Map?)?['level'] as num?)?.toInt() ?? 1;
+    final idx = (level - 1).clamp(0, 2);
+    const fontSizes  = [22.0, 18.0, 16.0];
+    const topPads    = [16.0, 14.0, 12.0];
+    const bottomPads = [ 8.0,  6.0,  4.0];
+    return Padding(
+      padding: EdgeInsets.only(top: topPads[idx], bottom: bottomPads[idx]),
+      child: RichText(
+        text: TextSpan(
+          style: GoogleFonts.googleSans(
+            fontSize: fontSizes[idx],
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+            height: 1.3,
+          ),
+          children: _inlineSpans(node),
         ),
-        'p': Style(
-          margin: Margins.only(top: 0, bottom: 8),
-          padding: HtmlPaddings.zero,
+      ),
+    );
+  }
+
+  Widget _buildParagraph(Map<String, dynamic> node, {Color? textColor}) {
+    final content =
+        (node['content'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    if (content.isEmpty) return const SizedBox(height: 8);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: RichText(
+        text: TextSpan(
+          style: GoogleFonts.googleSans(
+            fontSize: 15,
+            color: textColor ?? AppColors.textPrimary,
+            height: 1.6,
+          ),
+          children: _inlineSpans(node, textColor: textColor),
         ),
-        'div': Style(
-          margin: Margins.zero,
-          padding: HtmlPaddings.zero,
-        ),
-        'hr': Style(
-          margin: Margins.symmetric(vertical: 8),
-        ),
-        'h1': Style(
-          fontSize: FontSize(22),
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-          margin: Margins.only(top: 16, bottom: 8),
-        ),
-        'h2': Style(
-          fontSize: FontSize(18),
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-          margin: Margins.only(top: 14, bottom: 6),
-        ),
-        'h3': Style(
-          fontSize: FontSize(16),
-          fontWeight: FontWeight.bold,
-          color: AppColors.textPrimary,
-          margin: Margins.only(top: 12, bottom: 4),
-        ),
-        'a': Style(color: AppColors.primary),
-        'blockquote': Style(
-          padding: HtmlPaddings.only(left: 16),
+      ),
+    );
+  }
+
+  Widget _buildList(Map<String, dynamic> node, {required bool ordered}) {
+    final items =
+        (node['content'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final start =
+        ordered ? (((node['attrs'] as Map?)?['start'] as num?)?.toInt() ?? 1) : 1;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < items.length; i++)
+            _buildListItem(
+              items[i],
+              bullet: ordered ? '${start + i}.' : '•',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildListItem(Map<String, dynamic> node, {required String bullet}) {
+    final content =
+        (node['content'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 24,
+            child: Text(
+              bullet,
+              style: GoogleFonts.googleSans(
+                fontSize: 15,
+                color: AppColors.textPrimary,
+                height: 1.6,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [for (final child in content) _buildNode(child)],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBlockquote(Map<String, dynamic> node) {
+    final content =
+        (node['content'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        decoration: const BoxDecoration(
           border: Border(
             left: BorderSide(color: AppColors.primary, width: 4),
           ),
-          color: AppColors.textSecondary,
         ),
-        'img': Style(width: Width(100, Unit.percent)),
-      },
+        padding: const EdgeInsets.only(left: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final child in content)
+              child['type'] == 'paragraph'
+                  ? _buildParagraph(child, textColor: AppColors.textSecondary)
+                  : _buildNode(child),
+          ],
+        ),
+      ),
     );
+  }
+
+  Widget _buildCodeBlock(Map<String, dynamic> node) {
+    final content =
+        (node['content'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    final text = content.map((n) => n['text'] as String? ?? '').join('');
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 13,
+          color: AppColors.textPrimary,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImage(Map<String, dynamic> node) {
+    final attrs =
+        (node['attrs'] as Map?)?.cast<String, dynamic>() ?? {};
+    final src = attrs['src'] as String?;
+    if (src == null || src.isEmpty) return const SizedBox.shrink();
+
+    final widthStr = attrs['imgWidth'] as String? ?? '100%';
+    final align    = attrs['imgAlign'] as String? ?? 'left';
+    final match    = RegExp(r'([\d.]+)%').firstMatch(widthStr);
+    final fraction = match != null ? double.parse(match.group(1)!) / 100.0 : 1.0;
+    final alignment = switch (align) {
+      'center' => Alignment.center,
+      'right'  => Alignment.centerRight,
+      _        => Alignment.centerLeft,
+    };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: LayoutBuilder(
+        builder: (_, constraints) => Align(
+          alignment: alignment,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              src,
+              width: constraints.maxWidth * fraction,
+              fit: BoxFit.contain,
+              errorBuilder: (_, _, _) => const SizedBox.shrink(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildYouTube(Map<String, dynamic> node) {
+    final attrs = (node['attrs'] as Map?)?.cast<String, dynamic>() ?? {};
+    final src    = attrs['src'] as String? ?? '';
+    final videoId = _youTubeId(src);
+    if (videoId == null) return const SizedBox.shrink();
+    return _YouTubeThumbnail(videoId: videoId);
+  }
+
+  Widget _buildHorizontalRule() {
+    return const Padding(
+      padding: EdgeInsets.symmetric(vertical: 8),
+      child: Divider(),
+    );
+  }
+
+  // ─── Inline span builders ──────────────────────────────────────────────────
+
+  List<InlineSpan> _inlineSpans(
+    Map<String, dynamic> node, {
+    Color? textColor,
+  }) {
+    final content =
+        (node['content'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+    return content
+        .map((n) => _buildInlineSpan(n, textColor: textColor))
+        .toList();
+  }
+
+  InlineSpan _buildInlineSpan(
+    Map<String, dynamic> node, {
+    Color? textColor,
+  }) {
+    if (node['type'] == 'hardBreak') return const TextSpan(text: '\n');
+    if (node['type'] != 'text') return const TextSpan(text: '');
+
+    final text  = node['text'] as String? ?? '';
+    final marks =
+        (node['marks'] as List?)?.cast<Map<String, dynamic>>() ?? [];
+
+    var style = TextStyle(color: textColor ?? AppColors.textPrimary);
+    String? linkHref;
+
+    for (final mark in marks) {
+      switch (mark['type'] as String?) {
+        case 'bold':
+          style = style.copyWith(fontWeight: FontWeight.bold);
+        case 'italic':
+          style = style.copyWith(fontStyle: FontStyle.italic);
+        case 'strike':
+          style = style.copyWith(decoration: TextDecoration.lineThrough);
+        case 'code':
+          style = style.copyWith(
+            fontFamily: 'monospace',
+            fontSize: 13,
+            backgroundColor: Colors.grey.shade200,
+          );
+        case 'link':
+          linkHref = (mark['attrs'] as Map?)?['href'] as String?;
+      }
+    }
+
+    if (linkHref != null) {
+      final href = linkHref;
+      return TextSpan(
+        text: text,
+        style: style.copyWith(
+          color: AppColors.primary,
+          decoration: TextDecoration.underline,
+          decorationColor: AppColors.primary,
+        ),
+        recognizer: TapGestureRecognizer()
+          ..onTap = () =>
+              launchUrl(Uri.parse(href), mode: LaunchMode.externalApplication),
+      );
+    }
+
+    return TextSpan(text: text, style: style);
+  }
+
+  // ─── YouTube ID helper ─────────────────────────────────────────────────────
+
+  static String? _youTubeId(String src) {
+    var m = RegExp(r'youtube(?:-nocookie)?\.com/embed/([a-zA-Z0-9_-]+)')
+        .firstMatch(src);
+    if (m != null) return m.group(1);
+    m = RegExp(r'youtube\.com/watch\?[^"]*[?&]v=([a-zA-Z0-9_-]+)')
+        .firstMatch(src);
+    if (m != null) return m.group(1);
+    m = RegExp(r'youtu\.be/([a-zA-Z0-9_-]+)').firstMatch(src);
+    return m?.group(1);
   }
 }
 
@@ -509,7 +746,6 @@ class _YouTubeThumbnail extends StatelessWidget {
         child: Stack(
           alignment: Alignment.center,
           children: [
-            // Thumbnail
             AspectRatio(
               aspectRatio: 16 / 9,
               child: Image.network(
@@ -517,15 +753,14 @@ class _YouTubeThumbnail extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (_, _, _) => Container(
                   color: Colors.grey.shade200,
-                  child: const Icon(Icons.videocam_off, color: Colors.grey, size: 48),
+                  child: const Icon(Icons.videocam_off,
+                      color: Colors.grey, size: 48),
                 ),
               ),
             ),
-            // Dark overlay
             Positioned.fill(
               child: Container(color: const Color(0x33000000)),
             ),
-            // Play icon
             Container(
               width: 56,
               height: 56,
@@ -535,7 +770,6 @@ class _YouTubeThumbnail extends StatelessWidget {
               ),
               child: const Icon(Icons.play_arrow, color: Colors.white, size: 32),
             ),
-            // "เปิดใน YouTube" button at bottom
             Positioned(
               bottom: 12,
               child: GestureDetector(
@@ -544,7 +778,8 @@ class _YouTubeThumbnail extends StatelessWidget {
                   mode: LaunchMode.externalApplication,
                 ),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xCCFF0000),
                     borderRadius: BorderRadius.circular(20),
@@ -562,40 +797,6 @@ class _YouTubeThumbnail extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-// ─── Sized + aligned image ────────────────────────────────────────────────────
-
-class _ImageWidget extends StatelessWidget {
-  final _ImageChunk chunk;
-
-  const _ImageWidget({required this.chunk});
-
-  @override
-  Widget build(BuildContext context) {
-    final alignment = switch (chunk.align) {
-      'center' => Alignment.center,
-      'right'  => Alignment.centerRight,
-      _        => Alignment.centerLeft,
-    };
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final width = constraints.maxWidth * chunk.widthFraction;
-          return Align(
-            alignment: alignment,
-            child: Image.network(
-              chunk.src,
-              width: width,
-              fit: BoxFit.contain,
-              errorBuilder: (_, _, _) => const SizedBox.shrink(),
-            ),
-          );
-        },
       ),
     );
   }
