@@ -7,13 +7,46 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.4"
   }
   public: {
     Tables: {
+      appointment_status_logs: {
+        Row: {
+          appointment_id: string
+          changed_at: string
+          changed_by: string | null
+          from_status: Database["public"]["Enums"]["appointment_status"] | null
+          id: string
+          to_status: Database["public"]["Enums"]["appointment_status"]
+        }
+        Insert: {
+          appointment_id: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["appointment_status"] | null
+          id?: string
+          to_status: Database["public"]["Enums"]["appointment_status"]
+        }
+        Update: {
+          appointment_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["appointment_status"] | null
+          id?: string
+          to_status?: Database["public"]["Enums"]["appointment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_status_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       articles: {
         Row: {
           content_html: string
@@ -25,6 +58,8 @@ export type Database = {
           id: string
           is_visible: boolean
           publish_at: string | null
+          published_content_html: string | null
+          published_content_json: Json | null
           status: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at: string | null
@@ -39,6 +74,8 @@ export type Database = {
           id?: string
           is_visible?: boolean
           publish_at?: string | null
+          published_content_html?: string | null
+          published_content_json?: Json | null
           status?: Database["public"]["Enums"]["article_status"]
           title: string
           updated_at?: string | null
@@ -53,6 +90,8 @@ export type Database = {
           id?: string
           is_visible?: boolean
           publish_at?: string | null
+          published_content_html?: string | null
+          published_content_json?: Json | null
           status?: Database["public"]["Enums"]["article_status"]
           title?: string
           updated_at?: string | null
@@ -294,6 +333,45 @@ export type Database = {
           service_center?: Database["public"]["Enums"]["service_center"]
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      service_centers: {
+        Row: {
+          contacts: Json
+          created_at: string
+          description: string | null
+          display_order: number
+          image_url: string | null
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          contacts?: Json
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          image_url?: string | null
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          contacts?: Json
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          image_url?: string | null
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -593,6 +671,39 @@ export type Database = {
       dearmor: { Args: { "": string }; Returns: string }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
+      get_appointment_status_log: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_from_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_reference_number?: string
+          p_to_status?: string
+        }
+        Returns: {
+          appointment_id: string
+          changed_at: string
+          from_status: string
+          full_name: string
+          id: string
+          performed_by: string
+          reference_number: string
+          to_status: string
+        }[]
+      }
+      get_article_detail: {
+        Args: { p_article_id: string }
+        Returns: {
+          content_json: Json
+          cover_image_url: string
+          created_by_name: string
+          id: string
+          publish_at: string
+          title: string
+        }[]
+      }
       get_audit_log: {
         Args: {
           p_action?: string
@@ -690,6 +801,7 @@ export type Database = {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
           cover_image_url: string
+          created_by_name: string
           excerpt: string
           id: string
           publish_at: string
@@ -733,6 +845,21 @@ export type Database = {
           day: string
           request_count: number
           service_center: Database["public"]["Enums"]["service_center"]
+        }[]
+      }
+      get_service_centers: {
+        Args: never
+        Returns: {
+          contacts: Json
+          created_at: string
+          description: string | null
+          display_order: number
+          image_url: string | null
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          updated_at: string
         }[]
       }
       get_staff_audit_log: {
@@ -784,8 +911,6 @@ export type Database = {
         Returns: {
           cancelled_count: number
           completed_count: number
-          first_name: string
-          last_name: string
           staff_user_id: string
           week_start: string
         }[]
@@ -810,6 +935,18 @@ export type Database = {
       }
       save_recovery_codes: {
         Args: { secret_codes: string[] }
+        Returns: undefined
+      }
+      upsert_service_center: {
+        Args: {
+          p_contacts?: Json
+          p_description?: string
+          p_display_order?: number
+          p_image_url?: string
+          p_latitude?: number
+          p_longitude?: number
+          p_name: string
+        }
         Returns: undefined
       }
       verify_recovery_code: {
@@ -875,7 +1012,6 @@ export type Database = {
 }
 
 type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
-
 type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
@@ -888,145 +1024,86 @@ export type Tables<
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
-      Row: infer R
-    }
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends { Row: infer R }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
-        Row: infer R
-      }
-      ? R
-      : never
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+  ? (DefaultSchema["Tables"] & DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends { Row: infer R }
+    ? R
     : never
+  : never
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  TableName extends DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Insert: infer I
-    }
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends { Insert: infer I }
     ? I
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Insert: infer I
-      }
-      ? I
-      : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends { Insert: infer I }
+    ? I
     : never
+  : never
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  TableName extends DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = DefaultSchemaTableNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
-      Update: infer U
-    }
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends { Update: infer U }
     ? U
     : never
   : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
-        Update: infer U
-      }
-      ? U
-      : never
+  ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends { Update: infer U }
+    ? U
     : never
+  : never
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  EnumName extends DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = DefaultSchemaEnumNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
   : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
-    : never
+  ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
-    schema: keyof DatabaseWithoutInternals
-  }
+  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
-> = PublicCompositeTypeNameOrOptions extends {
-  schema: keyof DatabaseWithoutInternals
-}
+> = PublicCompositeTypeNameOrOptions extends { schema: keyof DatabaseWithoutInternals }
   ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
   : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
-    : never
+  ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : never
 
 export const Constants = {
   public: {
     Enums: {
-      appointment_status: [
-        "pending",
-        "confirmed",
-        "cancelled_by_user",
-        "cancelled_by_staff",
-        "completed",
-      ],
+      appointment_status: ["pending","confirmed","cancelled_by_user","cancelled_by_staff","completed"],
       article_status: ["draft", "scheduled", "published", "hidden"],
-      audit_action: [
-        "role_updated",
-        "staff_profile_updated",
-        "restock",
-        "fulfillment",
-        "adjustment",
-        "staff_created",
-        "staff_deleted",
-        "email_updated",
-      ],
-      request_status: [
-        "pending",
-        "preparing",
-        "ready",
-        "completed",
-        "cancelled_by_user",
-        "cancelled_by_staff",
-      ],
+      audit_action: ["role_updated","staff_profile_updated","restock","fulfillment","adjustment","staff_created","staff_deleted","email_updated"],
+      request_status: ["pending","preparing","ready","completed","cancelled_by_user","cancelled_by_staff"],
       role: ["staff", "admin", "superadmin"],
-      service_center: [
-        "รพ.โพนพิสัย",
-        "รพ.สต.วัดหลวง",
-        "อบต.วัดหลวง",
-        "สสจ.หนองคาย",
-      ],
+      service_center: ["รพ.โพนพิสัย","รพ.สต.วัดหลวง","อบต.วัดหลวง","สสจ.หนองคาย"],
       transaction_type: ["restock", "fulfillment", "adjustment"],
     },
   },
