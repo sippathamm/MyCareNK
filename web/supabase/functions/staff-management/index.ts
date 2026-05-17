@@ -101,6 +101,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(400, 'error', 'ข้อมูลไม่ครบถ้วน');
     }
 
+    if (callerProfile.role === 'admin' && role === 'superadmin') {
+      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถสร้างบัญชีผู้ดูแลสูงสุดได้');
+    }
+
     const { data: authData, error: authErr } = await serviceClient.auth.admin.createUser({
       email,
       password,
@@ -156,6 +160,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     ]);
     const snapshotEmail = authUserSnapshot.data?.user?.email ?? null;
 
+    if (callerProfile.role === 'admin' && profileSnapshot?.role === 'superadmin') {
+      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถลบบัญชีผู้ดูแลสูงสุดได้');
+    }
+
     const { error: deleteErr } = await serviceClient.auth.admin.deleteUser(user_id);
     if (deleteErr) {
       return jsonResponse(500, 'error', 'ไม่สามารถลบบัญชีได้');
@@ -205,6 +213,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
         ? serviceClient.auth.admin.getUserById(user_id)
         : Promise.resolve({ data: { user: null }, error: null }),
     ]);
+
+    // Admin cannot modify superadmin accounts or promote anyone to superadmin
+    if (callerProfile.role === 'admin') {
+      if (profileBefore.data?.role === 'superadmin') {
+        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลสูงสุดได้');
+      }
+      if (role === 'superadmin') {
+        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถกำหนดสิทธิ์ผู้ดูแลสูงสุดได้');
+      }
+    }
 
     // Diff: only keep fields that actually changed
     const changedProfileUpdates: Record<string, unknown> = {};

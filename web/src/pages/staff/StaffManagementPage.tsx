@@ -213,12 +213,13 @@ interface EditStaffDialogProps {
   staff: StaffMember | null;
   centerNames: string[];
   currentUserId: string;
+  currentRole: string;
   onClose: () => void;
   onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: string; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
-function EditStaffDialog({ open, staff, centerNames, currentUserId, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
+function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -271,26 +272,33 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, onClose, onU
     handleClose();
   };
 
+  const isRestricted = currentRole === 'admin' && staff?.role === 'superadmin';
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
       <DialogContent dividers>
+        {isRestricted && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            ผู้ดูแลไม่สามารถแก้ไขหรือลบบัญชีผู้ดูแลสูงสุดได้
+          </Alert>
+        )}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth />
-            <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth />
+            <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted} />
+            <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
           </Box>
-          <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth />
+          <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
           <TextField
             select label="สถานบริการ" value={serviceCenter}
-            onChange={e => setServiceCenter(e.target.value)} fullWidth
+            onChange={e => setServiceCenter(e.target.value)} fullWidth disabled={isRestricted}
           >
             {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
           </TextField>
           <TextField
             select label="ระดับสิทธิ์" value={role}
-            onChange={e => { setRole(e.target.value); setConfirmDowngrade(false); }} fullWidth
+            onChange={e => { setRole(e.target.value); setConfirmDowngrade(false); }} fullWidth disabled={isRestricted}
           >
             {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
           </TextField>
@@ -326,7 +334,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, onClose, onU
           startIcon={deleting ? undefined : <DeleteIcon />}
           endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
           onClick={handleDelete}
-          disabled={deleting || (staff?.staff_user_id === currentUserId)}
+          disabled={deleting || isRestricted || (staff?.staff_user_id === currentUserId)}
           sx={{ mr: 'auto' }}
         >
           {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
@@ -335,7 +343,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, onClose, onU
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={submitting}
+          disabled={submitting || isRestricted}
           endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           บันทึก
@@ -472,6 +480,7 @@ export default function StaffManagementPage() {
         staff={editTarget}
         centerNames={centerNames}
         currentUserId={currentUserId}
+        currentRole={role ?? ''}
         onClose={() => setEditTarget(null)}
         onUpdate={updateStaff}
         onDelete={deleteStaff}
