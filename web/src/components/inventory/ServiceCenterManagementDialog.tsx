@@ -2,17 +2,28 @@ import { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   Typography, Box, Grid, Card, CardContent, Chip,
-  IconButton, Skeleton, Tooltip, Divider, Alert,
+  IconButton, Skeleton, Tooltip, Divider, Alert, CircularProgress,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { useServiceCenters, type ServiceCenterRow } from '../../hooks/useServiceCenters';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { supabase } from '../../lib/supabase';
 import ServiceCenterEditDialog from './ServiceCenterEditDialog';
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdit: () => void }) {
+interface CardProps {
+  center: ServiceCenterRow;
+  onEdit: () => void;
+  isSuperadmin: boolean;
+  toggling: boolean;
+  onToggleActive: (newActive: boolean) => void;
+}
+
+function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleActive }: CardProps) {
   const firstTwoContacts = center.contacts.slice(0, 2);
   const hasLocation = center.latitude !== null && center.longitude !== null;
 
@@ -24,26 +35,17 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
           <Box
             component="img"
             src={center.image_url}
-            sx={{
-              position: 'absolute', top: 0, left: 0,
-              width: '100%', height: '100%', objectFit: 'cover',
-            }}
+            sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
           />
         ) : (
-          <Box
-            sx={{
-              position: 'absolute', top: 0, left: 0,
-              width: '100%', height: '100%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-          >
+          <Box sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <StorefrontIcon sx={{ fontSize: 48, color: 'grey.300' }} />
           </Box>
         )}
       </Box>
 
       <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Header row */}
+        {/* Header */}
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
           <Typography variant="subtitle1" fontWeight="bold" sx={{ flex: 1, mr: 1 }}>
             {center.name}
@@ -71,18 +73,44 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
           </Box>
         )}
 
-        <Box sx={{ mt: 'auto' }}>
+        <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
           <Chip
             size="small"
             icon={<LocationOnIcon />}
             label={hasLocation ? 'มีตำแหน่ง' : 'ยังไม่มีตำแหน่ง'}
             sx={{
+              alignSelf: 'flex-start',
               bgcolor: hasLocation ? '#E8F5E9' : '#F5F5F5',
               color: hasLocation ? '#2E7D32' : '#9E9E9E',
               fontSize: '0.7rem',
               '& .MuiChip-icon': { color: hasLocation ? '#2E7D32' : '#9E9E9E', fontSize: 14 },
             }}
           />
+
+          {isSuperadmin && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Chip
+                size="small"
+                label={center.is_active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
+                sx={{
+                  bgcolor: center.is_active ? '#E8F5E9' : '#F5F5F5',
+                  color: center.is_active ? '#2E7D32' : '#9E9E9E',
+                  fontSize: '0.7rem',
+                }}
+              />
+              <Button
+                size="small"
+                variant="outlined"
+                color={center.is_active ? 'error' : 'success'}
+                disabled={toggling}
+                onClick={() => onToggleActive(!center.is_active)}
+                startIcon={toggling ? <CircularProgress size={12} color="inherit" /> : null}
+                sx={{ fontSize: '0.7rem', py: 0.25 }}
+              >
+                {center.is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+              </Button>
+            </Box>
+          )}
         </Box>
       </CardContent>
     </Card>
@@ -98,13 +126,18 @@ interface Props {
 
 export default function ServiceCenterManagementDialog({ open, onClose }: Props) {
   const { centers, loading, error, refetch } = useServiceCenters(open);
+  const { role } = useRoleAccess();
+  const isSuperadmin = role === 'superadmin';
   const [editTarget, setEditTarget] = useState<ServiceCenterRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
+  const [togglingCenter, setTogglingCenter] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
       setEditTarget(null);
       setEditOpen(false);
+      setAddOpen(false);
     }
   }, [open]);
 
@@ -113,27 +146,54 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
     setEditOpen(true);
   };
 
-  const handleEditClose = () => {
+  const handleDialogClose = () => {
     setEditOpen(false);
+    setAddOpen(false);
     setEditTarget(null);
   };
 
-  const handleEditSuccess = () => {
+  const handleDialogSuccess = () => {
     setEditOpen(false);
+    setAddOpen(false);
     setEditTarget(null);
     refetch();
+  };
+
+  const handleToggleActive = async (center: ServiceCenterRow, newActive: boolean) => {
+    setTogglingCenter(center.name);
+    const { error: toggleError } = await supabase.rpc('toggle_service_center_active', {
+      p_name: center.name,
+      p_is_active: newActive,
+    });
+    setTogglingCenter(null);
+    if (!toggleError) refetch();
   };
 
   return (
     <>
       <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
-          <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
-            จัดการสถานบริการ
-          </Typography>
-          <Typography component="div" variant="caption" color="text.secondary">
-            แก้ไขรูปภาพ ข้อมูลทั่วไป ช่องทางติดต่อ และตำแหน่งของแต่ละสถานบริการ
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <Box>
+              <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
+                จัดการสถานบริการ
+              </Typography>
+              <Typography component="div" variant="caption" color="text.secondary">
+                แก้ไขรูปภาพ ข้อมูลทั่วไป ช่องทางติดต่อ และตำแหน่งของแต่ละสถานบริการ
+              </Typography>
+            </Box>
+            {isSuperadmin && (
+              <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => setAddOpen(true)}
+                size="small"
+                sx={{ flexShrink: 0, ml: 2, mt: 0.5 }}
+              >
+                เพิ่มสถานบริการ
+              </Button>
+            )}
+          </Box>
         </DialogTitle>
 
         <Divider />
@@ -149,12 +209,18 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
             {loading
               ? Array.from({ length: 4 }).map((_, i) => (
                   <Grid key={i} size={{ xs: 12, sm: 6 }}>
-                    <Skeleton variant="rounded" height={240} />
+                    <Skeleton variant="rounded" height={260} />
                   </Grid>
                 ))
               : centers.map((center) => (
                   <Grid key={center.name} size={{ xs: 12, sm: 6 }}>
-                    <ServiceCenterCard center={center} onEdit={() => handleEdit(center)} />
+                    <ServiceCenterCard
+                      center={center}
+                      onEdit={() => handleEdit(center)}
+                      isSuperadmin={isSuperadmin}
+                      toggling={togglingCenter === center.name}
+                      onToggleActive={(newActive) => handleToggleActive(center, newActive)}
+                    />
                   </Grid>
                 ))
             }
@@ -167,10 +233,11 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
       </Dialog>
 
       <ServiceCenterEditDialog
-        open={editOpen}
-        center={editTarget}
-        onClose={handleEditClose}
-        onSuccess={handleEditSuccess}
+        open={editOpen || addOpen}
+        center={addOpen ? null : editTarget}
+        existingNames={centers.map(c => c.name)}
+        onClose={handleDialogClose}
+        onSuccess={handleDialogSuccess}
       />
     </>
   );

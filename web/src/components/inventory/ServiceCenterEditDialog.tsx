@@ -15,6 +15,7 @@ import type { ServiceCenterRow } from '../../hooks/useServiceCenters';
 interface Props {
   open: boolean;
   center: ServiceCenterRow | null;
+  existingNames: string[];
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -34,7 +35,10 @@ function getFileExtension(filename: string) {
   return filename.split('.').pop() ?? 'jpg';
 }
 
-export default function ServiceCenterEditDialog({ open, center, onClose, onSuccess }: Props) {
+export default function ServiceCenterEditDialog({ open, center, existingNames, onClose, onSuccess }: Props) {
+  const isAddMode = open && center === null;
+
+  const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [contacts, setContacts] = useState<ContactItem[]>([]);
   const [latitude, setLatitude] = useState('');
@@ -43,28 +47,37 @@ export default function ServiceCenterEditDialog({ open, center, onClose, onSucce
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [addedName, setAddedName] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    setError(null);
+    setAddedName(null);
     if (center) {
+      setName('');
       setDescription(center.description ?? '');
       setContacts(center.contacts.length > 0 ? [...center.contacts] : []);
       setLatitude(center.latitude !== null ? String(center.latitude) : '');
       setLongitude(center.longitude !== null ? String(center.longitude) : '');
       setImageUrl(center.image_url);
+    } else {
+      setName('');
+      setDescription('');
+      setContacts([]);
+      setLatitude('');
+      setLongitude('');
+      setImageUrl(null);
     }
-    setError(null);
   }, [open, center]);
 
   const handleClose = () => {
     if (saving || uploading) return;
+    if (addedName) { onSuccess(); return; }
     onClose();
   };
 
-  const handleAddContact = () => {
-    setContacts(prev => [...prev, { label: '', value: '' }]);
-  };
+  const handleAddContact = () => setContacts(prev => [...prev, { label: '', value: '' }]);
 
   const handleContactChange = (i: number, field: 'label' | 'value', val: string) => {
     setContacts(prev => prev.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
@@ -88,9 +101,7 @@ export default function ServiceCenterEditDialog({ open, center, onClose, onSucce
         .from('service-center-assets')
         .upload(path, file, { cacheControl: '3600', upsert: false });
       if (uploadError) { setError(`อัปโหลดรูปไม่สำเร็จ: ${uploadError.message}`); return; }
-      const { data: { publicUrl } } = supabase.storage
-        .from('service-center-assets')
-        .getPublicUrl(path);
+      const { data: { publicUrl } } = supabase.storage.from('service-center-assets').getPublicUrl(path);
       setImageUrl(publicUrl);
     } catch (e) {
       setError(`อัปโหลดรูปไม่สำเร็จ: ${e instanceof Error ? e.message : 'ข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`);
@@ -99,20 +110,48 @@ export default function ServiceCenterEditDialog({ open, center, onClose, onSucce
     }
   };
 
-  const handleSave = async () => {
-    if (!center) return;
-
+  const validateLatLng = (): { lat: number | null; lng: number | null } | null => {
     const latStr = latitude.trim();
     const lngStr = longitude.trim();
     const lat = latStr ? parseFloat(latStr) : null;
     const lng = lngStr ? parseFloat(lngStr) : null;
 
-    if (latStr && (lat === null || isNaN(lat))) { setError('ละติจูดต้องเป็นตัวเลข'); return; }
-    if (lngStr && (lng === null || isNaN(lng))) { setError('ลองจิจูดต้องเป็นตัวเลข'); return; }
+    if (latStr && (lat === null || isNaN(lat))) { setError('ละติจูดต้องเป็นตัวเลข'); return null; }
+    if (lngStr && (lng === null || isNaN(lng))) { setError('ลองจิจูดต้องเป็นตัวเลข'); return null; }
     if ((latStr && !lngStr) || (!latStr && lngStr)) {
       setError('กรุณากรอกทั้งละติจูดและลองจิจูด หรือเว้นว่างทั้งคู่');
+      return null;
+    }
+    return { lat, lng };
+  };
+
+  const handleSaveAdd = async () => {
+    const trimmedName = name.trim();
+    if (!trimmedName) { setError('กรุณากรอกชื่อสถานบริการ'); return; }
+    if (existingNames.includes(trimmedName)) { setError('ชื่อนี้มีอยู่แล้ว'); return; }
+
+    setSaving(true);
+    setError(null);
+
+    const { error: addError } = await supabase.rpc('add_service_center', { p_name: trimmedName });
+    if (addError) { setError(addError.message); setSaving(false); return; }
+
+    const { error: initError } = await supabase.rpc('init_service_center_inventory', { p_name: trimmedName });
+    setSaving(false);
+
+    if (initError) {
+      setError(`สถานบริการถูกเพิ่มแล้ว แต่เกิดข้อผิดพลาดในการสร้างสต็อก: ${initError.message}`);
       return;
     }
+
+    setAddedName(trimmedName);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!center) return;
+
+    const coords = validateLatLng();
+    if (coords === null) return;
 
     const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
 
@@ -124,17 +163,12 @@ export default function ServiceCenterEditDialog({ open, center, onClose, onSucce
       p_image_url: imageUrl ?? undefined,
       p_description: description.trim() || undefined,
       p_contacts: cleanedContacts as unknown as never,
-      p_latitude: lat ?? undefined,
-      p_longitude: lng ?? undefined,
+      p_latitude: coords.lat ?? undefined,
+      p_longitude: coords.lng ?? undefined,
     });
 
     setSaving(false);
-
-    if (saveError) {
-      setError(saveError.message);
-      return;
-    }
-
+    if (saveError) { setError(saveError.message); return; }
     onSuccess();
   };
 
@@ -142,212 +176,218 @@ export default function ServiceCenterEditDialog({ open, center, onClose, onSucce
   const lng = parseFloat(longitude.trim());
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
 
-  if (!center) return null;
+  if (!open) return null;
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
-          แก้ไขสถานบริการ
+          {isAddMode ? 'เพิ่มสถานบริการ' : 'แก้ไขสถานบริการ'}
         </Typography>
-        <Typography component="div" variant="caption" color="text.secondary">
-          {center.name}
-        </Typography>
+        {!isAddMode && center && (
+          <Typography component="div" variant="caption" color="text.secondary">
+            {center.name}
+          </Typography>
+        )}
       </DialogTitle>
 
       <Divider />
 
       <DialogContent sx={{ pt: 2.5 }}>
-        {/* Image upload — 16:9 */}
-        <Box
-          sx={{
-            position: 'relative',
-            paddingTop: '56.25%',
-            bgcolor: 'grey.100',
-            borderRadius: 2,
-            overflow: 'hidden',
-            mb: 2.5,
-            cursor: uploading ? 'not-allowed' : 'pointer',
-          }}
-          onClick={uploading ? undefined : () => imageInputRef.current?.click()}
-        >
-          {imageUrl ? (
-            <Box
-              component="img"
-              src={imageUrl}
-              sx={{
-                position: 'absolute', top: 0, left: 0,
-                width: '100%', height: '100%', objectFit: 'cover',
-              }}
-            />
-          ) : (
+        {addedName ? (
+          <Alert severity="success" sx={{ borderRadius: 1.5 }}>
+            <Typography variant="body2" fontWeight={600}>
+              เพิ่มสถานบริการ "{addedName}" เรียบร้อยแล้ว
+            </Typography>
+            <Typography variant="body2" sx={{ mt: 0.5 }}>
+              กรุณา refresh หน้า "สต็อกและพยากรณ์" เพื่อให้ inventory card ใหม่ปรากฏ
+            </Typography>
+          </Alert>
+        ) : (
+          <>
+            {/* Image upload — 16:9 */}
             <Box
               sx={{
-                position: 'absolute', top: 0, left: 0,
-                width: '100%', height: '100%',
-                display: 'flex', flexDirection: 'column',
-                alignItems: 'center', justifyContent: 'center', gap: 1,
+                position: 'relative', paddingTop: '56.25%', bgcolor: 'grey.100',
+                borderRadius: 2, overflow: 'hidden', mb: 2.5,
+                cursor: uploading ? 'not-allowed' : 'pointer',
               }}
+              onClick={uploading ? undefined : () => imageInputRef.current?.click()}
             >
-              <StorefrontIcon sx={{ fontSize: 40, color: 'grey.400' }} />
-              <Typography variant="caption" color="text.secondary">
-                คลิกเพื่ออัปโหลดรูปภาพ
-              </Typography>
+              {imageUrl ? (
+                <Box
+                  component="img"
+                  src={imageUrl}
+                  sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+                  }}
+                >
+                  <StorefrontIcon sx={{ fontSize: 40, color: 'grey.400' }} />
+                  <Typography variant="caption" color="text.secondary">คลิกเพื่ออัปโหลดรูปภาพ</Typography>
+                </Box>
+              )}
+              <Box sx={{ position: 'absolute', bottom: 8, right: 8 }}>
+                <Button
+                  size="small"
+                  variant="contained"
+                  startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <PhotoCameraIcon />}
+                  onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
+                  disabled={uploading}
+                  sx={{ bgcolor: 'rgba(0,0,0,0.55)', '&:hover': { bgcolor: 'rgba(0,0,0,0.75)' } }}
+                >
+                  {uploading ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูป'}
+                </Button>
+              </Box>
             </Box>
-          )}
-          <Box sx={{ position: 'absolute', bottom: 8, right: 8 }}>
+            <input
+              ref={imageInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              style={{ display: 'none' }}
+              onChange={handleImageFileChange}
+            />
+
+            {/* Name */}
+            <TextField
+              label="ชื่อสถานบริการ"
+              value={isAddMode ? name : center?.name ?? ''}
+              onChange={isAddMode ? (e) => setName(e.target.value) : undefined}
+              fullWidth
+              disabled={!isAddMode || saving}
+              sx={{ mb: 2 }}
+            />
+
+            {/* Description */}
+            <TextField
+              label="ข้อมูลทั่วไป"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              fullWidth
+              multiline
+              rows={3}
+              sx={{ mb: 2.5 }}
+              disabled={saving}
+            />
+
+            {/* Contacts */}
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+              ข้อมูลติดต่อ
+            </Typography>
+
+            {contacts.map((c, i) => (
+              <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                <TextField
+                  label="ป้ายกำกับ"
+                  value={c.label}
+                  onChange={(e) => handleContactChange(i, 'label', e.target.value)}
+                  size="small"
+                  sx={{ flex: 1 }}
+                  placeholder="เช่น โทรศัพท์"
+                  disabled={saving}
+                />
+                <TextField
+                  label="ช่องทางติดต่อ"
+                  value={c.value}
+                  onChange={(e) => handleContactChange(i, 'value', e.target.value)}
+                  size="small"
+                  sx={{ flex: 2 }}
+                  placeholder="เช่น 042-471-xxx"
+                  disabled={saving}
+                />
+                <Tooltip title="ลบ">
+                  <IconButton size="small" onClick={() => handleRemoveContact(i)} disabled={saving} color="error">
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ))}
+
             <Button
               size="small"
-              variant="contained"
-              startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <PhotoCameraIcon />}
-              onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
-              disabled={uploading}
-              sx={{ bgcolor: 'rgba(0,0,0,0.55)', '&:hover': { bgcolor: 'rgba(0,0,0,0.75)' } }}
+              startIcon={<AddIcon />}
+              onClick={handleAddContact}
+              disabled={saving}
+              sx={{ mb: 2.5, color: 'text.secondary' }}
             >
-              {uploading ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูป'}
+              เพิ่มช่องทางติดต่อ
             </Button>
-          </Box>
-        </Box>
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/jpeg,image/png,image/webp,image/gif"
-          style={{ display: 'none' }}
-          onChange={handleImageFileChange}
-        />
 
-        {/* Name (read-only) */}
-        <TextField
-          label="ชื่อสถานบริการ"
-          value={center.name}
-          fullWidth
-          disabled
-          sx={{ mb: 2 }}
-        />
+            <Divider sx={{ mb: 2 }} />
 
-        {/* Description */}
-        <TextField
-          label="ข้อมูลทั่วไป"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          fullWidth
-          multiline
-          rows={3}
-          sx={{ mb: 2.5 }}
-          disabled={saving}
-        />
+            {/* Location */}
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+              ตำแหน่ง
+            </Typography>
 
-        {/* Contacts */}
-        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-          ข้อมูลติดต่อ
-        </Typography>
-
-        {contacts.map((c, i) => (
-          <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-            <TextField
-              label="ป้ายกำกับ"
-              value={c.label}
-              onChange={(e) => handleContactChange(i, 'label', e.target.value)}
-              size="small"
-              sx={{ flex: 1 }}
-              placeholder="เช่น โทรศัพท์"
-              disabled={saving}
-            />
-            <TextField
-              label="ช่องทางติดต่อ"
-              value={c.value}
-              onChange={(e) => handleContactChange(i, 'value', e.target.value)}
-              size="small"
-              sx={{ flex: 2 }}
-              placeholder="เช่น 042-471-xxx"
-              disabled={saving}
-            />
-            <Tooltip title="ลบ">
-              <IconButton
+            <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+              <TextField
+                label="ละติจูด"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
+                fullWidth
                 size="small"
-                onClick={() => handleRemoveContact(i)}
+                placeholder="เช่น 17.6830000"
                 disabled={saving}
-                color="error"
+                inputProps={{ inputMode: 'decimal' }}
+              />
+              <TextField
+                label="ลองจิจูด"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
+                fullWidth
+                size="small"
+                placeholder="เช่น 102.4160000"
+                disabled={saving}
+                inputProps={{ inputMode: 'decimal' }}
+              />
+            </Box>
+
+            {canShowMap && (
+              <Button
+                size="small"
+                startIcon={<MapIcon />}
+                component="a"
+                href={`https://www.google.com/maps?q=${lat},${lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ mb: 1 }}
               >
-                <DeleteOutlineIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        ))}
+                ดูบน Google Maps
+              </Button>
+            )}
 
-        <Button
-          size="small"
-          startIcon={<AddIcon />}
-          onClick={handleAddContact}
-          disabled={saving}
-          sx={{ mb: 2.5, color: 'text.secondary' }}
-        >
-          เพิ่มช่องทางติดต่อ
-        </Button>
-
-        <Divider sx={{ mb: 2 }} />
-
-        {/* Location */}
-        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-          ตำแหน่ง
-        </Typography>
-
-        <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-          <TextField
-            label="ละติจูด"
-            value={latitude}
-            onChange={(e) => setLatitude(e.target.value)}
-            fullWidth
-            size="small"
-            placeholder="เช่น 17.6830000"
-            disabled={saving}
-            inputProps={{ inputMode: 'decimal' }}
-          />
-          <TextField
-            label="ลองจิจูด"
-            value={longitude}
-            onChange={(e) => setLongitude(e.target.value)}
-            fullWidth
-            size="small"
-            placeholder="เช่น 102.4160000"
-            disabled={saving}
-            inputProps={{ inputMode: 'decimal' }}
-          />
-        </Box>
-
-        {canShowMap && (
-          <Button
-            size="small"
-            startIcon={<MapIcon />}
-            component="a"
-            href={`https://www.google.com/maps?q=${lat},${lng}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            sx={{ mb: 1 }}
-          >
-            ดูบน Google Maps
-          </Button>
-        )}
-
-        {error && (
-          <Alert severity="error" sx={{ mt: 2, borderRadius: 1.5 }}>
-            {error}
-          </Alert>
+            {error && (
+              <Alert severity="error" sx={{ mt: 2, borderRadius: 1.5 }}>
+                {error}
+              </Alert>
+            )}
+          </>
         )}
       </DialogContent>
 
       <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <Button onClick={handleClose} disabled={saving || uploading} color="inherit">
-          ยกเลิก
-        </Button>
-        <Button
-          onClick={handleSave}
-          variant="contained"
-          disabled={saving || uploading}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
-        >
-          {saving ? 'กำลังบันทึก...' : 'บันทึก'}
-        </Button>
+        {addedName ? (
+          <Button onClick={onSuccess} variant="contained">ปิด</Button>
+        ) : (
+          <>
+            <Button onClick={handleClose} disabled={saving || uploading} color="inherit">
+              ยกเลิก
+            </Button>
+            <Button
+              onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
+              variant="contained"
+              disabled={saving || uploading}
+              startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+              {saving ? 'กำลังบันทึก...' : 'บันทึก'}
+            </Button>
+          </>
+        )}
       </DialogActions>
     </Dialog>
   );
