@@ -132,7 +132,7 @@ class _MainScreenState extends State<MainScreen> {
                 child: const Icon(Icons.chat_bubble),
               ),
             ),
-            label: 'ข้อความ',
+            label: 'การแจ้งเตือน',
           ),
           const BottomNavigationBarItem(
             icon: Icon(Icons.settings_outlined),

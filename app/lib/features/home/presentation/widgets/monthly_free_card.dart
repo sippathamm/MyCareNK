@@ -23,6 +23,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   int _usedLubricants = AppConstants.maxLubricantQuota;
   int? _daysUntilReset;
   bool _isLoading = true;
+  bool _isLoggedIn = true;
 
   // Bumped whenever data arrives or parent refreshKey changes —
   // used as ValueKey so TweenAnimationBuilder replays from 0.
@@ -67,14 +68,14 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
     if (user == null) {
       if (mounted) {
         setState(() {
-          _usedCondoms = AppConstants.maxCondomQuota;
-          _usedLubricants = AppConstants.maxLubricantQuota;
+          _isLoggedIn = false;
           _isLoading = false;
           _animationVersion++;
         });
       }
       return;
     }
+    _isLoggedIn = true;
 
     final now = DateTime.now();
     final monthStart =
@@ -211,46 +212,58 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             ),
           ),
           const SizedBox(height: 4),
-          TweenAnimationBuilder<int>(
-            key: ValueKey('condom_num_$_animationVersion'),
-            tween: IntTween(begin: 0, end: remaining),
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, _) => RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$value ',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+          if (_isLoggedIn)
+            TweenAnimationBuilder<int>(
+              key: ValueKey('condom_num_$_animationVersion'),
+              tween: IntTween(begin: 0, end: remaining),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) => RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$value ',
+                      style: GoogleFonts.googleSans(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: 'ชิ้น',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.primary,
+                    TextSpan(
+                      text: 'ชิ้น',
+                      style: GoogleFonts.googleSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.primary,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            )
+          else
+            Text(
+              '--',
+              style: GoogleFonts.googleSans(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primary.withValues(alpha: 0.4),
               ),
             ),
-          ),
           const SizedBox(height: 8),
           _buildAnimatedProgressBar(
             animationKey: 'condom_bar_$_animationVersion',
             color: AppColors.primary,
-            current: remaining,
+            current: _isLoggedIn ? remaining : 0,
             total: AppConstants.maxCondomQuota,
           ),
           const SizedBox(height: 12),
           Text(
-            _daysUntilReset != null
-                ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
-                : 'จะรีเซ็ตในอีก -- วัน',
+            _isLoggedIn
+                ? (_daysUntilReset != null
+                    ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
+                    : 'จะรีเซ็ตในอีก -- วัน')
+                : 'เข้าสู่ระบบเพื่อดูสิทธิ์ของคุณ',
             style: GoogleFonts.googleSans(
               fontSize: 12,
               fontWeight: FontWeight.w400,
@@ -302,46 +315,58 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             ),
           ),
           const SizedBox(height: 4),
-          TweenAnimationBuilder<int>(
-            key: ValueKey('lubricant_num_$_animationVersion'),
-            tween: IntTween(begin: 0, end: remaining),
-            duration: const Duration(milliseconds: 900),
-            curve: Curves.easeOutCubic,
-            builder: (context, value, _) => RichText(
-              text: TextSpan(
-                children: [
-                  TextSpan(
-                    text: '$value ',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.lubricant,
+          if (_isLoggedIn)
+            TweenAnimationBuilder<int>(
+              key: ValueKey('lubricant_num_$_animationVersion'),
+              tween: IntTween(begin: 0, end: remaining),
+              duration: const Duration(milliseconds: 900),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, _) => RichText(
+                text: TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '$value ',
+                      style: GoogleFonts.googleSans(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.lubricant,
+                      ),
                     ),
-                  ),
-                  TextSpan(
-                    text: 'ชิ้น',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w500,
-                      color: AppColors.lubricant,
+                    TextSpan(
+                      text: 'ชิ้น',
+                      style: GoogleFonts.googleSans(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.lubricant,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
+              ),
+            )
+          else
+            Text(
+              '--',
+              style: GoogleFonts.googleSans(
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                color: AppColors.lubricant.withValues(alpha: 0.4),
               ),
             ),
-          ),
           const SizedBox(height: 8),
           _buildAnimatedProgressBar(
             animationKey: 'lubricant_bar_$_animationVersion',
             color: AppColors.lubricant,
-            current: remaining,
+            current: _isLoggedIn ? remaining : 0,
             total: AppConstants.maxLubricantQuota,
           ),
           const SizedBox(height: 12),
           Text(
-            _daysUntilReset != null
-                ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
-                : 'จะรีเซ็ตในอีก -- วัน',
+            _isLoggedIn
+                ? (_daysUntilReset != null
+                    ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
+                    : 'จะรีเซ็ตในอีก -- วัน')
+                : 'เข้าสู่ระบบเพื่อดูสิทธิ์ของคุณ',
             style: GoogleFonts.googleSans(
               fontSize: 12,
               fontWeight: FontWeight.w400,
