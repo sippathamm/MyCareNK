@@ -1,0 +1,39 @@
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
+
+export interface ServiceCenterRow {
+  name: string;
+  image_url: string | null;
+  description: string | null;
+  contacts: { label: string; value: string }[];
+  latitude: number | null;
+  longitude: number | null;
+  is_active: boolean;
+  display_order: number;
+}
+
+export function useServiceCenters(enabled = true) {
+  const [centers, setCenters] = useState<ServiceCenterRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    const { data, error: fetchError } = await supabase.rpc('get_service_centers');
+    if (fetchError) {
+      setError(fetchError.message);
+    } else {
+      setCenters((data as unknown as ServiceCenterRow[]) ?? []);
+    }
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (enabled) {
+      fetchData();
+    }
+  }, [enabled, fetchData]);
+
+  return { centers, loading, error, refetch: fetchData };
+}

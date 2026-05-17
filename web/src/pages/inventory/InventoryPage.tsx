@@ -12,6 +12,7 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import RestockModal from './RestockModal';
 import AdjustmentModal from './AdjustmentModal';
 import ConsumptionTrendChart from './ConsumptionTrendChart';
+import ServiceCenterManagementDialog from '../../components/inventory/ServiceCenterManagementDialog';
 
 const LOW_STOCK_DAYS = 7;
 
@@ -152,6 +153,7 @@ export default function InventoryPage() {
   const { role, profile, loading: roleLoading } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
+  const [manageOpen, setManageOpen] = useState(false);
 
   const handleRestockSuccess = useCallback(() => {
     setRestockTarget(null);
@@ -185,12 +187,23 @@ export default function InventoryPage() {
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>
-        สต็อกและพยากรณ์
-      </Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        สต็อกปัจจุบันและการพยากรณ์จากอัตราการใช้
-      </Typography>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" gutterBottom>สต็อกและพยากรณ์</Typography>
+          <Typography variant="body1" color="text.secondary">
+            สต็อกปัจจุบันและการพยากรณ์จากอัตราการใช้
+          </Typography>
+        </Box>
+        {isAdminOrSuperadmin && (
+          <Button
+            variant="contained"
+            startIcon={<StorefrontIcon />}
+            onClick={() => setManageOpen(true)}
+          >
+            จัดการสถานบริการ
+          </Button>
+        )}
+      </Box>
 
       {/* Low-stock warning banner */}
       {!loading && lowStockItems.length > 0 && (
@@ -286,6 +299,12 @@ export default function InventoryPage() {
         target={adjustmentTarget}
         onClose={() => setAdjustmentTarget(null)}
         onSuccess={handleAdjustmentSuccess}
+      />
+
+      {/* Service center management dialog */}
+      <ServiceCenterManagementDialog
+        open={manageOpen}
+        onClose={() => setManageOpen(false)}
       />
     </Box>
   );
