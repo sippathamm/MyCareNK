@@ -240,6 +240,7 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
         open={editOpen || addOpen}
         center={addOpen ? null : editTarget}
         existingNames={centers.map(c => c.name)}
+        isSuperadmin={isSuperadmin}
         onClose={handleDialogClose}
         onSuccess={handleDialogSuccess}
       />

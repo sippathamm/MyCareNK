@@ -17,6 +17,7 @@ interface Props {
   open: boolean;
   center: ServiceCenterRow | null;
   existingNames: string[];
+  isSuperadmin: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
@@ -36,7 +37,7 @@ function getFileExtension(filename: string) {
   return filename.split('.').pop() ?? 'jpg';
 }
 
-export default function ServiceCenterEditDialog({ open, center, existingNames, onClose, onSuccess }: Props) {
+export default function ServiceCenterEditDialog({ open, center, existingNames, isSuperadmin, onClose, onSuccess }: Props) {
   const isAddMode = open && center === null;
 
   const [name, setName] = useState('');
@@ -397,8 +398,8 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, o
           <Button onClick={onSuccess} variant="contained">ปิด</Button>
         ) : (
           <>
-            {/* Delete button — edit mode only, bottom-left */}
-            {!isAddMode && (
+            {/* Delete button — edit mode only, superadmin only, bottom-left */}
+            {!isAddMode && isSuperadmin && (
               <Tooltip title={canDelete ? '' : 'ปิดใช้งานสถานบริการก่อนจึงจะสามารถลบได้'}>
                 <span style={{ marginRight: 'auto' }}>
                   <Button
