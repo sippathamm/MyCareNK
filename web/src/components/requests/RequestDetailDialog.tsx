@@ -100,10 +100,10 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
       {request && (
         <Dialog open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth>
           <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
+            <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               รายละเอียดคำขอ
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography component="div" variant="caption" color="text.secondary">
               {request.reference_number}
             </Typography>
           </DialogTitle>

@@ -98,10 +98,10 @@ export default function AppointmentDetailDialog({
       {appointment && (
         <>
           <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
+            <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               รายละเอียดการนัดหมาย
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography component="div" variant="caption" color="text.secondary">
               {appointment.reference_number}
             </Typography>
           </DialogTitle>

@@ -72,7 +72,7 @@ export default function StaffWorkloadDetailDialog({
 
   useEffect(() => { if (!open) { setReqFilter('all'); setSelectedReq(null); setReqDetailOpen(false); } }, [open]);
 
-  const { data: trendData, loading: trendLoading } = useStaffWorkloadTrend(
+  const { data: trendData, loading: trendLoading, error: trendError } = useStaffWorkloadTrend(
     dateFrom, dateTo, serviceCenter, open ? staffId : null,
   );
 
@@ -187,10 +187,10 @@ export default function StaffWorkloadDetailDialog({
       {row && (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
           <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
+            <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               {row.first_name} {row.last_name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography component="div" variant="caption" color="text.secondary">
               {row.service_center}
             </Typography>
           </DialogTitle>
@@ -245,7 +245,7 @@ export default function StaffWorkloadDetailDialog({
             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
               จำนวนคำขอที่สำเร็จรายสัปดาห์
             </Typography>
-            <StaffWeeklyTrendChart data={trendData} loading={trendLoading} />
+            <StaffWeeklyTrendChart data={trendData} loading={trendLoading} error={trendError} />
 
             <Divider sx={{ my: 2 }} />
 
