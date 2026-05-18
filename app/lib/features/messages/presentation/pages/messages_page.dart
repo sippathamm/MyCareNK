@@ -306,6 +306,7 @@ class MessagesPage extends StatefulWidget {
 class _MessagesPageState extends State<MessagesPage> {
   List<_RequestGroup> _groups = [];
   bool _isLoading = true;
+  bool _isLoggedIn = true;
   RealtimeChannel? _subscription;
 
   @override
@@ -358,7 +359,7 @@ class _MessagesPageState extends State<MessagesPage> {
   Future<void> _fetchData() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() { _isLoggedIn = false; _isLoading = false; });
       return;
     }
     final userId = session.user.id;
@@ -547,9 +548,11 @@ class _MessagesPageState extends State<MessagesPage> {
       ),
       body: _isLoading
           ? _buildSkeleton()
-          : _groups.isEmpty
-              ? _buildEmpty()
-              : _buildList(),
+          : !_isLoggedIn
+              ? _buildNotLoggedIn()
+              : _groups.isEmpty
+                  ? _buildEmpty()
+                  : _buildList(),
     );
   }
 
@@ -583,6 +586,22 @@ class _MessagesPageState extends State<MessagesPage> {
             Container(height: 24, width: 60, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12))),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNotLoggedIn() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            'กรุณาเข้าสู่ระบบ',
+            style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
+          ),
+        ],
       ),
     );
   }
