@@ -54,10 +54,4 @@ class DoctorAppointmentModel {
       }[key] ??
       key;
 
-  static const locationKeyToServiceCenter = {
-    'phonphisai': 'รพ.โพนพิสัย',
-    'wat': 'รพ.สต.วัดหลวง',
-    'abt': 'อบต.วัดหลวง',
-    'ssj': 'สสจ.หนองคาย',
-  };
 }

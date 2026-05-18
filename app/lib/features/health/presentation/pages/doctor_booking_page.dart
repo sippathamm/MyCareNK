@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/models/service_center_model.dart';
+import '../../../../core/services/service_center_service.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
-import '../../data/models/doctor_appointment_model.dart';
 import 'appointment_history_page.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -14,13 +15,6 @@ class _Reason {
   final String label;
   final IconData icon;
   const _Reason(this.key, this.label, this.icon);
-}
-
-class _Location {
-  final String key;
-  final String label;
-  final String hours;
-  const _Location(this.key, this.label, this.hours);
 }
 
 class _BookingDate {
@@ -41,13 +35,6 @@ final _kReasons = <_Reason>[
   _Reason('prep', 'รับยา PrEP', Icons.medication),
   _Reason('hiv', 'ตรวจเลือด HIV', Icons.biotech),
   _Reason('consult', 'ปรึกษาทั่วไป', Icons.chat_bubble_outline),
-];
-
-final _kLocations = <_Location>[
-  _Location('phonphisai', 'รพ.โพนพิสัย', 'จ–ศ 08:00–16:00'),
-  _Location('wat', 'รพ.สต.วัดหลวง', 'จ–ศ 08:00–16:00'),
-  _Location('abt', 'อบต.วัดหลวง', 'จ–ศ 08:30–16:30'),
-  _Location('ssj', 'สสจ.หนองคาย', 'จ–ศ 08:00–17:00'),
 ];
 
 final _kMorningSlots = [
@@ -99,15 +86,28 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   int _step = 0;
   String? _reason;
-  String? _location;
+  String? _location; // stores center name directly
   String? _dateKey;
   String? _timeSlot;
   final TextEditingController _noteCtrl = TextEditingController();
+
+  List<ServiceCenterModel> _centers = [];
+  bool _centersLoading = true;
 
   @override
   void initState() {
     super.initState();
     _reason = widget.initialReason;
+    _loadCenters();
+  }
+
+  Future<void> _loadCenters() async {
+    try {
+      final centers = await ServiceCenterService.fetchActive();
+      if (mounted) setState(() { _centers = centers; _centersLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _centersLoading = false);
+    }
   }
 
   @override
@@ -121,8 +121,8 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   _Reason? get _selectedReason =>
       _kReasons.where((r) => r.key == _reason).firstOrNull;
-  _Location? get _selectedLocation =>
-      _kLocations.where((l) => l.key == _location).firstOrNull;
+  ServiceCenterModel? get _selectedLocation =>
+      _centers.where((c) => c.name == _location).firstOrNull;
   _BookingDate? get _selectedDate => _dates
       .where((d) => d.date.toIso8601String().substring(0, 10) == _dateKey)
       .firstOrNull;
@@ -227,12 +227,31 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   _SectionCard(
                     title: 'สถานพยาบาล',
                     icon: Icons.local_hospital_outlined,
-                    child: Column(
-                      children: List.generate(
-                        _kLocations.length,
-                        (i) => _buildLocationTile(_kLocations[i], i),
-                      ),
-                    ),
+                    child: _centersLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : _centers.isEmpty
+                            ? GestureDetector(
+                                onTap: _loadCenters,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
+                                        style: GoogleFonts.googleSans(
+                                            fontSize: 14, color: AppColors.textHint)),
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                children: List.generate(
+                                  _centers.length,
+                                  (i) => _buildLocationTile(_centers[i], i),
+                                ),
+                              ),
                   ),
                   _SectionCard(
                     title: 'วันที่นัด',
@@ -346,10 +365,10 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     );
   }
 
-  Widget _buildLocationTile(_Location loc, int index) {
-    final sel = _location == loc.key;
+  Widget _buildLocationTile(ServiceCenterModel loc, int index) {
+    final sel = _location == loc.name;
     return GestureDetector(
-      onTap: () => setState(() => _location = loc.key),
+      onTap: () => setState(() => _location = loc.name),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -389,16 +408,17 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    loc.label,
+                    loc.name,
                     style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Text('${loc.hours} น.',
-                      style: GoogleFonts.googleSans(
-                          fontSize: 14, color: AppColors.textHint)),
+                  if (loc.operatingHours != null)
+                    Text('${loc.operatingHours} น.',
+                        style: GoogleFonts.googleSans(
+                            fontSize: 14, color: AppColors.textHint)),
                 ],
               ),
             ),
@@ -536,10 +556,12 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   // ── Confirm ─────────────────────────────────────────────────────────────────
 
   Widget _buildConfirm() {
+    final loc = _selectedLocation;
     final rows = [
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', _selectedLocation?.label ?? ''),
-      (Icons.access_time_outlined, 'เวลาทำการ', '${_selectedLocation?.hours ?? ''} น.'),
+      (Icons.local_hospital_outlined, 'สถานพยาบาล', loc?.name ?? ''),
+      if (loc?.operatingHours != null)
+        (Icons.access_time_outlined, 'เวลาทำการ', '${loc!.operatingHours} น.'),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
       (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
     ];
@@ -743,7 +765,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         params: {
           'p_user_id': userId,
           'p_reason': _reason,
-          'p_service_center': DoctorAppointmentModel.locationKeyToServiceCenter[_location]!,
+          'p_service_center': _location,
           'p_date': _dateKey,
           'p_time': _timeSlot,
           'p_note': _noteCtrl.text.isEmpty ? null : _noteCtrl.text,
@@ -769,7 +791,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   Widget _buildSuccess() {
     final infoRows = [
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', _selectedLocation?.label ?? ''),
+      (Icons.local_hospital_outlined, 'สถานพยาบาล', _selectedLocation?.name ?? ''),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
       (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
