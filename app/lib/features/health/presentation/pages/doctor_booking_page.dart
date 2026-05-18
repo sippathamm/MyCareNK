@@ -219,7 +219,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     ),
                   ),
                   _SectionCard(
-                    title: 'สถานพยาบาล',
+                    title: 'สถานบริการ',
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
                         ? const Center(
@@ -429,7 +429,19 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   Widget _buildDatePicker() {
     final loc = _selectedLocation;
-    if (loc != null && !loc.appointmentServiceEnabled) {
+    if (loc == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'กรุณาเลือกสถานบริการก่อน',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    if (!loc.appointmentServiceEnabled) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -513,7 +525,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             _location == null
-                ? 'กรุณาเลือกสถานพยาบาลก่อน'
+                ? 'กรุณาเลือกสถานบริการก่อน'
                 : 'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
@@ -526,14 +538,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (morning.isNotEmpty) ...[
-          _buildSlotGroup('ช่วงเช้า', morning),
-        ],
-        if (morning.isNotEmpty && afternoon.isNotEmpty)
-          const SizedBox(height: 14),
-        if (afternoon.isNotEmpty) ...[
-          _buildSlotGroup('ช่วงบ่าย', afternoon),
-        ],
+        _buildSlotGroup('ช่วงเช้า', morning),
+        const SizedBox(height: 14),
+        _buildSlotGroup('ช่วงบ่าย', afternoon),
       ],
     );
   }
@@ -551,6 +558,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
         ),
         const SizedBox(height: 8),
+        if (slots.isEmpty)
+          Text('–',
+              style: GoogleFonts.googleSans(
+                  fontSize: 15, color: AppColors.textHint))
+        else
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -592,7 +604,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     final loc = _selectedLocation;
     final rows = [
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', loc?.name ?? ''),
+      (Icons.local_hospital_outlined, 'สถานบริการ', loc?.name ?? ''),
       if (loc?.operatingHours != null)
         (Icons.access_time_outlined, 'เวลาทำการ', loc!.operatingHours!),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
@@ -698,7 +710,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานพยาบาลล่วงหน้าอย่างน้อย 24 ชม.',
+                            'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานบริการล่วงหน้าอย่างน้อย 24 ชม.',
                             style: GoogleFonts.googleSans(
                               fontSize: 13,
                               color: AppColors.textPrimary,
@@ -824,7 +836,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   Widget _buildSuccess() {
     final infoRows = [
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', _selectedLocation?.name ?? ''),
+      (Icons.local_hospital_outlined, 'สถานบริการ', _selectedLocation?.name ?? ''),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
       (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),

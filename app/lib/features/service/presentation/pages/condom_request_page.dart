@@ -504,7 +504,19 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   Widget _buildDatePicker() {
     final center = _selectedCenter;
-    if (center != null && !center.condomServiceEnabled) {
+    if (center == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'กรุณาเลือกสถานบริการก่อน',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    if (!center.condomServiceEnabled) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
@@ -595,7 +607,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             center == null
-                ? 'กรุณาเลือกสถานพยาบาลก่อน'
+                ? 'กรุณาเลือกสถานบริการก่อน'
                 : 'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
@@ -646,21 +658,22 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     final morning = times.where((t) => _hourOf(t) < 12).toList();
     final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
 
+    Widget dash() => Text('–',
+        style: GoogleFonts.googleSans(
+            fontSize: 15, color: AppColors.textHint));
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (morning.isNotEmpty) ...[
-          label('ช่วงเช้า'),
-          Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList()),
-        ],
-        if (afternoon.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          label('ช่วงบ่าย'),
-          Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: afternoon.map(chip).toList()),
-        ],
+        label('ช่วงเช้า'),
+        morning.isNotEmpty
+            ? Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList())
+            : dash(),
+        const SizedBox(height: 14),
+        label('ช่วงบ่าย'),
+        afternoon.isNotEmpty
+            ? Wrap(spacing: 8, runSpacing: 8, children: afternoon.map(chip).toList())
+            : dash(),
       ],
     );
   }

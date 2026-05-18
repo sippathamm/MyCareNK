@@ -507,13 +507,13 @@ class _AppointmentHistoryDetailPageState
       header: Row(children: [
         const Icon(Icons.local_hospital_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('สถานพยาบาล วันที่ และเวลารับ',
+        Text('สถานบริการ วันที่ และเวลารับ',
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
         children: [
-          _buildInfoRow('สถานพยาบาล', _data.selectedServiceCenter),
+          _buildInfoRow('สถานบริการ', _data.selectedServiceCenter),
           _buildInfoRow('วันที่', dateStr),
           _buildInfoRow('เวลา', '${_data.selectedTime} น.'),
         ],
