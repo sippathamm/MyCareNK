@@ -8,6 +8,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import HomeIcon from '@mui/icons-material/Home';
 import { useServiceCenters, type ServiceCenterRow } from '../../hooks/useServiceCenters';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { supabase } from '../../lib/supabase';
@@ -70,6 +72,26 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
             </IconButton>
           </Tooltip>
         </Box>
+
+        {/* Operating hours */}
+        {center.operating_hours && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+            <AccessTimeIcon sx={{ fontSize: 13, color: 'text.disabled', flexShrink: 0 }} />
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {center.operating_hours}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Address */}
+        {center.address && (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5, mb: 1 }}>
+            <HomeIcon sx={{ fontSize: 13, color: 'text.disabled', flexShrink: 0, mt: '1px' }} />
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.4 }}>
+              {center.address}
+            </Typography>
+          </Box>
+        )}
 
         {/* Contacts */}
         {firstTwoContacts.length > 0 && (
