@@ -50,7 +50,9 @@ class CondomRequestPage extends StatefulWidget {
 }
 
 class _CondomRequestPageState extends State<CondomRequestPage> {
-  final Map<int, int> _quantities = {49: 0, 52: 0, 54: 0, 56: 0};
+  final Map<int, int> _quantities = {
+    for (final s in AppConstants.condomSizes) s: 0
+  };
   int _lubricantQuantity = 0;
   String? _selectedServiceCenter;
   DateTime? _selectedDate;
