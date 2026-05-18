@@ -121,9 +121,22 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const SizedBox(
-        height: 180,
-        child: Center(child: CircularProgressIndicator()),
+      return SizedBox(
+        height: 200,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          itemCount: 2,
+          itemBuilder: (_, _) => Container(
+            margin: const EdgeInsets.symmetric(horizontal: 8),
+            width: MediaQuery.of(context).size.width * 0.9 - 16,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade200,
+              borderRadius: BorderRadius.circular(20),
+            ),
+          ),
+        ),
       );
     }
 

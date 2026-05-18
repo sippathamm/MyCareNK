@@ -546,10 +546,44 @@ class _MessagesPageState extends State<MessagesPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
+          ? _buildSkeleton()
           : _groups.isEmpty
               ? _buildEmpty()
               : _buildList(),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      itemCount: 4,
+      itemBuilder: (_, _) => Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 16, width: 140, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 6),
+                  Container(height: 12, width: 100, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4))),
+                ],
+              ),
+            ),
+            Container(height: 24, width: 60, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12))),
+          ],
+        ),
+      ),
     );
   }
 
