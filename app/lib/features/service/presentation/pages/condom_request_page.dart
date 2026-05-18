@@ -430,7 +430,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   Widget _buildLocationTile(ServiceCenterModel center, int index) {
     final sel = _selectedServiceCenter == center.name;
     return GestureDetector(
-      onTap: () => setState(() => _selectedServiceCenter = center.name),
+      onTap: () => setState(() {
+        if (_selectedServiceCenter != center.name) _selectedTime = null;
+        _selectedServiceCenter = center.name;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -566,6 +569,11 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   // ── Time picker ─────────────────────────────────────────────────────────────
 
+  ServiceCenterModel? get _selectedCenter =>
+      _centers.where((c) => c.name == _selectedServiceCenter).firstOrNull;
+
+  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
+
   Widget _buildTimePicker() {
     Widget chip(String t) {
       final parts = t.split(':');
@@ -605,12 +613,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   color: AppColors.textSecondary)),
         );
 
-    final morning = AppConstants.pickupTimes
-        .where((t) => int.parse(t.split(':')[0]) < 12)
-        .toList();
-    final afternoon = AppConstants.pickupTimes
-        .where((t) => int.parse(t.split(':')[0]) >= 12)
-        .toList();
+    final times = _selectedCenter?.pickupTimes ?? AppConstants.pickupTimes;
+    final morning = times.where((t) => _hourOf(t) < 12).toList();
+    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

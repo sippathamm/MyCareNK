@@ -116,6 +116,22 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                         ? center.address
                         : null,
                   ),
+                  if (center.condomServiceEnabled) ...[
+                    const SizedBox(height: 20),
+                    _buildTimesSection(
+                      icon: Icons.inventory_2_outlined,
+                      title: 'เวลารับถุงยางอนามัย',
+                      times: center.pickupTimes,
+                    ),
+                  ],
+                  if (center.appointmentServiceEnabled) ...[
+                    const SizedBox(height: 20),
+                    _buildTimesSection(
+                      icon: Icons.event_outlined,
+                      title: 'เวลานัดพบแพทย์',
+                      times: center.appointmentTimes,
+                    ),
+                  ],
                   const SizedBox(height: 20),
                   _buildContactsSection(center.contacts),
                   const SizedBox(height: 20),
@@ -160,6 +176,61 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
             color: hasContent ? AppColors.textPrimary : AppColors.textHint,
           ),
         ),
+      ],
+    );
+  }
+
+  Widget _buildTimesSection({
+    required IconData icon,
+    required String title,
+    required List<String> times,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18, color: AppColors.primary),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: GoogleFonts.googleSans(
+                fontSize: 15,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        if (times.isEmpty)
+          Text(
+            'ไม่มีข้อมูล',
+            style: GoogleFonts.googleSans(
+              fontSize: 15,
+              color: AppColors.textHint,
+            ),
+          )
+        else
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: times.map((t) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: AppColors.primaryBackground,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.primaryLight),
+              ),
+              child: Text(
+                '$t น.',
+                style: GoogleFonts.googleSans(
+                  fontSize: 14,
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            )).toList(),
+          ),
       ],
     );
   }

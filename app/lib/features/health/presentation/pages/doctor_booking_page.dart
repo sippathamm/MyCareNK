@@ -37,14 +37,6 @@ final _kReasons = <_Reason>[
   _Reason('consult', 'ปรึกษาทั่วไป', Icons.chat_bubble_outline),
 ];
 
-final _kMorningSlots = [
-  '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-];
-
-final _kAfternoonSlots = [
-  '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
-];
-
 final _thMonths = [
   '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
   'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
@@ -123,6 +115,8 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       _kReasons.where((r) => r.key == _reason).firstOrNull;
   ServiceCenterModel? get _selectedLocation =>
       _centers.where((c) => c.name == _location).firstOrNull;
+
+  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
   _BookingDate? get _selectedDate => _dates
       .where((d) => d.date.toIso8601String().substring(0, 10) == _dateKey)
       .firstOrNull;
@@ -368,7 +362,10 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   Widget _buildLocationTile(ServiceCenterModel loc, int index) {
     final sel = _location == loc.name;
     return GestureDetector(
-      onTap: () => setState(() => _location = loc.name),
+      onTap: () => setState(() {
+        if (_location != loc.name) _timeSlot = null;
+        _location = loc.name;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -495,12 +492,34 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   }
 
   Widget _buildTimePicker() {
+    final times = _selectedLocation?.appointmentTimes ?? [];
+    if (times.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            _location != null
+                ? 'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์'
+                : 'กรุณาเลือกสถานพยาบาลก่อน',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    final morning = times.where((t) => _hourOf(t) < 12).toList();
+    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSlotGroup('ช่วงเช้า', _kMorningSlots),
-        const SizedBox(height: 14),
-        _buildSlotGroup('ช่วงบ่าย', _kAfternoonSlots),
+        if (morning.isNotEmpty) ...[
+          _buildSlotGroup('ช่วงเช้า', morning),
+        ],
+        if (morning.isNotEmpty && afternoon.isNotEmpty)
+          const SizedBox(height: 14),
+        if (afternoon.isNotEmpty) ...[
+          _buildSlotGroup('ช่วงบ่าย', afternoon),
+        ],
       ],
     );
   }
