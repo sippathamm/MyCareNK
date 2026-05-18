@@ -192,6 +192,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
             expandedHeight: 260,
             pinned: true,
             backgroundColor: AppColors.white,
+            elevation: 0,
+            scrolledUnderElevation: 0,
             automaticallyImplyLeading: false,
             leading: const _BackButton(),
             flexibleSpace: FlexibleSpaceBar(
@@ -243,6 +245,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
             expandedHeight: 260,
             pinned: true,
             backgroundColor: AppColors.white,
+            elevation: 0,
+            scrolledUnderElevation: 0,
             automaticallyImplyLeading: false,
             leading: _BackButton(scrolled: _titleVisible),
             centerTitle: true,
@@ -368,32 +372,40 @@ class _BackButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(8),
-      child: GestureDetector(
-        onTap: () => Navigator.of(context).pop(),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: scrolled ? Colors.transparent : const Color(0x4D000000),
-            shape: BoxShape.circle,
-          ),
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              AnimatedOpacity(
-                opacity: scrolled ? 0.0 : 1.0,
-                duration: const Duration(milliseconds: 200),
-                child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: scrolled ? 0 : 1,
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: const BoxDecoration(
+                color: Color(0x4D000000),
+                shape: BoxShape.circle,
               ),
-              AnimatedOpacity(
-                opacity: scrolled ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 200),
-                child: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
-              ),
-            ],
+            ),
           ),
-        ),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: scrolled ? 0 : 1,
+            child: const Icon(Icons.arrow_back, color: AppColors.white, size: 20),
+          ),
+          AnimatedOpacity(
+            duration: const Duration(milliseconds: 200),
+            opacity: scrolled ? 1 : 0,
+            child: const Icon(Icons.arrow_back, color: AppColors.primary, size: 20),
+          ),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => Navigator.of(context).pop(),
+              borderRadius: BorderRadius.circular(18),
+              child: const SizedBox(width: 36, height: 36),
+            ),
+          ),
+        ],
       ),
     );
   }
