@@ -374,6 +374,24 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
   const canDelete = center !== null && !center.is_active;
   const currentEnabled = scheduleTab === 'condom' ? condomEnabled : appointmentEnabled;
+  const isInvalidTime = (t: string): boolean => {
+    if (!TIME_REGEX.test(t)) return false;
+    const [h, m] = t.split(':').map(Number);
+    return h > 23 || m > 59;
+  };
+
+  const isOutOfRange = (t: string, period: Period): boolean =>
+    TIME_REGEX.test(t) && !isInvalidTime(t) && (period === 'morning' ? hourOf(t) >= 12 : hourOf(t) < 12);
+
+  const hasRangeError =
+    (condomEnabled && (
+      pickupMorning.some(t => isInvalidTime(t) || isOutOfRange(t, 'morning')) ||
+      pickupAfternoon.some(t => isInvalidTime(t) || isOutOfRange(t, 'afternoon'))
+    )) ||
+    (appointmentEnabled && (
+      apptMorning.some(t => isInvalidTime(t) || isOutOfRange(t, 'morning')) ||
+      apptAfternoon.some(t => isInvalidTime(t) || isOutOfRange(t, 'afternoon'))
+    ));
 
   const renderTimePeriod = (type: ScheduleTab, period: Period, label: string, times: string[]) => (
     <Box sx={{ flex: 1 }}>
@@ -381,17 +399,21 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         {label}
       </Typography>
       {times.map((t, i) => (
-        <Box key={i} sx={{ display: 'flex', gap: 0.5, mb: 0.75, alignItems: 'center' }}>
+        <Box key={i} sx={{ display: 'flex', gap: 0.5, mb: 0.75, alignItems: 'flex-start' }}>
           <TextField
-            type="time"
+            type="text"
             value={t}
             onChange={(e) => handleTimeChange(type, period, i, e.target.value)}
             size="small"
             disabled={saving}
-            inputProps={{
-              step: 1800,
-              ...(period === 'morning' ? { max: '11:59' } : { min: '12:00' }),
-            }}
+            error={isInvalidTime(t) || isOutOfRange(t, period)}
+            helperText={
+              isInvalidTime(t) ? 'รูปแบบเวลาไม่ถูกต้อง' :
+              isOutOfRange(t, period) ? (period === 'morning' ? 'ต้องก่อน 12:00' : 'ต้องตั้งแต่ 12:00') :
+              undefined
+            }
+            placeholder="HH:MM"
+            inputProps={{ maxLength: 5 }}
             sx={{ flex: 1 }}
           />
           <Tooltip title="ลบ">
@@ -720,7 +742,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
           <Button
             onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
             variant="contained"
-            disabled={saving || uploading || deleting}
+            disabled={saving || uploading || deleting || hasRangeError}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
           >
             {saving ? 'กำลังบันทึก...' : 'บันทึก'}
