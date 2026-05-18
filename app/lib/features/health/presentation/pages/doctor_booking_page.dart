@@ -416,7 +416,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     ),
                   ),
                   if (loc.operatingHours != null)
-                    Text('${loc.operatingHours} น.',
+                    Text(loc.operatingHours!,
                         style: GoogleFonts.googleSans(
                             fontSize: 14, color: AppColors.textHint)),
                 ],
@@ -561,7 +561,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
       (Icons.local_hospital_outlined, 'สถานพยาบาล', loc?.name ?? ''),
       if (loc?.operatingHours != null)
-        (Icons.access_time_outlined, 'เวลาทำการ', '${loc!.operatingHours} น.'),
+        (Icons.access_time_outlined, 'เวลาทำการ', loc!.operatingHours!),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
       (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
     ];

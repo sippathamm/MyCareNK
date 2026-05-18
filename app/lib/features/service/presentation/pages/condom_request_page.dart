@@ -477,7 +477,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   if (center.operatingHours != null) ...[
                     const SizedBox(height: 2),
                     Text(
-                      '${center.operatingHours} น.',
+                      center.operatingHours!,
                       style: GoogleFonts.googleSans(
                         fontSize: 14,
                         color: AppColors.textHint,

@@ -177,7 +177,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       p_contacts: cleanedContacts as unknown as never,
       p_latitude: coords.lat ?? undefined,
       p_longitude: coords.lng ?? undefined,
-      p_operating_hours: operatingHours.trim() || undefined,
+      p_operating_hours: operatingHours.trim().replace(/-/g, '–') || undefined,
       p_address: address.trim() || undefined,
     });
 
