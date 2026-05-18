@@ -53,7 +53,23 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
             backgroundColor: AppColors.white,
             elevation: 0,
             scrolledUnderElevation: 0,
+            automaticallyImplyLeading: false,
             leading: _BackButton(scrolled: _scrolled),
+            centerTitle: true,
+            title: AnimatedOpacity(
+              opacity: _scrolled ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 200),
+              child: Text(
+                center.name,
+                style: GoogleFonts.googleSans(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
             flexibleSpace: FlexibleSpaceBar(
               background: center.imageUrl != null
                   ? Image.network(
@@ -136,8 +152,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
             Text(
               title,
               style: GoogleFonts.googleSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 15,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -166,8 +181,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
             Text(
               'ข้อมูลติดต่อ',
               style: GoogleFonts.googleSans(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+                fontSize: 15,
                 color: AppColors.textSecondary,
               ),
             ),
@@ -188,23 +202,43 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
     return SizedBox(
       width: double.infinity,
       height: 52,
-      child: OutlinedButton.icon(
-        onPressed: () async {
-          final url = Uri.parse('https://maps.google.com/?q=$lat,$lng');
-          if (await canLaunchUrl(url)) {
-            await launchUrl(url, mode: LaunchMode.externalApplication);
-          }
-        },
-        icon: const Icon(Icons.map_outlined),
-        label: Text(
-          'ดูบน Google Maps',
-          style: GoogleFonts.googleSans(fontWeight: FontWeight.w500),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [AppColors.primaryDark, AppColors.primary],
+            begin: Alignment.centerLeft,
+            end: Alignment.centerRight,
+          ),
+          borderRadius: BorderRadius.circular(24),
         ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.primary,
-          side: const BorderSide(color: AppColors.primary),
-          shape: RoundedRectangleBorder(
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(24),
+          child: InkWell(
+            onTap: () async {
+              final url = Uri.parse('https://maps.google.com/?q=$lat,$lng');
+              if (await canLaunchUrl(url)) {
+                await launchUrl(url, mode: LaunchMode.externalApplication);
+              }
+            },
             borderRadius: BorderRadius.circular(24),
+            splashColor: Colors.white.withValues(alpha: 0.25),
+            highlightColor: Colors.transparent,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.map_outlined, color: AppColors.white, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  'ดูบน Google Maps',
+                  style: GoogleFonts.googleSans(
+                    color: AppColors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
