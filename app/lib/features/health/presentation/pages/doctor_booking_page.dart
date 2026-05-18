@@ -428,6 +428,19 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   }
 
   Widget _buildDatePicker() {
+    final loc = _selectedLocation;
+    if (loc != null && !loc.appointmentServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 84,
       child: ListView.separated(
@@ -492,15 +505,16 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   }
 
   Widget _buildTimePicker() {
-    final times = _selectedLocation?.appointmentTimes ?? [];
-    if (times.isEmpty) {
+    final loc = _selectedLocation;
+    final times = loc?.appointmentTimes ?? [];
+    if (loc == null || !loc.appointmentServiceEnabled || times.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            _location != null
-                ? 'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์'
-                : 'กรุณาเลือกสถานพยาบาลก่อน',
+            _location == null
+                ? 'กรุณาเลือกสถานพยาบาลก่อน'
+                : 'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
           ),

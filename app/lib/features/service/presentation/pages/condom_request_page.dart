@@ -503,6 +503,19 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // ── Date picker ─────────────────────────────────────────────────────────────
 
   Widget _buildDatePicker() {
+    final center = _selectedCenter;
+    if (center != null && !center.condomServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 84,
       child: ListView.separated(
@@ -575,6 +588,22 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
 
   Widget _buildTimePicker() {
+    final center = _selectedCenter;
+    if (center == null || !center.condomServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            center == null
+                ? 'กรุณาเลือกสถานพยาบาลก่อน'
+                : 'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+
     Widget chip(String t) {
       final parts = t.split(':');
       final tod =
@@ -613,7 +642,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   color: AppColors.textSecondary)),
         );
 
-    final times = _selectedCenter?.pickupTimes ?? AppConstants.pickupTimes;
+    final times = center.pickupTimes;
     final morning = times.where((t) => _hourOf(t) < 12).toList();
     final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
 
