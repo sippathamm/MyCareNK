@@ -12,6 +12,10 @@ export interface ServiceCenterRow {
   is_active: boolean;
   display_order: number;
   operating_hours: string | null;
+  condom_service_enabled: boolean;
+  appointment_service_enabled: boolean;
+  pickup_times: string[];
+  appointment_times: string[];
 }
 
 export function useServiceCenters(enabled = true) {

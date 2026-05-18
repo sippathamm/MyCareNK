@@ -2,7 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, CircularProgress,
-  Alert, Divider, IconButton, Tooltip,
+  Alert, Divider, IconButton, Tooltip, Switch, FormControlLabel,
+  Tabs, Tab,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -29,6 +30,20 @@ interface ContactItem {
   value: string;
 }
 
+type ScheduleTab = 'condom' | 'appointment';
+type Period = 'morning' | 'afternoon';
+
+const DEFAULT_PICKUP_MORNING   = ['10:00'];
+const DEFAULT_PICKUP_AFTERNOON = ['14:00'];
+const DEFAULT_APPT_MORNING     = ['08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
+const DEFAULT_APPT_AFTERNOON   = ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
+
+const TIME_REGEX = /^\d{2}:\d{2}$/;
+
+function hourOf(t: string): number {
+  return parseInt(t.split(':')[0], 10);
+}
+
 function generateId(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(16)))
     .map(b => b.toString(16).padStart(2, '0'))
@@ -50,6 +65,15 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [operatingHours, setOperatingHours] = useState('');
   const [address, setAddress] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>('condom');
+  const [condomEnabled, setCondomEnabled] = useState(true);
+  const [appointmentEnabled, setAppointmentEnabled] = useState(false);
+  const [pickupMorning, setPickupMorning]     = useState<string[]>(DEFAULT_PICKUP_MORNING);
+  const [pickupAfternoon, setPickupAfternoon] = useState<string[]>(DEFAULT_PICKUP_AFTERNOON);
+  const [apptMorning, setApptMorning]         = useState<string[]>(DEFAULT_APPT_MORNING);
+  const [apptAfternoon, setApptAfternoon]     = useState<string[]>(DEFAULT_APPT_AFTERNOON);
+
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -65,6 +89,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setAddedName(null);
     setConfirmDelete(false);
     setStaffBlockDialog(false);
+    setScheduleTab('condom');
     if (center) {
       setName('');
       setDescription(center.description ?? '');
@@ -74,6 +99,18 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setLongitude(center.longitude !== null ? String(center.longitude) : '');
       setOperatingHours(center.operating_hours ?? '');
       setImageUrl(center.image_url);
+      setCondomEnabled(center.condom_service_enabled ?? true);
+      setAppointmentEnabled(center.appointment_service_enabled ?? false);
+      const pu = center.pickup_times ?? [];
+      const pm = pu.filter(t => hourOf(t) < 12);
+      const pa = pu.filter(t => hourOf(t) >= 12);
+      setPickupMorning(pm.length ? pm : DEFAULT_PICKUP_MORNING);
+      setPickupAfternoon(pa.length ? pa : DEFAULT_PICKUP_AFTERNOON);
+      const au = center.appointment_times ?? [];
+      const am = au.filter(t => hourOf(t) < 12);
+      const aa = au.filter(t => hourOf(t) >= 12);
+      setApptMorning(am.length ? am : DEFAULT_APPT_MORNING);
+      setApptAfternoon(aa.length ? aa : DEFAULT_APPT_AFTERNOON);
     } else {
       setName('');
       setDescription('');
@@ -83,6 +120,12 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setLongitude('');
       setOperatingHours('');
       setImageUrl(null);
+      setCondomEnabled(true);
+      setAppointmentEnabled(false);
+      setPickupMorning(DEFAULT_PICKUP_MORNING);
+      setPickupAfternoon(DEFAULT_PICKUP_AFTERNOON);
+      setApptMorning(DEFAULT_APPT_MORNING);
+      setApptAfternoon(DEFAULT_APPT_AFTERNOON);
     }
   }, [open, center]);
 
@@ -93,13 +136,39 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   };
 
   const handleAddContact = () => setContacts(prev => [...prev, { label: '', value: '' }]);
-
   const handleContactChange = (i: number, field: 'label' | 'value', val: string) => {
     setContacts(prev => prev.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
   };
-
   const handleRemoveContact = (i: number) => {
     setContacts(prev => prev.filter((_, idx) => idx !== i));
+  };
+
+  const handleAddTime = (type: ScheduleTab, period: Period) => {
+    if (type === 'condom') {
+      if (period === 'morning') setPickupMorning(prev => [...prev, '']);
+      else setPickupAfternoon(prev => [...prev, '']);
+    } else {
+      if (period === 'morning') setApptMorning(prev => [...prev, '']);
+      else setApptAfternoon(prev => [...prev, '']);
+    }
+  };
+  const handleTimeChange = (type: ScheduleTab, period: Period, i: number, val: string) => {
+    if (type === 'condom') {
+      if (period === 'morning') setPickupMorning(prev => prev.map((t, idx) => idx === i ? val : t));
+      else setPickupAfternoon(prev => prev.map((t, idx) => idx === i ? val : t));
+    } else {
+      if (period === 'morning') setApptMorning(prev => prev.map((t, idx) => idx === i ? val : t));
+      else setApptAfternoon(prev => prev.map((t, idx) => idx === i ? val : t));
+    }
+  };
+  const handleRemoveTime = (type: ScheduleTab, period: Period, i: number) => {
+    if (type === 'condom') {
+      if (period === 'morning') setPickupMorning(prev => prev.filter((_, idx) => idx !== i));
+      else setPickupAfternoon(prev => prev.filter((_, idx) => idx !== i));
+    } else {
+      if (period === 'morning') setApptMorning(prev => prev.filter((_, idx) => idx !== i));
+      else setApptAfternoon(prev => prev.filter((_, idx) => idx !== i));
+    }
   };
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,10 +208,77 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     return { lat, lng };
   };
 
+  const validateSchedule = (): { cleanPickup: string[]; cleanAppt: string[] } | null => {
+    if (!condomEnabled && !appointmentEnabled) {
+      setError('ต้องเปิดใช้งานอย่างน้อย 1 บริการ (รับถุงยางอนามัย หรือ นัดพบแพทย์)');
+      return null;
+    }
+    const dedup = (arr: string[]) => {
+      const seen = new Set<string>();
+      return arr.map(t => t.trim()).filter(t => { if (!t || seen.has(t)) return false; seen.add(t); return true; });
+    };
+
+    const cpm = dedup(pickupMorning);
+    const cpa = dedup(pickupAfternoon);
+    const cam = dedup(apptMorning);
+    const caa = dedup(apptAfternoon);
+    const cleanPickup = [...cpm, ...cpa].sort();
+    const cleanAppt   = [...cam, ...caa].sort();
+
+    if (condomEnabled) {
+      if (cleanPickup.length === 0) {
+        setScheduleTab('condom');
+        setError('กรุณาเพิ่มเวลารับถุงยางอนามัยอย่างน้อย 1 ช่วงเวลา');
+        return null;
+      }
+      for (const t of cpm) {
+        if (!TIME_REGEX.test(t) || hourOf(t) >= 12) {
+          setScheduleTab('condom');
+          setError(`เวลาช่วงเช้า "${t}" ต้องอยู่ในรูปแบบ HH:MM และก่อน 12:00`);
+          return null;
+        }
+      }
+      for (const t of cpa) {
+        if (!TIME_REGEX.test(t) || hourOf(t) < 12) {
+          setScheduleTab('condom');
+          setError(`เวลาช่วงบ่าย "${t}" ต้องอยู่ในรูปแบบ HH:MM และตั้งแต่ 12:00`);
+          return null;
+        }
+      }
+    }
+    if (appointmentEnabled) {
+      if (cleanAppt.length === 0) {
+        setScheduleTab('appointment');
+        setError('กรุณาเพิ่มเวลานัดพบแพทย์อย่างน้อย 1 ช่วงเวลา');
+        return null;
+      }
+      for (const t of cam) {
+        if (!TIME_REGEX.test(t) || hourOf(t) >= 12) {
+          setScheduleTab('appointment');
+          setError(`เวลาช่วงเช้า "${t}" ต้องอยู่ในรูปแบบ HH:MM และก่อน 12:00`);
+          return null;
+        }
+      }
+      for (const t of caa) {
+        if (!TIME_REGEX.test(t) || hourOf(t) < 12) {
+          setScheduleTab('appointment');
+          setError(`เวลาช่วงบ่าย "${t}" ต้องอยู่ในรูปแบบ HH:MM และตั้งแต่ 12:00`);
+          return null;
+        }
+      }
+    }
+    return { cleanPickup, cleanAppt };
+  };
+
   const handleSaveAdd = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) { setError('กรุณากรอกชื่อสถานบริการ'); return; }
     if (existingNames.includes(trimmedName)) { setError('ชื่อนี้มีอยู่แล้ว'); return; }
+    const schedule = validateSchedule();
+    if (schedule === null) return;
+    const coords = validateLatLng();
+    if (coords === null) return;
+    const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
 
     setSaving(true);
     setError(null);
@@ -151,10 +287,30 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     if (addError) { setError(addError.message); setSaving(false); return; }
 
     const { error: initError } = await supabase.rpc('init_service_center_inventory', { p_name: trimmedName });
-    setSaving(false);
-
     if (initError) {
+      setSaving(false);
       setError(`สถานบริการถูกเพิ่มแล้ว แต่เกิดข้อผิดพลาดในการสร้างสต็อก: ${initError.message}`);
+      return;
+    }
+
+    const { error: upsertError } = await supabase.rpc('upsert_service_center', {
+      p_name: trimmedName,
+      p_image_url: imageUrl ?? undefined,
+      p_description: description.trim() || undefined,
+      p_contacts: cleanedContacts as unknown as never,
+      p_latitude: coords.lat ?? undefined,
+      p_longitude: coords.lng ?? undefined,
+      p_operating_hours: operatingHours.trim().replace(/-/g, '–') || undefined,
+      p_address: address.trim() || undefined,
+      p_condom_service_enabled: condomEnabled,
+      p_appointment_service_enabled: appointmentEnabled,
+      p_pickup_times: condomEnabled ? schedule.cleanPickup : [],
+      p_appointment_times: appointmentEnabled ? schedule.cleanAppt : [],
+    });
+
+    setSaving(false);
+    if (upsertError) {
+      setError(`สถานบริการถูกเพิ่มแล้ว แต่เกิดข้อผิดพลาดในการบันทึกเวลา: ${upsertError.message}`);
       return;
     }
 
@@ -165,6 +321,8 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     if (!center) return;
     const coords = validateLatLng();
     if (coords === null) return;
+    const schedule = validateSchedule();
+    if (schedule === null) return;
 
     const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
     setSaving(true);
@@ -179,6 +337,10 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       p_longitude: coords.lng ?? undefined,
       p_operating_hours: operatingHours.trim().replace(/-/g, '–') || undefined,
       p_address: address.trim() || undefined,
+      p_condom_service_enabled: condomEnabled,
+      p_appointment_service_enabled: appointmentEnabled,
+      p_pickup_times: condomEnabled ? schedule.cleanPickup : [],
+      p_appointment_times: appointmentEnabled ? schedule.cleanAppt : [],
     });
 
     setSaving(false);
@@ -211,6 +373,129 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const lng = parseFloat(longitude.trim());
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
   const canDelete = center !== null && !center.is_active;
+  const currentEnabled = scheduleTab === 'condom' ? condomEnabled : appointmentEnabled;
+  const isInvalidTime = (t: string): boolean => {
+    if (!TIME_REGEX.test(t)) return false;
+    const [h, m] = t.split(':').map(Number);
+    return h > 23 || m > 59;
+  };
+
+  const isOutOfRange = (t: string, period: Period): boolean =>
+    TIME_REGEX.test(t) && !isInvalidTime(t) && (period === 'morning' ? hourOf(t) >= 12 : hourOf(t) < 12);
+
+  const hasRangeError =
+    (condomEnabled && (
+      pickupMorning.some(t => isInvalidTime(t) || isOutOfRange(t, 'morning')) ||
+      pickupAfternoon.some(t => isInvalidTime(t) || isOutOfRange(t, 'afternoon'))
+    )) ||
+    (appointmentEnabled && (
+      apptMorning.some(t => isInvalidTime(t) || isOutOfRange(t, 'morning')) ||
+      apptAfternoon.some(t => isInvalidTime(t) || isOutOfRange(t, 'afternoon'))
+    ));
+
+  const renderTimePeriod = (type: ScheduleTab, period: Period, label: string, times: string[]) => (
+    <Box sx={{ flex: 1 }}>
+      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: 'block', mb: 1 }}>
+        {label}
+      </Typography>
+      {times.map((t, i) => (
+        <Box key={i} sx={{ display: 'flex', gap: 0.5, mb: 0.75, alignItems: 'flex-start' }}>
+          <TextField
+            type="text"
+            value={t}
+            onChange={(e) => handleTimeChange(type, period, i, e.target.value)}
+            size="small"
+            disabled={saving}
+            error={isInvalidTime(t) || isOutOfRange(t, period)}
+            helperText={
+              isInvalidTime(t) ? 'รูปแบบเวลาไม่ถูกต้อง' :
+              isOutOfRange(t, period) ? (period === 'morning' ? 'ต้องก่อน 12:00' : 'ต้องตั้งแต่ 12:00') :
+              undefined
+            }
+            placeholder="HH:MM"
+            inputProps={{ maxLength: 5 }}
+            sx={{ flex: 1 }}
+          />
+          <Tooltip title="ลบ">
+            <IconButton size="small" onClick={() => handleRemoveTime(type, period, i)} disabled={saving} color="error">
+              <DeleteOutlineIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Box>
+      ))}
+      <Button
+        size="small"
+        startIcon={<AddIcon />}
+        onClick={() => handleAddTime(type, period)}
+        disabled={saving}
+        sx={{ color: 'text.secondary', fontSize: 12 }}
+      >
+        เพิ่มเวลา
+      </Button>
+    </Box>
+  );
+
+  const renderScheduleSection = () => {
+    const morningTimes   = scheduleTab === 'condom' ? pickupMorning   : apptMorning;
+    const afternoonTimes = scheduleTab === 'condom' ? pickupAfternoon : apptAfternoon;
+    return (
+      <>
+        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+          กำหนดเวลา
+        </Typography>
+
+        <Tabs
+          value={scheduleTab}
+          onChange={(_, v: ScheduleTab) => setScheduleTab(v)}
+          sx={{ mb: 1.5, minHeight: 36 }}
+          TabIndicatorProps={{ style: { backgroundColor: '#FF9F6B' } }}
+        >
+          <Tab
+            label="รับถุงยางอนามัย"
+            value="condom"
+            sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'condom' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
+          />
+          <Tab
+            label="นัดพบแพทย์"
+            value="appointment"
+            sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'appointment' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
+          />
+        </Tabs>
+
+        <FormControlLabel
+          control={
+            <Switch
+              checked={currentEnabled}
+              onChange={(e) => {
+                if (scheduleTab === 'condom') setCondomEnabled(e.target.checked);
+                else setAppointmentEnabled(e.target.checked);
+              }}
+              disabled={saving}
+              sx={{
+                '& .MuiSwitch-switchBase.Mui-checked': { color: '#FF9F6B' },
+                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#FF9F6B' },
+              }}
+            />
+          }
+          label={
+            <Typography variant="body2" color={currentEnabled ? 'text.primary' : 'text.secondary'}>
+              เปิดใช้งาน
+            </Typography>
+          }
+          sx={{ mb: currentEnabled ? 1.5 : 2 }}
+        />
+
+        {currentEnabled && (
+          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+            {renderTimePeriod(scheduleTab, 'morning', 'ช่วงเช้า', morningTimes)}
+            {renderTimePeriod(scheduleTab, 'afternoon', 'ช่วงบ่าย', afternoonTimes)}
+          </Box>
+        )}
+
+        <Divider sx={{ mb: 2 }} />
+      </>
+    );
+  };
 
   return (
     <>
@@ -288,6 +573,9 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
               sx={{ mb: 2 }}
             />
 
+            {/* Scheduling — both modes */}
+            {renderScheduleSection()}
+
             {/* Description */}
             <TextField
               label="ข้อมูลทั่วไป"
@@ -309,7 +597,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
               size="small"
               placeholder="เช่น จ–ศ 08:00–16:00"
               disabled={saving}
-              helperText="แสดงในแอปของผู้ใช้ใต้ชื่อสถานบริการ"
               sx={{ mb: 2 }}
             />
 
@@ -455,7 +742,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
           <Button
             onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
             variant="contained"
-            disabled={saving || uploading || deleting}
+            disabled={saving || uploading || deleting || hasRangeError}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
           >
             {saving ? 'กำลังบันทึก...' : 'บันทึก'}

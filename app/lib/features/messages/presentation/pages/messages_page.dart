@@ -306,6 +306,7 @@ class MessagesPage extends StatefulWidget {
 class _MessagesPageState extends State<MessagesPage> {
   List<_RequestGroup> _groups = [];
   bool _isLoading = true;
+  bool _isLoggedIn = true;
   RealtimeChannel? _subscription;
 
   @override
@@ -358,7 +359,7 @@ class _MessagesPageState extends State<MessagesPage> {
   Future<void> _fetchData() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() { _isLoggedIn = false; _isLoading = false; });
       return;
     }
     final userId = session.user.id;
@@ -546,10 +547,62 @@ class _MessagesPageState extends State<MessagesPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _groups.isEmpty
-              ? _buildEmpty()
-              : _buildList(),
+          ? _buildSkeleton()
+          : !_isLoggedIn
+              ? _buildNotLoggedIn()
+              : _groups.isEmpty
+                  ? _buildEmpty()
+                  : _buildList(),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      itemCount: 4,
+      itemBuilder: (_, _) => Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 16, width: 140, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 6),
+                  Container(height: 12, width: 100, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4))),
+                ],
+              ),
+            ),
+            Container(height: 24, width: 60, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotLoggedIn() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            'กรุณาเข้าสู่ระบบ',
+            style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
+          ),
+        ],
+      ),
     );
   }
 
