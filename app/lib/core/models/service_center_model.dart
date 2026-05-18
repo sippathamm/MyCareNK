@@ -2,6 +2,7 @@ class ServiceCenterModel {
   final String name;
   final String? imageUrl;
   final String? description;
+  final String? address;
   final List<Map<String, String>> contacts;
   final double? latitude;
   final double? longitude;
@@ -13,6 +14,7 @@ class ServiceCenterModel {
     required this.name,
     this.imageUrl,
     this.description,
+    this.address,
     required this.contacts,
     this.latitude,
     this.longitude,
@@ -26,6 +28,7 @@ class ServiceCenterModel {
       name: map['name'] as String,
       imageUrl: map['image_url'] as String?,
       description: map['description'] as String?,
+      address: map['address'] as String?,
       contacts: (map['contacts'] as List<dynamic>? ?? [])
           .map((c) => Map<String, String>.from(c as Map))
           .toList(),

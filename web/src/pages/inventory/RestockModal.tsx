@@ -4,7 +4,6 @@ import {
   Button, TextField, Typography, Box, CircularProgress,
   Alert, Divider,
 } from '@mui/material';
-import InventoryIcon from '@mui/icons-material/Inventory2';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';

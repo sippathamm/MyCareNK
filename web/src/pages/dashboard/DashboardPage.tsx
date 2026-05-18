@@ -8,6 +8,7 @@ import { useLeadTime } from '../../hooks/useLeadTime';
 import { usePeakTime } from '../../hooks/usePeakTime';
 import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { toLocalDateString } from '../../utils/staffWorkloadUtils';
 
 const STATUS_COLORS = {
   pending: '#FF9F6B',
@@ -90,13 +91,6 @@ const SummaryCard = ({ title, value, color }: { title: string; value: string | n
     </CardContent>
   </Card>
 );
-
-function toLocalDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 function getDefaultDateFrom(): string {
   const d = new Date();
