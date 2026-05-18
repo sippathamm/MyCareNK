@@ -376,7 +376,7 @@ class _ContactRow extends StatelessWidget {
           Text(
             '$label: ',
             style: GoogleFonts.googleSans(
-              fontSize: 14,
+              fontSize: 15,
               color: AppColors.textSecondary,
             ),
           ),
@@ -394,7 +394,7 @@ class _ContactRow extends StatelessWidget {
             child: Text(
               value,
               style: GoogleFonts.googleSans(
-                fontSize: 14,
+                fontSize: 15,
                 color: isPhone ? AppColors.primary : AppColors.textPrimary,
                 decoration: isPhone ? TextDecoration.underline : null,
                 decorationColor: isPhone ? AppColors.primary : null,
