@@ -4,6 +4,8 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/models/service_center_model.dart';
+import '../../../../../core/services/service_center_service.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
@@ -24,19 +26,6 @@ class _PickDate {
   final String monthLabel;
   const _PickDate(this.date, this.dayLabel, this.monthLabel);
 }
-
-class _ServiceCenter {
-  final String name;
-  final String hours;
-  const _ServiceCenter(this.name, this.hours);
-}
-
-const _kServiceCenters = [
-  _ServiceCenter('รพ.โพนพิสัย', 'จ–ศ 08:00–16:00'),
-  _ServiceCenter('รพ.สต.วัดหลวง', 'จ–ศ 08:00–16:00'),
-  _ServiceCenter('อบต.วัดหลวง', 'จ–ศ 08:30–16:30'),
-  _ServiceCenter('สสจ.หนองคาย', 'จ–ศ 08:00–17:00'),
-];
 
 List<_PickDate> _buildDateList() {
   final list = <_PickDate>[];
@@ -71,6 +60,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   StreamSubscription<AuthState>? _authSubscription;
   final List<_PickDate> _dates = _buildDateList();
 
+  List<ServiceCenterModel> _centers = [];
+  bool _centersLoading = true;
+
   int _currentMonthlyUsed = AppConstants.maxCondomQuota;
   int _currentMonthlyLubricantUsed = AppConstants.maxLubricantQuota;
 
@@ -86,6 +78,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   @override
   void initState() {
     super.initState();
+    _loadCenters();
     _fetchMonthlyQuota();
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
@@ -99,6 +92,15 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         _fetchMonthlyQuota();
       }
     });
+  }
+
+  Future<void> _loadCenters() async {
+    try {
+      final centers = await ServiceCenterService.fetchActive();
+      if (mounted) setState(() { _centers = centers; _centersLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _centersLoading = false);
+    }
   }
 
   Future<void> _fetchMonthlyQuota() async {
@@ -216,12 +218,31 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   _buildSectionCard(
                     title: 'สถานบริการ',
                     icon: Icons.local_hospital_outlined,
-                    child: Column(
-                      children: List.generate(
-                        _kServiceCenters.length,
-                        (i) => _buildLocationTile(_kServiceCenters[i], i),
-                      ),
-                    ),
+                    child: _centersLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : _centers.isEmpty
+                            ? GestureDetector(
+                                onTap: _loadCenters,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
+                                        style: GoogleFonts.googleSans(
+                                            fontSize: 14, color: AppColors.textHint)),
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                children: List.generate(
+                                  _centers.length,
+                                  (i) => _buildLocationTile(_centers[i], i),
+                                ),
+                              ),
                   ),
                   _buildSectionCard(
                     title: 'วันที่รับ',
@@ -404,7 +425,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   // ── Location tiles ──────────────────────────────────────────────────────────
 
-  Widget _buildLocationTile(_ServiceCenter center, int index) {
+  Widget _buildLocationTile(ServiceCenterModel center, int index) {
     final sel = _selectedServiceCenter == center.name;
     return GestureDetector(
       onTap: () => setState(() => _selectedServiceCenter = center.name),
@@ -453,14 +474,16 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${center.hours} น.',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 14,
-                      color: AppColors.textHint,
+                  if (center.operatingHours != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      '${center.operatingHours} น.',
+                      style: GoogleFonts.googleSans(
+                        fontSize: 14,
+                        color: AppColors.textHint,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),

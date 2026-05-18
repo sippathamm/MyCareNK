@@ -380,6 +380,7 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           name: string
+          operating_hours: string | null
           updated_at: string
         }
         Insert: {
@@ -392,6 +393,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name: string
+          operating_hours?: string | null
           updated_at?: string
         }
         Update: {
@@ -404,6 +406,7 @@ export type Database = {
           latitude?: number | null
           longitude?: number | null
           name?: string
+          operating_hours?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -1003,6 +1006,7 @@ export type Database = {
           p_latitude?: number
           p_longitude?: number
           p_name: string
+          p_operating_hours?: string
         }
         Returns: undefined
       }

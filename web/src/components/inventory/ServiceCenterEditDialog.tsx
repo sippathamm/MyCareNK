@@ -47,6 +47,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [contacts, setContacts] = useState<ContactItem[]>([]);
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
+  const [operatingHours, setOperatingHours] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -69,6 +70,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setContacts(center.contacts.length > 0 ? [...center.contacts] : []);
       setLatitude(center.latitude !== null ? String(center.latitude) : '');
       setLongitude(center.longitude !== null ? String(center.longitude) : '');
+      setOperatingHours(center.operating_hours ?? '');
       setImageUrl(center.image_url);
     } else {
       setName('');
@@ -76,6 +78,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setContacts([]);
       setLatitude('');
       setLongitude('');
+      setOperatingHours('');
       setImageUrl(null);
     }
   }, [open, center]);
@@ -171,6 +174,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       p_contacts: cleanedContacts as unknown as never,
       p_latitude: coords.lat ?? undefined,
       p_longitude: coords.lng ?? undefined,
+      p_operating_hours: operatingHours.trim() || undefined,
     });
 
     setSaving(false);
@@ -378,6 +382,23 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
                 ดูบน Google Maps
               </Button>
             )}
+
+            <Divider sx={{ mb: 2, mt: 1 }} />
+
+            {/* Operating hours */}
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+              เวลาทำการ
+            </Typography>
+            <TextField
+              label="เวลาทำการ"
+              value={operatingHours}
+              onChange={(e) => setOperatingHours(e.target.value)}
+              fullWidth
+              size="small"
+              placeholder="เช่น จ–ศ 08:00–16:00"
+              disabled={saving}
+              helperText="แสดงในแอปของผู้ใช้ใต้ชื่อสถานบริการ"
+            />
 
             {confirmDelete && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 1.5 }}>

@@ -10,6 +10,7 @@ export interface ServiceCenterRow {
   longitude: number | null;
   is_active: boolean;
   display_order: number;
+  operating_hours: string | null;
 }
 
 export function useServiceCenters(enabled = true) {
