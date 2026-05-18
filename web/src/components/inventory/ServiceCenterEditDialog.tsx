@@ -33,10 +33,10 @@ interface ContactItem {
 type ScheduleTab = 'condom' | 'appointment';
 type Period = 'morning' | 'afternoon';
 
-const DEFAULT_PICKUP_MORNING   = ['10:00'];
-const DEFAULT_PICKUP_AFTERNOON = ['14:00'];
-const DEFAULT_APPT_MORNING     = ['08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30'];
-const DEFAULT_APPT_AFTERNOON   = ['13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00'];
+const DEFAULT_PICKUP_MORNING   = ['08:00'];
+const DEFAULT_PICKUP_AFTERNOON: string[] = [];
+const DEFAULT_APPT_MORNING     = ['08:00'];
+const DEFAULT_APPT_AFTERNOON: string[]   = [];
 
 const TIME_REGEX = /^\d{2}:\d{2}$/;
 
@@ -104,13 +104,13 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       const pu = center.pickup_times ?? [];
       const pm = pu.filter(t => hourOf(t) < 12);
       const pa = pu.filter(t => hourOf(t) >= 12);
-      setPickupMorning(pm.length ? pm : DEFAULT_PICKUP_MORNING);
-      setPickupAfternoon(pa.length ? pa : DEFAULT_PICKUP_AFTERNOON);
+      setPickupMorning(pu.length === 0 ? DEFAULT_PICKUP_MORNING : pm);
+      setPickupAfternoon(pu.length === 0 ? DEFAULT_PICKUP_AFTERNOON : pa);
       const au = center.appointment_times ?? [];
       const am = au.filter(t => hourOf(t) < 12);
       const aa = au.filter(t => hourOf(t) >= 12);
-      setApptMorning(am.length ? am : DEFAULT_APPT_MORNING);
-      setApptAfternoon(aa.length ? aa : DEFAULT_APPT_AFTERNOON);
+      setApptMorning(au.length === 0 ? DEFAULT_APPT_MORNING : am);
+      setApptAfternoon(au.length === 0 ? DEFAULT_APPT_AFTERNOON : aa);
     } else {
       setName('');
       setDescription('');

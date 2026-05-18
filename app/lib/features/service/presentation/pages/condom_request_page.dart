@@ -430,7 +430,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   Widget _buildLocationTile(ServiceCenterModel center, int index) {
     final sel = _selectedServiceCenter == center.name;
     return GestureDetector(
-      onTap: () => setState(() => _selectedServiceCenter = center.name),
+      onTap: () => setState(() {
+        if (_selectedServiceCenter != center.name) _selectedTime = null;
+        _selectedServiceCenter = center.name;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -500,6 +503,31 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // ── Date picker ─────────────────────────────────────────────────────────────
 
   Widget _buildDatePicker() {
+    final center = _selectedCenter;
+    if (center == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'กรุณาเลือกสถานบริการก่อน',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    if (!center.condomServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 84,
       child: ListView.separated(
@@ -566,7 +594,28 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   // ── Time picker ─────────────────────────────────────────────────────────────
 
+  ServiceCenterModel? get _selectedCenter =>
+      _centers.where((c) => c.name == _selectedServiceCenter).firstOrNull;
+
+  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
+
   Widget _buildTimePicker() {
+    final center = _selectedCenter;
+    if (center == null || !center.condomServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            center == null
+                ? 'กรุณาเลือกสถานบริการก่อน'
+                : 'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+
     Widget chip(String t) {
       final parts = t.split(':');
       final tod =
@@ -605,28 +654,26 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   color: AppColors.textSecondary)),
         );
 
-    final morning = AppConstants.pickupTimes
-        .where((t) => int.parse(t.split(':')[0]) < 12)
-        .toList();
-    final afternoon = AppConstants.pickupTimes
-        .where((t) => int.parse(t.split(':')[0]) >= 12)
-        .toList();
+    final times = center.pickupTimes;
+    final morning = times.where((t) => _hourOf(t) < 12).toList();
+    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
+
+    Widget dash() => Text('–',
+        style: GoogleFonts.googleSans(
+            fontSize: 15, color: AppColors.textHint));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (morning.isNotEmpty) ...[
-          label('ช่วงเช้า'),
-          Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList()),
-        ],
-        if (afternoon.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          label('ช่วงบ่าย'),
-          Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: afternoon.map(chip).toList()),
-        ],
+        label('ช่วงเช้า'),
+        morning.isNotEmpty
+            ? Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList())
+            : dash(),
+        const SizedBox(height: 14),
+        label('ช่วงบ่าย'),
+        afternoon.isNotEmpty
+            ? Wrap(spacing: 8, runSpacing: 8, children: afternoon.map(chip).toList())
+            : dash(),
       ],
     );
   }

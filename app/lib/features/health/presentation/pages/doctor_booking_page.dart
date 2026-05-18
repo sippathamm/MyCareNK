@@ -37,14 +37,6 @@ final _kReasons = <_Reason>[
   _Reason('consult', 'ปรึกษาทั่วไป', Icons.chat_bubble_outline),
 ];
 
-final _kMorningSlots = [
-  '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-];
-
-final _kAfternoonSlots = [
-  '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
-];
-
 final _thMonths = [
   '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
   'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
@@ -123,6 +115,8 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       _kReasons.where((r) => r.key == _reason).firstOrNull;
   ServiceCenterModel? get _selectedLocation =>
       _centers.where((c) => c.name == _location).firstOrNull;
+
+  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
   _BookingDate? get _selectedDate => _dates
       .where((d) => d.date.toIso8601String().substring(0, 10) == _dateKey)
       .firstOrNull;
@@ -225,7 +219,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     ),
                   ),
                   _SectionCard(
-                    title: 'สถานพยาบาล',
+                    title: 'สถานบริการ',
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
                         ? const Center(
@@ -368,7 +362,10 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   Widget _buildLocationTile(ServiceCenterModel loc, int index) {
     final sel = _location == loc.name;
     return GestureDetector(
-      onTap: () => setState(() => _location = loc.name),
+      onTap: () => setState(() {
+        if (_location != loc.name) _timeSlot = null;
+        _location = loc.name;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -431,6 +428,31 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   }
 
   Widget _buildDatePicker() {
+    final loc = _selectedLocation;
+    if (loc == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'กรุณาเลือกสถานบริการก่อน',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    if (!loc.appointmentServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 84,
       child: ListView.separated(
@@ -495,12 +517,30 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   }
 
   Widget _buildTimePicker() {
+    final loc = _selectedLocation;
+    final times = loc?.appointmentTimes ?? [];
+    if (loc == null || !loc.appointmentServiceEnabled || times.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            _location == null
+                ? 'กรุณาเลือกสถานบริการก่อน'
+                : 'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    final morning = times.where((t) => _hourOf(t) < 12).toList();
+    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSlotGroup('ช่วงเช้า', _kMorningSlots),
+        _buildSlotGroup('ช่วงเช้า', morning),
         const SizedBox(height: 14),
-        _buildSlotGroup('ช่วงบ่าย', _kAfternoonSlots),
+        _buildSlotGroup('ช่วงบ่าย', afternoon),
       ],
     );
   }
@@ -518,6 +558,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
         ),
         const SizedBox(height: 8),
+        if (slots.isEmpty)
+          Text('–',
+              style: GoogleFonts.googleSans(
+                  fontSize: 15, color: AppColors.textHint))
+        else
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -559,7 +604,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     final loc = _selectedLocation;
     final rows = [
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', loc?.name ?? ''),
+      (Icons.local_hospital_outlined, 'สถานบริการ', loc?.name ?? ''),
       if (loc?.operatingHours != null)
         (Icons.access_time_outlined, 'เวลาทำการ', loc!.operatingHours!),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
@@ -665,7 +710,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานพยาบาลล่วงหน้าอย่างน้อย 24 ชม.',
+                            'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานบริการล่วงหน้าอย่างน้อย 24 ชม.',
                             style: GoogleFonts.googleSans(
                               fontSize: 13,
                               color: AppColors.textPrimary,
@@ -791,7 +836,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   Widget _buildSuccess() {
     final infoRows = [
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', _selectedLocation?.name ?? ''),
+      (Icons.local_hospital_outlined, 'สถานบริการ', _selectedLocation?.name ?? ''),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
       (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
