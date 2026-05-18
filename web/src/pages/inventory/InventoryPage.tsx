@@ -44,16 +44,21 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
   const lubPct = Math.min((row.lubricant_qty / MAX_DISPLAY_QTY) * 100, 100);
   const condomColor = daysLeftColor(row.condom_days_left);
   const lubColor = daysLeftColor(row.lubricant_days_left);
+  const isZeroStock = row.condom_qty <= 0 || row.lubricant_qty <= 0;
   const isLowStock =
-    (row.condom_days_left !== null && row.condom_days_left < LOW_STOCK_DAYS) ||
-    (row.lubricant_days_left !== null && row.lubricant_days_left < LOW_STOCK_DAYS);
+    !isZeroStock && (
+      (row.condom_days_left !== null && row.condom_days_left < LOW_STOCK_DAYS) ||
+      (row.lubricant_days_left !== null && row.lubricant_days_left < LOW_STOCK_DAYS)
+    );
+
+  const borderColor = isZeroStock ? '#FF9F6B' : isLowStock ? '#EF7070' : 'transparent';
 
   return (
     <Card
       elevation={1}
       sx={{
         borderRadius: 2,
-        border: isLowStock ? '1.5px solid #EF7070' : '1.5px solid transparent',
+        border: `1.5px solid ${borderColor}`,
         transition: 'border-color 0.2s',
       }}
     >
@@ -66,7 +71,15 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               {row.service_center}
             </Typography>
           </Box>
-          {isLowStock && (
+          {isZeroStock && (
+            <Chip
+              label="ยังไม่ได้เติมสต็อก"
+              size="small"
+              icon={<WarningAmberIcon />}
+              sx={{ bgcolor: '#FFF7E6', color: '#FF9F6B', fontWeight: 600, fontSize: '0.7rem' }}
+            />
+          )}
+          {!isZeroStock && isLowStock && (
             <Chip
               label="สต็อกต่ำ"
               size="small"
@@ -179,10 +192,17 @@ export default function InventoryPage() {
     ? trend.filter((t) => t.service_center === profile.service_center)
     : trend;
 
+  const zeroStockItems = visibleForecast.filter(
+    (r) => r.condom_qty <= 0 || r.lubricant_qty <= 0,
+  );
+
   const lowStockItems = visibleForecast.filter(
     (r) =>
-      (r.condom_days_left !== null && r.condom_days_left < LOW_STOCK_DAYS) ||
-      (r.lubricant_days_left !== null && r.lubricant_days_left < LOW_STOCK_DAYS),
+      r.condom_qty > 0 && r.lubricant_qty > 0 &&
+      (
+        (r.condom_days_left !== null && r.condom_days_left < LOW_STOCK_DAYS) ||
+        (r.lubricant_days_left !== null && r.lubricant_days_left < LOW_STOCK_DAYS)
+      ),
   );
 
   return (
@@ -204,6 +224,29 @@ export default function InventoryPage() {
           </Button>
         )}
       </Box>
+
+      {/* Zero-stock warning banner */}
+      {!loading && zeroStockItems.length > 0 && (
+        <Alert
+          severity="warning"
+          icon={<WarningAmberIcon />}
+          sx={{ mb: 3, borderRadius: 2 }}
+        >
+          <AlertTitle sx={{ fontWeight: 700 }}>
+            แจ้งเตือน: สถานบริการยังไม่ได้เติมสต็อกเริ่มต้น ({zeroStockItems.length} สถานบริการ)
+          </AlertTitle>
+          {zeroStockItems.map((r) => {
+            const parts: string[] = [];
+            if (r.condom_qty <= 0) parts.push('ถุงยางอนามัย');
+            if (r.lubricant_qty <= 0) parts.push('เจลหล่อลื่น');
+            return (
+              <Typography key={r.service_center} variant="body2">
+                <strong>{r.service_center}</strong>: {parts.join(', ')} มีสต็อกเป็นศูนย์ — คำขอที่เสร็จสิ้นจะถูกระงับจนกว่าจะเติมสต็อก
+              </Typography>
+            );
+          })}
+        </Alert>
+      )}
 
       {/* Low-stock warning banner */}
       {!loading && lowStockItems.length > 0 && (

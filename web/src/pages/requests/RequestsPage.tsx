@@ -88,7 +88,12 @@ export default function RequestsPage() {
     if (error) {
       setRequests(prevRequests);
       setSelectedRequest(prevSelected);
-      setUpdateError(error.message);
+      const msg = error.message ?? '';
+      if (msg.includes('สต็อกถุงยางอนามัยไม่เพียงพอ') || msg.includes('สต็อกเจลหล่อลื่นไม่เพียงพอ') || msg.includes('สต็อกไม่เพียงพอ')) {
+        setUpdateError(`ไม่สามารถดำเนินการได้: ${msg} กรุณาไปที่หน้า "สต็อกและพยากรณ์" เพื่อเติมสต็อกก่อน`);
+      } else {
+        setUpdateError(msg);
+      }
       return false;
     }
     return true;
