@@ -92,7 +92,11 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
           <Chip
             size="small"
             icon={<LocationOnIcon />}
-            label={hasLocation ? 'มีตำแหน่ง' : 'ยังไม่มีตำแหน่ง'}
+            label={
+              hasLocation
+                ? `${center.latitude!.toFixed(4)}, ${center.longitude!.toFixed(4)}`
+                : 'ยังไม่มีตำแหน่ง'
+            }
             sx={{
               alignSelf: 'flex-start',
               bgcolor: hasLocation ? '#E8F5E9' : '#F5F5F5',

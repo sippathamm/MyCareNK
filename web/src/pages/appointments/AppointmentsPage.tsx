@@ -192,7 +192,7 @@ export default function AppointmentsPage() {
           {isAdminOrSuperadmin && (
             <TextField
               select
-              label="สถานพยาบาล"
+              label="สถานบริการ"
               size="small"
               value={serviceCenterFilter}
               onChange={(e) => setServiceCenterFilter(e.target.value)}

@@ -371,6 +371,7 @@ export type Database = {
       }
       service_centers: {
         Row: {
+          address: string | null
           contacts: Json
           created_at: string
           description: string | null
@@ -384,6 +385,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          address?: string | null
           contacts?: Json
           created_at?: string
           description?: string | null
@@ -397,6 +399,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          address?: string | null
           contacts?: Json
           created_at?: string
           description?: string | null
@@ -803,6 +806,7 @@ export type Database = {
           condom_daily_burn: number
           condom_days_left: number
           condom_qty: number
+          is_active: boolean
           lubricant_daily_burn: number
           lubricant_days_left: number
           lubricant_qty: number
@@ -999,6 +1003,7 @@ export type Database = {
       }
       upsert_service_center: {
         Args: {
+          p_address?: string
           p_contacts?: Json
           p_description?: string
           p_display_order?: number

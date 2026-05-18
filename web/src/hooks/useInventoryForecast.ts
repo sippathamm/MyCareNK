@@ -3,6 +3,7 @@ import { supabase } from '../lib/supabase';
 
 export interface InventoryForecastRow {
   service_center: string;
+  is_active: boolean;
   condom_qty: number;
   lubricant_qty: number;
   condom_daily_burn: number;

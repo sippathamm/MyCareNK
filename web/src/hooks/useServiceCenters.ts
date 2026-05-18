@@ -5,6 +5,7 @@ export interface ServiceCenterRow {
   name: string;
   image_url: string | null;
   description: string | null;
+  address: string | null;
   contacts: { label: string; value: string }[];
   latitude: number | null;
   longitude: number | null;

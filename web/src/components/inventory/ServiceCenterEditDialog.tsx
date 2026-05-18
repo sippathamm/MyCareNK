@@ -48,6 +48,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [operatingHours, setOperatingHours] = useState('');
+  const [address, setAddress] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -67,6 +68,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     if (center) {
       setName('');
       setDescription(center.description ?? '');
+      setAddress(center.address ?? '');
       setContacts(center.contacts.length > 0 ? [...center.contacts] : []);
       setLatitude(center.latitude !== null ? String(center.latitude) : '');
       setLongitude(center.longitude !== null ? String(center.longitude) : '');
@@ -75,6 +77,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     } else {
       setName('');
       setDescription('');
+      setAddress('');
       setContacts([]);
       setLatitude('');
       setLongitude('');
@@ -175,6 +178,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       p_latitude: coords.lat ?? undefined,
       p_longitude: coords.lng ?? undefined,
       p_operating_hours: operatingHours.trim() || undefined,
+      p_address: address.trim() || undefined,
     });
 
     setSaving(false);
@@ -292,8 +296,34 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
               fullWidth
               multiline
               rows={3}
-              sx={{ mb: 2.5 }}
+              sx={{ mb: 2 }}
               disabled={saving}
+            />
+
+            {/* Operating hours */}
+            <TextField
+              label="เวลาทำการ"
+              value={operatingHours}
+              onChange={(e) => setOperatingHours(e.target.value)}
+              fullWidth
+              size="small"
+              placeholder="เช่น จ–ศ 08:00–16:00"
+              disabled={saving}
+              helperText="แสดงในแอปของผู้ใช้ใต้ชื่อสถานบริการ"
+              sx={{ mb: 2 }}
+            />
+
+            {/* Address */}
+            <TextField
+              label="ที่อยู่"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="เช่น 123 ถ.มิตรภาพ ต.หนองกาย อ.เมือง จ.หนองคาย 43000"
+              disabled={saving}
+              sx={{ mb: 2.5 }}
             />
 
             {/* Contacts */}
@@ -384,21 +414,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             )}
 
             <Divider sx={{ mb: 2, mt: 1 }} />
-
-            {/* Operating hours */}
-            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-              เวลาทำการ
-            </Typography>
-            <TextField
-              label="เวลาทำการ"
-              value={operatingHours}
-              onChange={(e) => setOperatingHours(e.target.value)}
-              fullWidth
-              size="small"
-              placeholder="เช่น จ–ศ 08:00–16:00"
-              disabled={saving}
-              helperText="แสดงในแอปของผู้ใช้ใต้ชื่อสถานบริการ"
-            />
 
             {confirmDelete && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 1.5 }}>

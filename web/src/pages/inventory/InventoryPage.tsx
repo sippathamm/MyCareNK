@@ -65,11 +65,22 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
       <CardContent sx={{ p: 2.5 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <StorefrontIcon sx={{ color: 'info.main', fontSize: 20 }} />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1, mr: 1 }}>
+            <StorefrontIcon sx={{ color: 'info.main', fontSize: 20, flexShrink: 0 }} />
             <Typography variant="h6" fontWeight="bold" noWrap>
               {row.service_center}
             </Typography>
+            <Chip
+              size="small"
+              label={row.is_active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
+              sx={{
+                flexShrink: 0,
+                bgcolor: row.is_active ? '#E8F5E9' : '#F5F5F5',
+                color: row.is_active ? '#2E7D32' : '#9E9E9E',
+                fontSize: '0.65rem',
+                height: 20,
+              }}
+            />
           </Box>
           {isZeroStock && (
             <Chip
