@@ -228,7 +228,15 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
               color: AppColors.textHint,
             ),
           )
-        else
+        else ...[
+          Text(
+            '${lat.toStringAsFixed(4)}, ${lng.toStringAsFixed(4)}',
+            style: GoogleFonts.googleSans(
+              fontSize: 15,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
             height: 52,
@@ -279,6 +287,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
               ),
             ),
           ),
+        ],
       ],
     );
   }
@@ -377,7 +386,9 @@ class _ContactRow extends StatelessWidget {
                 ? () async {
                     final digits = value.replaceAll(RegExp(r'[\s\-\(\)]'), '');
                     final url = Uri(scheme: 'tel', path: digits);
-                    if (await canLaunchUrl(url)) await launchUrl(url);
+                    try {
+                      await launchUrl(url);
+                    } catch (_) {}
                   }
                 : null,
             child: Text(
