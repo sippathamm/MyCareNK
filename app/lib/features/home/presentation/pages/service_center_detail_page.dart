@@ -236,7 +236,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
               color: AppColors.textPrimary,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             height: 52,
