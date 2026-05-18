@@ -88,7 +88,7 @@ export default function RequestsPage() {
     if (error) {
       setRequests(prevRequests);
       setSelectedRequest(prevSelected);
-      setUpdateError(error.message);
+      setUpdateError(error.message ?? '');
       return false;
     }
     return true;
