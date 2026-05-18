@@ -276,6 +276,9 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     if (existingNames.includes(trimmedName)) { setError('ชื่อนี้มีอยู่แล้ว'); return; }
     const schedule = validateSchedule();
     if (schedule === null) return;
+    const coords = validateLatLng();
+    if (coords === null) return;
+    const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
 
     setSaving(true);
     setError(null);
@@ -292,6 +295,13 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
     const { error: upsertError } = await supabase.rpc('upsert_service_center', {
       p_name: trimmedName,
+      p_image_url: imageUrl ?? undefined,
+      p_description: description.trim() || undefined,
+      p_contacts: cleanedContacts as unknown as never,
+      p_latitude: coords.lat ?? undefined,
+      p_longitude: coords.lng ?? undefined,
+      p_operating_hours: operatingHours.trim().replace(/-/g, '–') || undefined,
+      p_address: address.trim() || undefined,
       p_condom_service_enabled: condomEnabled,
       p_appointment_service_enabled: appointmentEnabled,
       p_pickup_times: condomEnabled ? schedule.cleanPickup : [],
@@ -544,146 +554,131 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             {/* Scheduling — both modes */}
             {renderScheduleSection()}
 
-            {/* Description — edit mode only */}
-            {!isAddMode && (
-              <TextField
-                label="ข้อมูลทั่วไป"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                fullWidth
-                multiline
-                rows={3}
-                sx={{ mb: 2 }}
-                disabled={saving}
-              />
-            )}
+            {/* Description */}
+            <TextField
+              label="ข้อมูลทั่วไป"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              fullWidth
+              multiline
+              rows={3}
+              sx={{ mb: 2 }}
+              disabled={saving}
+            />
 
-            {/* Operating hours — edit mode only */}
-            {!isAddMode && (
+            {/* Operating hours */}
+            <TextField
+              label="เวลาทำการ"
+              value={operatingHours}
+              onChange={(e) => setOperatingHours(e.target.value)}
+              fullWidth
+              size="small"
+              placeholder="เช่น จ–ศ 08:00–16:00"
+              disabled={saving}
+              sx={{ mb: 2 }}
+            />
+
+            {/* Address */}
+            <TextField
+              label="ที่อยู่"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              fullWidth
+              multiline
+              rows={2}
+              placeholder="เช่น 123 ถ.มิตรภาพ ต.หนองกาย อ.เมือง จ.หนองคาย 43000"
+              disabled={saving}
+              sx={{ mb: 2.5 }}
+            />
+
+            {/* Contacts */}
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+              ข้อมูลติดต่อ
+            </Typography>
+
+            {contacts.map((c, i) => (
+              <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
+                <TextField
+                  label="ป้ายกำกับ"
+                  value={c.label}
+                  onChange={(e) => handleContactChange(i, 'label', e.target.value)}
+                  size="small"
+                  sx={{ flex: 1 }}
+                  placeholder="เช่น โทรศัพท์"
+                  disabled={saving}
+                />
+                <TextField
+                  label="ช่องทางติดต่อ"
+                  value={c.value}
+                  onChange={(e) => handleContactChange(i, 'value', e.target.value)}
+                  size="small"
+                  sx={{ flex: 2 }}
+                  placeholder="เช่น 042-471-xxx"
+                  disabled={saving}
+                />
+                <Tooltip title="ลบ">
+                  <IconButton size="small" onClick={() => handleRemoveContact(i)} disabled={saving} color="error">
+                    <DeleteOutlineIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              </Box>
+            ))}
+
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={handleAddContact}
+              disabled={saving}
+              sx={{ mb: 2.5, color: 'text.secondary' }}
+            >
+              เพิ่มช่องทางติดต่อ
+            </Button>
+
+            <Divider sx={{ mb: 2 }} />
+
+            {/* Location */}
+            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+              ตำแหน่ง
+            </Typography>
+
+            <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
               <TextField
-                label="เวลาทำการ"
-                value={operatingHours}
-                onChange={(e) => setOperatingHours(e.target.value)}
+                label="ละติจูด"
+                value={latitude}
+                onChange={(e) => setLatitude(e.target.value)}
                 fullWidth
                 size="small"
-                placeholder="เช่น จ–ศ 08:00–16:00"
+                placeholder="เช่น 17.6830000"
                 disabled={saving}
-                helperText="แสดงในแอปของผู้ใช้ใต้ชื่อสถานบริการ"
-                sx={{ mb: 2 }}
+                inputProps={{ inputMode: 'decimal' }}
               />
-            )}
-
-            {/* Address — edit mode only */}
-            {!isAddMode && (
               <TextField
-                label="ที่อยู่"
-                value={address}
-                onChange={(e) => setAddress(e.target.value)}
+                label="ลองจิจูด"
+                value={longitude}
+                onChange={(e) => setLongitude(e.target.value)}
                 fullWidth
-                multiline
-                rows={2}
-                placeholder="เช่น 123 ถ.มิตรภาพ ต.หนองกาย อ.เมือง จ.หนองคาย 43000"
+                size="small"
+                placeholder="เช่น 102.4160000"
                 disabled={saving}
-                sx={{ mb: 2.5 }}
+                inputProps={{ inputMode: 'decimal' }}
               />
+            </Box>
+
+            {canShowMap && (
+              <Button
+                variant="outlined"
+                startIcon={<MapIcon />}
+                component="a"
+                href={`https://www.google.com/maps?q=${lat},${lng}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ mb: 1 }}
+              >
+                ดูบน Google Maps
+              </Button>
             )}
 
-            {/* Contacts — edit mode only */}
-            {!isAddMode && (
-              <>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-                  ข้อมูลติดต่อ
-                </Typography>
-
-                {contacts.map((c, i) => (
-                  <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                    <TextField
-                      label="ป้ายกำกับ"
-                      value={c.label}
-                      onChange={(e) => handleContactChange(i, 'label', e.target.value)}
-                      size="small"
-                      sx={{ flex: 1 }}
-                      placeholder="เช่น โทรศัพท์"
-                      disabled={saving}
-                    />
-                    <TextField
-                      label="ช่องทางติดต่อ"
-                      value={c.value}
-                      onChange={(e) => handleContactChange(i, 'value', e.target.value)}
-                      size="small"
-                      sx={{ flex: 2 }}
-                      placeholder="เช่น 042-471-xxx"
-                      disabled={saving}
-                    />
-                    <Tooltip title="ลบ">
-                      <IconButton size="small" onClick={() => handleRemoveContact(i)} disabled={saving} color="error">
-                        <DeleteOutlineIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                ))}
-
-                <Button
-                  size="small"
-                  startIcon={<AddIcon />}
-                  onClick={handleAddContact}
-                  disabled={saving}
-                  sx={{ mb: 2.5, color: 'text.secondary' }}
-                >
-                  เพิ่มช่องทางติดต่อ
-                </Button>
-
-                <Divider sx={{ mb: 2 }} />
-              </>
-            )}
-
-            {/* Location — edit mode only */}
-            {!isAddMode && (
-              <>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-                  ตำแหน่ง
-                </Typography>
-
-                <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-                  <TextField
-                    label="ละติจูด"
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
-                    fullWidth
-                    size="small"
-                    placeholder="เช่น 17.6830000"
-                    disabled={saving}
-                    inputProps={{ inputMode: 'decimal' }}
-                  />
-                  <TextField
-                    label="ลองจิจูด"
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
-                    fullWidth
-                    size="small"
-                    placeholder="เช่น 102.4160000"
-                    disabled={saving}
-                    inputProps={{ inputMode: 'decimal' }}
-                  />
-                </Box>
-
-                {canShowMap && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<MapIcon />}
-                    component="a"
-                    href={`https://www.google.com/maps?q=${lat},${lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ mb: 1 }}
-                  >
-                    ดูบน Google Maps
-                  </Button>
-                )}
-
-                <Divider sx={{ mb: 2, mt: 1 }} />
-              </>
-            )}
+            <Divider sx={{ mb: 2, mt: 1 }} />
 
             {confirmDelete && (
               <Alert severity="warning" sx={{ mt: 2, borderRadius: 1.5 }}>
