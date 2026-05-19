@@ -3,10 +3,10 @@ import { supabase } from '../lib/supabase';
 import type { Enums } from '../lib/database.types';
 
 export interface StaffMember {
-  user_id: string;
+  staff_user_id: string;
   first_name: string;
   last_name: string;
-  service_center: Enums<'service_center'>;
+  service_center: string;
   role: Enums<'role'>;
   email: string;
   created_at: string;
@@ -68,7 +68,7 @@ export function useStaffManagement() {
     password: string;
     first_name: string;
     last_name: string;
-    service_center: Enums<'service_center'>;
+    service_center: string;
     role: Enums<'role'>;
   }): Promise<string | null> => {
     const { error: err } = await callStaffManagement('create', payload);
@@ -77,10 +77,10 @@ export function useStaffManagement() {
   }, [fetchStaff]);
 
   const updateStaff = useCallback(async (payload: {
-    user_id: string;
+    staff_user_id: string;
     first_name?: string;
     last_name?: string;
-    service_center?: Enums<'service_center'>;
+    service_center?: string;
     role?: Enums<'role'>;
     email?: string;
   }): Promise<string | null> => {
@@ -91,7 +91,7 @@ export function useStaffManagement() {
 
   const deleteStaff = useCallback(async (userId: string): Promise<string | null> => {
     const { error: err } = await callStaffManagement('delete', { user_id: userId });
-    if (!err) setStaff(prev => prev.filter(s => s.user_id !== userId));
+    if (!err) setStaff(prev => prev.filter(s => s.staff_user_id !== userId));
     return err;
   }, []);
 

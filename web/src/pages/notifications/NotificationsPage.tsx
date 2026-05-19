@@ -5,9 +5,19 @@ import { useNavigate } from 'react-router-dom';
 import {
   useNotification,
   STATUS_CONFIG,
+  APPOINTMENT_STATUS_CONFIG,
+  isAppointmentNotification,
   type NotificationItem,
   type RequestStatus,
+  type AppointmentEventType,
 } from '../../contexts/NotificationContext';
+
+function getNotifConfig(item: NotificationItem) {
+  if (isAppointmentNotification(item)) {
+    return APPOINTMENT_STATUS_CONFIG[item.event_type as AppointmentEventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  }
+  return STATUS_CONFIG[item.event_type as RequestStatus];
+}
 
 function formatRelativeTime(dateStr: string): string {
   const diffMs = Date.now() - new Date(dateStr).getTime();
@@ -28,8 +38,8 @@ function formatAbsoluteDateTime(dateStr: string): string {
   return `${datePart} ${hours}:${minutes} น.`;
 }
 
-function StatusDot({ eventType }: { eventType: RequestStatus }) {
-  const { color } = STATUS_CONFIG[eventType] ?? { color: '#9E9E9E' };
+function StatusDot({ item }: { item: NotificationItem }) {
+  const color = item.is_read ? (getNotifConfig(item)?.color ?? '#9E9E9E') : '#FF9F6B';
   return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.5 }} />;
 }
 
@@ -38,7 +48,7 @@ function NotificationRow({ item, onItemClick, onDelete }: {
   onItemClick: (item: NotificationItem) => void;
   onDelete: (e: React.MouseEvent, id: string) => void;
 }) {
-  const cfg = STATUS_CONFIG[item.event_type];
+  const cfg = getNotifConfig(item);
   return (
     <ListItemButton
       onClick={() => onItemClick(item)}
@@ -47,23 +57,23 @@ function NotificationRow({ item, onItemClick, onDelete }: {
         py: 1.5,
         alignItems: 'flex-start',
         gap: 2,
-        backgroundColor: item.is_read ? 'transparent' : cfg.bg,
+        backgroundColor: item.is_read ? 'transparent' : '#FFF0E6',
         '&:hover': { filter: 'brightness(0.97)' },
       }}
     >
-      <StatusDot eventType={item.event_type} />
+      <StatusDot item={item} />
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Typography
             variant="body2"
             fontWeight={item.is_read ? 400 : 600}
-            sx={{ color: item.is_read ? 'text.primary' : cfg.color }}
+            sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
           >
             {cfg.label}
           </Typography>
           {!item.is_read && (
-            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: cfg.color, flexShrink: 0 }} />
+            <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#FF9F6B', flexShrink: 0 }} />
           )}
         </Box>
         <Typography variant="body2" color="text.secondary">
@@ -91,7 +101,11 @@ export default function NotificationsPage() {
 
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
-    navigate('/requests', { state: { openRequestId: item.request_id } });
+    if (isAppointmentNotification(item)) {
+      navigate('/appointments', { state: { openAppointmentId: item.source_id } });
+    } else {
+      navigate('/requests', { state: { openRequestId: item.source_id } });
+    }
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -119,7 +133,7 @@ export default function NotificationsPage() {
         )}
       </Box>
 
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
+      <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
         {notifications.length === 0 ? (
           <Box sx={{ py: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5, color: 'text.secondary' }}>
             <NotificationsNoneIcon sx={{ fontSize: 56, opacity: 0.3 }} />

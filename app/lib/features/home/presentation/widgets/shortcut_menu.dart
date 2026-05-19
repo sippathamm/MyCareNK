@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../features/service/presentation/pages/request_history_page.dart';
+import '../pages/service_centers_page.dart';
 
 class ShortcutMenu extends StatelessWidget {
   final VoidCallback? onNavigateToHistory;
@@ -76,9 +77,18 @@ class ShortcutMenu extends StatelessWidget {
                       ),
                     );
                   }
+                } else if (label == 'สถานบริการ') {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ServiceCentersPage(),
+                    ),
+                  );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('"$label" ถูกกด')),
+                    SnackBar(
+                      content: Text('"$label" ถูกกด'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
                   );
                 }
               },

@@ -12,6 +12,7 @@ const DATA_KEY   = 'จำนวนคำขอ';
 interface Props {
   data:    WorkloadTrendRow[];
   loading: boolean;
+  error?:  string | null;
 }
 
 function formatWeek(isoDate: string): string {
@@ -21,7 +22,7 @@ function formatWeek(isoDate: string): string {
   return `${day}/${mon}`;
 }
 
-export default function StaffWeeklyTrendChart({ data, loading }: Props) {
+export default function StaffWeeklyTrendChart({ data, loading, error }: Props) {
   // Pivot data: [{ week, จำนวนคำขอ: count }]
   const chartData = useMemo(() => {
     const byWeek = new Map<string, number>();
@@ -38,6 +39,14 @@ export default function StaffWeeklyTrendChart({ data, loading }: Props) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 220 }}>
         <CircularProgress size={32} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: 220 }}>
+        <Typography variant="body2" color="error.main">{error}</Typography>
       </Box>
     );
   }
@@ -67,8 +76,8 @@ export default function StaffWeeklyTrendChart({ data, loading }: Props) {
           axisLine={false}
         />
         <Tooltip
-          formatter={(value: number, name: string) => [value, name]}
-          labelFormatter={(label: string) => `สัปดาห์ ${formatWeek(label)}`}
+          formatter={(value, name) => [value, name]}
+          labelFormatter={(label) => `สัปดาห์ ${formatWeek(String(label))}`}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
         <Line

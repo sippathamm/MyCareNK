@@ -48,7 +48,10 @@ class RecoveryCodesGrid extends StatelessWidget {
             onPressed: () {
               Clipboard.setData(ClipboardData(text: recoveryCodes.join(', ')));
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('คัดลอกรหัสทั้งหมดแล้ว')),
+                SnackBar(
+                  content: Text('คัดลอกรหัสทั้งหมดแล้ว', style: GoogleFonts.googleSans()),
+                  behavior: SnackBarBehavior.floating,
+                ),
               );
             },
             style: OutlinedButton.styleFrom(

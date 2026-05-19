@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Enums } from '../lib/database.types';
 
 export interface InventoryForecastRow {
-  service_center: Enums<'service_center'>;
+  service_center: string;
+  is_active: boolean;
   condom_qty: number;
   lubricant_qty: number;
   condom_daily_burn: number;
@@ -14,7 +14,7 @@ export interface InventoryForecastRow {
 
 export interface ConsumptionTrendPoint {
   day: string;
-  service_center: Enums<'service_center'>;
+  service_center: string;
   condom_used: number;
   lubricant_used: number;
 }
@@ -47,6 +47,7 @@ export function useInventoryForecast() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

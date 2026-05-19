@@ -1,7 +1,12 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/models/service_center_model.dart';
+import '../../../../core/services/service_center_service.dart';
+import '../../../../core/widgets/gradient_button.dart';
+import '../../../auth/presentation/pages/login_page.dart';
+import 'appointment_history_page.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -10,13 +15,6 @@ class _Reason {
   final String label;
   final IconData icon;
   const _Reason(this.key, this.label, this.icon);
-}
-
-class _Location {
-  final String key;
-  final String label;
-  final String hours;
-  const _Location(this.key, this.label, this.hours);
 }
 
 class _BookingDate {
@@ -37,21 +35,6 @@ final _kReasons = <_Reason>[
   _Reason('prep', 'รับยา PrEP', Icons.medication),
   _Reason('hiv', 'ตรวจเลือด HIV', Icons.biotech),
   _Reason('consult', 'ปรึกษาทั่วไป', Icons.chat_bubble_outline),
-];
-
-final _kLocations = <_Location>[
-  _Location('phonphisai', 'รพ.โพนพิสัย', 'จ–ศ 08:00–16:00'),
-  _Location('wat', 'รพ.สต.วัดหลวง', 'จ–ศ 08:00–16:00'),
-  _Location('abt', 'อบต.วัดหลวง', 'จ–ศ 08:30–16:30'),
-  _Location('ssj', 'สสจ.หนองคาย', 'จ–ศ 08:00–17:00'),
-];
-
-final _kMorningSlots = [
-  '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
-];
-
-final _kAfternoonSlots = [
-  '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00',
 ];
 
 final _thMonths = [
@@ -90,20 +73,33 @@ class DoctorBookingPage extends StatefulWidget {
 
 class _DoctorBookingPageState extends State<DoctorBookingPage> {
   final List<_BookingDate> _dates = _getAvailableDates();
-  late final String _refNum;
+  String _refNum = '';
+  bool _isSubmitting = false;
 
   int _step = 0;
   String? _reason;
-  String? _location;
+  String? _location; // stores center name directly
   String? _dateKey;
   String? _timeSlot;
   final TextEditingController _noteCtrl = TextEditingController();
+
+  List<ServiceCenterModel> _centers = [];
+  bool _centersLoading = true;
 
   @override
   void initState() {
     super.initState();
     _reason = widget.initialReason;
-    _refNum = 'NK-APT-${10000 + Random().nextInt(90000)}';
+    _loadCenters();
+  }
+
+  Future<void> _loadCenters() async {
+    try {
+      final centers = await ServiceCenterService.fetchActive();
+      if (mounted) setState(() { _centers = centers; _centersLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _centersLoading = false);
+    }
   }
 
   @override
@@ -117,8 +113,10 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   _Reason? get _selectedReason =>
       _kReasons.where((r) => r.key == _reason).firstOrNull;
-  _Location? get _selectedLocation =>
-      _kLocations.where((l) => l.key == _location).firstOrNull;
+  ServiceCenterModel? get _selectedLocation =>
+      _centers.where((c) => c.name == _location).firstOrNull;
+
+  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
   _BookingDate? get _selectedDate => _dates
       .where((d) => d.date.toIso8601String().substring(0, 10) == _dateKey)
       .firstOrNull;
@@ -134,62 +132,61 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   Widget _buildStepIndicator() {
     const labels = ['เลือกบริการ', 'ยืนยัน', 'สำเร็จ'];
+    const double nodeSize = 34;
+    const double gap = 6;
+    final n = labels.length;
+
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final isDone = idx < _step;
+      final isCurrent = idx == _step;
+      final active = isDone || isCurrent;
+      final isLast = idx == n - 1;
+      final showCheck = isDone || (isCurrent && isLast);
+      iconItems.add(AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: nodeSize, height: nodeSize,
+        decoration: BoxDecoration(color: active ? AppColors.lubricant : const Color(0xFFE8E8E8), shape: BoxShape.circle),
+        child: Center(child: showCheck
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : Text('${idx + 1}', style: GoogleFonts.googleSans(fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textMuted))),
+      ));
+      if (!isLast) {
+        iconItems.addAll([
+          const SizedBox(width: gap),
+          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: idx < _step ? AppColors.lubricant : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(width: gap),
+        ]);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: Row(
-        children: List.generate(labels.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            final leftIdx = i ~/ 2;
-            final done = leftIdx < _step;
-            return Expanded(
-              child: Container(
-                height: 3,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: done ? AppColors.lubricant : const Color(0xFFE8E8E8),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            );
+      child: Column(children: [
+        Row(children: iconItems),
+        const SizedBox(height: 4),
+        LayoutBuilder(builder: (context, constraints) {
+          final W = constraints.maxWidth;
+          final slotSpacing = (W - nodeSize) / (n - 1);
+          TextStyle labelStyle(int idx) {
+            final active = idx <= _step;
+            return GoogleFonts.googleSans(fontSize: 11, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.lubricant : AppColors.textMuted);
           }
-          final idx = i ~/ 2;
-          final isDone = idx < _step;
-          final isCurrent = idx == _step;
-          final color = (isDone || isCurrent) ? AppColors.lubricant : const Color(0xFFE8E8E8);
-          final textColor = (isDone || isCurrent) ? Colors.white : AppColors.textMuted;
-          return Column(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                child: Center(
-                  child: isDone
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : Text(
-                          '${idx + 1}',
-                          style: GoogleFonts.googleSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: textColor,
-                          ),
-                        ),
+          return SizedBox(
+            height: 16,
+            child: Stack(clipBehavior: Clip.none, children: [
+              Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
+              Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
+              for (int i = 1; i < n - 1; i++)
+                Positioned(
+                  left: nodeSize / 2 + i * slotSpacing,
+                  top: 0,
+                  child: FractionalTranslation(translation: const Offset(-0.5, 0), child: Text(labels[i], style: labelStyle(i))),
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                labels[idx],
-                style: GoogleFonts.googleSans(
-                  fontSize: 11,
-                  fontWeight: (isDone || isCurrent) ? FontWeight.w700 : FontWeight.w400,
-                  color: (isDone || isCurrent) ? AppColors.lubricant : AppColors.textMuted,
-                ),
-              ),
-            ],
+            ]),
           );
         }),
-      ),
+      ]),
     );
   }
 
@@ -222,14 +219,33 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     ),
                   ),
                   _SectionCard(
-                    title: 'สถานพยาบาล',
+                    title: 'สถานบริการ',
                     icon: Icons.local_hospital_outlined,
-                    child: Column(
-                      children: List.generate(
-                        _kLocations.length,
-                        (i) => _buildLocationTile(_kLocations[i], i),
-                      ),
-                    ),
+                    child: _centersLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : _centers.isEmpty
+                            ? GestureDetector(
+                                onTap: _loadCenters,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
+                                        style: GoogleFonts.googleSans(
+                                            fontSize: 14, color: AppColors.textHint)),
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                children: List.generate(
+                                  _centers.length,
+                                  (i) => _buildLocationTile(_centers[i], i),
+                                ),
+                              ),
                   ),
                   _SectionCard(
                     title: 'วันที่นัด',
@@ -343,10 +359,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     );
   }
 
-  Widget _buildLocationTile(_Location loc, int index) {
-    final sel = _location == loc.key;
+  Widget _buildLocationTile(ServiceCenterModel loc, int index) {
+    final sel = _location == loc.name;
     return GestureDetector(
-      onTap: () => setState(() => _location = loc.key),
+      onTap: () => setState(() {
+        if (_location != loc.name) _timeSlot = null;
+        _location = loc.name;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -386,16 +405,17 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    loc.label,
+                    loc.name,
                     style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  Text('${loc.hours} น.',
-                      style: GoogleFonts.googleSans(
-                          fontSize: 14, color: AppColors.textHint)),
+                  if (loc.operatingHours != null)
+                    Text(loc.operatingHours!,
+                        style: GoogleFonts.googleSans(
+                            fontSize: 14, color: AppColors.textHint)),
                 ],
               ),
             ),
@@ -408,6 +428,31 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   }
 
   Widget _buildDatePicker() {
+    final loc = _selectedLocation;
+    if (loc == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'กรุณาเลือกสถานบริการก่อน',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    if (!loc.appointmentServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 84,
       child: ListView.separated(
@@ -472,12 +517,30 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   }
 
   Widget _buildTimePicker() {
+    final loc = _selectedLocation;
+    final times = loc?.appointmentTimes ?? [];
+    if (loc == null || !loc.appointmentServiceEnabled || times.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            _location == null
+                ? 'กรุณาเลือกสถานบริการก่อน'
+                : 'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    final morning = times.where((t) => _hourOf(t) < 12).toList();
+    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSlotGroup('ช่วงเช้า', _kMorningSlots),
+        _buildSlotGroup('ช่วงเช้า', morning),
         const SizedBox(height: 14),
-        _buildSlotGroup('ช่วงบ่าย', _kAfternoonSlots),
+        _buildSlotGroup('ช่วงบ่าย', afternoon),
       ],
     );
   }
@@ -495,6 +558,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
         ),
         const SizedBox(height: 8),
+        if (slots.isEmpty)
+          Text('–',
+              style: GoogleFonts.googleSans(
+                  fontSize: 15, color: AppColors.textHint))
+        else
         Wrap(
           spacing: 8,
           runSpacing: 8,
@@ -533,10 +601,12 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   // ── Confirm ─────────────────────────────────────────────────────────────────
 
   Widget _buildConfirm() {
+    final loc = _selectedLocation;
     final rows = [
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', _selectedLocation?.label ?? ''),
-      (Icons.access_time_outlined, 'เวลาทำการ', '${_selectedLocation?.hours ?? ''} น.'),
+      (Icons.local_hospital_outlined, 'สถานบริการ', loc?.name ?? ''),
+      if (loc?.operatingHours != null)
+        (Icons.access_time_outlined, 'เวลาทำการ', loc!.operatingHours!),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
       (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
     ];
@@ -640,7 +710,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานพยาบาลล่วงหน้าอย่างน้อย 24 ชม.',
+                            'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานบริการล่วงหน้าอย่างน้อย 24 ชม.',
                             style: GoogleFonts.googleSans(
                               fontSize: 13,
                               color: AppColors.textPrimary,
@@ -662,12 +732,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               children: [
                 _PrimaryBtn(
                   label: 'ยืนยันการนัดหมาย',
-                  onPressed: () => setState(() => _step = 2),
+                  onPressed: _isSubmitting ? null : _submitBooking,
+                  isLoading: _isSubmitting,
                 ),
                 const SizedBox(height: 10),
                 _OutlinedBtn(
                   label: 'แก้ไข',
-                  onPressed: () => setState(() => _step = 0),
+                  onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
                 ),
               ],
             ),
@@ -677,11 +748,95 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     );
   }
 
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
+  Future<void> _submitBooking() async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) {
+      if (!mounted) return;
+      showDialog<void>(
+        context: context,
+        barrierColor: Colors.black.withValues(alpha: 0.6),
+        builder: (ctx) => AlertDialog(
+          backgroundColor: AppColors.white,
+          elevation: 24,
+          shadowColor: Colors.black38,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: Text('กรุณาเข้าสู่ระบบ',
+              style: GoogleFonts.googleSans(
+                  fontSize: 18, fontWeight: FontWeight.bold)),
+          content: Text('คุณต้องเข้าสู่ระบบก่อนจึงจะนัดพบแพทย์ได้',
+              style: GoogleFonts.googleSans(fontSize: 15, height: 1.6)),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            GradientButton(
+              height: 46,
+              onPressed: () async {
+                Navigator.of(ctx).pop();
+                final loggedIn = await Navigator.of(context, rootNavigator: true)
+                    .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+                if (loggedIn == true && mounted) _submitBooking();
+              },
+              label: 'เข้าสู่ระบบ',
+              fontSize: 15,
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              height: 46,
+              child: FilledButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: FilledButton.styleFrom(
+                  backgroundColor: const Color(0xFFEEEEEE),
+                  foregroundColor: AppColors.textPrimary,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24)),
+                ),
+                child: Text('ยกเลิก',
+                    style: GoogleFonts.googleSans(
+                        fontSize: 15, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final ref = await Supabase.instance.client.rpc(
+        'create_doctor_appointment',
+        params: {
+          'p_user_id': userId,
+          'p_reason': _reason,
+          'p_service_center': _location,
+          'p_date': _dateKey,
+          'p_time': _timeSlot,
+          'p_note': _noteCtrl.text.isEmpty ? null : _noteCtrl.text,
+        },
+      ) as String;
+
+      if (mounted) setState(() { _refNum = ref; _step = 2; });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+              style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
+
   // ── Success ─────────────────────────────────────────────────────────────────
 
   Widget _buildSuccess() {
     final infoRows = [
-      (Icons.local_hospital_outlined, 'สถานพยาบาล', _selectedLocation?.label ?? ''),
+      (Icons.local_hospital_outlined, 'สถานบริการ', _selectedLocation?.name ?? ''),
       (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
       (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
       (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
@@ -773,7 +928,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               ),
             ),
             Text(
-              'หมายเลขอ้างอิง: $_refNum',
+              'รหัสอ้างอิง: $_refNum',
               style: GoogleFonts.googleSans(fontSize: 14, color: AppColors.textHint),
             ),
             const SizedBox(height: 20),
@@ -830,14 +985,11 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             const SizedBox(height: 10),
             _OutlinedBtn(
               label: 'ดูประวัติการนัด',
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('ประวัติการนัดหมาย — เร็วๆ นี้'),
-                    behavior: SnackBarBehavior.floating,
-                  ),
-                );
-              },
+              onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(
+                    builder: (_) => const AppointmentHistoryPage()),
+                (route) => route.isFirst,
+              ),
             ),
                 ],
               ),
@@ -868,6 +1020,15 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         ),
       ),
       centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.history, color: AppColors.primary),
+          tooltip: 'ประวัติการนัด',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const AppointmentHistoryPage()),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -944,26 +1105,16 @@ class _SectionCard extends StatelessWidget {
 class _PrimaryBtn extends StatelessWidget {
   final String label;
   final VoidCallback? onPressed;
-  const _PrimaryBtn({required this.label, this.onPressed});
+  final bool isLoading;
+  const _PrimaryBtn({required this.label, this.onPressed, this.isLoading = false});
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor:
-              onPressed != null ? AppColors.lubricant : Colors.grey.shade300,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        ),
-        child: Text(label,
-            style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.w700)),
-      ),
+    return GradientButton(
+      onPressed: onPressed,
+      label: label,
+      isLoading: isLoading,
+      gradientColors: GradientButton.lubricantGradient,
     );
   }
 }

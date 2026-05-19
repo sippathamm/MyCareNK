@@ -4,7 +4,6 @@ import {
   Button, TextField, Typography, Box, CircularProgress,
   Alert, Divider,
 } from '@mui/material';
-import InventoryIcon from '@mui/icons-material/Inventory2';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';
@@ -77,10 +76,10 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
+        <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
           เติมสต็อก
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography component="div" variant="caption" color="text.secondary">
           {target.service_center}
         </Typography>
       </DialogTitle>

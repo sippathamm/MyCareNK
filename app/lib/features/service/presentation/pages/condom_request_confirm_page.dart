@@ -1,9 +1,10 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 import 'condom_request_success_page.dart';
+import 'request_history_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 
 class CondomRequestConfirmPage extends StatefulWidget {
@@ -46,11 +47,17 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   Future<void> _submitRequest() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเข้าสู่ระบบก่อนทำรายการ')),
-      );
-      Navigator.of(context, rootNavigator: true)
-          .push(MaterialPageRoute(builder: (context) => const LoginPage()));
+      final loggedIn = await Navigator.of(context, rootNavigator: true)
+          .push<bool>(MaterialPageRoute(builder: (context) => const LoginPage()));
+      if (loggedIn == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('เข้าสู่ระบบแล้ว', style: GoogleFonts.googleSans()),
+            backgroundColor: AppColors.success,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
       return;
     }
 
@@ -76,22 +83,18 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             '${widget.selectedTime!.minute.toString().padLeft(2, '0')}:00';
       }
 
-      const String chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      final Random random = Random();
-      final String refNumber =
-          List.generate(8, (_) => chars[random.nextInt(chars.length)]).join();
-
-      await Supabase.instance.client.from('condom_requests').insert({
-        'user_id': userId,
-        'condom_quantities': quantitiesJson,
-        'lubricant_quantity': widget.lubricantQuantity,
-        'selected_service_center': widget.selectedServiceCenter,
-        'selected_date': dateString,
-        'selected_time': timeString,
-        'message': widget.message,
-        'reference_number': refNumber,
-        'request_status': 'pending',
-      });
+      final String refNumber = await Supabase.instance.client.rpc(
+        'create_condom_request',
+        params: {
+          'p_user_id': userId,
+          'p_condom_quantities': quantitiesJson,
+          'p_lubricant_quantity': widget.lubricantQuantity,
+          'p_selected_service_center': widget.selectedServiceCenter,
+          'p_selected_date': dateString,
+          'p_selected_time': timeString,
+          'p_message': widget.message.isNotEmpty ? widget.message : null,
+        },
+      ) as String;
 
       final now = DateTime.now();
       final monthStart =
@@ -136,7 +139,11 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       debugPrint('Error saving condom request: $error');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล')),
+          SnackBar(
+            content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล', style: GoogleFonts.googleSans()),
+            backgroundColor: AppColors.error,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
       }
     } finally {
@@ -164,6 +171,15 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history, color: AppColors.primary),
+            tooltip: 'ประวัติคำขอ',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -220,29 +236,10 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
             child: Column(
               children: [
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: FilledButton(
-                    onPressed: _isLoading ? null : _submitRequest,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: AppColors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                    ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                                color: AppColors.white, strokeWidth: 2),
-                          )
-                        : Text('ยืนยัน',
-                            style: GoogleFonts.googleSans(
-                                fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                GradientButton(
+                  onPressed: _isLoading ? null : _submitRequest,
+                  label: 'ยืนยัน',
+                  isLoading: _isLoading,
                 ),
                 const SizedBox(height: 10),
                 SizedBox(
@@ -274,61 +271,61 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
 
   Widget _buildStepIndicator(int step) {
     const labels = ['กรอกข้อมูล', 'ยืนยัน', 'สำเร็จ'];
+    const double nodeSize = 34;
+    const double gap = 6;
+    final n = labels.length;
+
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final isDone = idx < step;
+      final isCurrent = idx == step;
+      final active = isDone || isCurrent;
+      final isLast = idx == n - 1;
+      final showCheck = isDone || (isCurrent && isLast);
+      iconItems.add(AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: nodeSize, height: nodeSize,
+        decoration: BoxDecoration(color: active ? AppColors.primary : const Color(0xFFE8E8E8), shape: BoxShape.circle),
+        child: Center(child: showCheck
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : Text('${idx + 1}', style: GoogleFonts.googleSans(fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textMuted))),
+      ));
+      if (!isLast) {
+        iconItems.addAll([
+          const SizedBox(width: gap),
+          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: idx < step ? AppColors.primary : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(width: gap),
+        ]);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: Row(
-        children: List.generate(labels.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            final done = (i ~/ 2) < step;
-            return Expanded(
-              child: Container(
-                height: 3,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: done ? AppColors.primary : const Color(0xFFE8E8E8),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            );
+      child: Column(children: [
+        Row(children: iconItems),
+        const SizedBox(height: 4),
+        LayoutBuilder(builder: (context, constraints) {
+          final W = constraints.maxWidth;
+          final slotSpacing = (W - nodeSize) / (n - 1);
+          TextStyle labelStyle(int idx) {
+            final active = idx <= step;
+            return GoogleFonts.googleSans(fontSize: 11, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.primary : AppColors.textMuted);
           }
-          final idx = i ~/ 2;
-          final isDone = idx < step;
-          final isCurrent = idx == step;
-          final active = isDone || isCurrent;
-          return Column(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: active ? AppColors.primary : const Color(0xFFE8E8E8),
-                  shape: BoxShape.circle,
+          return SizedBox(
+            height: 16,
+            child: Stack(clipBehavior: Clip.none, children: [
+              Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
+              Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
+              for (int i = 1; i < n - 1; i++)
+                Positioned(
+                  left: nodeSize / 2 + i * slotSpacing,
+                  top: 0,
+                  child: FractionalTranslation(translation: const Offset(-0.5, 0), child: Text(labels[i], style: labelStyle(i))),
                 ),
-                child: Center(
-                  child: isDone
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : Text('${idx + 1}',
-                          style: GoogleFonts.googleSans(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w700,
-                              color:
-                                  active ? Colors.white : AppColors.textMuted)),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                labels[idx],
-                style: GoogleFonts.googleSans(
-                  fontSize: 11,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: active ? AppColors.primary : AppColors.textMuted,
-                ),
-              ),
-            ],
+            ]),
           );
         }),
-      ),
+      ]),
     );
   }
 

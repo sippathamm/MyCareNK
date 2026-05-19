@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 
 class RequestHistoryDetailPage extends StatefulWidget {
   final CondomRequestModel data;
@@ -174,7 +175,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'หมายเลขอ้างอิง',
+              'รหัสอ้างอิง',
               style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Row(
@@ -197,10 +198,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'คัดลอกหมายเลขอ้างอิงแล้ว',
+                          'คัดลอกรหัสอ้างอิงแล้ว',
                           style: GoogleFonts.googleSans(),
                         ),
                         duration: const Duration(seconds: 2),
+                        behavior: SnackBarBehavior.floating,
                       ),
                     );
                   },
@@ -234,38 +236,44 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
   Widget _buildStatusTracker() {
     final status = _currentData.status;
+    const double nodeSize = 28;
+    const double gap = 6;
 
-    if (status.isCancelled) {
-      const cancelLabel = 'ยกเลิก';
-      return Row(
-        children: [
-          _buildStepNode(
-            color: AppColors.primary,
-            icon: Icons.check,
-            label: 'รอดำเนินการ',
-            isCurrent: false,
-            isDone: true,
-          ),
-          Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(2),
-              ),
+    Widget connector(Color color) => Expanded(
+          child: Container(
+            height: 3,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
             ),
           ),
-          _buildStepNode(
-            color: Colors.grey,
-            icon: Icons.close,
-            label: cancelLabel,
-            isCurrent: true,
-            isDone: false,
-            labelColor: Colors.grey[600],
+        );
+
+    Text labelText(String text, Color color, bool bold) => Text(
+          text,
+          style: GoogleFonts.googleSans(
+            fontSize: 11,
+            fontWeight: bold ? FontWeight.w700 : FontWeight.w400,
+            color: color,
           ),
-        ],
-      );
+        );
+
+    if (status.isCancelled) {
+      return Column(children: [
+        Row(children: [
+          _buildStepCircle(color: AppColors.primary, icon: Icons.check, isDone: true, isCurrent: false),
+          const SizedBox(width: gap),
+          connector(const Color(0xFFE8E8E8)),
+          const SizedBox(width: gap),
+          _buildStepCircle(color: Colors.grey, icon: Icons.close, isDone: false, isCurrent: true),
+        ]),
+        const SizedBox(height: 4),
+        Row(children: [
+          labelText('รอดำเนินการ', AppColors.textSecondary, false),
+          const Expanded(child: SizedBox()),
+          labelText('ยกเลิก', Colors.grey.shade600, true),
+        ]),
+      ]);
     }
 
     final steps = [
@@ -275,84 +283,94 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.status == status);
+    final n = steps.length;
 
-    return Row(
-      children: List.generate(steps.length * 2 - 1, (i) {
-        if (i.isOdd) {
-          final leftIdx = i ~/ 2;
-          final done = leftIdx < currentIdx;
-          return Expanded(
-            child: Container(
-              height: 3,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                color: done ? steps[leftIdx].color : const Color(0xFFE8E8E8),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final step = steps[idx];
+      final isDone = idx < currentIdx;
+      final isCurrent = idx == currentIdx;
+      iconItems.add(_buildStepCircle(
+        color: (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
+        icon: (isDone || (isCurrent && idx == n - 1)) ? Icons.check : null,
+        number: (isDone || (isCurrent && idx == n - 1)) ? null : idx + 1,
+        isDone: isDone,
+        isCurrent: isCurrent,
+      ));
+      if (idx < n - 1) {
+        final connColor = isDone ? step.color : const Color(0xFFE8E8E8);
+        iconItems.addAll([const SizedBox(width: gap), connector(connColor), const SizedBox(width: gap)]);
+      }
+    }
+
+    return Column(children: [
+      Row(children: iconItems),
+      const SizedBox(height: 4),
+      // LayoutBuilder + Stack: pixel-perfect label positioning
+      // icon[i] center = nodeSize/2 + i * (W - nodeSize)/(n-1) with equal Expanded connectors
+      // First label: Positioned(left:0) → left edge flush with icon0 left
+      // Middle labels: Positioned(left: center) + FractionalTranslation(-0.5,0) → centered exactly at icon center
+      // Last label: Positioned(right:0) → right edge flush with iconN right
+      LayoutBuilder(builder: (context, constraints) {
+        final W = constraints.maxWidth;
+        final slotSpacing = (W - nodeSize) / (n - 1);
+
+        TextStyle style(int idx) {
+          final isDone = idx < currentIdx;
+          final isCurrent = idx == currentIdx;
+          return GoogleFonts.googleSans(
+            fontSize: 11,
+            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+            color: isCurrent ? steps[idx].color : isDone ? AppColors.textSecondary : AppColors.textMuted,
           );
         }
-        final idx = i ~/ 2;
-        final isDone = idx < currentIdx;
-        final isCurrent = idx == currentIdx;
-        return _buildStepNode(
-          color: (isDone || isCurrent) ? steps[idx].color : const Color(0xFFE8E8E8),
-          icon: isDone ? Icons.check : null,
-          label: steps[idx].label,
-          number: isDone ? null : idx + 1,
-          isCurrent: isCurrent,
-          isDone: isDone,
-          labelColor: isCurrent
-              ? steps[idx].color
-              : isDone
-                  ? AppColors.textSecondary
-                  : AppColors.textMuted,
+
+        final positioned = <Widget>[
+          Positioned(left: 0, top: 0, child: Text(steps[0].label, style: style(0))),
+          Positioned(right: 0, top: 0, child: Text(steps[n - 1].label, style: style(n - 1))),
+          for (int i = 1; i < n - 1; i++)
+            Positioned(
+              left: nodeSize / 2 + i * slotSpacing,
+              top: 0,
+              child: FractionalTranslation(
+                translation: const Offset(-0.5, 0),
+                child: Text(steps[i].label, style: style(i)),
+              ),
+            ),
+        ];
+
+        return SizedBox(
+          height: 16,
+          child: Stack(clipBehavior: Clip.none, children: positioned),
         );
       }),
-    );
+    ]);
   }
 
-  Widget _buildStepNode({
+  Widget _buildStepCircle({
     required Color color,
     IconData? icon,
     int? number,
-    required String label,
     required bool isCurrent,
     required bool isDone,
-    Color? labelColor,
   }) {
-    return Column(
-      children: [
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          width: 28,
-          height: 28,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          child: Center(
-            child: icon != null
-                ? Icon(icon, color: Colors.white, size: 14)
-                : Text(
-                    '${number ?? ''}',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: (isCurrent || isDone)
-                          ? Colors.white
-                          : AppColors.textMuted,
-                    ),
-                  ),
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: GoogleFonts.googleSans(
-            fontSize: 11,
-            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-            color: labelColor ?? AppColors.textMuted,
-          ),
-        ),
-      ],
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      child: Center(
+        child: icon != null
+            ? Icon(icon, color: Colors.white, size: 14)
+            : Text(
+                '${number ?? ''}',
+                style: GoogleFonts.googleSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  color: (isCurrent || isDone) ? Colors.white : AppColors.textMuted,
+                ),
+              ),
+      ),
     );
   }
 
@@ -361,6 +379,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     required Widget content,
     bool showDivider = false,
     Widget? footer,
+    List<Color>? headerColors,
   }) {
     return Container(
       margin: const EdgeInsets.only(top: 16),
@@ -382,9 +401,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               width: double.infinity,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
+                  colors: headerColors ?? [AppColors.primaryDark, AppColors.primary],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
@@ -552,6 +571,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.cancelReason == null || _currentData.cancelReason!.isEmpty) return const SizedBox();
 
     return _buildCard(
+      headerColors: [AppColors.errorDark, AppColors.error],
       header: Row(children: [
         const Icon(Icons.info_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
@@ -563,7 +583,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         alignment: Alignment.centerLeft,
         child: Text(
           _currentData.cancelReason!,
-          style: GoogleFonts.googleSans(fontSize: 16, color: AppColors.error),
+          style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textPrimary),
         ),
       ),
     );
@@ -613,15 +633,19 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       }
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ยกเลิกคำขอเรียบร้อยแล้ว')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('ยกเลิกคำขอเรียบร้อยแล้ว', style: GoogleFonts.googleSans()),
+        backgroundColor: AppColors.success,
+        behavior: SnackBarBehavior.floating,
+      ));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('เกิดข้อผิดพลาดในการยกเลิกคำขอ')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('เกิดข้อผิดพลาดในการยกเลิกคำขอ', style: GoogleFonts.googleSans()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ));
     } finally {
       if (mounted) setState(() => _isCancelling = false);
     }
@@ -646,20 +670,12 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          SizedBox(
-            width: double.infinity,
+          GradientButton(
             height: 46,
-            child: FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.error,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text('ยืนยันยกเลิก',
-                  style: GoogleFonts.googleSans(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-            ),
+            onPressed: () => Navigator.of(ctx).pop(true),
+            label: 'ยืนยันยกเลิก',
+            gradientColors: GradientButton.errorGradient,
+            fontSize: 15,
           ),
           const SizedBox(height: 8),
           SizedBox(
@@ -689,24 +705,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
     return Column(
       children: [
-        SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: FilledButton(
-            onPressed: () => Navigator.of(context).pop(),
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.white,
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: Text(
-              'ตกลง',
-              style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.bold),
-            ),
-          ),
+        GradientButton(
+          onPressed: () => Navigator.of(context).pop(),
+          label: 'ตกลง',
         ),
         if (canCancel) ...[
           const SizedBox(height: 10),

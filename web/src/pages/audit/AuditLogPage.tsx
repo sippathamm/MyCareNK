@@ -7,15 +7,19 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess, type StaffRole } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
+import { useAppointmentStatusLog, type AppointmentStatusLogRow, type AppointmentStatusLogFilters } from '../../hooks/useAppointmentStatusLog';
 import StaffAuditLogDetailDrawer from '../../components/audit/StaffAuditLogDetailDrawer';
 import InventoryLogDetailDrawer from '../../components/audit/InventoryLogDetailDrawer';
 import {
   AUDIT_ACTION, AUDIT_ACTION_LABEL, AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR,
 } from '../../constants/auditLogActions';
 import type { AuditAction } from '../../constants/auditLogActions';
+import { formatDateTime } from '../../utils/requestUtils';
+import { createThGridLocale } from '../../constants/datagrid';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -32,26 +36,11 @@ function getDefaultDateFrom(): string {
   return toLocalDateString(d);
 }
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  const datePart = d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' });
-  const timePart = d.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', hour12: false });
-  return `${datePart} เวลา ${timePart} น.`;
-}
-
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100];
 
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีข้อมูลในช่วงที่เลือก',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from}–${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
+const thGridLocale = createThGridLocale('ไม่มีข้อมูลในช่วงที่เลือก');
 
 // Staff-related actions (Tab 1)
 const STAFF_AUDIT_ACTIONS = [
@@ -69,13 +58,6 @@ const INVENTORY_AUDIT_ACTIONS = [
   AUDIT_ACTION.ADJUSTMENT,
 ] as const;
 
-const SERVICE_CENTER_OPTIONS = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
-] as const;
-
 const STATUS_LABELS: Record<string, string> = {
   pending:            'รอดำเนินการ',
   preparing:          'กำลังเตรียม',
@@ -85,13 +67,12 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
 };
 
-const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
-  pending:            { bg: '#FFF0E6', color: '#E65100' },
-  preparing:          { bg: '#EBF4FF', color: '#1565C0' },
-  ready:              { bg: '#F5EAF9', color: '#7B1FA2' },
-  completed:          { bg: '#EBF7EC', color: '#2E7D32' },
-  cancelled_by_staff: { bg: '#F5F5F5', color: '#616161' },
-  cancelled_by_user:  { bg: '#F5F5F5', color: '#616161' },
+const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
+  pending:            'รอยืนยัน',
+  confirmed:          'ยืนยันแล้ว',
+  completed:          'เสร็จสิ้น',
+  cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
+  cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
 };
 
 const STATUS_OPTIONS = [
@@ -122,14 +103,13 @@ function ActionChip({ action }: { action: string }) {
 
 function StatusChip({ status }: { status: string | null }) {
   if (!status) return <Typography variant="caption" color="text.disabled">—</Typography>;
-  const cfg = STATUS_COLORS[status] ?? { bg: '#F5F5F5', color: '#616161' };
-  return (
-    <Chip
-      label={STATUS_LABELS[status] ?? status}
-      size="small"
-      sx={{ bgcolor: cfg.bg, color: cfg.color, fontWeight: 600, fontSize: '0.72rem' }}
-    />
-  );
+  switch (status) {
+    case 'pending':   return <Chip label={STATUS_LABELS['pending']}   size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'preparing': return <Chip label={STATUS_LABELS['preparing']} size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'ready':     return <Chip label={STATUS_LABELS['ready']}     size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'completed': return <Chip label={STATUS_LABELS['completed']} size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600, fontSize: '0.72rem' }} />;
+    default:          return <Chip label={STATUS_LABELS[status] ?? status} size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
+  }
 }
 
 function InventoryQtyChip({ value }: { value: unknown }) {
@@ -191,8 +171,10 @@ function AuditLogTab() {
 
   return (
     <>
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
+
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap" sx={{ mb: 3 }}>
           <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
             onChange={e => { setDateFrom(e.target.value); resetPage(); }}
             slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
@@ -212,11 +194,6 @@ function AuditLogTab() {
             sx={{ minWidth: 220 }}
             placeholder="ค้นหา UUID เจ้าหน้าที่" />
         </Stack>
-      </Paper>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
-
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
         <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
@@ -226,7 +203,7 @@ function AuditLogTab() {
               pageSizeOptions={PAGE_SIZE_OPTIONS}
               onRowClick={({ row }) => setDetailRow(row as StaffAuditLogRow)}
               sx={{
-                border: 'none', borderRadius: 2,
+                border: 'none',
                 '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
                 '& .MuiDataGrid-row': { cursor: 'pointer' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
@@ -266,7 +243,7 @@ function RequestStatusLogTab() {
 
   const columns = useMemo<GridColDef<RequestStatusLogRow>[]>(() => [
     {
-      field: 'reference_number', headerName: 'หมายเลขอ้างอิง', width: 160, minWidth: 140,
+      field: 'reference_number', headerName: 'รหัสอ้างอิง', width: 160, minWidth: 140,
       renderCell: (p) => (
         <Typography variant="body2">{p.value ?? '—'}</Typography>
       ),
@@ -281,7 +258,7 @@ function RequestStatusLogTab() {
     },
     {
       field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
-      renderCell: (p) => <Typography variant="body2">{p.value}</Typography>,
+      renderCell: (p) => <Typography variant="body2">{p.value ?? '—'}</Typography>,
     },
     {
       field: 'changed_at', headerName: 'เมื่อวันที่', flex: 1.3, minWidth: 170,
@@ -291,8 +268,10 @@ function RequestStatusLogTab() {
 
   return (
     <>
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
-        <Stack spacing={2}>
+      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
+
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+        <Stack spacing={2} sx={{ mb: 3 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
               onChange={e => { setDateFrom(e.target.value); resetPage(); }}
@@ -313,13 +292,8 @@ function RequestStatusLogTab() {
           </Stack>
           <TextField size="small" value={refNumFilter}
             onChange={e => { setRefNumFilter(e.target.value); resetPage(); }}
-            sx={{ maxWidth: 320 }} placeholder="ค้นหาหมายเลขอ้างอิง" />
+            sx={{ maxWidth: 320 }} placeholder="ค้นหารหัสอ้างอิง" />
         </Stack>
-      </Paper>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
-
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
         <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
@@ -327,8 +301,9 @@ function RequestStatusLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
+              disableRowSelectionOnClick
               sx={{
-                border: 'none', borderRadius: 2,
+                border: 'none',
                 '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
               }}
@@ -339,9 +314,123 @@ function RequestStatusLogTab() {
   );
 }
 
-// ─── Tab 3: Inventory Log ─────────────────────────────────────────────────────
+// ─── Tab 3: Appointment Status Log ───────────────────────────────────────────
+
+function AppointmentStatusChip({ status }: { status: string | null }) {
+  if (!status) return <Typography variant="caption" color="text.disabled">—</Typography>;
+  const label = APPOINTMENT_STATUS_LABELS[status] ?? status;
+  switch (status) {
+    case 'pending':            return <Chip label={label} size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'confirmed':          return <Chip label={label} size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'completed':          return <Chip label={label} size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'cancelled_by_user':
+    case 'cancelled_by_staff': return <Chip label={label} size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
+    default:                   return <Chip label={label} size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
+  }
+}
+
+const APPOINTMENT_STATUS_OPTIONS = [
+  { value: '', label: 'ทั้งหมด' },
+  ...Object.entries(APPOINTMENT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
+];
+
+function AppointmentStatusLogTab() {
+  const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
+  const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
+  const [fromStatus, setFromStatus] = useState('');
+  const [toStatus, setToStatus] = useState('');
+  const [refNumFilter, setRefNumFilter] = useState('');
+  const [page, setPage] = useState(0);
+  const [pageSize, setPageSize] = useState(25);
+
+  const resetPage = useCallback(() => setPage(0), []);
+
+  const filters = useMemo<AppointmentStatusLogFilters>(() => ({
+    performedBy:     null,
+    fromStatus:      fromStatus || null,
+    toStatus:        toStatus   || null,
+    referenceNumber: refNumFilter.trim() || null,
+    dateFrom:        dateFrom   || null,
+    dateTo:          dateTo     || null,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
+
+  const { rows, loading, error } = useAppointmentStatusLog(filters, page, pageSize);
+
+  const columns = useMemo<GridColDef<AppointmentStatusLogRow>[]>(() => [
+    {
+      field: 'reference_number', headerName: 'รหัสอ้างอิง', width: 180, minWidth: 150,
+      renderCell: (p) => <Typography variant="body2">{p.value ?? '—'}</Typography>,
+    },
+    {
+      field: 'from_status', headerName: 'จากสถานะ', flex: 1, minWidth: 160,
+      renderCell: (p) => <AppointmentStatusChip status={p.value} />,
+    },
+    {
+      field: 'to_status', headerName: 'เป็นสถานะ', flex: 1, minWidth: 160,
+      renderCell: (p) => <AppointmentStatusChip status={p.value} />,
+    },
+    {
+      field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
+      renderCell: (p) => <Typography variant="body2">{p.value ?? '—'}</Typography>,
+    },
+    {
+      field: 'changed_at', headerName: 'เมื่อวันที่', flex: 1.3, minWidth: 170,
+      renderCell: (p) => <DateTimeCell value={p.value} />,
+    },
+  ], []);
+
+  return (
+    <>
+      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
+
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+        <Stack spacing={2} sx={{ mb: 3 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+            <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
+              onChange={e => { setDateFrom(e.target.value); resetPage(); }}
+              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+            <TextField label="ถึงวันที่" type="date" size="small" value={dateTo}
+              onChange={e => { setDateTo(e.target.value); resetPage(); }}
+              slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
+            <TextField label="จากสถานะ" select size="small" value={fromStatus}
+              onChange={e => { setFromStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+              {APPOINTMENT_STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+            </TextField>
+            <TextField label="เป็นสถานะ" select size="small" value={toStatus}
+              onChange={e => { setToStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
+              slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+              {APPOINTMENT_STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+            </TextField>
+          </Stack>
+          <TextField size="small" value={refNumFilter}
+            onChange={e => { setRefNumFilter(e.target.value); resetPage(); }}
+            sx={{ maxWidth: 320 }} placeholder="ค้นหารหัสอ้างอิง" />
+        </Stack>
+        <Box sx={{ height: 500 }}>
+          <DataGrid
+            rows={rows} columns={columns} loading={loading}
+            localeText={thGridLocale}
+            paginationModel={{ page, pageSize }}
+            onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            disableRowSelectionOnClick
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+            }}
+          />
+        </Box>
+      </Paper>
+    </>
+  );
+}
+
+// ─── Tab 4: Inventory Log ─────────────────────────────────────────────────────
 
 function InventoryLogTab() {
+  const { centers } = useServiceCenters();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
@@ -388,18 +477,14 @@ function InventoryLogTab() {
       field: 'created_at', headerName: 'เมื่อวันที่', flex: 1.3, minWidth: 170,
       renderCell: (p) => <DateTimeCell value={p.value} />,
     },
-    {
-      field: 'reason', headerName: 'เหตุผล', flex: 1.2, minWidth: 140,
-      renderCell: (p) => p.value
-        ? <Typography variant="body2" sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '100%' }}>{p.value}</Typography>
-        : <Typography variant="body2" color="text.disabled">—</Typography>,
-    },
   ], []);
 
   return (
     <>
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 3, boxShadow: 2 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
+      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
+
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap" sx={{ mb: 3 }}>
           <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom}
             onChange={e => { setDateFrom(e.target.value); resetPage(); }}
             slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
@@ -418,16 +503,11 @@ function InventoryLogTab() {
             onChange={e => { setServiceCenterFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">ทั้งหมด</MenuItem>
-            {SERVICE_CENTER_OPTIONS.map(sc => (
-              <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+            {centers.map(c => (
+              <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
             ))}
           </TextField>
         </Stack>
-      </Paper>
-
-      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
-
-      <Paper sx={{ borderRadius: 3, boxShadow: 2, overflow: 'hidden' }}>
         <Box sx={{ height: 500 }}>
             <DataGrid
               rows={rows} columns={columns} loading={loading}
@@ -437,7 +517,7 @@ function InventoryLogTab() {
               pageSizeOptions={PAGE_SIZE_OPTIONS}
               onRowClick={({ row }) => setDetailRow(row as InventoryLogRow)}
               sx={{
-                border: 'none', borderRadius: 2,
+                border: 'none',
                 '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
                 '& .MuiDataGrid-row': { cursor: 'pointer' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
@@ -458,6 +538,7 @@ function InventoryLogTab() {
 const ALL_TABS: { label: string; roles: StaffRole[]; Component: () => React.JSX.Element }[] = [
   { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['superadmin'],          Component: AuditLogTab },
   { label: 'ประวัติสถานะคำขอ',                  roles: ['staff', 'admin', 'superadmin'], Component: RequestStatusLogTab },
+  { label: 'ประวัติสถานะนัดหมาย',               roles: ['staff', 'admin', 'superadmin'], Component: AppointmentStatusLogTab },
   { label: 'ประวัติการแก้ไขสต็อก',              roles: ['admin', 'superadmin'], Component: InventoryLogTab },
 ];
 
@@ -482,10 +563,10 @@ export default function AuditLogPage() {
   const ActiveComponent = visibleTabs[safeTab]?.Component ?? null;
 
   return (
-    <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>
+    <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>บันทึกการตรวจสอบ</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ และการจัดการสต็อก
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ การเปลี่ยนแปลงสถานะนัดหมาย และการจัดการสต็อก
       </Typography>
 
       <Tabs

@@ -11,9 +11,17 @@ const AuthPageWrapper = ({ children, maxWidth = 'xs' }: AuthPageWrapperProps) =>
     <Typography
       component="h1"
       variant="h4"
-      sx={{ mb: 4, fontWeight: 'bold', color: 'primary.main', textAlign: 'center', whiteSpace: 'nowrap' }}
+      sx={{ mb: 1, fontWeight: 900, textAlign: 'center', whiteSpace: 'nowrap', letterSpacing: 1 }}
     >
-      MyCareNK สำหรับเจ้าหน้าที่
+      <Box component="span" sx={{ color: 'primary.main' }}>MyCareNK</Box>
+      {' '}
+      <Box component="span" sx={{ color: 'text.primary' }}>Staff</Box>
+    </Typography>
+    <Typography
+      variant="body2"
+      sx={{ mb: 4, color: 'text.secondary', textAlign: 'center' }}
+    >
+      ระบบจัดการคำขอถุงยางอนามัยและนัดพบแพทย์ (PEP · PrEP · ตรวจเลือด)
     </Typography>
     <Container component="main" maxWidth={maxWidth}>
       <Paper elevation={3} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', borderRadius: 3 }}>

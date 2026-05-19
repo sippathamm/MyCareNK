@@ -1,15 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Enums } from '../lib/database.types';
-
 export interface RestockHistoryRow {
   id: string;
-  service_center: Enums<'service_center'>;
+  service_center: string;
   action: 'restock' | 'adjustment';
   condom_delta: number;
   lubricant_delta: number;
   created_at: string;
-  performed_by: string;
+  performed_by: string | null;
   performer_name: string;
   note: string | null;
 }
@@ -33,7 +31,7 @@ export function useRestockHistory() {
           .limit(200),
         supabase
           .from('staff_profiles')
-          .select('user_id, first_name, last_name'),
+          .select('staff_user_id, first_name, last_name'),
       ]);
 
     if (logsErr || profileErr) {
@@ -44,7 +42,7 @@ export function useRestockHistory() {
 
     const profileMap = new Map(
       (profiles ?? []).map((p) => [
-        p.user_id,
+        p.staff_user_id,
         [p.first_name, p.last_name].filter(Boolean).join(' ') || 'ไม่ทราบชื่อ',
       ]),
     );
@@ -53,13 +51,14 @@ export function useRestockHistory() {
       (logs ?? []).map((t) => ({
         ...t,
         action: t.action as 'restock' | 'adjustment',
-        performer_name: profileMap.get(t.performed_by) ?? 'ไม่ทราบชื่อ',
+        performer_name: profileMap.get(t.performed_by ?? '') ?? 'ไม่ทราบชื่อ',
       })),
     );
     setLoading(false);
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

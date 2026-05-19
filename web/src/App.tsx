@@ -14,6 +14,9 @@ import StaffWorkloadPage from './pages/staff/StaffWorkloadPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import AuditLogPage from './pages/audit/AuditLogPage';
+import AppointmentsPage from './pages/appointments/AppointmentsPage';
+import ArticlesPage from './pages/articles/ArticlesPage';
+import ArticleEditorPage from './pages/articles/ArticleEditorPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -62,11 +65,15 @@ function App() {
                 <Routes>
                   <Route path="dashboard" element={<DashboardPage session={session!} />} />
                   <Route path="requests" element={<RequestsPage />} />
+                  <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="staff" element={<StaffManagementPage />} />
                   <Route path="staff-workload" element={<StaffWorkloadPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
                   <Route path="audit-log" element={<AuditLogPage />} />
+                  <Route path="articles" element={<ArticlesPage />} />
+                  <Route path="articles/new" element={<ArticleEditorPage />} />
+                  <Route path="articles/:id/edit" element={<ArticleEditorPage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </MainLayout>

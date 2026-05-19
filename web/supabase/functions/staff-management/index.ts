@@ -37,7 +37,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const { data: callerProfile, error: callerErr } = await serviceClient
     .from('staff_profiles')
     .select('role')
-    .eq('user_id', user.id)
+    .eq('staff_user_id', user.id)
     .single();
 
   if (callerErr || !callerProfile || (callerProfile.role !== 'admin' && callerProfile.role !== 'superadmin')) {
@@ -57,7 +57,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (action === 'list') {
     const { data: profiles, error: profileErr } = await serviceClient
       .from('staff_profiles')
-      .select('user_id, first_name, last_name, service_center, role, created_at, updated_at')
+      .select('staff_user_id, first_name, last_name, service_center, role, created_at, updated_at')
       .order('created_at', { ascending: true });
 
     if (profileErr) {
@@ -76,15 +76,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const authMap = new Map(authUsers.map(u => [u.id, { email: u.email ?? '', last_sign_in_at: u.last_sign_in_at ?? null }]));
 
     const staff = (profiles ?? []).map(p => ({
-      user_id: p.user_id,
+      staff_user_id: p.staff_user_id,
       first_name: p.first_name,
       last_name: p.last_name,
       service_center: p.service_center,
       role: p.role,
       created_at: p.created_at,
       updated_at: p.updated_at,
-      email: authMap.get(p.user_id as string)?.email ?? '',
-      last_sign_in_at: authMap.get(p.user_id as string)?.last_sign_in_at ?? null,
+      email: authMap.get(p.staff_user_id as string)?.email ?? '',
+      last_sign_in_at: authMap.get(p.staff_user_id as string)?.last_sign_in_at ?? null,
     }));
 
     return jsonResponse(200, 'success', 'ดึงข้อมูลสำเร็จ', { staff });
@@ -99,6 +99,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (!email || !password || !first_name || !last_name || !service_center || !role) {
       return jsonResponse(400, 'error', 'ข้อมูลไม่ครบถ้วน');
+    }
+
+    if (callerProfile.role === 'admin' && role === 'superadmin') {
+      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถสร้างบัญชีผู้ดูแลสูงสุดได้');
     }
 
     const { data: authData, error: authErr } = await serviceClient.auth.admin.createUser({
@@ -119,7 +123,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const { data: profileData, error: profileErr } = await serviceClient
       .from('staff_profiles')
-      .insert({ user_id: userId, first_name, last_name, service_center, role })
+      .insert({ staff_user_id: userId, first_name, last_name, service_center, role })
       .select('id')
       .single();
 
@@ -151,10 +155,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Snapshot profile + email before delete (cascade will remove rows after deleteUser)
     const [{ data: profileSnapshot }, authUserSnapshot] = await Promise.all([
-      serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, role').eq('user_id', user_id).single(),
+      serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, role').eq('staff_user_id', user_id).single(),
       serviceClient.auth.admin.getUserById(user_id),
     ]);
     const snapshotEmail = authUserSnapshot.data?.user?.email ?? null;
+
+    if (callerProfile.role === 'admin' && profileSnapshot?.role === 'superadmin') {
+      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถลบบัญชีผู้ดูแลสูงสุดได้');
+    }
 
     const { error: deleteErr } = await serviceClient.auth.admin.deleteUser(user_id);
     if (deleteErr) {
@@ -182,8 +190,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // UPDATE
   if (action === 'update') {
-    const { user_id, first_name, last_name, service_center, role, email } = body as {
-      user_id?: string; first_name?: string; last_name?: string;
+    const { staff_user_id: user_id, first_name, last_name, service_center, role, email } = body as {
+      staff_user_id?: string; first_name?: string; last_name?: string;
       service_center?: string; role?: string; email?: string;
     };
 
@@ -199,12 +207,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const needsProfileFetch = hasPotentialProfileUpdate || hasEmailUpdate || hasRoleUpdate;
     const [profileBefore, authUserBefore] = await Promise.all([
       needsProfileFetch
-        ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, role').eq('user_id', user_id).single()
+        ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, role').eq('staff_user_id', user_id).single()
         : Promise.resolve({ data: null, error: null }),
       hasEmailUpdate
         ? serviceClient.auth.admin.getUserById(user_id)
         : Promise.resolve({ data: { user: null }, error: null }),
     ]);
+
+    // Admin cannot modify superadmin accounts or promote anyone to superadmin
+    if (callerProfile.role === 'admin') {
+      if (profileBefore.data?.role === 'superadmin') {
+        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลสูงสุดได้');
+      }
+      if (role === 'superadmin') {
+        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถกำหนดสิทธิ์ผู้ดูแลสูงสุดได้');
+      }
+    }
 
     // Diff: only keep fields that actually changed
     const changedProfileUpdates: Record<string, unknown> = {};
@@ -231,7 +249,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (Object.keys(profileTableUpdates).length > 0) {
       profileTableUpdates.updated_at = new Date().toISOString();
-      tasks.push(serviceClient.from('staff_profiles').update(profileTableUpdates).eq('user_id', user_id) as Promise<{ error: unknown }>);
+      tasks.push(serviceClient.from('staff_profiles').update(profileTableUpdates).eq('staff_user_id', user_id) as Promise<{ error: unknown }>);
     }
 
     if (hasActualEmailChange) {

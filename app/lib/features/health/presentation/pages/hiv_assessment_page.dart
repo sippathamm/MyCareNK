@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import 'doctor_booking_page.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -562,7 +563,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           duration: const Duration(milliseconds: 150),
           child: _PrimaryBtn(
             label:
-                _step == _totalQ - 1 ? 'ดูผลประเมิน' : 'ถัดไป →',
+                _step == _totalQ - 1 ? 'ดูผลประเมิน' : 'ถัดไป',
             onPressed: _selected != null ? _handleNext : null,
           ),
         ),
@@ -983,25 +984,10 @@ class _PrimaryBtn extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          backgroundColor:
-              onPressed != null ? AppColors.avatarIcon : Colors.grey.shade300,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24)),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.googleSans(
-              fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-      ),
+    return GradientButton(
+      onPressed: onPressed,
+      label: label,
+      gradientColors: GradientButton.healthGradient,
     );
   }
 }

@@ -142,7 +142,7 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">UUID เจ้าหน้าที่</Typography>
-              <Typography variant="body2">{row.target_id}</Typography>
+              <Typography variant="body1">{row.target_id}</Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">โดย</Typography>

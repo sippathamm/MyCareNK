@@ -27,7 +27,10 @@ class EmergencyButton extends StatelessWidget {
         child: InkWell(
           onTap: () async {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('"1669" ถูกกด')),
+              const SnackBar(
+                content: Text('"1669" ถูกกด'),
+                behavior: SnackBarBehavior.floating,
+              ),
             );
             final launchUri = Uri(scheme: 'tel', path: '1669');
             if (await canLaunchUrl(launchUri)) {

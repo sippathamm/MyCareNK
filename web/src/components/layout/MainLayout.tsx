@@ -15,9 +15,11 @@ import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import ArticleIcon from '@mui/icons-material/Article';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useNotification, STATUS_CONFIG, type RequestStatus } from '../../contexts/NotificationContext';
+import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
 import NotificationPanel from '../notifications/NotificationPanel';
 
 const DRAWER_OPEN_WIDTH = 260;
@@ -38,17 +40,19 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { role, profile, loading } = useRoleAccess();
-  const { unreadCount, toastOpen, toastMessage, toastEventType, closeToast } = useNotification();
-  const toastCfg = toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null;
+  const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast } = useNotification();
+  const toastCfg = toastIsAppointment
+    ? APPOINTMENT_STATUS_CONFIG[(toastAppointmentEventType ?? 'pending') as AppointmentEventType]
+    : (toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null);
 
   const bellRef = useRef<HTMLButtonElement>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const drawerWidth = sidebarOpen ? DRAWER_OPEN_WIDTH : DRAWER_CLOSED_WIDTH;
 
-  const handleBellClick = () => setPanelOpen(true);
-  const handlePanelClose = () => setPanelOpen(false);
+  const handleBellClick = () => { setAnchorEl(bellRef.current); };
+  const handlePanelClose = () => { setAnchorEl(null); };
 
   const handleLogout = async () => {
     await logout();
@@ -58,9 +62,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navItems = [
     { text: 'แดชบอร์ด', icon: <DashboardIcon />, path: '/dashboard', show: true },
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
+    { text: 'รายการนัดหมาย', icon: <CalendarMonthIcon />, path: '/appointments', show: true },
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
     { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
+    { text: 'บทความ', icon: <ArticleIcon />, path: '/articles', show: role === 'admin' || role === 'superadmin' },
     { text: 'บันทึกการตรวจสอบ', icon: <ManageSearchIcon />, path: '/audit-log', show: !!role },
   ];
 
@@ -105,7 +111,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
               aria-label="การแจ้งเตือน"
               color="inherit"
             >
-              <Badge badgeContent={unreadCount > 0 ? unreadCount : undefined} color="error">
+              <Badge
+                badgeContent={unreadCount > 0 ? unreadCount : undefined}
+                sx={{ '& .MuiBadge-badge': { bgcolor: '#FFCDD2', color: '#C62828' } }}
+              >
                 <NotificationsIcon />
               </Badge>
             </IconButton>
@@ -260,7 +269,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* Notification Panel (Popover) */}
       <NotificationPanel
-        anchorEl={panelOpen ? bellRef.current : null}
+        anchorEl={anchorEl}
         onClose={handlePanelClose}
       />
 

@@ -7,16 +7,28 @@ import '../../../../../core/constants/app_colors.dart';
 // Local data models
 // ---------------------------------------------------------------------------
 
-enum _MsgType { submitted, preparing, ready, completed, cancelled }
+enum _MsgType {
+  submitted, preparing, ready, completed, cancelled,
+  apptPending, apptConfirmed, apptCompleted, apptCancelled,
+}
 
-_MsgType _parseMsgType(String? type) {
-  switch (type) {
-    case 'preparing':      return _MsgType.preparing;
-    case 'ready':          return _MsgType.ready;
-    case 'completed':      return _MsgType.completed;
+_MsgType _parseMsgType(String? sourceType, String? eventType) {
+  if (sourceType == 'doctor_appointment') {
+    switch (eventType) {
+      case 'confirmed':          return _MsgType.apptConfirmed;
+      case 'completed':          return _MsgType.apptCompleted;
+      case 'cancelled_by_user':
+      case 'cancelled_by_staff': return _MsgType.apptCancelled;
+      default:                   return _MsgType.apptPending;
+    }
+  }
+  switch (eventType) {
+    case 'preparing':          return _MsgType.preparing;
+    case 'ready':              return _MsgType.ready;
+    case 'completed':          return _MsgType.completed;
     case 'cancelled_by_staff':
-    case 'cancelled_by_user': return _MsgType.cancelled;
-    default:               return _MsgType.submitted;
+    case 'cancelled_by_user':  return _MsgType.cancelled;
+    default:                   return _MsgType.submitted;
   }
 }
 
@@ -24,7 +36,6 @@ class _MsgItem {
   final String id;
   final _MsgType type;
   final String text;
-  // ถ้ากำหนด textSpans จะ render เป็น RichText แทน (เช่น ยกเลิกโดยเจ้าหน้าที่)
   final List<InlineSpan>? textSpans;
   final DateTime createdAt;
   bool isNew;
@@ -123,177 +134,159 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
   ),
   _MsgType.cancelled: _TypeConfig(
     icon: Icons.cancel_outlined,
-    iconColor: Colors.grey.shade600,
-    iconBg: Colors.grey.shade200,
+    iconColor: Colors.grey,
+    iconBg: Color(0xFFEEEEEE),
+    label: 'ยกเลิก',
+  ),
+  _MsgType.apptPending: _TypeConfig(
+    icon: Icons.calendar_today_outlined,
+    iconColor: AppColors.primary,
+    iconBg: AppColors.statusPendingLight,
+    label: 'รอยืนยัน',
+  ),
+  _MsgType.apptConfirmed: _TypeConfig(
+    icon: Icons.event_available_outlined,
+    iconColor: AppColors.statusReady,
+    iconBg: AppColors.statusReadyLight,
+    label: 'ยืนยันแล้ว',
+  ),
+  _MsgType.apptCompleted: _TypeConfig(
+    icon: Icons.check_circle_outline,
+    iconColor: AppColors.statusCompleted,
+    iconBg: AppColors.statusCompletedLight,
+    label: 'เสร็จสิ้น',
+  ),
+  _MsgType.apptCancelled: _TypeConfig(
+    icon: Icons.cancel_outlined,
+    iconColor: Colors.grey,
+    iconBg: Color(0xFFEEEEEE),
     label: 'ยกเลิก',
   ),
 };
 
 // ---------------------------------------------------------------------------
-// Mock data — ครอบทุกกรณี
+// Build message text from event_type + metadata
 // ---------------------------------------------------------------------------
 
-const bool _kUseMock = true;
+(String, List<InlineSpan>?) _buildAppointmentMessage(
+  String eventType,
+  Map<String, dynamic> metadata,
+) {
+  switch (eventType) {
+    case 'confirmed':
+      final dateRaw = metadata['selected_date'] as String? ?? '';
+      final timeRaw = metadata['selected_time'] as String? ?? '';
+      final serviceCenter = metadata['selected_service_center'] as String? ?? '';
+      String datePart = '';
+      if (dateRaw.isNotEmpty) {
+        try {
+          final d = DateTime.parse(dateRaw);
+          datePart = '${d.day} ${_thaiMonths[d.month - 1]} ${d.year + 543}';
+        } catch (_) {}
+      }
+      final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
+      final dateTimeLabel = '$datePart เวลา $timePart น.';
+      return (
+        'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
+        <InlineSpan>[
+          const TextSpan(text: 'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ '),
+          TextSpan(
+            text: serviceCenter,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const TextSpan(text: ' ภายในวันที่ '),
+          TextSpan(
+            text: dateTimeLabel,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    case 'completed':
+      return ('การนัดหมายของคุณเสร็จสิ้นแล้ว', null);
+    case 'cancelled_by_user':
+      return ('คุณได้ยกเลิกการนัดหมายนี้แล้ว', null);
+    case 'cancelled_by_staff':
+      return (
+        'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
+        <InlineSpan>[
+          const TextSpan(
+            text: 'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
+          ),
+          const TextSpan(
+            text: 'บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+    default: // pending
+      return ('ระบบได้รับการนัดหมายของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน', null);
+  }
+}
 
-List<_RequestGroup> _buildMockGroups() {
-  final now = DateTime.now().toUtc();
-  DateTime d(int daysAgo, int hour, int minute) =>
-      now.subtract(Duration(days: daysAgo)).copyWith(hour: hour, minute: minute, second: 0);
+(String, List<InlineSpan>?) _buildMessage(
+  String sourceType,
+  String eventType,
+  Map<String, dynamic> metadata,
+) {
+  if (sourceType == 'doctor_appointment') {
+    return _buildAppointmentMessage(eventType, metadata);
+  }
+  switch (eventType) {
+    case 'preparing':
+      return ('เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ', null);
 
-  return [
-    // 1. พร้อมรับ — มี 2 ข้อความใหม่
-    _RequestGroup(
-      requestId: 'mock-1',
-      referenceNumber: 'NK-2568-00145',
-      serviceCenter: 'รพ.โพนพิสัย',
-      messages: [
-        _MsgItem(
-          id: 'm1-3',
-          type: _MsgType.ready,
-          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด (2 พ.ค. 2568 เวลา 10:00 น.)',
-          textSpans: const [
-            TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด '),
-            TextSpan(
-              text: '(2 พ.ค. 2568 เวลา 10:00 น.)',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-          createdAt: d(0, 10, 23),
-          isNew: true,
-        ),
-        _MsgItem(
-          id: 'm1-2',
-          type: _MsgType.preparing,
-          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ จัดเตรียมโดย: สมชาย ใจดี',
-          createdAt: d(0, 9, 14),
-          isNew: true,
-        ),
-        _MsgItem(
-          id: 'm1-1',
-          type: _MsgType.submitted,
-          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
-          createdAt: d(0, 8, 50),
-          isNew: false,
-        ),
-      ],
-    ),
-    // 2. สำเร็จ — flow ครบ
-    _RequestGroup(
-      requestId: 'mock-2',
-      referenceNumber: 'NK-2568-00141',
-      serviceCenter: 'รพ.สต.วัดหลวง',
-      messages: [
-        _MsgItem(
-          id: 'm2-4',
-          type: _MsgType.completed,
-          text: 'คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว',
-          createdAt: d(7, 14, 35),
-          isNew: false,
-        ),
-        _MsgItem(
-          id: 'm2-3',
-          type: _MsgType.ready,
-          text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด (25 เม.ย. 2568 เวลา 14:00 น.)',
-          textSpans: const [
-            TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับภายในวันที่กำหนด '),
-            TextSpan(
-              text: '(25 เม.ย. 2568 เวลา 14:00 น.)',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-          createdAt: d(8, 13, 5),
-          isNew: false,
-        ),
-        _MsgItem(
-          id: 'm2-2',
-          type: _MsgType.preparing,
-          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ จัดเตรียมโดย: วิภา สุขใจ',
-          createdAt: d(8, 10, 20),
-          isNew: false,
-        ),
-        _MsgItem(
-          id: 'm2-1',
-          type: _MsgType.submitted,
-          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
-          createdAt: d(8, 9, 30),
-          isNew: false,
-        ),
-      ],
-    ),
-    // 3. ยกเลิกโดยเจ้าหน้าที่
-    _RequestGroup(
-      requestId: 'mock-3',
-      referenceNumber: 'NK-2568-00138',
-      serviceCenter: 'อบต.วัดหลวง',
-      messages: [
-        _MsgItem(
-          id: 'm3-3',
-          type: _MsgType.cancelled,
-          text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ประวัติคำขอ › รายละเอียด › เหตุผล',
-          textSpans: [
-            const TextSpan(text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ '),
-            const TextSpan(
-              text: 'ประวัติคำขอ › รายละเอียด › เหตุผล',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ],
-          createdAt: d(14, 11, 45),
-          isNew: false,
-        ),
-        _MsgItem(
-          id: 'm3-2',
-          type: _MsgType.preparing,
-          text: 'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ จัดเตรียมโดย: ประทีป มั่นคง',
-          createdAt: d(14, 9, 0),
-          isNew: false,
-        ),
-        _MsgItem(
-          id: 'm3-1',
-          type: _MsgType.submitted,
-          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
-          createdAt: d(14, 8, 30),
-          isNew: false,
-        ),
-      ],
-    ),
-    // 4. ยกเลิกโดยผู้ใช้
-    _RequestGroup(
-      requestId: 'mock-4',
-      referenceNumber: 'NK-2568-00130',
-      serviceCenter: 'สสจ.หนองคาย',
-      messages: [
-        _MsgItem(
-          id: 'm4-2',
-          type: _MsgType.cancelled,
-          text: 'คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว',
-          createdAt: d(21, 15, 10),
-          isNew: false,
-        ),
-        _MsgItem(
-          id: 'm4-1',
-          type: _MsgType.submitted,
-          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
-          createdAt: d(21, 14, 55),
-          isNew: false,
-        ),
-      ],
-    ),
-    // 5. เพิ่งส่งคำขอ — 1 ข้อความใหม่
-    _RequestGroup(
-      requestId: 'mock-5',
-      referenceNumber: 'NK-2568-00125',
-      serviceCenter: 'รพ.โพนพิสัย',
-      messages: [
-        _MsgItem(
-          id: 'm5-1',
-          type: _MsgType.submitted,
-          text: 'ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ',
-          createdAt: d(30, 16, 5),
-          isNew: true,
-        ),
-      ],
-    ),
-  ];
+    case 'ready':
+      final dateRaw = metadata['selected_date'] as String? ?? '';
+      final timeRaw = metadata['selected_time'] as String? ?? '';
+      final serviceCenter = metadata['selected_service_center'] as String? ?? '';
+      String datePart = '';
+      if (dateRaw.isNotEmpty) {
+        try {
+          final d = DateTime.parse(dateRaw);
+          datePart = '${d.day} ${_thaiMonths[d.month - 1]} ${d.year + 543}';
+        } catch (_) {}
+      }
+      final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
+      final dateTimeLabel = '$datePart เวลา $timePart น.';
+      return (
+        'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
+        <InlineSpan>[
+          const TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ '),
+          TextSpan(
+            text: serviceCenter,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const TextSpan(text: ' ภายในวันที่ '),
+          TextSpan(
+            text: dateTimeLabel,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+
+    case 'completed':
+      return ('คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว', null);
+
+    case 'cancelled_by_staff':
+      return (
+        'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
+        <InlineSpan>[
+          const TextSpan(
+            text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
+          ),
+          const TextSpan(
+            text: 'บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      );
+
+    case 'cancelled_by_user':
+      return ('คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว', null);
+
+    default: // pending
+      return ('ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ', null);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -302,8 +295,9 @@ List<_RequestGroup> _buildMockGroups() {
 
 class MessagesPage extends StatefulWidget {
   final ValueNotifier<int>? unreadNotifier;
+  final int refreshKey;
 
-  const MessagesPage({super.key, this.unreadNotifier});
+  const MessagesPage({super.key, this.unreadNotifier, this.refreshKey = 0});
 
   @override
   State<MessagesPage> createState() => _MessagesPageState();
@@ -312,18 +306,21 @@ class MessagesPage extends StatefulWidget {
 class _MessagesPageState extends State<MessagesPage> {
   List<_RequestGroup> _groups = [];
   bool _isLoading = true;
+  bool _isLoggedIn = true;
   RealtimeChannel? _subscription;
 
   @override
   void initState() {
     super.initState();
-    if (_kUseMock) {
-      _groups = _buildMockGroups();
-      _isLoading = false;
-      WidgetsBinding.instance.addPostFrameCallback((_) => _notifyUnread());
-    } else {
+    _fetchData();
+    _setupRealtime();
+  }
+
+  @override
+  void didUpdateWidget(MessagesPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.refreshKey != widget.refreshKey) {
       _fetchData();
-      _setupRealtime();
     }
   }
 
@@ -342,11 +339,11 @@ class _MessagesPageState extends State<MessagesPage> {
     if (session == null) return;
 
     _subscription = Supabase.instance.client
-        .channel('messages:notifications:${session.user.id}')
+        .channel('user_notifs:${session.user.id}')
         .onPostgresChanges(
           event: PostgresChangeEvent.insert,
           schema: 'public',
-          table: 'notifications',
+          table: 'user_notifications',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'user_id',
@@ -362,7 +359,7 @@ class _MessagesPageState extends State<MessagesPage> {
   Future<void> _fetchData() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
-      if (mounted) setState(() => _isLoading = false);
+      if (mounted) setState(() { _isLoggedIn = false; _isLoading = false; });
       return;
     }
     final userId = session.user.id;
@@ -370,15 +367,14 @@ class _MessagesPageState extends State<MessagesPage> {
     try {
       final [rawNotifs, rawReads] = await Future.wait([
         Supabase.instance.client
-            .from('notifications')
+            .from('user_notifications')
             .select(
-              'id, type, message, created_at, request_id, '
-              'condom_requests!request_id(reference_number, selected_service_center)',
+              'id, source_type, source_id, reference_number, event_type, metadata, created_at',
             )
             .eq('user_id', userId)
             .order('created_at', ascending: false),
         Supabase.instance.client
-            .from('notification_reads')
+            .from('user_notification_reads')
             .select('notification_id')
             .eq('user_id', userId),
       ]);
@@ -389,26 +385,29 @@ class _MessagesPageState extends State<MessagesPage> {
 
       final groupMap = <String, _RequestGroup>{};
       for (final n in rawNotifs as List) {
-        final reqId = n['request_id'] as String? ?? '';
-        final req = n['condom_requests'] as Map<String, dynamic>? ?? {};
-        final refNum = req['reference_number'] as String? ?? reqId;
-        final center = req['selected_service_center'] as String? ?? '';
+        final sourceId = n['source_id'] as String? ?? '';
+        final sourceType = n['source_type'] as String? ?? '';
+        final refNum = n['reference_number'] as String? ?? sourceId;
+        final eventType = n['event_type'] as String? ?? '';
+        final metadata = (n['metadata'] as Map<String, dynamic>?) ?? {};
+        final (text, textSpans) = _buildMessage(sourceType, eventType, metadata);
 
         final item = _MsgItem(
           id: n['id'] as String,
-          type: _parseMsgType(n['type'] as String?),
-          text: n['message'] as String? ?? '',
+          type: _parseMsgType(sourceType, eventType),
+          text: text,
+          textSpans: textSpans,
           createdAt: DateTime.parse(n['created_at'] as String),
           isNew: !readIds.contains(n['id'] as String),
         );
 
-        if (groupMap.containsKey(reqId)) {
-          groupMap[reqId]!.messages.add(item);
+        if (groupMap.containsKey(sourceId)) {
+          groupMap[sourceId]!.messages.add(item);
         } else {
-          groupMap[reqId] = _RequestGroup(
-            requestId: reqId,
+          groupMap[sourceId] = _RequestGroup(
+            requestId: sourceId,
             referenceNumber: refNum,
-            serviceCenter: center,
+            serviceCenter: '',
             messages: [item],
           );
         }
@@ -431,21 +430,21 @@ class _MessagesPageState extends State<MessagesPage> {
   }
 
   Future<void> _markAllRead() async {
-    if (!_kUseMock) {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session == null) return;
-      final userId = session.user.id;
-      final unreadIds = _groups
-          .expand((g) => g.messages)
-          .where((m) => m.isNew)
-          .map((m) => m.id)
-          .toList();
-      if (unreadIds.isEmpty) return;
-      await Supabase.instance.client.from('notification_reads').upsert(
-        unreadIds.map((id) => {'notification_id': id, 'user_id': userId}).toList(),
-        onConflict: 'notification_id,user_id',
-      );
-    }
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) return;
+    final userId = session.user.id;
+    final unreadIds = _groups
+        .expand((g) => g.messages)
+        .where((m) => m.isNew)
+        .map((m) => m.id)
+        .toList();
+    if (unreadIds.isEmpty) return;
+    await Supabase.instance.client.from('user_notification_reads').upsert(
+      unreadIds
+          .map((id) => {'notification_id': id, 'user_id': userId})
+          .toList(),
+      onConflict: 'notification_id,user_id',
+    );
     if (mounted) {
       setState(() {
         for (final g in _groups) {
@@ -460,17 +459,17 @@ class _MessagesPageState extends State<MessagesPage> {
 
   Future<void> _markGroupRead(_RequestGroup group) async {
     if (group.messages.every((m) => !m.isNew)) return;
-    if (!_kUseMock) {
-      final session = Supabase.instance.client.auth.currentSession;
-      if (session == null) return;
-      final userId = session.user.id;
-      final unreadIds =
-          group.messages.where((m) => m.isNew).map((m) => m.id).toList();
-      await Supabase.instance.client.from('notification_reads').upsert(
-        unreadIds.map((id) => {'notification_id': id, 'user_id': userId}).toList(),
-        onConflict: 'notification_id,user_id',
-      );
-    }
+    final session = Supabase.instance.client.auth.currentSession;
+    if (session == null) return;
+    final userId = session.user.id;
+    final unreadIds =
+        group.messages.where((m) => m.isNew).map((m) => m.id).toList();
+    await Supabase.instance.client.from('user_notification_reads').upsert(
+      unreadIds
+          .map((id) => {'notification_id': id, 'user_id': userId})
+          .toList(),
+      onConflict: 'notification_id,user_id',
+    );
     if (mounted) {
       setState(() {
         for (final m in group.messages) {
@@ -497,7 +496,7 @@ class _MessagesPageState extends State<MessagesPage> {
         title: Row(
           children: [
             const Text(
-              'ข้อความ',
+              'แจ้งเตือน',
               style: TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
@@ -548,10 +547,62 @@ class _MessagesPageState extends State<MessagesPage> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _groups.isEmpty
-              ? _buildEmpty()
-              : _buildList(),
+          ? _buildSkeleton()
+          : !_isLoggedIn
+              ? _buildNotLoggedIn()
+              : _groups.isEmpty
+                  ? _buildEmpty()
+                  : _buildList(),
+    );
+  }
+
+  Widget _buildSkeleton() {
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+      itemCount: 4,
+      itemBuilder: (_, _) => Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: Colors.grey.shade200),
+          boxShadow: const [BoxShadow(color: AppColors.cardShadow, blurRadius: 10, offset: Offset(0, 4))],
+        ),
+        child: Row(
+          children: [
+            Container(width: 48, height: 48, decoration: BoxDecoration(color: Colors.grey.shade200, shape: BoxShape.circle)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(height: 16, width: 140, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4))),
+                  const SizedBox(height: 6),
+                  Container(height: 12, width: 100, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(4))),
+                ],
+              ),
+            ),
+            Container(height: 24, width: 60, decoration: BoxDecoration(color: Colors.grey.shade200, borderRadius: BorderRadius.circular(12))),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotLoggedIn() {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          Text(
+            'กรุณาเข้าสู่ระบบ',
+            style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
+          ),
+        ],
+      ),
     );
   }
 
@@ -563,7 +614,7 @@ class _MessagesPageState extends State<MessagesPage> {
           Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
           const SizedBox(height: 12),
           Text(
-            'ยังไม่มีข้อความ',
+            'ยังไม่มีการแจ้งเตือน',
             style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
@@ -581,7 +632,7 @@ class _MessagesPageState extends State<MessagesPage> {
         itemCount: _groups.length,
         itemBuilder: (context, i) => _RequestGroupTile(
           group: _groups[i],
-          defaultOpen: i == 0,
+          defaultOpen: false,
           onExpand: _markGroupRead,
         ),
       ),
@@ -735,16 +786,22 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              Icon(Icons.location_on_outlined, size: 13, color: Colors.grey[400]),
-                              const SizedBox(width: 3),
-                              Text(
-                                g.serviceCenter,
-                                style: GoogleFonts.googleSans(
-                                  fontSize: 13,
-                                  color: Colors.grey[500],
+                              if (g.serviceCenter.isNotEmpty) ...[
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  size: 13,
+                                  color: Colors.grey[400],
                                 ),
-                              ),
-                              const SizedBox(width: 6),
+                                const SizedBox(width: 3),
+                                Text(
+                                  g.serviceCenter,
+                                  style: GoogleFonts.googleSans(
+                                    fontSize: 13,
+                                    color: Colors.grey[500],
+                                  ),
+                                ),
+                                const SizedBox(width: 6),
+                              ],
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 8,
@@ -886,7 +943,6 @@ class _MessageBubble extends StatelessWidget {
           // ── Bubble ──
           Expanded(
             child: Padding(
-              // ระยะห่างระหว่าง bubble — อยู่ใน Expanded เพื่อให้เส้นยาวถึงไอคอนถัดไป
               padding: EdgeInsets.only(bottom: isLast ? 0 : 12),
               child: Container(
                 padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),

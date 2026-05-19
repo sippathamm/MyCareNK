@@ -14,7 +14,407 @@ export type Database = {
   }
   public: {
     Tables: {
-      audit_logs: {
+      appointment_status_logs: {
+        Row: {
+          appointment_id: string
+          changed_at: string
+          changed_by: string | null
+          from_status: Database["public"]["Enums"]["appointment_status"] | null
+          id: string
+          to_status: Database["public"]["Enums"]["appointment_status"]
+        }
+        Insert: {
+          appointment_id: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["appointment_status"] | null
+          id?: string
+          to_status: Database["public"]["Enums"]["appointment_status"]
+        }
+        Update: {
+          appointment_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["appointment_status"] | null
+          id?: string
+          to_status?: Database["public"]["Enums"]["appointment_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointment_status_logs_appointment_id_fkey"
+            columns: ["appointment_id"]
+            isOneToOne: false
+            referencedRelation: "doctor_appointments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      articles: {
+        Row: {
+          content_html: string
+          content_json: Json
+          cover_image_url: string | null
+          created_at: string | null
+          created_by: string | null
+          has_draft: boolean
+          id: string
+          is_visible: boolean
+          publish_at: string | null
+          published_content_html: string | null
+          published_content_json: Json | null
+          status: Database["public"]["Enums"]["article_status"]
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          content_html?: string
+          content_json?: Json
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          has_draft?: boolean
+          id?: string
+          is_visible?: boolean
+          publish_at?: string | null
+          published_content_html?: string | null
+          published_content_json?: Json | null
+          status?: Database["public"]["Enums"]["article_status"]
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          content_html?: string
+          content_json?: Json
+          cover_image_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          has_draft?: boolean
+          id?: string
+          is_visible?: boolean
+          publish_at?: string | null
+          published_content_html?: string | null
+          published_content_json?: Json | null
+          status?: Database["public"]["Enums"]["article_status"]
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      condom_requests: {
+        Row: {
+          cancel_reason: string | null
+          completed_at: string | null
+          condom_quantities: Json
+          created_at: string
+          handled_by: string | null
+          id: string
+          is_delay: boolean
+          lubricant_quantity: number
+          message: string | null
+          reference_number: string
+          request_status: Database["public"]["Enums"]["request_status"]
+          selected_date: string | null
+          selected_service_center: string
+          selected_time: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          cancel_reason?: string | null
+          completed_at?: string | null
+          condom_quantities?: Json
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          is_delay?: boolean
+          lubricant_quantity?: number
+          message?: string | null
+          reference_number: string
+          request_status?: Database["public"]["Enums"]["request_status"]
+          selected_date?: string | null
+          selected_service_center: string
+          selected_time?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          cancel_reason?: string | null
+          completed_at?: string | null
+          condom_quantities?: Json
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          is_delay?: boolean
+          lubricant_quantity?: number
+          message?: string | null
+          reference_number?: string
+          request_status?: Database["public"]["Enums"]["request_status"]
+          selected_date?: string | null
+          selected_service_center?: string
+          selected_time?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_condom_requests_service_center"
+            columns: ["selected_service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
+      doctor_appointments: {
+        Row: {
+          appointment_status: Database["public"]["Enums"]["appointment_status"]
+          cancel_reason: string | null
+          created_at: string
+          handled_by: string | null
+          id: string
+          note: string | null
+          reason: string
+          reference_number: string
+          selected_date: string
+          selected_service_center: string
+          selected_time: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          appointment_status?: Database["public"]["Enums"]["appointment_status"]
+          cancel_reason?: string | null
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          reason: string
+          reference_number: string
+          selected_date: string
+          selected_service_center: string
+          selected_time: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          appointment_status?: Database["public"]["Enums"]["appointment_status"]
+          cancel_reason?: string | null
+          created_at?: string
+          handled_by?: string | null
+          id?: string
+          note?: string | null
+          reason?: string
+          reference_number?: string
+          selected_date?: string
+          selected_service_center?: string
+          selected_time?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_doctor_appointments_service_center"
+            columns: ["selected_service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
+      inventory_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["audit_action"]
+          condom_delta: number
+          created_at: string
+          id: string
+          lubricant_delta: number
+          note: string | null
+          performed_by: string | null
+          reason: string | null
+          reference_request_id: string | null
+          service_center: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["audit_action"]
+          condom_delta?: number
+          created_at?: string
+          id?: string
+          lubricant_delta?: number
+          note?: string | null
+          performed_by?: string | null
+          reason?: string | null
+          reference_request_id?: string | null
+          service_center: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["audit_action"]
+          condom_delta?: number
+          created_at?: string
+          id?: string
+          lubricant_delta?: number
+          note?: string | null
+          performed_by?: string | null
+          reason?: string | null
+          reference_request_id?: string | null
+          service_center?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_inventory_logs_service_center"
+            columns: ["service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+          {
+            foreignKeyName: "inventory_logs_reference_request_id_fkey"
+            columns: ["reference_request_id"]
+            isOneToOne: false
+            referencedRelation: "condom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      recovery_attempts: {
+        Row: {
+          attempted_at: string | null
+          id: string
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string | null
+          id?: string
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string | null
+          id?: string
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      request_status_logs: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          from_status: Database["public"]["Enums"]["request_status"] | null
+          id: string
+          request_id: string
+          to_status: Database["public"]["Enums"]["request_status"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["request_status"] | null
+          id?: string
+          request_id: string
+          to_status: Database["public"]["Enums"]["request_status"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          from_status?: Database["public"]["Enums"]["request_status"] | null
+          id?: string
+          request_id?: string
+          to_status?: Database["public"]["Enums"]["request_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "request_status_logs_request_id_fkey"
+            columns: ["request_id"]
+            isOneToOne: false
+            referencedRelation: "condom_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_center_inventory: {
+        Row: {
+          condom_qty: number
+          id: string
+          last_restocked_at: string | null
+          lubricant_qty: number
+          service_center: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          condom_qty?: number
+          id?: string
+          last_restocked_at?: string | null
+          lubricant_qty?: number
+          service_center: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          condom_qty?: number
+          id?: string
+          last_restocked_at?: string | null
+          lubricant_qty?: number
+          service_center?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_service_center_inventory_service_center"
+            columns: ["service_center"]
+            isOneToOne: true
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
+      service_centers: {
+        Row: {
+          address: string | null
+          contacts: Json
+          created_at: string
+          description: string | null
+          display_order: number
+          image_url: string | null
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          operating_hours: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contacts?: Json
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          image_url?: string | null
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          operating_hours?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contacts?: Json
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          image_url?: string | null
+          is_active?: boolean
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          operating_hours?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      staff_audit_logs: {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
           created_at: string
@@ -47,64 +447,7 @@ export type Database = {
         }
         Relationships: []
       }
-      condom_requests: {
-        Row: {
-          cancel_reason: string | null
-          completed_at: string | null
-          condom_quantities: Json
-          created_at: string
-          handled_by: string | null
-          id: string
-          is_delay: boolean
-          lubricant_quantity: number
-          message: string | null
-          reference_number: string
-          request_status: Database["public"]["Enums"]["status"]
-          selected_date: string | null
-          selected_service_center: Database["public"]["Enums"]["service_center"]
-          selected_time: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          cancel_reason?: string | null
-          completed_at?: string | null
-          condom_quantities?: Json
-          created_at?: string
-          handled_by?: string | null
-          id?: string
-          is_delay?: boolean
-          lubricant_quantity?: number
-          message?: string | null
-          reference_number: string
-          request_status?: Database["public"]["Enums"]["status"]
-          selected_date?: string | null
-          selected_service_center?: Database["public"]["Enums"]["service_center"]
-          selected_time?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          cancel_reason?: string | null
-          completed_at?: string | null
-          condom_quantities?: Json
-          created_at?: string
-          handled_by?: string | null
-          id?: string
-          is_delay?: boolean
-          lubricant_quantity?: number
-          message?: string | null
-          reference_number?: string
-          request_status?: Database["public"]["Enums"]["status"]
-          selected_date?: string | null
-          selected_service_center?: Database["public"]["Enums"]["service_center"]
-          selected_time?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      notification_reads: {
+      staff_notification_reads: {
         Row: {
           notification_id: string
           read_at: string
@@ -125,126 +468,38 @@ export type Database = {
             foreignKeyName: "notification_reads_notification_id_fkey"
             columns: ["notification_id"]
             isOneToOne: false
-            referencedRelation: "notifications"
+            referencedRelation: "staff_notifications"
             referencedColumns: ["id"]
           },
         ]
       }
-      notifications: {
+      staff_notifications: {
         Row: {
           created_at: string
-          event_type: Database["public"]["Enums"]["status"]
+          event_type: string
           id: string
+          metadata: Json
           reference_number: string
-          request_id: string | null
+          source_id: string
+          source_type: string
         }
         Insert: {
           created_at?: string
-          event_type: Database["public"]["Enums"]["status"]
+          event_type: string
           id?: string
+          metadata?: Json
           reference_number?: string
-          request_id?: string | null
+          source_id: string
+          source_type: string
         }
         Update: {
           created_at?: string
-          event_type?: Database["public"]["Enums"]["status"]
+          event_type?: string
           id?: string
+          metadata?: Json
           reference_number?: string
-          request_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "notifications_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "condom_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      recovery_attempts: {
-        Row: {
-          attempted_at: string | null
-          id: string
-          success: boolean | null
-          user_id: string
-        }
-        Insert: {
-          attempted_at?: string | null
-          id?: string
-          success?: boolean | null
-          user_id: string
-        }
-        Update: {
-          attempted_at?: string | null
-          id?: string
-          success?: boolean | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      request_status_logs: {
-        Row: {
-          changed_at: string
-          changed_by: string | null
-          from_status: Database["public"]["Enums"]["status"] | null
-          id: string
-          request_id: string
-          to_status: Database["public"]["Enums"]["status"]
-        }
-        Insert: {
-          changed_at?: string
-          changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["status"] | null
-          id?: string
-          request_id: string
-          to_status: Database["public"]["Enums"]["status"]
-        }
-        Update: {
-          changed_at?: string
-          changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["status"] | null
-          id?: string
-          request_id?: string
-          to_status?: Database["public"]["Enums"]["status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "request_status_logs_request_id_fkey"
-            columns: ["request_id"]
-            isOneToOne: false
-            referencedRelation: "condom_requests"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      service_center_inventory: {
-        Row: {
-          condom_qty: number
-          id: string
-          last_restocked_at: string | null
-          lubricant_qty: number
-          service_center: Database["public"]["Enums"]["service_center"]
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          condom_qty?: number
-          id?: string
-          last_restocked_at?: string | null
-          lubricant_qty?: number
-          service_center: Database["public"]["Enums"]["service_center"]
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          condom_qty?: number
-          id?: string
-          last_restocked_at?: string | null
-          lubricant_qty?: number
-          service_center?: Database["public"]["Enums"]["service_center"]
-          updated_at?: string
-          updated_by?: string | null
+          source_id?: string
+          source_type?: string
         }
         Relationships: []
       }
@@ -255,9 +510,9 @@ export type Database = {
           id: string
           last_name: string | null
           role: Database["public"]["Enums"]["role"]
-          service_center: Database["public"]["Enums"]["service_center"] | null
+          service_center: string | null
+          staff_user_id: string
           updated_at: string | null
-          user_id: string
         }
         Insert: {
           created_at?: string | null
@@ -265,9 +520,9 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: Database["public"]["Enums"]["service_center"] | null
+          service_center?: string | null
+          staff_user_id: string
           updated_at?: string | null
-          user_id: string
         }
         Update: {
           created_at?: string | null
@@ -275,11 +530,19 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: Database["public"]["Enums"]["service_center"] | null
+          service_center?: string | null
+          staff_user_id?: string
           updated_at?: string | null
-          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_staff_profiles_service_center"
+            columns: ["service_center"]
+            isOneToOne: false
+            referencedRelation: "service_centers"
+            referencedColumns: ["name"]
+          },
+        ]
       }
       user_monthly_quotas: {
         Row: {
@@ -304,6 +567,65 @@ export type Database = {
           updated_at?: string | null
           used_condoms?: number | null
           used_lubricants?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_notification_reads: {
+        Row: {
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_notification_reads_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "user_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_notifications: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          metadata: Json
+          reference_number: string
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          metadata?: Json
+          reference_number?: string
+          source_id: string
+          source_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          metadata?: Json
+          reference_number?: string
+          source_id?: string
+          source_type?: string
           user_id?: string
         }
         Relationships: []
@@ -370,17 +692,76 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_service_center: { Args: { p_name: string }; Returns: undefined }
+      create_condom_request: {
+        Args: {
+          p_condom_quantities: Json
+          p_lubricant_quantity: number
+          p_message?: string
+          p_selected_date: string
+          p_selected_service_center: string
+          p_selected_time?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      create_doctor_appointment: {
+        Args: {
+          p_date: string
+          p_note?: string
+          p_reason: string
+          p_service_center: string
+          p_time: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       dearmor: { Args: { "": string }; Returns: string }
+      delete_service_center: { Args: { p_name: string }; Returns: undefined }
       gen_random_uuid: { Args: never; Returns: string }
       gen_salt: { Args: { "": string }; Returns: string }
+      get_appointment_status_log: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_from_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_reference_number?: string
+          p_to_status?: string
+        }
+        Returns: {
+          appointment_id: string
+          changed_at: string
+          from_status: string
+          full_name: string
+          id: string
+          performed_by: string
+          reference_number: string
+          to_status: string
+        }[]
+      }
+      get_article_detail: {
+        Args: { p_article_id: string }
+        Returns: {
+          content_json: Json
+          cover_image_url: string
+          created_by_name: string
+          id: string
+          publish_at: string
+          title: string
+        }[]
+      }
       get_audit_log: {
         Args: {
-          p_action?: Database["public"]["Enums"]["audit_action"]
+          p_action?: string
           p_date_from?: string
           p_date_to?: string
           p_limit?: number
           p_offset?: number
           p_performed_by?: string
+          p_target_id?: string
           p_target_table?: string
         }
         Returns: {
@@ -391,6 +772,7 @@ export type Database = {
           new_value: Json
           old_value: Json
           performed_by: string
+          target_full_name: string
           target_id: string
           target_table: string
         }[]
@@ -399,7 +781,7 @@ export type Database = {
         Args: {
           p_date_from: string
           p_date_to: string
-          p_service_center?: Database["public"]["Enums"]["service_center"]
+          p_service_center?: string
         }
         Returns: {
           overall_avg_minutes: number
@@ -414,7 +796,7 @@ export type Database = {
           condom_used: number
           day: string
           lubricant_used: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }[]
       }
       get_days_until_reset: { Args: never; Returns: number }
@@ -424,10 +806,33 @@ export type Database = {
           condom_daily_burn: number
           condom_days_left: number
           condom_qty: number
+          is_active: boolean
           lubricant_daily_burn: number
           lubricant_days_left: number
           lubricant_qty: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
+        }[]
+      }
+      get_inventory_log: {
+        Args: {
+          p_action?: string
+          p_date_from?: string
+          p_date_to?: string
+          p_limit?: number
+          p_offset?: number
+          p_service_center?: string
+        }
+        Returns: {
+          action: Database["public"]["Enums"]["audit_action"]
+          condom_delta: number
+          created_at: string
+          full_name: string
+          id: string
+          lubricant_delta: number
+          note: string
+          performed_by: string
+          reason: string
+          service_center: string
         }[]
       }
       get_peak_time_stats: {
@@ -442,6 +847,17 @@ export type Database = {
           count: number
         }[]
       }
+      get_published_articles: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: {
+          cover_image_url: string
+          created_by_name: string
+          excerpt: string
+          id: string
+          publish_at: string
+          title: string
+        }[]
+      }
       get_request_status_log: {
         Args: {
           p_date_from?: string
@@ -450,6 +866,7 @@ export type Database = {
           p_limit?: number
           p_offset?: number
           p_performed_by?: string
+          p_reference_number?: string
           p_to_status?: string
         }
         Returns: {
@@ -458,6 +875,7 @@ export type Database = {
           full_name: string
           id: string
           performed_by: string
+          reference_number: string
           request_id: string
           to_status: string
         }[]
@@ -465,7 +883,7 @@ export type Database = {
       get_service_center_demand: {
         Args: { p_date_from: string; p_date_to: string }
         Returns: {
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
           total_condoms: number
           total_lubricants: number
           total_requests: number
@@ -476,53 +894,86 @@ export type Database = {
         Returns: {
           day: string
           request_count: number
-          service_center: Database["public"]["Enums"]["service_center"]
+          service_center: string
         }[]
       }
-      get_staff_workload:
-        | {
-            Args: { p_date_from: string; p_date_to: string }
-            Returns: {
-              avg_lead_time_minutes: number
-              cancelled_count: number
-              completed_count: number
-              full_name: string
-              service_center: Database["public"]["Enums"]["service_center"]
-              staff_user_id: string
-            }[]
-          }
-        | {
-            Args: {
-              p_date_from: string
-              p_date_to: string
-              p_service_center?: string
-            }
-            Returns: {
-              avg_lead_time_minutes: number
-              cancelled_count: number
-              completed_count: number
-              first_name: string
-              last_name: string
-              overdue_count: number
-              service_center: Database["public"]["Enums"]["service_center"]
-              staff_user_id: string
-            }[]
-          }
-      get_staff_workload_trend: {
+      get_service_centers: {
+        Args: never
+        Returns: {
+          contacts: Json
+          created_at: string
+          description: string | null
+          display_order: number
+          image_url: string | null
+          is_active: boolean
+          latitude: number | null
+          longitude: number | null
+          name: string
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "service_centers"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      get_staff_audit_log: {
+        Args: {
+          p_action?: string
+          p_date_from?: string
+          p_date_to?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_target_id?: string
+        }
+        Returns: {
+          action: Database["public"]["Enums"]["audit_action"]
+          created_at: string
+          full_name: string
+          id: string
+          new_value: Json
+          old_value: Json
+          performed_by: string
+          target_full_name: string
+          target_id: string
+        }[]
+      }
+      get_staff_workload: {
         Args: {
           p_date_from: string
           p_date_to: string
+          p_service_center?: string
+        }
+        Returns: {
+          avg_lead_time_minutes: number
+          cancelled_count: number
+          completed_count: number
+          first_name: string
+          last_name: string
+          overdue_count: number
+          service_center: string
+          staff_user_id: string
+        }[]
+      }
+      get_staff_workload_trend: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
           p_service_center?: string
           p_staff_user_id?: string
         }
         Returns: {
           cancelled_count: number
           completed_count: number
-          first_name: string
-          last_name: string
           staff_user_id: string
           week_start: string
         }[]
+      }
+      init_service_center_inventory: {
+        Args: { p_name: string }
+        Returns: undefined
       }
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
@@ -544,6 +995,24 @@ export type Database = {
       }
       save_recovery_codes: {
         Args: { secret_codes: string[] }
+        Returns: undefined
+      }
+      toggle_service_center_active: {
+        Args: { p_is_active: boolean; p_name: string }
+        Returns: undefined
+      }
+      upsert_service_center: {
+        Args: {
+          p_address?: string
+          p_contacts?: Json
+          p_description?: string
+          p_display_order?: number
+          p_image_url?: string
+          p_latitude?: number
+          p_longitude?: number
+          p_name: string
+          p_operating_hours?: string
+        }
         Returns: undefined
       }
       verify_recovery_code: {
@@ -571,6 +1040,13 @@ export type Database = {
       }
     }
     Enums: {
+      appointment_status:
+        | "pending"
+        | "confirmed"
+        | "cancelled_by_user"
+        | "cancelled_by_staff"
+        | "completed"
+      article_status: "draft" | "scheduled" | "published" | "hidden"
       audit_action:
         | "role_updated"
         | "staff_profile_updated"
@@ -580,19 +1056,14 @@ export type Database = {
         | "staff_created"
         | "staff_deleted"
         | "email_updated"
-      role: "staff" | "admin" | "superadmin"
-      service_center:
-        | "รพ.โพนพิสัย"
-        | "รพ.สต.วัดหลวง"
-        | "อบต.วัดหลวง"
-        | "สสจ.หนองคาย"
-      status:
+      request_status:
         | "pending"
         | "preparing"
         | "ready"
         | "completed"
         | "cancelled_by_user"
         | "cancelled_by_staff"
+      role: "staff" | "admin" | "superadmin"
       transaction_type: "restock" | "fulfillment" | "adjustment"
     }
     CompositeTypes: {
@@ -721,6 +1192,14 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      appointment_status: [
+        "pending",
+        "confirmed",
+        "cancelled_by_user",
+        "cancelled_by_staff",
+        "completed",
+      ],
+      article_status: ["draft", "scheduled", "published", "hidden"],
       audit_action: [
         "role_updated",
         "staff_profile_updated",
@@ -731,14 +1210,7 @@ export const Constants = {
         "staff_deleted",
         "email_updated",
       ],
-      role: ["staff", "admin", "superadmin"],
-      service_center: [
-        "รพ.โพนพิสัย",
-        "รพ.สต.วัดหลวง",
-        "อบต.วัดหลวง",
-        "สสจ.หนองคาย",
-      ],
-      status: [
+      request_status: [
         "pending",
         "preparing",
         "ready",
@@ -746,6 +1218,7 @@ export const Constants = {
         "cancelled_by_user",
         "cancelled_by_staff",
       ],
+      role: ["staff", "admin", "superadmin"],
       transaction_type: ["restock", "fulfillment", "adjustment"],
     },
   },

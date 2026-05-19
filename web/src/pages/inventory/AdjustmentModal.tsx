@@ -107,10 +107,10 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
-        <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
+        <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
           ปรับสต็อก
         </Typography>
-        <Typography variant="caption" color="text.secondary">
+        <Typography component="div" variant="caption" color="text.secondary">
           {target.service_center}
         </Typography>
       </DialogTitle>

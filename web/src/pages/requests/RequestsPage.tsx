@@ -11,20 +11,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 import { useRequests } from '../../hooks/useRequests';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { supabase } from '../../lib/supabase';
+import { createThGridLocale } from '../../constants/datagrid';
 
-const SERVICE_CENTERS = ['รพ.โพนพิสัย', 'รพ.สต.วัดหลวง', 'อบต.วัดหลวง', 'สสจ.หนองคาย'] as const;
-
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีรายการคำขอ',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  footerRowSelected: (count: number) => `เลือกแล้ว ${count} แถว`,
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from} - ${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
+const thGridLocale = createThGridLocale('ไม่มีรายการคำขอ');
 
 export default function RequestsPage() {
   const location = useLocation();
@@ -32,6 +23,7 @@ export default function RequestsPage() {
   const { requests, setRequests, loading } = useRequests();
   const { role, loading: roleLoading } = useRoleAccess();
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
+  const { centers } = useServiceCenters(isAdminOrSuperadmin);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
@@ -46,6 +38,7 @@ export default function RequestsPage() {
     if (loading || !openRequestId) return;
     const req = requests.find(r => r.id === openRequestId);
     if (req) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedRequest(req);
       setDialogOpen(true);
       navigate(location.pathname, { replace: true, state: null });
@@ -54,12 +47,12 @@ export default function RequestsPage() {
 
   const getStatusChip = (status: string) => {
     switch (status) {
-      case 'pending': return <Chip label="รอดำเนินการ" color="warning" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-      case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
-      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+      case 'pending':            return <Chip label="รอดำเนินการ"        size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
+      case 'preparing':          return <Chip label="กำลังเตรียม"        size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
+      case 'ready':              return <Chip label="รอรับ"              size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
+      case 'completed':          return <Chip label="เสร็จสิ้น"          size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
+      case 'cancelled_by_user':  return <Chip label="ยกเลิกโดยผู้ใช้"    size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
+      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
       default: return <Chip label={status} size="small" />;
     }
   };
@@ -83,7 +76,7 @@ export default function RequestsPage() {
     setStatusUpdating(true);
     setUpdateError(null);
 
-    const updatePayload: { request_status: string; cancel_reason?: string | null } = { request_status: newStatus };
+    const updatePayload: { request_status: RequestData['request_status']; cancel_reason?: string | null } = { request_status: newStatus as RequestData['request_status'] };
     if (reason !== undefined) {
       updatePayload.cancel_reason = reason;
     } else {
@@ -96,7 +89,7 @@ export default function RequestsPage() {
     if (error) {
       setRequests(prevRequests);
       setSelectedRequest(prevSelected);
-      setUpdateError(error.message);
+      setUpdateError(error.message ?? '');
       return false;
     }
     return true;
@@ -113,10 +106,10 @@ export default function RequestsPage() {
   });
 
   const columns: GridColDef[] = [
-    { field: 'reference_number', headerName: 'หมายเลขอ้างอิง', flex: 1, minWidth: 120 },
+    { field: 'reference_number', headerName: 'รหัสอ้างอิง', flex: 1, minWidth: 120 },
     {
       field: 'selected_date',
-      headerName: 'วันเดือนปีรับ',
+      headerName: 'วัน',
       flex: 1,
       minWidth: 150,
       renderCell: (params) => {
@@ -142,7 +135,7 @@ export default function RequestsPage() {
     },
     {
       field: 'selected_time',
-      headerName: 'เวลารับ',
+      headerName: 'เวลา',
       flex: 0.8,
       minWidth: 100,
       valueGetter: (_, row) => `${(row as RequestData).selected_time ?? '-'} น.`
@@ -195,13 +188,13 @@ export default function RequestsPage() {
         รายการคำขอ
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        จัดการรายการคำขอ
+        จัดการรายการคำขอถุงยางอนามัย
       </Typography>
 
-      <Paper sx={{ p: 3, mb: 4, borderRadius: 3, boxShadow: 2 }}>
+      <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
           <TextField
-            label="ค้นหาหมายเลขอ้างอิง"
+            label="ค้นหารหัสอ้างอิง"
             variant="outlined"
             size="small"
             value={search}
@@ -218,8 +211,8 @@ export default function RequestsPage() {
               sx={{ minWidth: 200 }}
             >
               <MenuItem value="all">ทั้งหมด</MenuItem>
-              {SERVICE_CENTERS.map(sc => (
-                <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+              {centers.map(c => (
+                <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
               ))}
             </TextField>
           )}
@@ -269,6 +262,11 @@ export default function RequestsPage() {
               }}
               pageSizeOptions={[10, 25, 50]}
               disableRowSelectionOnClick
+              sx={{
+                border: 'none',
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+              }}
             />
           </Box>
         )}

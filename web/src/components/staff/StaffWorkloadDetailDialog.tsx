@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  Typography, Box, Divider, Chip, CircularProgress, Stack,
+  Typography, Box, Divider, Chip, Stack,
   Tooltip, IconButton, Snackbar, Alert,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -29,11 +29,11 @@ function toRequestData(r: StaffRequestRow): RequestData {
 
 type ReqFilter = 'all' | 'completed' | 'cancelled' | 'overdue';
 
-const FILTER_CONFIG: Record<ReqFilter, { label: string; color: string; bg: string; border: string }> = {
-  all:       { label: 'ทั้งหมด',  color: 'white',   bg: '#FF9F6B', border: '#FF9F6B' },
-  completed: { label: 'เสร็จสิ้น', color: '#2E7D32', bg: '#EBF7EC', border: '#2E7D32' },
-  cancelled: { label: 'ยกเลิก',   color: '#616161', bg: '#E0E0E0', border: '#9E9E9E' },
-  overdue:   { label: 'ล่าช้า',   color: '#E65100', bg: '#FFF8E1', border: '#E65100' },
+const FILTER_LABELS: Record<ReqFilter, string> = {
+  all:       'ทั้งหมด',
+  completed: 'เสร็จสิ้น',
+  cancelled: 'ยกเลิก',
+  overdue:   'ล่าช้า',
 };
 
 const thGridLocale = {
@@ -70,9 +70,16 @@ export default function StaffWorkloadDetailDialog({
   const [statusUpdating, setStatusUpdating]   = useState(false);
   const [statusError, setStatusError]         = useState<string | null>(null);
 
-  useEffect(() => { if (!open) { setReqFilter('all'); setSelectedReq(null); setReqDetailOpen(false); } }, [open]);
+  useEffect(() => {
+    if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setReqFilter('all');
+      setSelectedReq(null);
+      setReqDetailOpen(false);
+    }
+  }, [open]);
 
-  const { data: trendData, loading: trendLoading } = useStaffWorkloadTrend(
+  const { data: trendData, loading: trendLoading, error: trendError } = useStaffWorkloadTrend(
     dateFrom, dateTo, serviceCenter, open ? staffId : null,
   );
 
@@ -121,7 +128,7 @@ export default function StaffWorkloadDetailDialog({
   const columns = useMemo<GridColDef<StaffRequestRow>[]>(() => [
     {
       field: 'reference_number',
-      headerName: 'หมายเลขอ้างอิง',
+      headerName: 'รหัสอ้างอิง',
       flex: 1, minWidth: 120,
     },
     {
@@ -179,7 +186,6 @@ export default function StaffWorkloadDetailDialog({
         </Tooltip>
       ),
     },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], []);
 
   return (
@@ -187,10 +193,10 @@ export default function StaffWorkloadDetailDialog({
       {row && (
         <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
           <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
+            <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               {row.first_name} {row.last_name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography component="div" variant="caption" color="text.secondary">
               {row.service_center}
             </Typography>
           </DialogTitle>
@@ -245,30 +251,29 @@ export default function StaffWorkloadDetailDialog({
             <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1 }}>
               จำนวนคำขอที่สำเร็จรายสัปดาห์
             </Typography>
-            <StaffWeeklyTrendChart data={trendData} loading={trendLoading} />
+            <StaffWeeklyTrendChart data={trendData} loading={trendLoading} error={trendError} />
 
             <Divider sx={{ my: 2 }} />
 
             {/* ── Request list ── */}
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="subtitle1" fontWeight="bold">รายการคำขอ</Typography>
-              <Stack direction="row" spacing={0.75}>
-                {(Object.entries(FILTER_CONFIG) as [ReqFilter, typeof FILTER_CONFIG[ReqFilter]][]).map(([key, cfg]) => {
+              <Stack direction="row" spacing={1} flexWrap="wrap">
+                {(Object.entries(FILTER_LABELS) as [ReqFilter, string][]).map(([key, label]) => {
                   const active = reqFilter === key;
                   return (
                     <Chip
                       key={key}
-                      label={cfg.label}
-                      size="small"
+                      label={label}
                       onClick={() => setReqFilter(key)}
                       sx={{
                         fontWeight: active ? 700 : 400,
-                        bgcolor: active ? cfg.bg : 'transparent',
-                        color: active ? cfg.color : 'text.secondary',
+                        bgcolor: active ? '#FF9F6B' : 'transparent',
+                        color: active ? 'white' : 'text.secondary',
                         border: '1px solid',
-                        borderColor: active ? cfg.border : 'divider',
+                        borderColor: active ? '#FF9F6B' : 'divider',
                         cursor: 'pointer',
-                        '&:hover': { bgcolor: active ? cfg.bg : 'action.hover' },
+                        '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
                       }}
                     />
                   );

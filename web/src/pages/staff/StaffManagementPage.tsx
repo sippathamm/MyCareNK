@@ -14,7 +14,10 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useAuth } from '../../hooks/useAuth';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { formatDateTime } from '../../utils/requestUtils';
+import { createThGridLocale } from '../../constants/datagrid';
+import type { Enums } from '../../lib/database.types';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -24,17 +27,10 @@ const ROLE_OPTIONS = [
   { value: 'superadmin', label: 'ผู้ดูแลสูงสุด' },
 ] as const;
 
-const SERVICE_CENTER_OPTIONS = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
-] as const;
-
-const ROLE_COLOR: Record<string, 'error' | 'primary' | 'default'> = {
-  superadmin: 'error',
-  admin: 'primary',
-  staff: 'default',
+const ROLE_CHIP_SX: Record<string, { bgcolor: string; color: string }> = {
+  superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
+  admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
+  staff:      { bgcolor: '#F5F5F5', color: '#616161' },
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -45,15 +41,7 @@ const ROLE_LABEL: Record<string, string> = {
 
 const ROLE_RANK: Record<string, number> = { staff: 0, admin: 1, superadmin: 2 };
 
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีข้อมูลเจ้าหน้าที่',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from} - ${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
+const thGridLocale = createThGridLocale('ไม่มีข้อมูลเจ้าหน้าที่');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -73,42 +61,26 @@ function generatePassword(): string {
   return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
 }
 
-function formatRelative(dateStr: string | null): string {
-  if (!dateStr) return 'ยังไม่เคยเข้าสู่ระบบ';
-  const diffMs = Date.now() - new Date(dateStr).getTime();
-  const secs = Math.floor(diffMs / 1000);
-  if (secs < 60) return `${secs} วินาทีที่แล้ว`;
-  const mins = Math.floor(secs / 60);
-  if (mins < 60) return `${mins} นาทีที่แล้ว`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} ชั่วโมงที่แล้ว`;
-  return `${Math.floor(hrs / 24)} วันที่แล้ว`;
-}
-
-function formatLastSignIn(dateStr: string | null): string {
-  if (!dateStr) return 'ยังไม่เคยเข้าสู่ระบบ';
-  return `${formatDateTime(dateStr)} (${formatRelative(dateStr)})`;
-}
-
 // ─── Add Staff Dialog ─────────────────────────────────────────────────────────
 
 interface AddStaffDialogProps {
   open: boolean;
+  centerNames: string[];
   onClose: () => void;
   onSuccess: () => void;
   onCreate: (payload: {
     email: string; password: string; first_name: string;
-    last_name: string; service_center: string; role: string;
+    last_name: string; service_center: string; role: Enums<'role'>;
   }) => Promise<string | null>;
 }
 
-function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
+function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [serviceCenter, setServiceCenter] = useState('');
-  const [role, setRole] = useState('staff');
+  const [role, setRole] = useState<Enums<'role'>>('staff');
   const [password, setPassword] = useState('');
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -166,11 +138,11 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
               select label="สถานบริการ" value={serviceCenter}
               onChange={e => setServiceCenter(e.target.value)} fullWidth required
             >
-              {SERVICE_CENTER_OPTIONS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
             </TextField>
             <TextField
               select label="ระดับสิทธิ์" value={role}
-              onChange={e => setRole(e.target.value)} fullWidth required
+              onChange={e => setRole(e.target.value as Enums<'role'>)} fullWidth required
             >
               {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
@@ -207,7 +179,7 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle2" color="text.secondary">ระดับสิทธิ์</Typography>
-                <Chip label={ROLE_LABEL[role]} color={ROLE_COLOR[role] ?? 'default'} size="small" />
+                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...(ROLE_CHIP_SX[role] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }} />
               </Box>
             </Box>
           </Box>
@@ -240,18 +212,20 @@ function AddStaffDialog({ open, onClose, onSuccess, onCreate }: AddStaffDialogPr
 interface EditStaffDialogProps {
   open: boolean;
   staff: StaffMember | null;
+  centerNames: string[];
   currentUserId: string;
+  currentRole: string;
   onClose: () => void;
-  onUpdate: (payload: { user_id: string; first_name: string; last_name: string; service_center: string; role: string; email?: string }) => Promise<string | null>;
+  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: Enums<'role'>; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
-function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
+function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [serviceCenter, setServiceCenter] = useState('');
-  const [role, setRole] = useState('staff');
+  const [role, setRole] = useState<Enums<'role'>>('staff');
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -260,6 +234,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
 
   useEffect(() => {
     if (staff) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFirstName(staff.first_name);
       setLastName(staff.last_name);
       setEmail(staff.email);
@@ -283,7 +258,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
     setSubmitting(true);
     setError(null);
     const emailChanged = email !== staff.email;
-    const err = await onUpdate({ user_id: staff.user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role, ...(emailChanged && { email }) });
+    const err = await onUpdate({ staff_user_id: staff.staff_user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role, ...(emailChanged && { email }) });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -293,32 +268,39 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
     if (!staff) return;
     if (!confirmDelete) { setConfirmDelete(true); return; }
     setDeleting(true);
-    const err = await onDelete(staff.user_id);
+    const err = await onDelete(staff.staff_user_id);
     setDeleting(false);
     if (err) { setError(err); return; }
     handleClose();
   };
 
+  const isRestricted = currentRole === 'admin' && staff?.role === 'superadmin';
+
   return (
     <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
       <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
       <DialogContent dividers>
+        {isRestricted && (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            ผู้ดูแลไม่สามารถแก้ไขหรือลบบัญชีผู้ดูแลสูงสุดได้
+          </Alert>
+        )}
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
           <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth />
-            <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth />
+            <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted} />
+            <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
           </Box>
-          <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth />
+          <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
           <TextField
             select label="สถานบริการ" value={serviceCenter}
-            onChange={e => setServiceCenter(e.target.value)} fullWidth
+            onChange={e => setServiceCenter(e.target.value)} fullWidth disabled={isRestricted}
           >
-            {SERVICE_CENTER_OPTIONS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+            {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
           </TextField>
           <TextField
             select label="ระดับสิทธิ์" value={role}
-            onChange={e => { setRole(e.target.value); setConfirmDowngrade(false); }} fullWidth
+            onChange={e => { setRole(e.target.value as Enums<'role'>); setConfirmDowngrade(false); }} fullWidth disabled={isRestricted}
           >
             {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
           </TextField>
@@ -349,11 +331,12 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
       </DialogContent>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button
+          variant="contained"
           color="error"
           startIcon={deleting ? undefined : <DeleteIcon />}
           endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
           onClick={handleDelete}
-          disabled={deleting || (staff?.user_id === currentUserId)}
+          disabled={deleting || isRestricted || (staff?.staff_user_id === currentUserId)}
           sx={{ mr: 'auto' }}
         >
           {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
@@ -362,7 +345,7 @@ function EditStaffDialog({ open, staff, currentUserId, onClose, onUpdate, onDele
         <Button
           variant="contained"
           onClick={handleSave}
-          disabled={submitting}
+          disabled={submitting || isRestricted}
           endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
         >
           บันทึก
@@ -379,6 +362,8 @@ export default function StaffManagementPage() {
   const { session } = useAuth();
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
+  const { centers } = useServiceCenters();
+  const centerNames = centers.map(c => c.name);
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
 
@@ -395,7 +380,16 @@ export default function StaffManagementPage() {
   }
 
   const columns: GridColDef[] = [
-    { field: 'user_id', headerName: 'UUID', flex: 1.8, minWidth: 280 },
+    {
+      field: 'staff_user_id', headerName: 'UUID', flex: 1.8, minWidth: 280,
+      renderCell: (params) => (
+        <Tooltip title={params.value as string} placement="top">
+          <Typography variant="body2" noWrap sx={{ overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '100%' }}>
+            {params.value}
+          </Typography>
+        </Tooltip>
+      ),
+    },
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 100 },
     { field: 'last_name', headerName: 'นามสกุล', flex: 1, minWidth: 100 },
     {
@@ -406,25 +400,12 @@ export default function StaffManagementPage() {
       renderCell: (params) => (
         <Chip
           label={ROLE_LABEL[params.value as string] ?? params.value}
-          color={ROLE_COLOR[params.value as string] ?? 'default'}
           size="small"
+          sx={{ ...(ROLE_CHIP_SX[params.value as string] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }}
         />
       ),
     },
     { field: 'service_center', headerName: 'สถานบริการ', flex: 1.5, minWidth: 160 },
-    {
-      field: 'last_sign_in_at',
-      headerName: 'เข้าสู่ระบบล่าสุดเมื่อ',
-      flex: 2,
-      minWidth: 220,
-      renderCell: (params) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', width: '100%' }}>
-          <Typography variant="body2">
-            {formatLastSignIn(params.value as string | null)}
-          </Typography>
-        </Box>
-      ),
-    },
     {
       field: 'actions',
       headerName: '',
@@ -467,11 +448,11 @@ export default function StaffManagementPage() {
 
       {error && <Alert severity="error" sx={{ mb: 3 }}>{error}</Alert>}
 
-      <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 2 }}>
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
         <Box sx={{ height: 500, width: '100%' }}>
           <DataGrid
             rows={staff}
-            getRowId={(row) => row.user_id}
+            getRowId={(row) => row.staff_user_id}
             columns={columns}
             loading={loading}
             localeText={thGridLocale}
@@ -479,12 +460,18 @@ export default function StaffManagementPage() {
             pageSizeOptions={[10]}
             disableRowSelectionOnClick
             getRowHeight={() => 56}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+            }}
           />
         </Box>
       </Paper>
 
       <AddStaffDialog
         open={addOpen}
+        centerNames={centerNames}
         onClose={() => setAddOpen(false)}
         onSuccess={fetchStaff}
         onCreate={createStaff}
@@ -493,7 +480,9 @@ export default function StaffManagementPage() {
       <EditStaffDialog
         open={!!editTarget}
         staff={editTarget}
+        centerNames={centerNames}
         currentUserId={currentUserId}
+        currentRole={role ?? ''}
         onClose={() => setEditTarget(null)}
         onUpdate={updateStaff}
         onDelete={deleteStaff}

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
 
@@ -649,38 +650,12 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         _buildLocationCard(request),
         _buildMessageCard(request),
         const SizedBox(height: 32),
-        SizedBox(
-          width: double.infinity,
-          height: 48,
-          child: FilledButton(
-            onPressed: _isConfirming ? null : _confirmReceive,
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.statusCompleted,
-              disabledBackgroundColor: AppColors.statusCompleted.withValues(
-                alpha: 0.5,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: _isConfirming
-                ? const SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: CircularProgressIndicator(
-                      color: AppColors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : Text(
-                    'ยืนยันการรับ',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.white,
-                    ),
-                  ),
-          ),
+        GradientButton(
+          height: 52,
+          onPressed: _isConfirming ? null : _confirmReceive,
+          label: 'ยืนยันการรับ',
+          isLoading: _isConfirming,
+          gradientColors: GradientButton.completedGradient,
         ),
       ],
     );
@@ -699,7 +674,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'หมายเลขอ้างอิง',
+              'รหัสอ้างอิง',
               style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Text(
@@ -740,141 +715,114 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _buildStatusTracker(CondomRequestModel request) {
-    const Color prepColor = AppColors.lubricant;
-    const Color readyColor = AppColors.statusReady;
-    const Color compColor = AppColors.statusCompleted;
+    final steps = [
+      (label: 'รอดำเนินการ', status: RequestStatus.pending,   color: AppColors.primary),
+      (label: 'กำลังเตรียม', status: RequestStatus.preparing,  color: AppColors.statusPreparing),
+      (label: 'พร้อมรับ',    status: RequestStatus.ready,      color: AppColors.statusReady),
+      (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
+    ];
+    final currentIdx = steps.indexWhere((s) => s.status == request.status);
+    const double nodeSize = 28;
+    const double gap = 6;
+    final n = steps.length;
 
-    final status = request.status;
-    final isPrepDone =
-        status == RequestStatus.preparing ||
-        status == RequestStatus.ready ||
-        status == RequestStatus.completed;
-    final isReadyDone =
-        status == RequestStatus.ready || status == RequestStatus.completed;
-    final isFinalDone = status == RequestStatus.completed;
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final step = steps[idx];
+      final isDone = idx < currentIdx;
+      final isCurrent = idx == currentIdx;
+      final isLast = idx == n - 1;
+      final showCheck = isDone || (isCurrent && isLast);
+      iconItems.add(AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: nodeSize, height: nodeSize,
+        decoration: BoxDecoration(
+          color: (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
+          shape: BoxShape.circle,
+        ),
+        child: Center(
+          child: showCheck
+              ? const Icon(Icons.check, color: Colors.white, size: 14)
+              : Text('${idx + 1}',
+                  style: GoogleFonts.googleSans(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: (isDone || isCurrent) ? Colors.white : AppColors.textMuted)),
+        ),
+      ));
+      if (!isLast) {
+        iconItems.addAll([
+          const SizedBox(width: gap),
+          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: isDone ? step.color : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(width: gap),
+        ]);
+      }
+    }
 
-    return Column(
-      children: [
-        Row(
-          children: [
-            _dot(AppColors.primary, filled: true),
-            Expanded(
-              child: _line(isPrepDone ? AppColors.primary : Colors.grey[300]!),
-            ),
-            _dot(prepColor, filled: isPrepDone),
-            Expanded(child: _line(isReadyDone ? prepColor : Colors.grey[300]!)),
-            _dot(readyColor, filled: isReadyDone),
-            Expanded(
-              child: _line(isFinalDone ? readyColor : Colors.grey[300]!),
-            ),
-            _dot(compColor, filled: isFinalDone),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _statusLabel(
-              'รอดำเนินการ',
-              status == RequestStatus.pending,
-              AppColors.primary,
-            ),
-            _statusLabel(
-              'กำลังเตรียม',
-              status == RequestStatus.preparing,
-              prepColor,
-            ),
-            _statusLabel('พร้อมรับ', status == RequestStatus.ready, readyColor),
-            _statusLabel(
-              'เสร็จสิ้น',
-              status == RequestStatus.completed,
-              compColor,
-            ),
-          ],
-        ),
-      ],
-    );
+    return Column(children: [
+      Row(children: iconItems),
+      const SizedBox(height: 4),
+      LayoutBuilder(builder: (context, constraints) {
+        final W = constraints.maxWidth;
+        final slotSpacing = (W - nodeSize) / (n - 1);
+        TextStyle labelStyle(int idx) {
+          final isDone = idx < currentIdx;
+          final isCurrent = idx == currentIdx;
+          return GoogleFonts.googleSans(
+            fontSize: 11,
+            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
+            color: isCurrent ? steps[idx].color : isDone ? AppColors.textSecondary : AppColors.textMuted,
+          );
+        }
+        return SizedBox(
+          height: 16,
+          child: Stack(clipBehavior: Clip.none, children: [
+            Positioned(left: 0, top: 0, child: Text(steps[0].label, style: labelStyle(0))),
+            Positioned(right: 0, top: 0, child: Text(steps[n - 1].label, style: labelStyle(n - 1))),
+            for (int i = 1; i < n - 1; i++)
+              Positioned(
+                left: nodeSize / 2 + i * slotSpacing,
+                top: 0,
+                child: FractionalTranslation(
+                  translation: const Offset(-0.5, 0),
+                  child: Text(steps[i].label, style: labelStyle(i)),
+                ),
+              ),
+          ]),
+        );
+      }),
+    ]);
   }
-
-  Widget _dot(Color color, {required bool filled}) => Container(
-    width: 24,
-    height: 24,
-    decoration: BoxDecoration(
-      shape: BoxShape.circle,
-      color: filled ? color : AppColors.white,
-      border: filled ? null : Border.all(color: color, width: 2),
-    ),
-  );
-
-  Widget _line(Color color) => Container(height: 2, color: color);
-
-  Widget _statusLabel(String label, bool active, Color color) => Text(
-    label,
-    style: GoogleFonts.googleSans(
-      color: active ? color : Colors.black87,
-      fontSize: 12,
-      fontWeight: active ? FontWeight.bold : FontWeight.normal,
-    ),
-  );
 
   Widget _buildQuantityCard(CondomRequestModel request) {
     final total = request.condomQuantities.values.fold(0, (s, v) => s + v);
     if (total == 0) return const SizedBox();
 
     return _card(
-      header: const Text(
-        'ถุงยางอนามัย',
-        style: TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
+      header: Row(children: [
+        const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Text('ถุงยางอนามัย',
+            style: GoogleFonts.googleSans(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Column(
-        children: request.condomQuantities.entries
-            .where((e) => e.value > 0)
-            .map(
-              (e) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'ขนาด ${e.key} มม.',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    Text(
-                      '${e.value} ชิ้น',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            )
-            .toList(),
-      ),
-      showDivider: true,
-      footer: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'รวม',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          Text(
-            '$total ชิ้น',
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
+          ...request.condomQuantities.entries
+              .where((e) => e.value > 0)
+              .map((e) => _infoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('รวม',
+                  style: GoogleFonts.googleSans(
+                      fontSize: 16, fontWeight: FontWeight.bold)),
+              Text('$total ชิ้น',
+                  style: GoogleFonts.googleSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary)),
+            ],
           ),
         ],
       ),
@@ -885,37 +833,14 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     if (request.lubricantQuantity == 0) return const SizedBox();
 
     return _card(
-      header: const Row(
-        children: [
-          Icon(Icons.add_circle_outline, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'เพิ่มเติม',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-      content: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text(
-            'เจลหล่อลื่น',
-            style: TextStyle(fontSize: 16, color: Colors.black87),
-          ),
-          Text(
-            '${request.lubricantQuantity} ชิ้น',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: AppColors.primary,
-            ),
-          ),
-        ],
-      ),
+      header: Row(children: [
+        const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Text('เพิ่มเติม',
+            style: GoogleFonts.googleSans(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
+      content: _infoRow('เจลหล่อลื่น', '${request.lubricantQuantity} ชิ้น'),
     );
   }
 
@@ -935,26 +860,17 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     }
 
     return _card(
-      header: const Row(
-        children: [
-          Icon(Icons.calendar_today_outlined, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'สถานบริการ วันที่และเวลารับ',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+      header: Row(children: [
+        const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Text('สถานบริการ วันที่และเวลารับ',
+            style: GoogleFonts.googleSans(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Column(
         children: [
           _infoRow('สถานบริการ', request.selectedServiceCenter ?? '-'),
-          const SizedBox(height: 12),
           _infoRow('วันที่', outputDate),
-          const SizedBox(height: 12),
           _infoRow('เวลา', outputTime),
         ],
       ),
@@ -965,43 +881,49 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     if (request.message.isEmpty) return const SizedBox();
 
     return _card(
-      header: const Row(
-        children: [
-          Icon(Icons.comment_outlined, color: Colors.black),
-          SizedBox(width: 8),
-          Text(
-            'ฝากข้อความ',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
+      header: Row(children: [
+        const Icon(Icons.comment_outlined, color: Colors.white, size: 18),
+        const SizedBox(width: 8),
+        Text('ฝากข้อความ',
+            style: GoogleFonts.googleSans(
+                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+      ]),
       content: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          request.message,
-          style: const TextStyle(fontSize: 16, color: AppColors.primary),
-        ),
+        child: Text(request.message,
+            style: GoogleFonts.googleSans(
+                fontSize: 15, color: AppColors.textPrimary)),
       ),
     );
   }
 
-  Widget _infoRow(String label, String value) => Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-      Text(label, style: const TextStyle(fontSize: 16)),
-      Text(
-        value,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: AppColors.primary,
+  Widget _infoRow(String label, String value) => Padding(
+    padding: const EdgeInsets.only(bottom: 12),
+    child: Column(
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(label,
+                style: GoogleFonts.googleSans(
+                    fontSize: 14, color: AppColors.textSecondary)),
+            Flexible(
+              child: Text(
+                value,
+                textAlign: TextAlign.right,
+                style: GoogleFonts.googleSans(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+          ],
         ),
-      ),
-    ],
+        const SizedBox(height: 12),
+        const Divider(height: 1, color: Color(0xFFF0F0F0)),
+      ],
+    ),
   );
 
   Widget _card({
@@ -1015,10 +937,9 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.grey[300]!),
         boxShadow: const [
           BoxShadow(
-            color: Color(0x05000000),
+            color: AppColors.cardShadowMedium,
             blurRadius: 10,
             offset: Offset(0, 4),
           ),
@@ -1030,11 +951,16 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           children: [
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              color: AppColors.white,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [AppColors.primaryDark, AppColors.primary],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: header,
             ),
-            const Divider(height: 1),
             Padding(padding: const EdgeInsets.all(16), child: content),
             if (showDivider) const Divider(height: 1),
             if (footer != null)
@@ -1082,7 +1008,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         ),
         const SizedBox(height: 6),
         Text(
-          'หมายเลขอ้างอิง: $refNumber',
+          'รหัสอ้างอิง: $refNumber',
           style: GoogleFonts.googleSans(
             fontSize: 12,
             color: AppColors.textSecondary,
@@ -1108,7 +1034,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           chipColor = AppColors.statusPreparing;
           break;
         case RequestStatus.cancelledByUser:
-          chipLabel = 'ยกเลิกโดยผู้ใช้';
+          chipLabel = 'ยกเลิกโดยคุณ';
           chipColor = Colors.grey[600]!;
           break;
         case RequestStatus.cancelledByStaff:
@@ -1159,7 +1085,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         if (_requestData != null) ...[
           const SizedBox(height: 6),
           Text(
-            'หมายเลขอ้างอิง: ${_requestData!.referenceNumber}',
+            'รหัสอ้างอิง: ${_requestData!.referenceNumber}',
             style: GoogleFonts.googleSans(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -1242,32 +1168,26 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           ),
         ),
         const SizedBox(height: 24),
-        SizedBox(
-          width: double.infinity,
+        GradientButton(
           height: 48,
-          child: FilledButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(
-                context,
-                rootNavigator: true,
-              ).push(MaterialPageRoute(builder: (_) => const LoginPage()));
-            },
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-            ),
-            child: Text(
-              'เข้าสู่ระบบ',
-              style: GoogleFonts.googleSans(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.white,
-              ),
-            ),
-          ),
+          onPressed: () async {
+            final messenger = ScaffoldMessenger.of(context);
+            final rootNav = Navigator.of(context, rootNavigator: true);
+            Navigator.of(context).pop();
+            final loggedIn = await rootNav
+                .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
+            if (loggedIn == true) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text('เข้าสู่ระบบแล้ว',
+                      style: GoogleFonts.googleSans()),
+                  backgroundColor: AppColors.success,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            }
+          },
+          label: 'เข้าสู่ระบบ',
         ),
       ],
     );
@@ -1343,26 +1263,10 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _rescanButton() {
-    return SizedBox(
-      width: double.infinity,
+    return GradientButton(
       height: 48,
-      child: FilledButton(
-        onPressed: widget.onRescan,
-        style: FilledButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-        ),
-        child: Text(
-          'สแกนอีกครั้ง',
-          style: GoogleFonts.googleSans(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: AppColors.white,
-          ),
-        ),
-      ),
+      onPressed: widget.onRescan,
+      label: 'สแกนอีกครั้ง',
     );
   }
 

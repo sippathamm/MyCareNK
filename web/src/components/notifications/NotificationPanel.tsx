@@ -14,9 +14,19 @@ import { useNavigate } from 'react-router-dom';
 import {
   useNotification,
   STATUS_CONFIG,
+  APPOINTMENT_STATUS_CONFIG,
+  isAppointmentNotification,
   type NotificationItem,
   type RequestStatus,
+  type AppointmentEventType,
 } from '../../contexts/NotificationContext';
+
+function getNotifConfig(item: NotificationItem) {
+  if (isAppointmentNotification(item)) {
+    return APPOINTMENT_STATUS_CONFIG[item.event_type as AppointmentEventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  }
+  return STATUS_CONFIG[item.event_type as RequestStatus];
+}
 
 const PANEL_LIMIT = 15;
 
@@ -31,8 +41,8 @@ function formatRelativeTime(dateStr: string): string {
   return `${Math.floor(hours / 24)} วันที่แล้ว`;
 }
 
-function StatusDot({ eventType }: { eventType: RequestStatus }) {
-  const { color } = STATUS_CONFIG[eventType] ?? { color: '#9E9E9E' };
+function StatusDot({ item }: { item: NotificationItem }) {
+  const color = item.is_read ? (getNotifConfig(item)?.color ?? '#9E9E9E') : '#FF9F6B';
   return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.4 }} />;
 }
 
@@ -48,7 +58,11 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
     onClose();
-    navigate('/requests', { state: { openRequestId: item.request_id } });
+    if (isAppointmentNotification(item)) {
+      navigate('/appointments', { state: { openAppointmentId: item.source_id } });
+    } else {
+      navigate('/requests', { state: { openRequestId: item.source_id } });
+    }
   };
 
   const handleDelete = (e: React.MouseEvent, id: string) => {
@@ -92,7 +106,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
         <>
           <List disablePadding sx={{ overflowY: 'auto', maxHeight: 420 }}>
             {displayed.map((item, idx) => {
-              const cfg = STATUS_CONFIG[item.event_type];
+              const cfg = getNotifConfig(item);
               return (
                 <Box key={item.id}>
                   <ListItemButton
@@ -102,12 +116,12 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                       py: 1.5,
                       alignItems: 'flex-start',
                       gap: 1.5,
-                      backgroundColor: item.is_read ? 'transparent' : cfg.bg,
+                      backgroundColor: item.is_read ? 'transparent' : '#FFF0E6',
                       '&:hover': { filter: 'brightness(0.96)' },
                     }}
                   >
                     {/* Status color dot */}
-                    <StatusDot eventType={item.event_type} />
+                    <StatusDot item={item} />
 
                     {/* Content */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -115,13 +129,13 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                         <Typography
                           variant="body2"
                           fontWeight={item.is_read ? 400 : 600}
-                          sx={{ color: item.is_read ? 'text.primary' : cfg.color }}
+                          sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
                           noWrap
                         >
                           {cfg.label}
                         </Typography>
                         {!item.is_read && (
-                          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: cfg.color, flexShrink: 0 }} />
+                          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#FF9F6B', flexShrink: 0 }} />
                         )}
                       </Box>
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>

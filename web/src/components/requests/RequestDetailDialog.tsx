@@ -10,7 +10,7 @@ export interface RequestData {
   reference_number: string;
   selected_date: string | null;
   selected_time: string | null;
-  selected_service_center: Enums<'service_center'>;
+  selected_service_center: string;
   condom_quantities: Record<string, number>;
   lubricant_quantity: number;
   message: string | null;
@@ -19,7 +19,7 @@ export interface RequestData {
   completed_at: string | null;
   created_at: string;
   updated_at: string;
-  request_status: Enums<'status'>;
+  request_status: Enums<'request_status'>;
 }
 
 interface RequestDetailDialogProps {
@@ -100,10 +100,10 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
       {request && (
         <Dialog open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth>
           <DialogTitle sx={{ pb: 1 }}>
-            <Typography variant="h6" fontWeight="bold" lineHeight={1.2}>
+            <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               รายละเอียดคำขอ
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography component="div" variant="caption" color="text.secondary">
               {request.reference_number}
             </Typography>
           </DialogTitle>
@@ -147,7 +147,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   <Typography variant="body1">{formatDateTime(request.updated_at)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle2" color="text.secondary">วันเดือนปีรับ</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">วันรับ</Typography>
                   {(() => {
                     const days = getOverdueDays(request.selected_date ?? '', request.request_status);
                     if (days > 0) {
@@ -165,19 +165,19 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   <Typography variant="body1">{request.selected_time ?? '-'} น.</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">สถานที่รับ</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">สถานที่</Typography>
                   <Typography variant="body1" fontWeight="medium">{request.selected_service_center}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
                   {(() => {
                     switch (request.request_status) {
-                      case 'pending': return <Chip label="รอดำเนินการ" color="warning" size="small" sx={{ fontWeight: 'bold' }} />;
-                      case 'preparing': return <Chip label="กำลังเตรียม" color="info" size="small" sx={{ fontWeight: 'bold' }} />;
-                      case 'ready': return <Chip label="รอรับ" color="secondary" size="small" sx={{ fontWeight: 'bold' }} />;
-                      case 'completed': return <Chip label="เสร็จสิ้น" color="success" size="small" sx={{ fontWeight: 'bold' }} />;
-                      case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
-                      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#E0E0E0', color: '#616161', fontWeight: 'bold' }} />;
+                      case 'pending':            return <Chip label="รอดำเนินการ"        size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
+                      case 'preparing':          return <Chip label="กำลังเตรียม"        size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
+                      case 'ready':              return <Chip label="รอรับ"              size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
+                      case 'completed':          return <Chip label="เสร็จสิ้น"          size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
+                      case 'cancelled_by_user':  return <Chip label="ยกเลิกโดยผู้ใช้"    size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
+                      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
                     }
                   })()}
                 </Box>

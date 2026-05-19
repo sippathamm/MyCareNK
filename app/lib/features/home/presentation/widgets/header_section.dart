@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
-import 'emergency_button.dart';
+import 'language_switcher.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 
 class HeaderSection extends StatefulWidget {
@@ -21,7 +21,7 @@ class _HeaderSectionState extends State<HeaderSection> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        const EmergencyButton(),
+        const LanguageSwitcher(),
         StreamBuilder<AuthState>(
           stream: Supabase.instance.client.auth.onAuthStateChange,
           builder: (context, snapshot) {
@@ -29,10 +29,20 @@ class _HeaderSectionState extends State<HeaderSection> {
 
             if (session == null) {
               return InkWell(
-                onTap: () {
-                  Navigator.of(context, rootNavigator: true).push(
-                    MaterialPageRoute(builder: (context) => const LoginPage()),
-                  );
+                onTap: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  final loggedIn = await Navigator.of(context, rootNavigator: true)
+                      .push<bool>(MaterialPageRoute(builder: (context) => const LoginPage()));
+                  if (loggedIn == true) {
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text('เข้าสู่ระบบแล้ว',
+                            style: GoogleFonts.googleSans()),
+                        backgroundColor: AppColors.success,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                  }
                 },
                 borderRadius: BorderRadius.circular(24),
                 child: Container(
@@ -71,12 +81,16 @@ class _HeaderSectionState extends State<HeaderSection> {
                     'User';
 
                 return PopupMenuButton<String>(
+                  tooltip: 'บัญชีผู้ใช้',
                   onSelected: (value) async {
                     if (value == 'logout') {
                       await Supabase.instance.client.auth.signOut();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('ออกจากระบบแล้ว')),
+                          SnackBar(
+                            content: Text('ออกจากระบบแล้ว', style: GoogleFonts.googleSans()),
+                            behavior: SnackBarBehavior.floating,
+                          ),
                         );
                       }
                     }

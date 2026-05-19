@@ -20,8 +20,8 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const verifyStaffRole = async (userId: string): Promise<boolean> => {
   const { data, error } = await supabase
     .from('staff_profiles')
-    .select('user_id')
-    .eq('user_id', userId)
+    .select('staff_user_id')
+    .eq('staff_user_id', userId)
     .maybeSingle();
 
   if (error) {
@@ -142,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error('useAuth must be used inside <AuthProvider>');

@@ -51,13 +51,13 @@ export function useAuditLog(
       }
 
       const { data, error: rpcError } = await supabase.rpc('get_audit_log', {
-        p_performed_by:  filters.performedBy ?? null,
-        p_action:        filters.action      ?? null,
-        p_target_table:  filters.targetTable ?? null,
-        p_target_id:      filters.targetId      ?? null,
-        p_service_center: filters.serviceCenter ?? null,
-        p_date_from:      filters.dateFrom    ? new Date(filters.dateFrom).toISOString() : null,
-        p_date_to:       dateTo,
+        p_performed_by:  filters.performedBy  ?? undefined,
+        p_action:        filters.action        ?? undefined,
+        p_target_table:  filters.targetTable   ?? undefined,
+        p_target_id:      filters.targetId     ?? undefined,
+        p_service_center: filters.serviceCenter ?? undefined,
+        p_date_from:      filters.dateFrom     ? new Date(filters.dateFrom).toISOString() : undefined,
+        p_date_to:       dateTo ?? undefined,
         p_limit:         pageSize,
         p_offset:        page * pageSize,
       });

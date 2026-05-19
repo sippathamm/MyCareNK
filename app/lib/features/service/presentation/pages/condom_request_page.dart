@@ -4,10 +4,13 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
-import '../../../../features/auth/presentation/pages/login_page.dart';
+import '../../../../../core/models/service_center_model.dart';
+import '../../../../../core/services/service_center_service.dart';
+import '../../../../../core/widgets/gradient_button.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
 import 'condom_request_confirm_page.dart';
+import 'request_history_page.dart';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
@@ -23,19 +26,6 @@ class _PickDate {
   final String monthLabel;
   const _PickDate(this.date, this.dayLabel, this.monthLabel);
 }
-
-class _ServiceCenter {
-  final String name;
-  final String hours;
-  const _ServiceCenter(this.name, this.hours);
-}
-
-const _kServiceCenters = [
-  _ServiceCenter('รพ.โพนพิสัย', 'จ–ศ 08:00–16:00'),
-  _ServiceCenter('รพ.สต.วัดหลวง', 'จ–ศ 08:00–16:00'),
-  _ServiceCenter('อบต.วัดหลวง', 'จ–ศ 08:30–16:30'),
-  _ServiceCenter('สสจ.หนองคาย', 'จ–ศ 08:00–17:00'),
-];
 
 List<_PickDate> _buildDateList() {
   final list = <_PickDate>[];
@@ -60,7 +50,9 @@ class CondomRequestPage extends StatefulWidget {
 }
 
 class _CondomRequestPageState extends State<CondomRequestPage> {
-  final Map<int, int> _quantities = {49: 0, 52: 0, 54: 0, 56: 0};
+  final Map<int, int> _quantities = {
+    for (final s in AppConstants.condomSizes) s: 0
+  };
   int _lubricantQuantity = 0;
   String? _selectedServiceCenter;
   DateTime? _selectedDate;
@@ -69,6 +61,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   int _animationVersion = 0;
   StreamSubscription<AuthState>? _authSubscription;
   final List<_PickDate> _dates = _buildDateList();
+
+  List<ServiceCenterModel> _centers = [];
+  bool _centersLoading = true;
 
   int _currentMonthlyUsed = AppConstants.maxCondomQuota;
   int _currentMonthlyLubricantUsed = AppConstants.maxLubricantQuota;
@@ -85,6 +80,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   @override
   void initState() {
     super.initState();
+    _loadCenters();
     _fetchMonthlyQuota();
     _authSubscription =
         Supabase.instance.client.auth.onAuthStateChange.listen((data) {
@@ -98,6 +94,15 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         _fetchMonthlyQuota();
       }
     });
+  }
+
+  Future<void> _loadCenters() async {
+    try {
+      final centers = await ServiceCenterService.fetchActive();
+      if (mounted) setState(() { _centers = centers; _centersLoading = false; });
+    } catch (_) {
+      if (mounted) setState(() => _centersLoading = false);
+    }
   }
 
   Future<void> _fetchMonthlyQuota() async {
@@ -132,19 +137,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   }
 
   void _navigateToConfirm() {
-    final session = Supabase.instance.client.auth.currentSession;
-    if (session == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเข้าสู่ระบบ')),
-      );
-      Navigator.of(context, rootNavigator: true).push(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-      );
-      return;
-    }
     if (_totalSelected == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเลือกถุงยางอนามัยอย่างน้อย 1 ชิ้น')),
+        SnackBar(
+          content: Text('กรุณาเลือกถุงยางอนามัยอย่างน้อย 1 ชิ้น', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
       return;
     }
@@ -187,6 +186,15 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           ),
         ),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history, color: AppColors.primary),
+            tooltip: 'ประวัติคำขอ',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -212,12 +220,31 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   _buildSectionCard(
                     title: 'สถานบริการ',
                     icon: Icons.local_hospital_outlined,
-                    child: Column(
-                      children: List.generate(
-                        _kServiceCenters.length,
-                        (i) => _buildLocationTile(_kServiceCenters[i], i),
-                      ),
-                    ),
+                    child: _centersLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.symmetric(vertical: 12),
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : _centers.isEmpty
+                            ? GestureDetector(
+                                onTap: _loadCenters,
+                                child: Center(
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
+                                        style: GoogleFonts.googleSans(
+                                            fontSize: 14, color: AppColors.textHint)),
+                                  ),
+                                ),
+                              )
+                            : Column(
+                                children: List.generate(
+                                  _centers.length,
+                                  (i) => _buildLocationTile(_centers[i], i),
+                                ),
+                              ),
                   ),
                   _buildSectionCard(
                     title: 'วันที่รับ',
@@ -272,22 +299,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             child: AnimatedOpacity(
               opacity: _canProceed ? 1.0 : 0.4,
               duration: const Duration(milliseconds: 200),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: _canProceed ? _navigateToConfirm : null,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: AppColors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24)),
-                  ),
-                  child: Text('ถัดไป',
-                      style: GoogleFonts.googleSans(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
-                ),
+              child: GradientButton(
+                onPressed: _canProceed ? _navigateToConfirm : null,
+                label: 'ถัดไป',
               ),
             ),
           ),
@@ -300,63 +314,61 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   Widget _buildStepIndicator(int step) {
     const labels = ['กรอกข้อมูล', 'ยืนยัน', 'สำเร็จ'];
+    const double nodeSize = 34;
+    const double gap = 6;
+    final n = labels.length;
+
+    final iconItems = <Widget>[];
+    for (int idx = 0; idx < n; idx++) {
+      final isDone = idx < step;
+      final isCurrent = idx == step;
+      final active = isDone || isCurrent;
+      final isLast = idx == n - 1;
+      final showCheck = isDone || (isCurrent && isLast);
+      iconItems.add(AnimatedContainer(
+        duration: const Duration(milliseconds: 250),
+        width: nodeSize, height: nodeSize,
+        decoration: BoxDecoration(color: active ? AppColors.primary : const Color(0xFFE8E8E8), shape: BoxShape.circle),
+        child: Center(child: showCheck
+            ? const Icon(Icons.check, color: Colors.white, size: 16)
+            : Text('${idx + 1}', style: GoogleFonts.googleSans(fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textMuted))),
+      ));
+      if (!isLast) {
+        iconItems.addAll([
+          const SizedBox(width: gap),
+          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: idx < step ? AppColors.primary : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
+          const SizedBox(width: gap),
+        ]);
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: Row(
-        children: List.generate(labels.length * 2 - 1, (i) {
-          if (i.isOdd) {
-            final done = (i ~/ 2) < step;
-            return Expanded(
-              child: Container(
-                height: 3,
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  color: done ? AppColors.primary : const Color(0xFFE8E8E8),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            );
+      child: Column(children: [
+        Row(children: iconItems),
+        const SizedBox(height: 4),
+        LayoutBuilder(builder: (context, constraints) {
+          final W = constraints.maxWidth;
+          final slotSpacing = (W - nodeSize) / (n - 1);
+          TextStyle labelStyle(int idx) {
+            final active = idx <= step;
+            return GoogleFonts.googleSans(fontSize: 11, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.primary : AppColors.textMuted);
           }
-          final idx = i ~/ 2;
-          final isDone = idx < step;
-          final isCurrent = idx == step;
-          final active = isDone || isCurrent;
-          return Column(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 250),
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: active ? AppColors.primary : const Color(0xFFE8E8E8),
-                  shape: BoxShape.circle,
+          return SizedBox(
+            height: 16,
+            child: Stack(clipBehavior: Clip.none, children: [
+              Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
+              Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
+              for (int i = 1; i < n - 1; i++)
+                Positioned(
+                  left: nodeSize / 2 + i * slotSpacing,
+                  top: 0,
+                  child: FractionalTranslation(translation: const Offset(-0.5, 0), child: Text(labels[i], style: labelStyle(i))),
                 ),
-                child: Center(
-                  child: isDone
-                      ? const Icon(Icons.check, color: Colors.white, size: 16)
-                      : Text(
-                          '${idx + 1}',
-                          style: GoogleFonts.googleSans(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                            color: active ? Colors.white : AppColors.textMuted,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                labels[idx],
-                style: GoogleFonts.googleSans(
-                  fontSize: 11,
-                  fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-                  color: active ? AppColors.primary : AppColors.textMuted,
-                ),
-              ),
-            ],
+            ]),
           );
         }),
-      ),
+      ]),
     );
   }
 
@@ -415,10 +427,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   // ── Location tiles ──────────────────────────────────────────────────────────
 
-  Widget _buildLocationTile(_ServiceCenter center, int index) {
+  Widget _buildLocationTile(ServiceCenterModel center, int index) {
     final sel = _selectedServiceCenter == center.name;
     return GestureDetector(
-      onTap: () => setState(() => _selectedServiceCenter = center.name),
+      onTap: () => setState(() {
+        if (_selectedServiceCenter != center.name) _selectedTime = null;
+        _selectedServiceCenter = center.name;
+      }),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
@@ -464,14 +479,16 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       color: AppColors.textPrimary,
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    '${center.hours} น.',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 14,
-                      color: AppColors.textHint,
+                  if (center.operatingHours != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      center.operatingHours!,
+                      style: GoogleFonts.googleSans(
+                        fontSize: 14,
+                        color: AppColors.textHint,
+                      ),
                     ),
-                  ),
+                  ],
                 ],
               ),
             ),
@@ -486,6 +503,31 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // ── Date picker ─────────────────────────────────────────────────────────────
 
   Widget _buildDatePicker() {
+    final center = _selectedCenter;
+    if (center == null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'กรุณาเลือกสถานบริการก่อน',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+    if (!center.condomServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
     return SizedBox(
       height: 84,
       child: ListView.separated(
@@ -552,7 +594,28 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   // ── Time picker ─────────────────────────────────────────────────────────────
 
+  ServiceCenterModel? get _selectedCenter =>
+      _centers.where((c) => c.name == _selectedServiceCenter).firstOrNull;
+
+  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
+
   Widget _buildTimePicker() {
+    final center = _selectedCenter;
+    if (center == null || !center.condomServiceEnabled) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            center == null
+                ? 'กรุณาเลือกสถานบริการก่อน'
+                : 'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+            style: GoogleFonts.googleSans(
+                fontSize: 14, color: AppColors.textHint),
+          ),
+        ),
+      );
+    }
+
     Widget chip(String t) {
       final parts = t.split(':');
       final tod =
@@ -591,28 +654,26 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   color: AppColors.textSecondary)),
         );
 
-    final morning = AppConstants.pickupTimes
-        .where((t) => int.parse(t.split(':')[0]) < 12)
-        .toList();
-    final afternoon = AppConstants.pickupTimes
-        .where((t) => int.parse(t.split(':')[0]) >= 12)
-        .toList();
+    final times = center.pickupTimes;
+    final morning = times.where((t) => _hourOf(t) < 12).toList();
+    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
+
+    Widget dash() => Text('–',
+        style: GoogleFonts.googleSans(
+            fontSize: 15, color: AppColors.textHint));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (morning.isNotEmpty) ...[
-          label('ช่วงเช้า'),
-          Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList()),
-        ],
-        if (afternoon.isNotEmpty) ...[
-          const SizedBox(height: 14),
-          label('ช่วงบ่าย'),
-          Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: afternoon.map(chip).toList()),
-        ],
+        label('ช่วงเช้า'),
+        morning.isNotEmpty
+            ? Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList())
+            : dash(),
+        const SizedBox(height: 14),
+        label('ช่วงบ่าย'),
+        afternoon.isNotEmpty
+            ? Wrap(spacing: 8, runSpacing: 8, children: afternoon.map(chip).toList())
+            : dash(),
       ],
     );
   }

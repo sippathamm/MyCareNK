@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Box, Typography, Card, CardContent, Grid, TextField, MenuItem, Stack } from '@mui/material';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line, type TooltipProps } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line, type TooltipContentProps } from 'recharts';
 import type { Session } from '@supabase/supabase-js';
 import { useDashboard } from '../../hooks/useDashboard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useLeadTime } from '../../hooks/useLeadTime';
 import { usePeakTime } from '../../hooks/usePeakTime';
 import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
-import type { Enums } from '../../lib/database.types';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { toLocalDateString } from '../../utils/staffWorkloadUtils';
 
 const STATUS_COLORS = {
   pending: '#FF9F6B',
@@ -18,17 +19,10 @@ const STATUS_COLORS = {
 } as const;
 
 const LEAD_TIME_COLORS = {
-  pending_to_preparing: '#FF9F6B',
-  preparing_to_ready: '#64B5F6',
-  ready_to_completed: '#BA68C8',
+  pending_to_preparing: '#64B5F6',
+  preparing_to_ready: '#BA68C8',
+  ready_to_completed: '#81C784',
 } as const;
-
-const SERVICE_CENTERS: Enums<'service_center'>[] = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
-];
 
 interface DashboardPageProps {
   session: Session;
@@ -56,13 +50,13 @@ function ColoredYTick({ x, y, payload, index }: { x?: number; y?: number; payloa
   );
 }
 
-function BarTooltip({ active, payload, label }: TooltipProps<number, string>) {
+function BarTooltip({ active, payload, label }: TooltipContentProps) {
   if (!active || !payload?.length) return null;
   return (
     <Box sx={{ bgcolor: 'white', border: 'none', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5, minWidth: 140 }}>
       <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>{label}</Typography>
-      {payload.map((entry) => (
-        <Box key={entry.dataKey} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
+      {payload.map((entry, i) => (
+        <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
           <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: entry.fill }} />
           <Typography variant="caption">{entry.name}: {entry.value}</Typography>
         </Box>
@@ -85,6 +79,18 @@ function formatLeadTime(minutes: number | null | undefined): string {
   return `${h} ชั่วโมง ${m} นาที`;
 }
 
+function LeadTimeBarTooltip({ active, payload }: TooltipContentProps) {
+  if (!active || !payload?.length) return null;
+  return (
+    <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
+      <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
+        {payload[0]?.payload?.name}
+      </Typography>
+      <Typography variant="caption">{formatLeadTime(payload[0]?.value as number)}</Typography>
+    </Box>
+  );
+}
+
 const SummaryCard = ({ title, value, color }: { title: string; value: string | number; color: string }) => (
   <Card sx={{ height: '100%', borderRadius: 2 }} elevation={1}>
     <CardContent>
@@ -97,13 +103,6 @@ const SummaryCard = ({ title, value, color }: { title: string; value: string | n
     </CardContent>
   </Card>
 );
-
-function toLocalDateString(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
 
 function getDefaultDateFrom(): string {
   const d = new Date();
@@ -125,6 +124,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
   const [serviceCenter, setServiceCenter] = useState<string>('all');
 
   const isSuperadmin = role === 'superadmin';
+  const { centers } = useServiceCenters(isSuperadmin);
   const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
 
   const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedSC);
@@ -175,18 +175,6 @@ export default function DashboardPage({ session }: DashboardPageProps) {
 
   const hasBreakdownData = breakdownData.some(d => d.minutes !== null);
 
-  function LeadTimeBarTooltip({ active, payload }: TooltipProps<number, string>) {
-    if (!active || !payload?.length) return null;
-    return (
-      <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
-        <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
-          {payload[0]?.payload?.name}
-        </Typography>
-        <Typography variant="caption">{formatLeadTime(payload[0]?.value as number)}</Typography>
-      </Box>
-    );
-  }
-
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>
@@ -229,7 +217,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="date" tickLine={false} axisLine={false} />
                   <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} content={<BarTooltip />} />
+                  <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} content={BarTooltip} />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" />
                   {BAR_STATUS_ITEMS.map(({ key, name }, idx) => (
                     <Bar
@@ -326,8 +314,8 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                 sx={{ minWidth: 180 }}
               >
                 <MenuItem value="all">ทั้งหมด</MenuItem>
-                {SERVICE_CENTERS.map(sc => (
-                  <MenuItem key={sc} value={sc}>{sc}</MenuItem>
+                {centers.map(c => (
+                  <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
                 ))}
               </TextField>
             )}
@@ -395,8 +383,8 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                     <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} unit=" นาที" />
                     <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={180} tick={<ColoredYTick />} />
-                    <Tooltip content={<LeadTimeBarTooltip />} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                    <Bar dataKey="minutes" radius={[0, 4, 4, 0]} minPointSize={4} label={{ position: 'right', fontSize: 11, fill: '#666', formatter: (v: number) => formatLeadTime(v) }}>
+                    <Tooltip content={LeadTimeBarTooltip} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
+                    <Bar dataKey="minutes" radius={[0, 4, 4, 0]} minPointSize={4} label={{ position: 'right', fontSize: 11, fill: '#666', formatter: (v: unknown) => typeof v === 'number' ? formatLeadTime(v) : String(v) }}>
                       {breakdownData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}

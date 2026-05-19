@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { Enums } from '../lib/database.types';
 
 export interface StaffWorkloadRow {
   staff_user_id: string;
   first_name: string;
   last_name: string;
-  service_center: Enums<'service_center'>;
+  service_center: string;
   completed_count: number;
   cancelled_count: number;
   overdue_count: number;
@@ -36,7 +35,7 @@ async function fetchWorkload(
   const { data, error } = await supabase.rpc('get_staff_workload', {
     p_date_from: from.toISOString(),
     p_date_to: to.toISOString(),
-    p_service_center: serviceCenter ?? null,
+    p_service_center: serviceCenter ?? undefined,
   });
   if (error) throw error;
   return (data as StaffWorkloadRow[]) ?? [];

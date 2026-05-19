@@ -1,17 +1,18 @@
 import { useState, useMemo } from 'react';
 import {
-  Box, Typography, Card, CardContent, TextField, MenuItem, Stack,
+  Box, Typography, Paper, TextField, MenuItem, Stack,
   Chip, Alert, Switch, FormControlLabel, Divider, IconButton, Tooltip,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import type { Enums } from '../../lib/database.types';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
 import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
+import { createThGridLocale } from '../../constants/datagrid';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -40,29 +41,13 @@ function DeltaChip({ delta, positiveIsGood = true }: { delta: number | null; pos
 
 // ─── Locale ──────────────────────────────────────────────────────────────────
 
-const thGridLocale = {
-  noRowsLabel: 'ไม่มีข้อมูลในช่วงที่เลือก',
-  noResultsOverlayLabel: 'ไม่พบข้อมูล',
-  MuiTablePagination: {
-    labelRowsPerPage: 'จำนวนต่อหน้า:',
-    labelDisplayedRows: ({ from, to, count }: { from: number; to: number; count: number }) =>
-      `${from} - ${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`,
-  },
-};
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const SERVICE_CENTERS: Enums<'service_center'>[] = [
-  'รพ.โพนพิสัย',
-  'รพ.สต.วัดหลวง',
-  'อบต.วัดหลวง',
-  'สสจ.หนองคาย',
-];
+const thGridLocale = createThGridLocale('ไม่มีข้อมูลในช่วงที่เลือก');
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffWorkloadPage() {
   const { role, loading: roleLoading } = useRoleAccess();
+  const { centers } = useServiceCenters(role === 'superadmin');
 
   // Main filter
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
@@ -207,15 +192,17 @@ export default function StaffWorkloadPage() {
         สรุปจำนวนคำขอที่แต่ละคนดำเนินการในช่วงเวลาที่เลือก
       </Typography>
 
-      {/* Filter Card */}
-      <Card sx={{ borderRadius: 2, mb: 3 }} elevation={1}>
-        <CardContent>
+      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
+
+      {/* Filter + Table */}
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+        <Box sx={{ mb: 3 }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom} onChange={e => setDateFrom(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
             <TextField label="ถึงวันที่" type="date" size="small" value={dateTo} onChange={e => setDateTo(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
             <TextField label="สถานบริการ" select size="small" value={serviceCenter} onChange={e => setServiceCenter(e.target.value)} sx={{ minWidth: 180 }}>
               <MenuItem value="all">ทั้งหมด</MenuItem>
-              {SERVICE_CENTERS.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              {centers.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
             </TextField>
             <FormControlLabel
               control={<Switch size="small" checked={compareEnabled} onChange={e => handleCompareToggle(e.target.checked)} />}
@@ -236,32 +223,29 @@ export default function StaffWorkloadPage() {
               </Stack>
             </>
           )}
-        </CardContent>
-      </Card>
+        </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 3 }}>เกิดข้อผิดพลาด: {error}</Alert>}
-
-      {/* Leaderboard Table */}
-      <Card sx={{ borderRadius: 2 }} elevation={1}>
-        <CardContent sx={{ p: 0, '&:last-child': { pb: 0 } }}>
-          <Box sx={{ height: 500 }}>
-            <DataGrid
-              rows={enrichedRows}
-              columns={columns}
-              loading={loading}
-              localeText={thGridLocale}
-              getRowHeight={() => compareEnabled ? 64 : 52}
-              initialState={{
-                pagination: { paginationModel: { pageSize: 25, page: 0 } },
-                sorting: { sortModel: [{ field: 'completed_count', sort: 'desc' }] },
-              }}
-              pageSizeOptions={[25, 50]}
-              disableRowSelectionOnClick
-              sx={{ border: 'none', borderRadius: 2, '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' } }}
-            />
-          </Box>
-        </CardContent>
-      </Card>
+        <Box sx={{ height: 500 }}>
+          <DataGrid
+            rows={enrichedRows}
+            columns={columns}
+            loading={loading}
+            localeText={thGridLocale}
+            getRowHeight={() => compareEnabled ? 64 : 52}
+            initialState={{
+              pagination: { paginationModel: { pageSize: 25, page: 0 } },
+              sorting: { sortModel: [{ field: 'completed_count', sort: 'desc' }] },
+            }}
+            pageSizeOptions={[25, 50]}
+            disableRowSelectionOnClick
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+            }}
+          />
+        </Box>
+      </Paper>
 
       {/* Detail Dialog */}
       <StaffWorkloadDetailDialog
