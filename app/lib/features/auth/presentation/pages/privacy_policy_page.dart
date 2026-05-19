@@ -103,6 +103,19 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
     } on AuthException catch (e) {
       if (!mounted) return;
       String msg = e.message;
+      if (msg.toLowerCase().contains('breach') ||
+          msg.toLowerCase().contains('found in a')) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            'รหัสผ่านนี้เคยรั่วไหลในอินเทอร์เน็ต กรุณากลับไปตั้งรหัสผ่านใหม่',
+            style: GoogleFonts.googleSans(),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+        Navigator.of(context).pop();
+        return;
+      }
       if (msg.toLowerCase().contains('already registered') ||
           msg.toLowerCase().contains('already exists')) {
         msg = 'ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว';
