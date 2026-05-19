@@ -166,6 +166,7 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
 
   useEffect(() => {
     if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setEditTarget(null);
       setEditOpen(false);
       setAddOpen(false);

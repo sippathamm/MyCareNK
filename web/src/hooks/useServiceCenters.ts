@@ -37,6 +37,7 @@ export function useServiceCenters(enabled = true) {
 
   useEffect(() => {
     if (enabled) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchData();
     }
   }, [enabled, fetchData]);

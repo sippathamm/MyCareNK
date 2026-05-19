@@ -48,10 +48,10 @@ export function useInventoryLog(
       }
 
       const { data, error: rpcError } = await supabase.rpc('get_inventory_log', {
-        p_action:         filters.action        ?? null,
-        p_service_center: filters.serviceCenter ?? null,
-        p_date_from:      filters.dateFrom      ? new Date(filters.dateFrom).toISOString() : null,
-        p_date_to:        dateTo,
+        p_action:         filters.action        ?? undefined,
+        p_service_center: filters.serviceCenter ?? undefined,
+        p_date_from:      filters.dateFrom      ? new Date(filters.dateFrom).toISOString() : undefined,
+        p_date_to:        dateTo ?? undefined,
         p_limit:          pageSize,
         p_offset:         page * pageSize,
       });

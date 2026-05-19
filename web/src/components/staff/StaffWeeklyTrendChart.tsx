@@ -76,8 +76,8 @@ export default function StaffWeeklyTrendChart({ data, loading, error }: Props) {
           axisLine={false}
         />
         <Tooltip
-          formatter={(value: number, name: string) => [value, name]}
-          labelFormatter={(label: string) => `สัปดาห์ ${formatWeek(label)}`}
+          formatter={(value, name) => [value, name]}
+          labelFormatter={(label) => `สัปดาห์ ${formatWeek(String(label))}`}
           contentStyle={{ fontSize: 12, borderRadius: 8 }}
         />
         <Line

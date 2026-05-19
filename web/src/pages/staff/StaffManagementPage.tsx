@@ -17,6 +17,7 @@ import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManage
 import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
+import type { Enums } from '../../lib/database.types';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -69,7 +70,7 @@ interface AddStaffDialogProps {
   onSuccess: () => void;
   onCreate: (payload: {
     email: string; password: string; first_name: string;
-    last_name: string; service_center: string; role: string;
+    last_name: string; service_center: string; role: Enums<'role'>;
   }) => Promise<string | null>;
 }
 
@@ -79,7 +80,7 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [serviceCenter, setServiceCenter] = useState('');
-  const [role, setRole] = useState('staff');
+  const [role, setRole] = useState<Enums<'role'>>('staff');
   const [password, setPassword] = useState('');
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -141,7 +142,7 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
             </TextField>
             <TextField
               select label="ระดับสิทธิ์" value={role}
-              onChange={e => setRole(e.target.value)} fullWidth required
+              onChange={e => setRole(e.target.value as Enums<'role'>)} fullWidth required
             >
               {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
@@ -215,7 +216,7 @@ interface EditStaffDialogProps {
   currentUserId: string;
   currentRole: string;
   onClose: () => void;
-  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: string; email?: string }) => Promise<string | null>;
+  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: Enums<'role'>; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
@@ -224,7 +225,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [serviceCenter, setServiceCenter] = useState('');
-  const [role, setRole] = useState('staff');
+  const [role, setRole] = useState<Enums<'role'>>('staff');
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -233,6 +234,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 
   useEffect(() => {
     if (staff) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFirstName(staff.first_name);
       setLastName(staff.last_name);
       setEmail(staff.email);
@@ -298,7 +300,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
           </TextField>
           <TextField
             select label="ระดับสิทธิ์" value={role}
-            onChange={e => { setRole(e.target.value); setConfirmDowngrade(false); }} fullWidth disabled={isRestricted}
+            onChange={e => { setRole(e.target.value as Enums<'role'>); setConfirmDowngrade(false); }} fullWidth disabled={isRestricted}
           >
             {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
           </TextField>

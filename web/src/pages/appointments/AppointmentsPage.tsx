@@ -58,6 +58,7 @@ export default function AppointmentsPage() {
     if (loading || !openAppointmentId) return;
     const apt = appointments.find(a => a.id === openAppointmentId);
     if (apt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedAppointment(apt);
       setDialogOpen(true);
       navigate(location.pathname, { replace: true, state: null });

@@ -38,6 +38,7 @@ export default function RequestsPage() {
     if (loading || !openRequestId) return;
     const req = requests.find(r => r.id === openRequestId);
     if (req) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedRequest(req);
       setDialogOpen(true);
       navigate(location.pathname, { replace: true, state: null });

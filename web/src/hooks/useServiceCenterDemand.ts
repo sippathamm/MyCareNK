@@ -51,6 +51,7 @@ export function useServiceCenterDemand(dateFrom: string, dateTo: string) {
   }, [dateFrom, dateTo]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, [fetchData]);
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
-  Typography, Box, Divider, Chip, CircularProgress, Stack,
+  Typography, Box, Divider, Chip, Stack,
   Tooltip, IconButton, Snackbar, Alert,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -70,7 +70,14 @@ export default function StaffWorkloadDetailDialog({
   const [statusUpdating, setStatusUpdating]   = useState(false);
   const [statusError, setStatusError]         = useState<string | null>(null);
 
-  useEffect(() => { if (!open) { setReqFilter('all'); setSelectedReq(null); setReqDetailOpen(false); } }, [open]);
+  useEffect(() => {
+    if (!open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setReqFilter('all');
+      setSelectedReq(null);
+      setReqDetailOpen(false);
+    }
+  }, [open]);
 
   const { data: trendData, loading: trendLoading, error: trendError } = useStaffWorkloadTrend(
     dateFrom, dateTo, serviceCenter, open ? staffId : null,
@@ -179,7 +186,6 @@ export default function StaffWorkloadDetailDialog({
         </Tooltip>
       ),
     },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], []);
 
   return (

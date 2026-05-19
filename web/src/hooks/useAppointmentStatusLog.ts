@@ -47,12 +47,12 @@ export function useAppointmentStatusLog(
       }
 
       const { data, error: rpcError } = await supabase.rpc('get_appointment_status_log', {
-        p_performed_by:     filters.performedBy     ?? null,
-        p_from_status:      filters.fromStatus      ?? null,
-        p_to_status:        filters.toStatus        ?? null,
-        p_reference_number: filters.referenceNumber ?? null,
-        p_date_from:        filters.dateFrom ? new Date(filters.dateFrom).toISOString() : null,
-        p_date_to:          dateTo,
+        p_performed_by:     filters.performedBy     ?? undefined,
+        p_from_status:      filters.fromStatus      ?? undefined,
+        p_to_status:        filters.toStatus        ?? undefined,
+        p_reference_number: filters.referenceNumber ?? undefined,
+        p_date_from:        filters.dateFrom ? new Date(filters.dateFrom).toISOString() : undefined,
+        p_date_to:          dateTo ?? undefined,
         p_limit:            pageSize,
         p_offset:           page * pageSize,
       });

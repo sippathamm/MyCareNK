@@ -21,10 +21,12 @@ export type AppointmentEventType = Enums<'appointment_status'>;
 
 export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolean };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function isAppointmentNotification(item: NotificationItem): boolean {
   return item.source_type === 'doctor_appointment';
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
   pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
   confirmed:          { label: 'ยืนยันนัดหมาย',           color: '#BA68C8', bg: '#F5EAF9' },
@@ -216,7 +218,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           setToastIsAppointment(isAppointment);
           setToastAppointmentEventType(aptEventType);
           setToastEventType(isAppointment ? null : row.event_type as RequestStatus);
-          setToastMessage(buildToastMessage(row.event_type, row.reference_number, isAppointment, aptEventType));
+          setToastMessage(buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType));
           setToastOpen(true);
           playNotificationSound();
         }
@@ -334,6 +336,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export function useNotification(): NotificationContextValue {
   const ctx = useContext(NotificationContext);
   if (!ctx) throw new Error('useNotification must be used inside <NotificationProvider>');
@@ -344,6 +347,7 @@ export function useNotification(): NotificationContextValue {
 // Helpers
 // ---------------------------------------------------------------------------
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string; bg: string }> = {
   pending:            { label: 'คำขอใหม่',              color: '#FF9F6B', bg: '#FFF0E6' },
   preparing:          { label: 'กำลังเตรียม',           color: '#64B5F6', bg: '#EBF4FF' },

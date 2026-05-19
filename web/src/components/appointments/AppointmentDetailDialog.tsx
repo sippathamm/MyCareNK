@@ -5,6 +5,7 @@ import {
 } from '@mui/material';
 import type { Enums } from '../../lib/database.types';
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const REASON_LABELS: Record<string, string> = {
   pep:     'รับยา PEP',
   prep:    'รับยา PrEP',

@@ -46,13 +46,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
     : (toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null);
 
   const bellRef = useRef<HTMLButtonElement>(null);
-  const [panelOpen, setPanelOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const drawerWidth = sidebarOpen ? DRAWER_OPEN_WIDTH : DRAWER_CLOSED_WIDTH;
 
-  const handleBellClick = () => setPanelOpen(true);
-  const handlePanelClose = () => setPanelOpen(false);
+  const handleBellClick = () => { setAnchorEl(bellRef.current); };
+  const handlePanelClose = () => { setAnchorEl(null); };
 
   const handleLogout = async () => {
     await logout();
@@ -269,7 +269,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
       {/* Notification Panel (Popover) */}
       <NotificationPanel
-        anchorEl={panelOpen ? bellRef.current : null}
+        anchorEl={anchorEl}
         onClose={handlePanelClose}
       />
 
