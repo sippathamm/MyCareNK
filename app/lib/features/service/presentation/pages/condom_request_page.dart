@@ -64,6 +64,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   List<ServiceCenterModel> _centers = [];
   bool _centersLoading = true;
+  bool _centersNotLoggedIn = false;
 
   int _currentMonthlyUsed = AppConstants.maxCondomQuota;
   int _currentMonthlyLubricantUsed = AppConstants.maxLubricantQuota;
@@ -92,11 +93,17 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         });
       } else if (data.event == AuthChangeEvent.signedIn) {
         _fetchMonthlyQuota();
+        _loadCenters();
       }
     });
   }
 
   Future<void> _loadCenters() async {
+    if (Supabase.instance.client.auth.currentUser == null) {
+      if (mounted) setState(() { _centersLoading = false; _centersNotLoggedIn = true; });
+      return;
+    }
+    if (mounted) setState(() { _centersLoading = true; _centersNotLoggedIn = false; });
     try {
       final centers = await ServiceCenterService.fetchActive();
       if (mounted) setState(() { _centers = centers; _centersLoading = false; });
@@ -227,24 +234,33 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           )
-                        : _centers.isEmpty
-                            ? GestureDetector(
-                                onTap: _loadCenters,
-                                child: Center(
-                                  child: Padding(
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
-                                    child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
-                                        style: GoogleFonts.googleSans(
-                                            fontSize: 14, color: AppColors.textHint)),
-                                  ),
+                        : _centersNotLoggedIn
+                            ? Center(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12),
+                                  child: Text('กรุณาเข้าสู่ระบบ',
+                                      style: GoogleFonts.googleSans(
+                                          fontSize: 14, color: AppColors.textHint)),
                                 ),
                               )
-                            : Column(
-                                children: List.generate(
-                                  _centers.length,
-                                  (i) => _buildLocationTile(_centers[i], i),
-                                ),
-                              ),
+                            : _centers.isEmpty
+                                ? GestureDetector(
+                                    onTap: _loadCenters,
+                                    child: Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                        child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
+                                            style: GoogleFonts.googleSans(
+                                                fontSize: 14, color: AppColors.textHint)),
+                                      ),
+                                    ),
+                                  )
+                                : Column(
+                                    children: List.generate(
+                                      _centers.length,
+                                      (i) => _buildLocationTile(_centers[i], i),
+                                    ),
+                                  ),
                   ),
                   _buildSectionCard(
                     title: 'วันที่รับ',

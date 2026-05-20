@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/models/service_center_model.dart';
 import '../../../../../core/services/service_center_service.dart';
@@ -14,11 +15,21 @@ class ServiceCentersPage extends StatefulWidget {
 
 class _ServiceCentersPageState extends State<ServiceCentersPage> {
   late Future<List<ServiceCenterModel>> _future;
+  bool _notLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
-    _future = ServiceCenterService.fetchActive();
+    _loadCenters();
+  }
+
+  void _loadCenters() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      setState(() { _notLoggedIn = true; _future = Future.value([]); });
+      return;
+    }
+    setState(() { _notLoggedIn = false; _future = ServiceCenterService.fetchActive(); });
   }
 
   @override
@@ -46,6 +57,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
       body: FutureBuilder<List<ServiceCenterModel>>(
         future: _future,
         builder: (context, snapshot) {
+          if (_notLoggedIn) return _buildNotLoggedIn();
           if (snapshot.connectionState == ConnectionState.waiting) {
             return _buildSkeleton();
           }
@@ -70,6 +82,28 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildNotLoggedIn() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.lock_outline, color: AppColors.textHint, size: 48),
+            const SizedBox(height: 12),
+            Text(
+              'กรุณาเข้าสู่ระบบ',
+              style: GoogleFonts.googleSans(
+                fontSize: 15,
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -111,8 +145,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
             ),
             const SizedBox(height: 16),
             OutlinedButton(
-              onPressed: () =>
-                  setState(() => _future = ServiceCenterService.fetchActive()),
+              onPressed: _loadCenters,
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
                 side: const BorderSide(color: AppColors.primary),
