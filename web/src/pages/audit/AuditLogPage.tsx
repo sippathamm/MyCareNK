@@ -202,6 +202,7 @@ function AuditLogTab() {
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
               onRowClick={({ row }) => setDetailRow(row as StaffAuditLogRow)}
+              hideFooterSelectedRowCount
               sx={{
                 border: 'none',
                 '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
@@ -516,6 +517,7 @@ function InventoryLogTab() {
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
               onRowClick={({ row }) => setDetailRow(row as InventoryLogRow)}
+              hideFooterSelectedRowCount
               sx={{
                 border: 'none',
                 '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
