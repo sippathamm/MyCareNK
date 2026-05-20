@@ -154,7 +154,7 @@ function AuditLogTab() {
       renderCell: (p) => <ActionChip action={p.value} />,
     },
     {
-      field: 'target_id', headerName: 'UUID เจ้าหน้าที่', width: 310,
+      field: 'target_staff_user_id', headerName: 'UUID เจ้าหน้าที่', width: 310,
       renderCell: (p) => (
         <Typography variant="body2">{p.value ?? '—'}</Typography>
       ),
