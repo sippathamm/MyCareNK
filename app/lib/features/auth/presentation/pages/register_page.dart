@@ -368,6 +368,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Text(
                             AppLocalizations.of(context).nationality,
@@ -375,8 +376,9 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                            child: Wrap(
+                              alignment: WrapAlignment.end,
+                              runSpacing: 4,
                               children: [
                                 _buildNationalityOption('ไทย', AppLocalizations.of(context).nationalityThai),
                                 _buildNationalityOption('ลาว', AppLocalizations.of(context).nationalityLao),
