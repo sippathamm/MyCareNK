@@ -177,47 +177,28 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
   }
 
   Widget _buildContent() {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildIntro(),
+        _buildIntro(l10n),
         const SizedBox(height: 28),
-        _buildSection(
-          number: '1',
-          title: 'ข้อมูลที่เราเก็บรวบรวม',
-          body:
-              'เมื่อท่านสร้างบัญชีและใช้งาน MyCareNK เราจะเก็บรวบรวมเฉพาะข้อมูลที่จำเป็นต่อการให้บริการเท่านั้น ได้แก่ ชื่อผู้ใช้งาน เพศ วันเกิด และสัญชาติที่ท่านกรอกในขั้นตอนการสมัคร รวมถึงข้อมูลการใช้บริการ เช่น ประวัติคำขอรับอุปกรณ์ป้องกัน สถานที่รับบริการ วันเวลานัดหมาย และข้อความที่ท่านฝากไว้ นอกจากนี้ ท่านอาจให้หมายเลขโทรศัพท์ไว้โดยสมัครใจ เพื่อให้เจ้าหน้าที่สามารถติดต่อนัดรับอุปกรณ์ป้องกัน นัดพบแพทย์ หรือในกรณีที่มีเหตุจำเป็นเร่งด่วน\n\nทั้งนี้ เราไม่เก็บชื่อ-นามสกุลจริง หมายเลขบัตรประชาชน หรือข้อมูลที่สามารถระบุตัวตนของท่านได้โดยตรงแต่อย่างใด',
-        ),
+        _buildSection(number: '1', title: l10n.privacySection1Title, body: l10n.privacySection1Body),
         const SizedBox(height: 24),
-        _buildSection(
-          number: '2',
-          title: 'เราใช้ข้อมูลของคุณทำอะไรบ้าง',
-          body:
-              'ข้อมูลที่เก็บรวบรวมจะถูกนำไปใช้เพื่อดำเนินการตามคำขอของท่าน ประสานงานกับเจ้าหน้าที่สถานบริการที่ท่านเลือก และติดตามสิทธิ์การรับบริการรายเดือนของท่านให้เป็นไปตามเกณฑ์ที่กำหนด นอกจากนี้ เราอาจนำข้อมูลในภาพรวม ซึ่งไม่สามารถระบุตัวตนของผู้ใช้รายใดได้ ไปใช้ประกอบการวางแผนด้านสาธารณสุขในระดับจังหวัด\n\nเราขอยืนยันว่าจะไม่นำข้อมูลของท่านไปขาย แลกเปลี่ยน หรือเปิดเผยต่อบุคคลหรือองค์กรภายนอกเพื่อวัตถุประสงค์ทางการค้าหรือวัตถุประสงค์อื่นใดที่นอกเหนือจากที่ระบุไว้ในนโยบายฉบับนี้',
-        ),
+        _buildSection(number: '2', title: l10n.privacySection2Title, body: l10n.privacySection2Body),
         const SizedBox(height: 24),
-        _buildSection(
-          number: '3',
-          title: 'การเก็บรักษาความลับ',
-          body:
-              'เราจำกัดการเข้าถึงข้อมูลของท่านเฉพาะเจ้าหน้าที่ของสถานบริการที่ท่านเลือกและผู้ดูแลระบบที่ได้รับอนุญาตอย่างเป็นทางการเท่านั้น โดยเจ้าหน้าที่จะสามารถมองเห็นได้เพียงข้อมูลที่จำเป็นต่อการจัดเตรียมและส่งมอบบริการให้ท่าน ได้แก่ ชื่อผู้ใช้งาน รายการและจำนวนอุปกรณ์ที่ขอ วันเวลานัดหมาย และสถานะคำขอเท่านั้น\n\nข้อมูลของท่านจะถูกเก็บรักษาตลอดระยะเวลาที่บัญชียังคงเปิดใช้งาน และจะถูกดำเนินการตามที่ท่านร้องขอในกรณีที่ต้องการลบหรือโอนย้ายข้อมูล',
-        ),
+        _buildSection(number: '3', title: l10n.privacySection3Title, body: l10n.privacySection3Body),
         const SizedBox(height: 24),
-        _buildSection(
-          number: '4',
-          title: 'ความปลอดภัย',
-          body:
-              'เราใช้มาตรการรักษาความปลอดภัยในระดับมาตรฐานสากลเพื่อคุ้มครองข้อมูลของท่านจากการเข้าถึง การแก้ไข หรือการเปิดเผยโดยไม่ได้รับอนุญาต ข้อมูลทุกอย่างถูกส่งผ่านช่องทางที่เข้ารหัสอย่างปลอดภัย และรหัสผ่านของท่านจะไม่ถูกจัดเก็บในรูปแบบที่อ่านออกได้ในระบบของเราแต่อย่างใด นอกจากนี้ ระบบยังถูกออกแบบให้แต่ละบัญชีสามารถเข้าถึงได้เฉพาะข้อมูลของตนเองเท่านั้น',
-        ),
+        _buildSection(number: '4', title: l10n.privacySection4Title, body: l10n.privacySection4Body),
         const SizedBox(height: 28),
-        _buildContact(),
+        _buildContact(l10n),
       ],
     );
   }
 
-  Widget _buildIntro() {
+  Widget _buildIntro(AppLocalizations l10n) {
     return Text(
-      'สำนักงานสาธารณสุขจังหวัดหนองคาย ในฐานะผู้ให้บริการแอปพลิเคชัน MyCareNK ตระหนักถึงความสำคัญของความเป็นส่วนตัวและให้คำมั่นว่าจะปกป้องข้อมูลส่วนบุคคลของท่านด้วยความรับผิดชอบสูงสุด ภายใต้พระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล พ.ศ. 2562',
+      l10n.privacyPolicyIntro,
       style: GoogleFonts.googleSans(
         fontSize: 14,
         color: AppColors.textSecondary,
@@ -290,7 +271,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
     );
   }
 
-  Widget _buildContact() {
+  Widget _buildContact(AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -306,7 +287,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'หากท่านมีข้อสงสัยหรือต้องการใช้สิทธิ์ตามกฎหมาย ไม่ว่าจะเป็นการขอเข้าถึง แก้ไข ลบ หรือโอนย้ายข้อมูลส่วนบุคคลของท่าน กรุณาติดต่อ นายสันติ ธรรมวิเศษ สำนักงานสาธารณสุขจังหวัดหนองคาย โทร. 084-686-6406',
+              l10n.privacyContactText,
               style: GoogleFonts.googleSans(
                 fontSize: 13,
                 color: AppColors.primary,
