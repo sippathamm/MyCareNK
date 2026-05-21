@@ -396,6 +396,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             controller: _customNationalityController,
                             style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                             decoration: InputDecoration(
+                              prefixIcon: Icon(Icons.language, color: Colors.grey[400]),
                               hintText: AppLocalizations.of(context).specifyNationality,
                               hintStyle: GoogleFonts.googleSans(
                                 color: Colors.grey[400],
