@@ -5,6 +5,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import 'article_detail_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class ArticleListPage extends StatefulWidget {
   const ArticleListPage({super.key});
@@ -47,11 +48,11 @@ class _ArticleListPageState extends State<ArticleListPage> {
         shadowColor: Colors.black38,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'กรุณาเข้าสู่ระบบ',
+          AppLocalizations.of(context).pleaseLogin,
           style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'คุณต้องเข้าสู่ระบบก่อนจึงจะดูบทความได้',
+          AppLocalizations.of(context).loginToViewArticles,
           style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -70,7 +71,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
                 Navigator.of(context).pop();
               }
             },
-            label: 'เข้าสู่ระบบ',
+            label: AppLocalizations.of(context).loginBtn,
             fontSize: 15,
           ),
           const SizedBox(height: 8),
@@ -88,7 +89,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               ),
               child: Text(
-                'ยกเลิก',
+                AppLocalizations.of(context).cancel,
                 style: GoogleFonts.googleSans(fontSize: 15, fontWeight: FontWeight.bold),
               ),
             ),
@@ -187,7 +188,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'บทความ',
+          AppLocalizations.of(context).articlesTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -214,7 +215,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'เกิดข้อผิดพลาด',
+              AppLocalizations.of(context).errorOccurredTitle,
               style: GoogleFonts.googleSans(
                 fontSize: 16,
                 color: AppColors.textPrimary,
@@ -223,7 +224,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: _fetchArticles,
-              child: Text('ลองใหม่', style: GoogleFonts.googleSans()),
+              child: Text(AppLocalizations.of(context).tryAgain, style: GoogleFonts.googleSans()),
             ),
           ],
         ),
@@ -237,7 +238,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
             Icon(Icons.article_outlined, size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             Text(
-              'ยังไม่มีบทความ',
+              AppLocalizations.of(context).noArticles,
               style: GoogleFonts.googleSans(
                 fontSize: 16,
                 color: AppColors.textSecondary,

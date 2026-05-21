@@ -6,6 +6,7 @@ import 'request_history_detail_page.dart';
 import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class RequestHistoryPage extends StatefulWidget {
   const RequestHistoryPage({super.key});
@@ -121,9 +122,9 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'ประวัติคำขอ',
-          style: TextStyle(
+        title: Text(
+          AppLocalizations.of(context).requestHistoryTitle,
+          style: const TextStyle(
             color: AppColors.textPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
@@ -161,7 +162,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                                   children: [
                                     Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
                                     const SizedBox(height: 16),
-                                    Text('กรุณาเข้าสู่ระบบ', style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
+                                    Text(AppLocalizations.of(context).pleaseLogin, style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
                                   ],
                                 ),
                               ),
@@ -176,7 +177,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                                   children: [
                                     Icon(Icons.inbox_outlined, size: 64, color: Colors.grey[300]),
                                     const SizedBox(height: 16),
-                                    Text('ยังไม่มีรายการ', style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
+                                    Text(AppLocalizations.of(context).noRequests, style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
                                   ],
                                 ),
                               ),
@@ -191,7 +192,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                                   children: [
                                     Icon(Icons.search_off_outlined, size: 64, color: Colors.grey[300]),
                                     const SizedBox(height: 16),
-                                    Text('ไม่พบรายการ', style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
+                                    Text(AppLocalizations.of(context).noMatchingRequests, style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400])),
                                   ],
                                 ),
                               ),
@@ -264,7 +265,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           });
         },
         decoration: InputDecoration(
-          hintText: 'ค้นหารหัสอ้างอิง',
+          hintText: AppLocalizations.of(context).searchRefCode,
           hintStyle: GoogleFonts.googleSans(color: Colors.grey[600], fontSize: 14),
           suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
@@ -284,17 +285,17 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
         children: [
-          _buildFilterChip('ทั้งหมด', null, AppColors.primary),
+          _buildFilterChip(AppLocalizations.of(context).all, null, AppColors.primary),
           const SizedBox(width: 8),
-          _buildFilterChip('รอดำเนินการ', {RequestStatus.pending}, AppColors.primary),
+          _buildFilterChip(AppLocalizations.of(context).statusPending, {RequestStatus.pending}, AppColors.primary),
           const SizedBox(width: 8),
-          _buildFilterChip('กำลังเตรียม', {RequestStatus.preparing}, AppColors.statusPreparing),
+          _buildFilterChip(AppLocalizations.of(context).statusPreparing, {RequestStatus.preparing}, AppColors.statusPreparing),
           const SizedBox(width: 8),
-          _buildFilterChip('พร้อมรับ', {RequestStatus.ready}, AppColors.statusReady),
+          _buildFilterChip(AppLocalizations.of(context).statusReady, {RequestStatus.ready}, AppColors.statusReady),
           const SizedBox(width: 8),
-          _buildFilterChip('เสร็จสิ้น', {RequestStatus.completed}, AppColors.statusCompleted),
+          _buildFilterChip(AppLocalizations.of(context).statusCompleted, {RequestStatus.completed}, AppColors.statusCompleted),
           const SizedBox(width: 8),
-          _buildFilterChip('ยกเลิก', {RequestStatus.cancelledByUser, RequestStatus.cancelledByStaff}, Colors.grey[600]!),
+          _buildFilterChip(AppLocalizations.of(context).statusCancelled, {RequestStatus.cancelledByUser, RequestStatus.cancelledByStaff}, Colors.grey[600]!),
         ],
       ),
     );
@@ -346,7 +347,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
       iconColor = Colors.grey[600]!;
       statusBgColor = Colors.grey[600]!;
       statusTextColor = AppColors.white;
-      statusText = data.status == RequestStatus.cancelledByStaff ? 'ยกเลิกโดยเจ้าหน้าที่' : 'ยกเลิกโดยคุณ';
+      statusText = data.status == RequestStatus.cancelledByStaff ? AppLocalizations.of(context).statusCancelledByStaff : AppLocalizations.of(context).statusCancelledByUser;
       statusIcon = Icons.cancel_outlined;
     } else {
       switch (data.status) {
@@ -355,7 +356,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           iconColor = AppColors.primary;
           statusBgColor = AppColors.primary;
           statusTextColor = AppColors.white;
-          statusText = 'รอดำเนินการ';
+          statusText = AppLocalizations.of(context).statusPending;
           statusIcon = Icons.assignment_outlined;
           break;
         case RequestStatus.preparing:
@@ -363,7 +364,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           iconColor = AppColors.statusPreparing;
           statusBgColor = AppColors.statusPreparing;
           statusTextColor = AppColors.white;
-          statusText = 'กำลังเตรียม';
+          statusText = AppLocalizations.of(context).statusPreparing;
           statusIcon = Icons.inventory_2_outlined;
           break;
         case RequestStatus.ready:
@@ -371,7 +372,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           iconColor = AppColors.statusReady;
           statusBgColor = AppColors.statusReady;
           statusTextColor = AppColors.white;
-          statusText = 'พร้อมรับ';
+          statusText = AppLocalizations.of(context).statusReady;
           statusIcon = Icons.local_shipping_outlined;
           break;
         case RequestStatus.completed:
@@ -379,7 +380,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           iconColor = AppColors.statusCompleted;
           statusBgColor = AppColors.statusCompleted;
           statusTextColor = AppColors.white;
-          statusText = 'เสร็จสิ้น';
+          statusText = AppLocalizations.of(context).statusCompleted;
           statusIcon = Icons.check_circle_outline;
           break;
         default:
@@ -447,7 +448,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'รหัสอ้างอิง',
+                        AppLocalizations.of(context).referenceNumber,
                         style: GoogleFonts.googleSans(
                           color: Colors.grey[500],
                           fontSize: 12,
@@ -540,7 +541,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'รายละเอียด',
+                      AppLocalizations.of(context).details,
                       style: TextStyle(
                         color: statusBgColor,
                         fontSize: 14,

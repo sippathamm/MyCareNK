@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/recovery_service.dart';
 import 'registration_success_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class PrivacyPolicyPage extends StatefulWidget {
   final String username;
@@ -107,7 +108,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           msg.toLowerCase().contains('found in a')) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
-            'รหัสผ่านนี้เคยรั่วไหลในอินเทอร์เน็ต กรุณากลับไปตั้งรหัสผ่านใหม่',
+            AppLocalizations.of(context).passwordLeaked,
             style: GoogleFonts.googleSans(),
           ),
           backgroundColor: AppColors.error,
@@ -118,7 +119,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
       }
       if (msg.toLowerCase().contains('already registered') ||
           msg.toLowerCase().contains('already exists')) {
-        msg = 'ชื่อผู้ใช้งานนี้มีอยู่ในระบบแล้ว';
+        msg = AppLocalizations.of(context).usernameExists;
       }
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg, style: GoogleFonts.googleSans()),
@@ -128,7 +129,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('เกิดข้อผิดพลาดในการสร้างบัญชี',
+        content: Text(AppLocalizations.of(context).createAccountError,
             style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
@@ -152,7 +153,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'นโยบายความเป็นส่วนตัว',
+          AppLocalizations.of(context).privacyPolicyTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -357,7 +358,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    'ฉันอ่านและเข้าใจนโยบายความเป็นส่วนตัวแล้ว',
+                    AppLocalizations.of(context).privacyPolicyCheckbox,
                     style: GoogleFonts.googleSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
@@ -379,7 +380,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
                     size: 13, color: AppColors.textHint),
                 const SizedBox(width: 4),
                 Text(
-                  'เลื่อนลงเพื่ออ่านนโยบายจนครบ',
+                  AppLocalizations.of(context).privacyPolicyScrollHint,
                   style: GoogleFonts.googleSans(
                       fontSize: 12, color: AppColors.textHint),
                 ),
@@ -389,7 +390,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           const SizedBox(height: 16),
           GradientButton(
             onPressed: (_hasAgreed && !_isLoading) ? _register : null,
-            label: 'ตกลง',
+            label: AppLocalizations.of(context).ok,
             isLoading: _isLoading,
           ),
         ],

@@ -11,29 +11,16 @@ import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
 import 'condom_request_confirm_page.dart';
 import 'request_history_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 // ── Date helpers ─────────────────────────────────────────────────────────────
 
-const _thMonths = [
-  '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-  'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-];
-const _thDays = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-
-class _PickDate {
-  final DateTime date;
-  final String dayLabel;
-  final String monthLabel;
-  const _PickDate(this.date, this.dayLabel, this.monthLabel);
-}
-
-List<_PickDate> _buildDateList() {
-  final list = <_PickDate>[];
+List<DateTime> _buildDateList() {
+  final list = <DateTime>[];
   var d = DateTime.now();
   while (list.length < 7) {
     if (d.weekday != DateTime.saturday && d.weekday != DateTime.sunday) {
-      final dow = d.weekday == 7 ? 0 : d.weekday;
-      list.add(_PickDate(d, _thDays[dow], _thMonths[d.month]));
+      list.add(d);
     }
     d = d.add(const Duration(days: 1));
   }
@@ -60,7 +47,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   final TextEditingController _messageController = TextEditingController();
   int _animationVersion = 0;
   StreamSubscription<AuthState>? _authSubscription;
-  final List<_PickDate> _dates = _buildDateList();
+  final List<DateTime> _dates = _buildDateList();
 
   List<ServiceCenterModel> _centers = [];
   bool _centersLoading = true;
@@ -147,7 +134,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     if (_totalSelected == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('กรุณาเลือกถุงยางอนามัยอย่างน้อย 1 ชิ้น', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.of(context).selectCondomFirst, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -185,7 +172,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'รับถุงยางอนามัย',
+          AppLocalizations.of(context).requestPageTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -196,7 +183,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.history, color: AppColors.primary),
-            tooltip: 'ประวัติคำขอ',
+            tooltip: AppLocalizations.of(context).requestHistory,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
             ),
@@ -225,7 +212,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   _buildLubricantCard(),
                   const SizedBox(height: 20),
                   _buildSectionCard(
-                    title: 'สถานบริการ',
+                    title: AppLocalizations.of(context).selectServiceCenterTitle,
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
                         ? const Center(
@@ -238,7 +225,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                             ? Center(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
-                                  child: Text('กรุณาเข้าสู่ระบบ',
+                                  child: Text(AppLocalizations.of(context).pleaseLogin,
                                       style: GoogleFonts.googleSans(
                                           fontSize: 14, color: AppColors.textHint)),
                                 ),
@@ -249,7 +236,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                                     child: Center(
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 12),
-                                        child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
+                                        child: Text(AppLocalizations.of(context).cannotLoadData,
                                             style: GoogleFonts.googleSans(
                                                 fontSize: 14, color: AppColors.textHint)),
                                       ),
@@ -263,24 +250,24 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                                   ),
                   ),
                   _buildSectionCard(
-                    title: 'วันที่รับ',
+                    title: AppLocalizations.of(context).selectDateTitle,
                     icon: Icons.event_outlined,
                     child: _buildDatePicker(),
                   ),
                   _buildSectionCard(
-                    title: 'เวลารับ',
+                    title: AppLocalizations.of(context).selectTimeTitle,
                     icon: Icons.schedule_outlined,
                     child: _buildTimePicker(),
                   ),
                   _buildSectionCard(
-                    title: 'ฝากข้อความ (ไม่ระบุได้)',
+                    title: AppLocalizations.of(context).addMessageTitle,
                     icon: Icons.comment_outlined,
                     child: TextField(
                       controller: _messageController,
                       maxLines: 3,
                       style: const TextStyle(fontSize: 16),
                       decoration: InputDecoration(
-                        hintText: 'พิมพ์ข้อความที่นี่...',
+                        hintText: AppLocalizations.of(context).addMessageHint,
                         hintStyle: GoogleFonts.googleSans(
                             fontSize: 16, color: AppColors.textHint),
                         border: OutlineInputBorder(
@@ -317,7 +304,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               duration: const Duration(milliseconds: 200),
               child: GradientButton(
                 onPressed: _canProceed ? _navigateToConfirm : null,
-                label: 'ถัดไป',
+                label: AppLocalizations.of(context).next,
               ),
             ),
           ),
@@ -329,7 +316,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // ── Step indicator ──────────────────────────────────────────────────────────
 
   Widget _buildStepIndicator(int step) {
-    const labels = ['กรอกข้อมูล', 'ยืนยัน', 'สำเร็จ'];
+    final l10n = AppLocalizations.of(context);
+    final labels = [l10n.stepForm, l10n.stepConfirm, l10n.stepSuccess];
     const double nodeSize = 34;
     const double gap = 6;
     final n = labels.length;
@@ -525,7 +513,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            'กรุณาเลือกสถานบริการก่อน',
+            AppLocalizations.of(context).selectServiceCenterFirst,
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
           ),
@@ -537,7 +525,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+            AppLocalizations.of(context).noCondomService,
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
           ),
@@ -552,12 +540,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final d = _dates[i];
+          final l10n = AppLocalizations.of(context);
+          final dow = d.weekday == 7 ? 0 : d.weekday;
           final sel = _selectedDate != null &&
-              _selectedDate!.year == d.date.year &&
-              _selectedDate!.month == d.date.month &&
-              _selectedDate!.day == d.date.day;
+              _selectedDate!.year == d.year &&
+              _selectedDate!.month == d.month &&
+              _selectedDate!.day == d.day;
           return GestureDetector(
-            onTap: () => setState(() => _selectedDate = d.date),
+            onTap: () => setState(() => _selectedDate = d),
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               width: 60,
@@ -572,7 +562,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    d.dayLabel,
+                    l10n.daysShort[dow],
                     style: GoogleFonts.googleSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -582,7 +572,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     ),
                   ),
                   Text(
-                    '${d.date.day}',
+                    '${d.day}',
                     style: GoogleFonts.googleSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -591,7 +581,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     ),
                   ),
                   Text(
-                    d.monthLabel,
+                    l10n.monthsShort[d.month],
                     style: GoogleFonts.googleSans(
                       fontSize: 11,
                       color: sel
@@ -623,8 +613,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             center == null
-                ? 'กรุณาเลือกสถานบริการก่อน'
-                : 'สถานบริการนี้ไม่เปิดรับถุงยางอนามัย',
+                ? AppLocalizations.of(context).selectServiceCenterFirst
+                : AppLocalizations.of(context).noCondomService,
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
           ),
@@ -681,12 +671,12 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        label('ช่วงเช้า'),
+        label(AppLocalizations.of(context).morning),
         morning.isNotEmpty
             ? Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList())
             : dash(),
         const SizedBox(height: 14),
-        label('ช่วงบ่าย'),
+        label(AppLocalizations.of(context).afternoon),
         afternoon.isNotEmpty
             ? Wrap(spacing: 8, runSpacing: 8, children: afternoon.map(chip).toList())
             : dash(),
@@ -710,7 +700,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'สิทธิ์รับฟรีเดือนนี้',
+          AppLocalizations.of(context).freeQuotaThisMonth,
           style: GoogleFonts.googleSans(
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -725,7 +715,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'ถุงยางอนามัย',
+                    AppLocalizations.of(context).condoms,
                     style: GoogleFonts.googleSans(
                         fontSize: 14, color: AppColors.textSecondary),
                   ),
@@ -744,7 +734,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                               color: AppColors.primary),
                         ),
                         TextSpan(
-                          text: 'ชิ้น',
+                          text: AppLocalizations.of(context).pieces,
                           style: GoogleFonts.googleSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
@@ -769,7 +759,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'เจลหล่อลื่น',
+                    AppLocalizations.of(context).lubricant,
                     style: GoogleFonts.googleSans(
                         fontSize: 14, color: AppColors.textSecondary),
                   ),
@@ -788,7 +778,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                               color: AppColors.lubricant),
                         ),
                         TextSpan(
-                          text: 'ชิ้น',
+                          text: AppLocalizations.of(context).pieces,
                           style: GoogleFonts.googleSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
@@ -879,14 +869,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   end: Alignment.centerRight,
                 ),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.inventory_2_outlined,
+                  const Icon(Icons.inventory_2_outlined,
                       color: AppColors.white, size: 18),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
-                    'ถุงยางอนามัย',
-                    style: TextStyle(
+                    AppLocalizations.of(context).condoms,
+                    style: GoogleFonts.googleSans(
                         color: AppColors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.bold),
@@ -918,7 +908,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  Text('รวม',
+                  Text(AppLocalizations.of(context).total,
                       style: GoogleFonts.googleSans(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   const Spacer(),
@@ -937,8 +927,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   SizedBox(
                     width: 26,
                     child: Center(
-                      child: Text('ชิ้น',
-                          style: GoogleFonts.googleSans(
+                      child: Text(AppLocalizations.of(context).pieces,
+                      style: GoogleFonts.googleSans(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
@@ -980,20 +970,22 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   end: Alignment.centerRight,
                 ),
               ),
-              child: const Row(
-                children: [
-                  Icon(Icons.add_circle_outline,
-                      color: AppColors.white, size: 18),
-                  SizedBox(width: 8),
-                  Text(
-                    'เพิ่มเติม',
-                    style: TextStyle(
-                        color: AppColors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+              child: Builder(builder: (context) {
+                return Row(
+                  children: [
+                    const Icon(Icons.add_circle_outline,
+                        color: AppColors.white, size: 18),
+                    const SizedBox(width: 8),
+                    Text(
+                      AppLocalizations.of(context).extra,
+                      style: GoogleFonts.googleSans(
+                          color: AppColors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                );
+              }),
             ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -1006,7 +998,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 final int maxLubricantAllowed =
                     _lubricantQuantity + remainingLubricant;
                 return StepperLubricant(
-                  label: 'เจลหล่อลื่น',
+                  label: AppLocalizations.of(context).lubricant,
                   count: _lubricantQuantity,
                   max: maxLubricantAllowed,
                   onChanged: (val) =>

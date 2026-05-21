@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/recovery_service.dart';
 import 'recovery_codes_display_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class ForgotPasswordResetPage extends StatefulWidget {
   final String username;
@@ -63,7 +64,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง', style: GoogleFonts.googleSans()),
+            content: Text(result.error ?? AppLocalizations.current.incorrectUsernameOrCode, style: GoogleFonts.googleSans()),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -73,7 +74,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.current.generalErrorRetry, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -97,7 +98,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'ลืมรหัสผ่าน',
+          AppLocalizations.of(context).forgotPasswordTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -133,7 +134,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'ตั้งรหัสผ่านใหม่',
+                  AppLocalizations.of(context).setNewPassword,
                   style: GoogleFonts.googleSans(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -142,7 +143,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'รหัสผ่านใหม่ต้องต่างจากรหัสผ่านเดิม',
+                  AppLocalizations.of(context).passwordDifferentFromOld,
                   style: GoogleFonts.googleSans(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -157,7 +158,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     obscureText: _obscurePassword,
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'รหัสผ่านใหม่',
+                      hintText: AppLocalizations.of(context).newPasswordHint,
                       hintStyle: GoogleFonts.googleSans(
                         color: Colors.grey[400],
                         fontSize: 14,
@@ -179,13 +180,13 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'กรุณากรอกรหัสผ่านใหม่';
+                        return AppLocalizations.current.newPasswordRequired;
                       }
                       if (value.length < 8) {
-                        return 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร';
+                        return AppLocalizations.current.passwordTooShort;
                       }
                       if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(value)) {
-                        return 'รหัสผ่านต้องมีทั้งตัวอักษรและตัวเลข';
+                        return AppLocalizations.current.passwordStrength;
                       }
                       return null;
                     },
@@ -197,7 +198,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                   child: Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'ต้องมีทั้งตัวอักษรและตัวเลข อย่างน้อย 8 ตัว',
+                      AppLocalizations.of(context).passwordStrengthHint,
                       style: GoogleFonts.googleSans(
                         fontSize: 12,
                         color: Colors.grey[500],
@@ -214,7 +215,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     obscureText: _obscureConfirmPassword,
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'ยืนยันรหัสผ่านใหม่',
+                      hintText: AppLocalizations.of(context).confirmNewPasswordHint,
                       hintStyle: GoogleFonts.googleSans(
                         color: Colors.grey[400],
                         fontSize: 14,
@@ -239,10 +240,10 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'กรุณายืนยันรหัสผ่านใหม่';
+                        return AppLocalizations.current.confirmNewPasswordRequired;
                       }
                       if (value != _passwordController.text) {
-                        return 'รหัสผ่านไม่ตรงกัน';
+                        return AppLocalizations.current.passwordMismatch;
                       }
                       return null;
                     },
@@ -253,7 +254,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
 
                 GradientButton(
                   onPressed: _isLoading ? null : _onConfirm,
-                  label: 'ยืนยัน',
+                  label: AppLocalizations.of(context).confirm,
                   isLoading: _isLoading,
                 ),
               ],

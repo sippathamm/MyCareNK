@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../widgets/service_card.dart';
 import 'condom_request_page.dart';
 import '../../../health/presentation/pages/hiv_assessment_page.dart';
@@ -11,6 +12,7 @@ class ServicePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
@@ -19,7 +21,7 @@ class ServicePage extends StatelessWidget {
         scrolledUnderElevation: 0,
         titleSpacing: 24,
         title: Text(
-          'บริการ',
+          l10n.servicePageTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -34,8 +36,8 @@ class ServicePage extends StatelessWidget {
             ServiceCard(
               icon: Icons.inventory_2_outlined,
               iconBgColor: AppColors.primary,
-              title: 'รับถุงยางอนามัย',
-              subtitle: 'ค้นหาสถานบริการและรับถุงยางอนามัยฟรี',
+              title: l10n.getCondomsTitle,
+              subtitle: l10n.getCondomsSubtitle,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const CondomRequestPage()),
               ),
@@ -44,8 +46,8 @@ class ServicePage extends StatelessWidget {
               icon: Icons.favorite_outline,
               iconBgColor: AppColors.avatarBackground,
               iconColor: AppColors.avatarIcon,
-              title: 'ประเมินความเสี่ยงการติดเชื้อ HIV',
-              subtitle: 'ทำแบบทดสอบเพื่อประเมินความเสี่ยงการติดเชื้อ HIV',
+              title: l10n.assessHIVTitle,
+              subtitle: l10n.assessHIVSubtitle,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const HivAssessmentPage()),
               ),
@@ -54,8 +56,8 @@ class ServicePage extends StatelessWidget {
               icon: Icons.calendar_month_outlined,
               iconBgColor: AppColors.statusPreparingLight,
               iconColor: AppColors.lubricant,
-              title: 'นัดพบแพทย์',
-              subtitle: 'จองคิวล่วงหน้าเพื่อรับยา PrEP/PEP ตรวจเลือด หรือปรึกษาสุขภาพ',
+              title: l10n.bookDoctorTitle,
+              subtitle: l10n.bookDoctorSubtitle,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const DoctorBookingPage()),
               ),

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import 'doctor_booking_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -30,71 +31,71 @@ class _Question {
   });
 }
 
-final _kQuestions = <_Question>[
+List<_Question> _buildQuestions(AppLocalizations l10n) => [
   _Question(
     section: 1,
-    sectionLabel: 'พฤติกรรมทางเพศ',
-    text: 'คุณใช้ถุงยางอนามัยเมื่อมีเพศสัมพันธ์บ่อยแค่ไหน?',
+    sectionLabel: l10n.sectionBehavior,
+    text: l10n.q1Text,
     icon: Icons.health_and_safety,
     options: [
-      _Option('ก', 'ใช้ทุกครั้ง', 'ทั้งทางช่องคลอดและทางทวารหนัก'),
-      _Option('ข', 'ใช้เกือบทุกครั้ง', 'มีพลาดหรือผิดพลาดบางครั้ง'),
-      _Option('ค', 'ไม่ได้ใช้เป็นประจำ', 'ไม่สวมถุงยางอนามัยบ่อยครั้ง'),
+      _Option('ก', l10n.q1OptALabel, l10n.q1OptASub),
+      _Option('ข', l10n.q1OptBLabel, l10n.q1OptBSub),
+      _Option('ค', l10n.q1OptCLabel, l10n.q1OptCSub),
     ],
   ),
   _Question(
     section: 1,
-    sectionLabel: 'พฤติกรรมทางเพศ',
-    text: 'คุณเคยมีถุงยางอนามัยแตกหรือหลุดระหว่างมีเพศสัมพันธ์หรือไม่?',
+    sectionLabel: l10n.sectionBehavior,
+    text: l10n.q2Text,
     icon: Icons.warning_amber,
     options: [
-      _Option('ก', 'ไม่เคยเกิดขึ้น', 'ไม่มีอุบัติเหตุดังกล่าว'),
-      _Option('ข', 'เคยเกิดขึ้น แต่รับยา PEP ทันที', 'ดำเนินการป้องกันเสมอ'),
-      _Option('ค', 'เคยเกิดขึ้นและไม่ได้ป้องกัน', 'ไม่ได้รับยาหรือดำเนินการใดๆ'),
+      _Option('ก', l10n.q2OptALabel, l10n.q2OptASub),
+      _Option('ข', l10n.q2OptBLabel, l10n.q2OptBSub),
+      _Option('ค', l10n.q2OptCLabel, l10n.q2OptCSub),
     ],
   ),
   _Question(
     section: 1,
-    sectionLabel: 'พฤติกรรมทางเพศ',
-    text: 'คุณเคยทำออรัลเซ็กซ์โดยไม่ป้องกันหรือไม่?',
+    sectionLabel: l10n.sectionBehavior,
+    text: l10n.q3Text,
     icon: Icons.face,
     options: [
-      _Option('ก', 'ไม่เคย', 'ใช้ถุงยางอนามัยทุกครั้งหรือไม่มีแผลในปาก'),
-      _Option('ข', 'เคย แต่ไม่มีการหลั่งในปาก', 'ไม่มีการสัมผัสของเหลวโดยตรง'),
-      _Option('ค', 'เคย และมีการหลั่งหรือแผลในปาก', 'มีการสัมผัสของเหลวหรือเลือดโดยตรง'),
+      _Option('ก', l10n.q3OptALabel, l10n.q3OptASub),
+      _Option('ข', l10n.q3OptBLabel, l10n.q3OptBSub),
+      _Option('ค', l10n.q3OptCLabel, l10n.q3OptCSub),
     ],
   ),
   _Question(
     section: 1,
-    sectionLabel: 'พฤติกรรมทางเพศ',
-    text: 'คุณเคยมีเพศสัมพันธ์กับคู่นอนที่มีความเสี่ยงหรือไม่?',
+    sectionLabel: l10n.sectionBehavior,
+    text: l10n.q4Text,
     icon: Icons.people,
     options: [
-      _Option('ก', 'ไม่เคย', 'คู่นอนผลเลือดเป็นลบหรือป้องกันทุกครั้ง'),
-      _Option('ข', 'ไม่ทราบสถานะ', 'ไม่ทราบผลตรวจหรือสถานะการติดเชื้อของคู่นอน'),
-      _Option('ค', 'เคย และคู่นอนเสี่ยงสูง', 'ทราบว่าติดเชื้อหรือไม่ได้รักษา'),
+      _Option('ก', l10n.q4OptALabel, l10n.q4OptASub),
+      _Option('ข', l10n.q4OptBLabel, l10n.q4OptBSub),
+      _Option('ค', l10n.q4OptCLabel, l10n.q4OptCSub),
     ],
   ),
   _Question(
     section: 2,
-    sectionLabel: 'พฤติกรรมสุขภาพและโรคติดต่อ',
-    text: 'คุณใช้สารเสพติดหรือไม่?',
+    sectionLabel: l10n.sectionHealthBehavior,
+    text: l10n.q5Text,
     icon: Icons.medication,
     options: [
-      _Option('ก', 'ไม่ใช้เลย', 'ไม่มีการใช้สารเสพติดใดๆ'),
-      _Option('ข', 'ใช้ชนิดกิน / สูบ / ดม', 'อาจทำให้ขาดสติหรือละเลยการป้องกัน'),
-      _Option('ค', 'ใช้ชนิดฉีด', 'และใช้เข็มร่วมกับผู้อื่น'),
+      _Option('ก', l10n.q5OptALabel, l10n.q5OptASub),
+      _Option('ข', l10n.q5OptBLabel, l10n.q5OptBSub),
+      _Option('ค', l10n.q5OptCLabel, l10n.q5OptCSub),
     ],
   ),
   _Question(
     section: 2,
-    sectionLabel: 'พฤติกรรมสุขภาพและโรคติดต่อ',
-    text: 'คุณเคยเป็นโรคติดต่อทางเพศสัมพันธ์ (STIs) หรือไม่?',
+    sectionLabel: l10n.sectionHealthBehavior,
+    text: l10n.q6Text,
     icon: Icons.biotech,
     options: [
-      _Option('ก', 'ไม่เคย', 'ไม่มีอาการผิดปกติใดๆ'),
-      _Option('ข', 'เคย แต่รักษาหายขาดแล้ว', 'ได้รับการรักษาจนครบถ้วน'),
-      _Option('ค', 'มีอาการอยู่และยังไม่รักษา', 'ปัจจุบันยังมีอาการผิดปกติ'),
+      _Option('ก', l10n.q6OptALabel, l10n.q6OptASub),
+      _Option('ข', l10n.q6OptBLabel, l10n.q6OptBSub),
+      _Option('ค', l10n.q6OptCLabel, l10n.q6OptCSub),
     ],
   ),
 ];
@@ -131,39 +132,36 @@ class _RiskConfig {
   });
 }
 
-final _kRiskConfigs = <_RiskLevel, _RiskConfig>{
+const _kRiskConfigs = <_RiskLevel, _RiskConfig>{
   _RiskLevel.low: _RiskConfig(
-    label: 'ความเสี่ยงต่ำ',
+    label: '',
     color: AppColors.success,
     bg: Color(0xFFE8F5E9),
     icon: Icons.check_circle,
-    headline: 'อยู่ในเกณฑ์ดีเยี่ยม',
-    advice:
-        'ควรรักษามาตรฐานการป้องกันอย่างต่อเนื่อง และแนะนำให้ตรวจเลือดทุก 6 เดือนเพื่อสุขภาวะที่ยั่งยืน',
-    pills: ['ตรวจเลือดทุก 6 เดือน', 'รักษามาตรฐานต่อไป'],
+    headline: '',
+    advice: '',
+    pills: [],
     hasCta: false,
   ),
   _RiskLevel.medium: _RiskConfig(
-    label: 'ความเสี่ยงปานกลาง',
+    label: '',
     color: Color(0xFFFF8F00),
     bg: Color(0xFFFFF8E1),
     icon: Icons.warning,
-    headline: 'ควรเฝ้าระวัง',
-    advice:
-        'เริ่มมีความเสี่ยงในการรับเชื้อ แนะนำให้ปรึกษาแพทย์เพื่อพิจารณาการใช้ยา PrEP และตรวจหาเชื้อทุก 3 เดือน',
-    pills: ['ปรึกษาแพทย์เรื่อง PrEP', 'ตรวจหาเชื้อทุก 3 เดือน'],
+    headline: '',
+    advice: '',
+    pills: [],
     hasCta: true,
     bookingReason: 'prep',
   ),
   _RiskLevel.high: _RiskConfig(
-    label: 'ความเสี่ยงสูง',
+    label: '',
     color: AppColors.error,
     bg: Color(0xFFFFEBEE),
     icon: Icons.emergency,
-    headline: 'เร่งด่วน — ควรพบแพทย์ทันที',
-    advice:
-        'มีความเสี่ยงสูงในการรับเชื้อ ควรพบแพทย์เพื่อตรวจเลือดโดยเร็ว หรือหากเพิ่งเสี่ยงมาไม่เกิน 72 ชั่วโมง ให้ขอรับยา PEP ทันที',
-    pills: ['พบแพทย์เพื่อตรวจเลือด', 'ขอรับยา PEP ภายใน 72 ชม.'],
+    headline: '',
+    advice: '',
+    pills: [],
     hasCta: true,
     bookingReason: 'pep',
   ),
@@ -187,8 +185,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
   static const int _totalQ = 6;
 
   bool get _isDone => _step >= _totalQ;
-  _Question? get _current =>
-      _step >= 0 && _step < _totalQ ? _kQuestions[_step] : null;
 
   bool _visible = true;
 
@@ -232,9 +228,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final questions = _buildQuestions(l10n);
     final risk = _isDone ? _calcRisk(_answers) : null;
     final riskCfg = risk != null ? _kRiskConfigs[risk]! : null;
-    final cur = _current;
+    final cur = _step >= 0 && _step < _totalQ ? questions[_step] : null;
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -248,7 +246,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               _isDone ? () => Navigator.of(context).pop() : _handleBack,
         ),
         title: Text(
-          'ประเมินความเสี่ยงการติดเชื้อ HIV',
+          AppLocalizations.of(context).hivAssessmentTitle,
           style: GoogleFonts.googleSans(
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -276,7 +274,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                   child: _step == -1
                       ? _buildIntro()
                       : _isDone
-                          ? _buildResult(riskCfg!)
+                          ? _buildResult(riskCfg!, risk!, l10n, questions)
                           : _buildQuestion(cur!),
                 ),
               ),
@@ -299,7 +297,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             children: [
               Flexible(
                 child: Text(
-                  cur.sectionLabel,
+                  cur.section == 1
+                      ? AppLocalizations.of(context).sectionBehavior
+                      : AppLocalizations.of(context).sectionHealthBehavior,
                   style: GoogleFonts.googleSans(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -340,7 +340,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  'ส่วนที่ $s',
+                  AppLocalizations.of(context).assessmentSectionLabel(s),
                   style: GoogleFonts.googleSans(
                     fontSize: 12,
                     fontWeight: FontWeight.w700,
@@ -372,7 +372,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         ),
         const SizedBox(height: 20),
         Text(
-          'แบบประเมินความเสี่ยงการติดเชื้อ HIV',
+          AppLocalizations.of(context).hivAssessmentFullTitle,
           style: GoogleFonts.googleSans(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -390,19 +390,15 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               height: 1.7,
             ),
             children: [
-              const TextSpan(text: 'โปรดพิจารณาพฤติกรรมของคุณในช่วง '),
+              TextSpan(text: AppLocalizations.of(context).assessmentIntroPart1),
               TextSpan(
-                text: '3–6 เดือนที่ผ่านมา',
+                text: AppLocalizations.of(context).assessmentIntroHighlight,
                 style: GoogleFonts.googleSans(
                   color: AppColors.avatarIcon,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const TextSpan(
-                text:
-                    ' และเลือกคำตอบที่ตรงกับความเป็นจริงมากที่สุด'
-                    '\nเพื่อให้ได้ผลการประเมินที่แม่นยำ',
-              ),
+              TextSpan(text: AppLocalizations.of(context).assessmentIntroPart2),
             ],
           ),
         ),
@@ -418,7 +414,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'แบบประเมินประกอบด้วย',
+                AppLocalizations.of(context).assessmentContains,
                 style: GoogleFonts.googleSans(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
@@ -426,10 +422,8 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 ),
               ),
               const SizedBox(height: 8),
-              _buildSectionEntry(
-                  '4 ข้อ', 'ส่วนที่ 1', 'พฤติกรรมทางเพศ'),
-              _buildSectionEntry(
-                  '2 ข้อ', 'ส่วนที่ 2', 'พฤติกรรมสุขภาพและโรคติดต่อ'),
+              _buildSectionEntry(AppLocalizations.of(context).questionCountLabel(4), AppLocalizations.of(context).assessmentSectionLabel(1), AppLocalizations.of(context).sectionBehavior),
+              _buildSectionEntry(AppLocalizations.of(context).questionCountLabel(2), AppLocalizations.of(context).assessmentSectionLabel(2), AppLocalizations.of(context).sectionHealthBehavior),
             ],
           ),
         ),
@@ -443,7 +437,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
-            'ไม่มีการเก็บข้อมูลของคุณ ใช้เพื่อการประเมินความเสี่ยงเท่านั้น',
+            AppLocalizations.of(context).assessmentDisclaimer,
             style: GoogleFonts.googleSans(
               fontSize: 13,
               color: AppColors.textHint,
@@ -452,7 +446,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           ),
         ),
         const SizedBox(height: 28),
-        _PrimaryBtn(label: 'เริ่มทำแบบประเมิน', onPressed: _handleNext),
+        _PrimaryBtn(label: AppLocalizations.of(context).startAssessment, onPressed: _handleNext),
       ],
     );
   }
@@ -532,7 +526,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'ข้อที่ ${_step + 1}',
+                      AppLocalizations.of(context).questionNumber(_step + 1),
                       style: GoogleFonts.googleSans(
                         fontSize: 13,
                         color: AppColors.avatarIcon,
@@ -562,8 +556,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           opacity: _selected != null ? 1.0 : 0.45,
           duration: const Duration(milliseconds: 150),
           child: _PrimaryBtn(
-            label:
-                _step == _totalQ - 1 ? 'ดูผลประเมิน' : 'ถัดไป',
+            label: _step == _totalQ - 1
+                ? AppLocalizations.of(context).viewAssessmentResult
+                : AppLocalizations.of(context).next,
             onPressed: _selected != null ? _handleNext : null,
           ),
         ),
@@ -662,7 +657,27 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     );
   }
 
-  Widget _buildResult(_RiskConfig cfg) {
+  Widget _buildResult(_RiskConfig cfg, _RiskLevel risk, AppLocalizations l10n, List<_Question> questions) {
+    final localizedLabel = risk == _RiskLevel.low
+        ? l10n.riskLow
+        : risk == _RiskLevel.medium
+            ? l10n.riskMedium
+            : l10n.riskHigh;
+    final localizedHeadline = risk == _RiskLevel.low
+        ? l10n.riskLowHeadline
+        : risk == _RiskLevel.medium
+            ? l10n.riskMediumHeadline
+            : l10n.riskHighHeadline;
+    final localizedAdvice = risk == _RiskLevel.low
+        ? l10n.riskLowAdvice
+        : risk == _RiskLevel.medium
+            ? l10n.riskMediumAdvice
+            : l10n.riskHighAdvice;
+    final localizedPills = risk == _RiskLevel.low
+        ? l10n.riskLowPills
+        : risk == _RiskLevel.medium
+            ? l10n.riskMediumPills
+            : l10n.riskHighPills;
     return Column(
       children: [
         const SizedBox(height: 24),
@@ -687,7 +702,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            cfg.label,
+            localizedLabel,
             style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -697,7 +712,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         ),
         const SizedBox(height: 10),
         Text(
-          cfg.headline,
+          localizedHeadline,
           style: GoogleFonts.googleSans(
             fontSize: 22,
             fontWeight: FontWeight.bold,
@@ -714,7 +729,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
-            cfg.advice,
+            localizedAdvice,
             style: GoogleFonts.googleSans(
               fontSize: 15,
               color: AppColors.textPrimary,
@@ -727,7 +742,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           spacing: 8,
           runSpacing: 8,
           alignment: WrapAlignment.center,
-          children: cfg.pills
+          children: localizedPills
               .map(
                 (p) => Container(
                   padding: const EdgeInsets.symmetric(
@@ -751,11 +766,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         const SizedBox(height: 20),
         _buildKnowledgeBox(),
         const SizedBox(height: 20),
-        _AnswerSummary(answers: Map.from(_answers)),
+        _AnswerSummary(answers: Map.from(_answers), questions: questions),
         const SizedBox(height: 20),
         if (cfg.hasCta) ...[
           _PrimaryBtn(
-            label: 'นัดพบแพทย์',
+            label: AppLocalizations.of(context).bookDoctorTitle,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (_) =>
@@ -765,7 +780,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           ),
           const SizedBox(height: 10),
         ],
-        _OutlinedBtn(label: 'ทำแบบประเมินใหม่', onPressed: _reset),
+        _OutlinedBtn(label: AppLocalizations.of(context).reassess, onPressed: _reset),
       ],
     );
   }
@@ -782,7 +797,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ข้อมูลเพิ่มเติม',
+            AppLocalizations.of(context).additionalInfo,
             style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w700,
@@ -790,17 +805,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             ),
           ),
           const SizedBox(height: 8),
-          _buildKnowledgeRow(
-            'PrEP',
-            'ยาสำหรับรับประทานก่อนสัมผัสความเสี่ยง ช่วยป้องกันการติดเชื้อ HIV ได้เกือบ 100%',
-          ),
-          _buildKnowledgeRow(
-            'PEP',
-            'ยาป้องกันฉุกเฉิน ต้องรับประทานให้เร็วที่สุดภายใน 72 ชั่วโมง หลังสัมผัสความเสี่ยง เพื่อยับยั้งการติดเชื้อเข้าสู่ร่างกาย',
-          ),
+          _buildKnowledgeRow('PrEP', AppLocalizations.of(context).prepMedDesc),
+          _buildKnowledgeRow('PEP', AppLocalizations.of(context).pepMedDesc),
           const SizedBox(height: 4),
           Text(
-            'นอกจากการตรวจ HIV ควรตรวจคัดกรองมะเร็งปากมดลูกและซิฟิลิสเป็นประจำ เนื่องจากรอยโรคเหล่านี้ส่งผลให้เชื้อ HIV เข้าสู่ร่างกายได้ง่ายขึ้นหากเกิดบาดแผล',
+            AppLocalizations.of(context).hivScreeningNote,
             style: GoogleFonts.googleSans(
               fontSize: 12,
               color: AppColors.textHint,
@@ -851,7 +860,8 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
 
 class _AnswerSummary extends StatefulWidget {
   final Map<int, String> answers;
-  const _AnswerSummary({required this.answers});
+  final List<_Question> questions;
+  const _AnswerSummary({required this.answers, required this.questions});
 
   @override
   State<_AnswerSummary> createState() => _AnswerSummaryState();
@@ -880,7 +890,7 @@ class _AnswerSummaryState extends State<_AnswerSummary> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'ดูคำตอบของคุณ',
+                  AppLocalizations.of(context).viewYourAnswers,
                   style: GoogleFonts.googleSans(
                       fontSize: 14, color: AppColors.textHint),
                 ),
@@ -904,7 +914,7 @@ class _AnswerSummaryState extends State<_AnswerSummary> {
           child: _expanded
               ? Column(
                   children: widget.answers.entries.map((e) {
-            final q = _kQuestions[e.key];
+            final q = widget.questions[e.key];
             final opt = q.options.firstWhere(
               (o) => o.key == e.value,
               orElse: () => q.options.first,

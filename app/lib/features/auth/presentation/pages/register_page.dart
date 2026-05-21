@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import 'privacy_policy_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -65,7 +66,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_gender == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('กรุณาเลือกเพศ', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.of(context).selectGender, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -76,7 +77,7 @@ class _RegisterPageState extends State<RegisterPage> {
     if (_selectedDateOfBirth == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('กรุณาเลือกวันเกิด', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.of(context).selectBirthDate, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -101,12 +102,12 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildNationalityOption(String value) {
+  Widget _buildNationalityOption(String value, String label) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Radio<String>(value: value, activeColor: AppColors.primary),
-        Text(value, style: GoogleFonts.googleSans(fontSize: 14)),
+        Text(label, style: GoogleFonts.googleSans(fontSize: 14)),
       ],
     );
   }
@@ -125,7 +126,7 @@ class _RegisterPageState extends State<RegisterPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'สร้างบัญชีใหม่',
+          AppLocalizations.of(context).registerTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -148,7 +149,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                      hintText: 'ชื่อผู้ใช้งาน',
+                      hintText: AppLocalizations.of(context).usernameHint,
                       hintStyle: GoogleFonts.googleSans(
                         color: Colors.grey[400],
                         fontSize: 14,
@@ -161,14 +162,14 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'กรุณากรอกชื่อผู้ใช้งาน';
+                        return AppLocalizations.current.usernameRequired;
                       }
                       final val = value.trim();
                       if (val.length < 4 || val.length > 20) {
-                        return 'ชื่อผู้ใช้งานต้องมีความยาว 4-20 ตัวอักษร';
+                        return AppLocalizations.current.usernameRange;
                       }
                       if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(val)) {
-                        return 'ชื่อผู้ใช้งานต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น';
+                        return AppLocalizations.current.usernameInvalidChars;
                       }
                       return null;
                     },
@@ -178,7 +179,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(
-                    'ตัวอักษรภาษาอังกฤษหรือตัวเลข (4–20 ตัว)',
+                    AppLocalizations.of(context).usernameLength,
                     style: GoogleFonts.googleSans(fontSize: 12, color: Colors.grey[500]),
                   ),
                 ),
@@ -192,7 +193,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                      hintText: 'รหัสผ่าน',
+                      hintText: AppLocalizations.of(context).passwordHint,
                       hintStyle: GoogleFonts.googleSans(
                         color: Colors.grey[400],
                         fontSize: 14,
@@ -209,13 +210,13 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'กรุณากรอกรหัสผ่าน';
+                        return AppLocalizations.current.passwordRequired;
                       }
                       if (value.length < 8) {
-                        return 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร';
+                        return AppLocalizations.current.passwordTooShort;
                       }
                       if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(value)) {
-                        return 'รหัสผ่านต้องมีทั้งตัวอักษรและตัวเลข';
+                        return AppLocalizations.current.passwordStrength;
                       }
                       return null;
                     },
@@ -225,7 +226,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 Padding(
                   padding: const EdgeInsets.only(left: 4),
                   child: Text(
-                    'ต้องมีทั้งตัวอักษรและตัวเลข อย่างน้อย 8 ตัว',
+                    AppLocalizations.of(context).passwordStrengthHint,
                     style: GoogleFonts.googleSans(fontSize: 12, color: Colors.grey[500]),
                   ),
                 ),
@@ -239,7 +240,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                      hintText: 'ยืนยันรหัสผ่าน',
+                      hintText: AppLocalizations.of(context).confirmPasswordHint,
                       hintStyle: GoogleFonts.googleSans(
                         color: Colors.grey[400],
                         fontSize: 14,
@@ -258,10 +259,10 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'กรุณายืนยันรหัสผ่าน';
+                        return AppLocalizations.current.confirmPasswordRequired;
                       }
                       if (value != _passwordController.text) {
-                        return 'รหัสผ่านไม่ตรงกัน';
+                        return AppLocalizations.current.passwordMismatch;
                       }
                       return null;
                     },
@@ -290,7 +291,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   value: _gender,
                                   isExpanded: true,
                                   hint: Text(
-                                    'เพศ',
+                                    AppLocalizations.of(context).gender,
                                     style: GoogleFonts.googleSans(
                                       color: Colors.grey[400],
                                       fontSize: 14,
@@ -303,11 +304,11 @@ class _RegisterPageState extends State<RegisterPage> {
                                   items: [
                                     DropdownMenuItem(
                                       value: 'ชาย',
-                                      child: Text('ชาย', style: GoogleFonts.googleSans()),
+                                      child: Text(AppLocalizations.of(context).male, style: GoogleFonts.googleSans()),
                                     ),
                                     DropdownMenuItem(
                                       value: 'หญิง',
-                                      child: Text('หญิง', style: GoogleFonts.googleSans()),
+                                      child: Text(AppLocalizations.of(context).female, style: GoogleFonts.googleSans()),
                                     ),
                                   ],
                                   onChanged: (value) =>
@@ -338,7 +339,7 @@ class _RegisterPageState extends State<RegisterPage> {
                                   color: Colors.grey[400],
                                   size: 20,
                                 ),
-                                hintText: 'วัน/เดือน/ปีเกิด',
+                                hintText: AppLocalizations.of(context).dateOfBirth,
                                 hintStyle: GoogleFonts.googleSans(
                                   color: Colors.grey[400],
                                   fontSize: 14,
@@ -359,69 +360,71 @@ class _RegisterPageState extends State<RegisterPage> {
 
                 const SizedBox(height: 16.0),
 
-                // Nationality Row
-                Row(
-                  children: [
-                    Text(
-                      'สัญชาติ',
-                      style: GoogleFonts.googleSans(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: RadioGroup<String>(
-                        groupValue: _nationality,
-                        onChanged: (val) => setState(() => _nationality = val!),
-                        child: Wrap(
-                          alignment: WrapAlignment.end,
-                          spacing: 8,
-                          runSpacing: 0,
-                          children: [
-                            _buildNationalityOption('ไทย'),
-                            _buildNationalityOption('ลาว'),
-                            _buildNationalityOption('พม่า'),
-                            _buildNationalityOption('อื่นๆ'),
-                          ],
-                        ),
+                // Nationality
+                RadioGroup<String>(
+                  groupValue: _nationality,
+                  onChanged: (val) => setState(() => _nationality = val!),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            AppLocalizations.of(context).nationality,
+                            style: GoogleFonts.googleSans(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                _buildNationalityOption('ไทย', AppLocalizations.of(context).nationalityThai),
+                                _buildNationalityOption('ลาว', AppLocalizations.of(context).nationalityLao),
+                                _buildNationalityOption('พม่า', AppLocalizations.of(context).nationalityMyanmar),
+                                _buildNationalityOption('อื่นๆ', AppLocalizations.of(context).nationalityOther),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
-                if (_nationality == 'อื่นๆ') ...[
-                  const SizedBox(height: 12),
-                  _buildInputBox(
-                    child: TextFormField(
-                      controller: _customNationalityController,
-                      style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                      decoration: InputDecoration(
-                        prefixIcon: Icon(Icons.public_outlined, color: Colors.grey[400]),
-                        hintText: 'ระบุสัญชาติ',
-                        hintStyle: GoogleFonts.googleSans(
-                          color: Colors.grey[400],
-                          fontSize: 14,
+                      if (_nationality == 'อื่นๆ') ...[
+                        const SizedBox(height: 8),
+                        _buildInputBox(
+                          child: TextFormField(
+                            controller: _customNationalityController,
+                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: AppLocalizations.of(context).specifyNationality,
+                              hintStyle: GoogleFonts.googleSans(
+                                color: Colors.grey[400],
+                                fontSize: 14,
+                              ),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 12.0,
+                              ),
+                            ),
+                            validator: (_) {
+                              if (_nationality == 'อื่นๆ' &&
+                                  _customNationalityController.text.trim().isEmpty) {
+                                return AppLocalizations.current.nationalityRequired;
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 16.0,
-                        ),
-                      ),
-                      validator: (_) {
-                        if (_nationality == 'อื่นๆ' &&
-                            _customNationalityController.text.trim().isEmpty) {
-                          return 'กรุณาระบุสัญชาติ';
-                        }
-                        return null;
-                      },
-                    ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
 
                 const SizedBox(height: 48.0),
 
                 // Submit Button
                 GradientButton(
                   onPressed: _goToPrivacyPolicy,
-                  label: 'ถัดไป',
+                  label: AppLocalizations.of(context).next,
                 ),
               ],
             ),

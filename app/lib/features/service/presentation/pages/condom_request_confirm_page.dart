@@ -6,6 +6,7 @@ import '../../../../../core/widgets/gradient_button.dart';
 import 'condom_request_success_page.dart';
 import 'request_history_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class CondomRequestConfirmPage extends StatefulWidget {
   final Map<int, int> quantities;
@@ -52,7 +53,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       if (loggedIn == true && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เข้าสู่ระบบแล้ว', style: GoogleFonts.googleSans()),
+            content: Text(AppLocalizations.current.loggedIn, style: GoogleFonts.googleSans()),
             backgroundColor: AppColors.success,
             behavior: SnackBarBehavior.floating,
           ),
@@ -140,7 +141,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('เกิดข้อผิดพลาดในการบันทึกข้อมูล', style: GoogleFonts.googleSans()),
+            content: Text(AppLocalizations.current.errorOccurred, style: GoogleFonts.googleSans()),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -164,7 +165,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'รับถุงยางอนามัย',
+          AppLocalizations.of(context).requestPageTitle,
           style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -174,7 +175,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.history, color: AppColors.primary),
-            tooltip: 'ประวัติคำขอ',
+            tooltip: AppLocalizations.of(context).requestHistory,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
             ),
@@ -217,7 +218,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'กรุณาตรวจสอบข้อมูลให้ถูกต้องก่อนยืนยัน หากต้องการแก้ไขให้กดปุ่ม "แก้ไข"',
+                            AppLocalizations.of(context).checkInfoMessage,
                             style: GoogleFonts.googleSans(
                                 fontSize: 13,
                                 color: AppColors.textPrimary,
@@ -238,7 +239,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               children: [
                 GradientButton(
                   onPressed: _isLoading ? null : _submitRequest,
-                  label: 'ยืนยัน',
+                  label: AppLocalizations.of(context).confirm,
                   isLoading: _isLoading,
                 ),
                 const SizedBox(height: 10),
@@ -254,7 +255,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24)),
                     ),
-                    child: Text('แก้ไข',
+                    child: Text(AppLocalizations.of(context).edit,
                         style: GoogleFonts.googleSans(
                             fontSize: 16, fontWeight: FontWeight.bold)),
                   ),
@@ -270,7 +271,8 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   // ── Step indicator ──────────────────────────────────────────────────────────
 
   Widget _buildStepIndicator(int step) {
-    const labels = ['กรอกข้อมูล', 'ยืนยัน', 'สำเร็จ'];
+    final l10n = AppLocalizations.of(context);
+    final labels = [l10n.stepForm, l10n.stepConfirm, l10n.stepSuccess];
     const double nodeSize = 34;
     const double gap = 6;
     final n = labels.length;
@@ -429,7 +431,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'สิทธิ์รับฟรีคงเหลือ',
+          AppLocalizations.of(context).remainingQuota,
           style: GoogleFonts.googleSans(
               fontWeight: FontWeight.bold,
               fontSize: 18,
@@ -443,7 +445,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('ถุงยางอนามัย',
+                  Text(AppLocalizations.of(context).condoms,
                       style: GoogleFonts.googleSans(
                           fontSize: 14, color: AppColors.textSecondary)),
                   TweenAnimationBuilder<int>(
@@ -464,7 +466,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                               fontSize: 28),
                         ),
                         TextSpan(
-                          text: 'ชิ้น',
+                          text: AppLocalizations.of(context).pieces,
                           style: GoogleFonts.googleSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
@@ -481,7 +483,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('เจลหล่อลื่น',
+                  Text(AppLocalizations.of(context).lubricant,
                       style: GoogleFonts.googleSans(
                           fontSize: 14, color: AppColors.textSecondary)),
                   TweenAnimationBuilder<int>(
@@ -503,7 +505,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                               fontSize: 28),
                         ),
                         TextSpan(
-                          text: 'ชิ้น',
+                          text: AppLocalizations.of(context).pieces,
                           style: GoogleFonts.googleSans(
                               fontSize: 20,
                               fontWeight: FontWeight.w500,
@@ -525,21 +527,24 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
 
   Widget _buildQuantityCard() {
     return _buildSectionCard(
-      title: 'ถุงยางอนามัย',
+      title: AppLocalizations.of(context).condoms,
       icon: Icons.inventory_2_outlined,
       child: Column(
         children: [
           ...widget.quantities.entries
               .where((e) => e.value > 0)
-              .map((e) => _buildInfoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+              .map((e) {
+                final l10n = AppLocalizations.of(context);
+                return _buildInfoRow('${l10n.sizeLabel} ${e.key} ${l10n.sizeMm}', '${e.value} ${l10n.pieces}');
+              }),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('รวม',
+              Text(AppLocalizations.of(context).total,
                   style: GoogleFonts.googleSans(
                       fontSize: 16, fontWeight: FontWeight.bold)),
               Text(
-                '$_totalSelected ชิ้น',
+                '$_totalSelected ${AppLocalizations.of(context).pieces}',
                 style: GoogleFonts.googleSans(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -554,28 +559,29 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
 
   Widget _buildLubricantCard() {
     return _buildSectionCard(
-      title: 'เพิ่มเติม',
+      title: AppLocalizations.of(context).extra,
       icon: Icons.add_circle_outline,
-      child: _buildInfoRow('เจลหล่อลื่น', '${widget.lubricantQuantity} ชิ้น'),
+      child: _buildInfoRow(AppLocalizations.of(context).lubricant, '${widget.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
   Widget _buildPlaceTimeCard() {
+    final l10n = AppLocalizations.of(context);
     final dateStr = widget.selectedDate != null
-        ? '${widget.selectedDate!.day} ${_monthTH(widget.selectedDate!.month)} ${widget.selectedDate!.year + 543}'
+        ? '${widget.selectedDate!.day} ${l10n.monthsFull[widget.selectedDate!.month]} ${widget.selectedDate!.year + 543}'
         : '-';
     final timeStr = widget.selectedTime != null
-        ? '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')} น.'
+        ? '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}'
         : '-';
 
     return _buildSectionCard(
-      title: 'สถานบริการ วันที่และเวลารับ',
+      title: l10n.serviceAndDateTime,
       icon: Icons.calendar_today_outlined,
       child: Column(
         children: [
-          _buildInfoRow('สถานบริการ', widget.selectedServiceCenter ?? '-'),
-          _buildInfoRow('วันที่', dateStr),
-          _buildInfoRow('เวลา', timeStr),
+          _buildInfoRow(l10n.serviceCenterLabel, widget.selectedServiceCenter ?? '-'),
+          _buildInfoRow(l10n.dateLabel, dateStr),
+          _buildInfoRow(l10n.timeLabel, timeStr),
         ],
       ),
     );
@@ -583,7 +589,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
 
   Widget _buildMessageCard() {
     return _buildSectionCard(
-      title: 'ฝากข้อความ',
+      title: AppLocalizations.of(context).messageLabel,
       icon: Icons.comment_outlined,
       child: Align(
         alignment: Alignment.centerLeft,
@@ -593,11 +599,4 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     );
   }
 
-  String _monthTH(int m) {
-    const months = [
-      '', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
-    ];
-    return months[m];
-  }
 }

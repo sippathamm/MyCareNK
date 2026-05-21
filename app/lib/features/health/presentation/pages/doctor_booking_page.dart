@@ -7,6 +7,7 @@ import '../../../../core/services/service_center_service.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import 'appointment_history_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
 
@@ -17,44 +18,19 @@ class _Reason {
   const _Reason(this.key, this.label, this.icon);
 }
 
-class _BookingDate {
-  final DateTime date;
-  final String dayLabel;
-  final String monthLabel;
-  final String fullLabel;
-  const _BookingDate({
-    required this.date,
-    required this.dayLabel,
-    required this.monthLabel,
-    required this.fullLabel,
-  });
-}
-
-final _kReasons = <_Reason>[
-  _Reason('pep', 'รับยา PEP (ฉุกเฉิน)', Icons.emergency),
-  _Reason('prep', 'รับยา PrEP', Icons.medication),
-  _Reason('hiv', 'ตรวจเลือด HIV', Icons.biotech),
-  _Reason('consult', 'ปรึกษาทั่วไป', Icons.chat_bubble_outline),
+List<_Reason> _buildReasons(AppLocalizations l10n) => [
+  _Reason('pep', l10n.reasonPEP, Icons.emergency),
+  _Reason('prep', l10n.reasonPrEP, Icons.medication),
+  _Reason('hiv', l10n.reasonHIV, Icons.biotech),
+  _Reason('consult', l10n.reasonConsult, Icons.chat_bubble_outline),
 ];
 
-final _thMonths = [
-  '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-  'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-];
-final _thDays = ['อา', 'จ', 'อ', 'พ', 'พฤ', 'ศ', 'ส'];
-
-List<_BookingDate> _getAvailableDates() {
-  final dates = <_BookingDate>[];
+List<DateTime> _buildAvailableDates() {
+  final dates = <DateTime>[];
   var d = DateTime.now();
   while (dates.length < 7) {
     if (d.weekday != DateTime.saturday && d.weekday != DateTime.sunday) {
-      final dow = d.weekday == 7 ? 0 : d.weekday;
-      dates.add(_BookingDate(
-        date: d,
-        dayLabel: _thDays[dow],
-        monthLabel: _thMonths[d.month],
-        fullLabel: '${d.day} ${_thMonths[d.month]} ${d.year + 543}',
-      ));
+      dates.add(d);
     }
     d = d.add(const Duration(days: 1));
   }
@@ -72,7 +48,7 @@ class DoctorBookingPage extends StatefulWidget {
 }
 
 class _DoctorBookingPageState extends State<DoctorBookingPage> {
-  final List<_BookingDate> _dates = _getAvailableDates();
+  final List<DateTime> _dates = _buildAvailableDates();
   String _refNum = '';
   bool _isSubmitting = false;
 
@@ -117,14 +93,14 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   bool get _canProceed =>
       _reason != null && _location != null && _dateKey != null && _timeSlot != null;
 
-  _Reason? get _selectedReason =>
-      _kReasons.where((r) => r.key == _reason).firstOrNull;
+  _Reason? _getSelectedReason(AppLocalizations l10n) =>
+      _buildReasons(l10n).where((r) => r.key == _reason).firstOrNull;
   ServiceCenterModel? get _selectedLocation =>
       _centers.where((c) => c.name == _location).firstOrNull;
 
   static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
-  _BookingDate? get _selectedDate => _dates
-      .where((d) => d.date.toIso8601String().substring(0, 10) == _dateKey)
+  DateTime? get _selectedDate => _dates
+      .where((d) => d.toIso8601String().substring(0, 10) == _dateKey)
       .firstOrNull;
 
   @override
@@ -137,7 +113,8 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   // ── Step indicator ──────────────────────────────────────────────────────────
 
   Widget _buildStepIndicator() {
-    const labels = ['เลือกบริการ', 'ยืนยัน', 'สำเร็จ'];
+    final l10n = AppLocalizations.of(context);
+    final labels = [l10n.bookingSelectService, l10n.stepConfirm, l10n.stepSuccess];
     const double nodeSize = 34;
     const double gap = 6;
     final n = labels.length;
@@ -201,7 +178,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   Widget _buildForm() {
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: _buildAppBar('นัดพบแพทย์', () => Navigator.of(context).pop()),
+      appBar: _buildAppBar(AppLocalizations.of(context).bookingTitle, () => Navigator.of(context).pop()),
       body: Column(
         children: [
           Container(
@@ -218,14 +195,14 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _SectionCard(
-                    title: 'เรื่องที่ต้องการพบแพทย์',
+                    title: AppLocalizations.of(context).bookingServiceReason,
                     icon: Icons.medical_services_outlined,
                     child: Column(
-                      children: _kReasons.map(_buildReasonTile).toList(),
+                      children: _buildReasons(AppLocalizations.of(context)).map(_buildReasonTile).toList(),
                     ),
                   ),
                   _SectionCard(
-                    title: 'สถานบริการ',
+                    title: AppLocalizations.of(context).selectServiceCenterTitle,
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
                         ? const Center(
@@ -238,7 +215,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                             ? Center(
                                 child: Padding(
                                   padding: const EdgeInsets.symmetric(vertical: 12),
-                                  child: Text('กรุณาเข้าสู่ระบบ',
+                                  child: Text(AppLocalizations.of(context).pleaseLogin,
                                       style: GoogleFonts.googleSans(
                                           fontSize: 14, color: AppColors.textHint)),
                                 ),
@@ -249,7 +226,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                     child: Center(
                                       child: Padding(
                                         padding: const EdgeInsets.symmetric(vertical: 12),
-                                        child: Text('ไม่สามารถโหลดข้อมูลได้ กดเพื่อลองใหม่',
+                                        child: Text(AppLocalizations.of(context).cannotLoadData,
                                             style: GoogleFonts.googleSans(
                                                 fontSize: 14, color: AppColors.textHint)),
                                       ),
@@ -263,24 +240,24 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                   ),
                   ),
                   _SectionCard(
-                    title: 'วันที่นัด',
+                    title: AppLocalizations.of(context).bookingAppointmentDate,
                     icon: Icons.event_outlined,
                     child: _buildDatePicker(),
                   ),
                   _SectionCard(
-                    title: 'เวลานัด',
+                    title: AppLocalizations.of(context).bookingAppointmentTime,
                     icon: Icons.schedule_outlined,
                     child: _buildTimePicker(),
                   ),
                   _SectionCard(
-                    title: 'บันทึกเพิ่มเติม (ไม่ระบุได้)',
+                    title: AppLocalizations.of(context).bookingAdditionalNotes,
                     icon: Icons.notes_outlined,
                     child: TextField(
                       controller: _noteCtrl,
                       maxLines: 3,
                       style: GoogleFonts.googleSans(fontSize: 16),
                       decoration: InputDecoration(
-                        hintText: 'เช่น อาการที่มี หรือยาที่ใช้อยู่...',
+                        hintText: AppLocalizations.of(context).bookingAdditionalNotesHint,
                         hintStyle: GoogleFonts.googleSans(
                             fontSize: 16, color: AppColors.textHint),
                         border: OutlineInputBorder(
@@ -316,7 +293,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               opacity: _canProceed ? 1.0 : 0.4,
               duration: const Duration(milliseconds: 200),
               child: _PrimaryBtn(
-                label: 'ถัดไป',
+                label: AppLocalizations.of(context).next,
                 onPressed: _canProceed ? () => setState(() => _step = 1) : null,
               ),
             ),
@@ -449,7 +426,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            'กรุณาเลือกสถานบริการก่อน',
+            AppLocalizations.of(context).selectServiceCenterFirst,
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
           ),
@@ -461,7 +438,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
-            'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
+            AppLocalizations.of(context).noAppointmentService,
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
           ),
@@ -476,7 +453,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
         separatorBuilder: (context, index) => const SizedBox(width: 8),
         itemBuilder: (_, i) {
           final d = _dates[i];
-          final key = d.date.toIso8601String().substring(0, 10);
+          final l10n = AppLocalizations.of(context);
+          final dow = d.weekday == 7 ? 0 : d.weekday;
+          final key = d.toIso8601String().substring(0, 10);
           final sel = _dateKey == key;
           return GestureDetector(
             onTap: () => setState(() => _dateKey = key),
@@ -495,7 +474,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    d.dayLabel,
+                    l10n.daysShort[dow],
                     style: GoogleFonts.googleSans(
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -505,7 +484,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     ),
                   ),
                   Text(
-                    '${d.date.day}',
+                    '${d.day}',
                     style: GoogleFonts.googleSans(
                       fontSize: 22,
                       fontWeight: FontWeight.w700,
@@ -514,7 +493,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     ),
                   ),
                   Text(
-                    d.monthLabel,
+                    l10n.monthsShort[d.month],
                     style: GoogleFonts.googleSans(
                       fontSize: 11,
                       color: sel
@@ -540,8 +519,8 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           padding: const EdgeInsets.symmetric(vertical: 8),
           child: Text(
             _location == null
-                ? 'กรุณาเลือกสถานบริการก่อน'
-                : 'สถานบริการนี้ไม่เปิดให้นัดพบแพทย์',
+                ? AppLocalizations.of(context).selectServiceCenterFirst
+                : AppLocalizations.of(context).noAppointmentService,
             style: GoogleFonts.googleSans(
                 fontSize: 14, color: AppColors.textHint),
           ),
@@ -553,9 +532,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSlotGroup('ช่วงเช้า', morning),
+        _buildSlotGroup(AppLocalizations.of(context).morning, morning),
         const SizedBox(height: 14),
-        _buildSlotGroup('ช่วงบ่าย', afternoon),
+        _buildSlotGroup(AppLocalizations.of(context).afternoon, afternoon),
       ],
     );
   }
@@ -598,7 +577,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
-                  '$t น.',
+                  '$t ${AppLocalizations.of(context).timeWithUnit}',
                   style: GoogleFonts.googleSans(
                     fontSize: 15,
                     fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
@@ -618,17 +597,17 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   Widget _buildConfirm() {
     final loc = _selectedLocation;
     final rows = [
-      (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
-      (Icons.local_hospital_outlined, 'สถานบริการ', loc?.name ?? ''),
+      (Icons.medical_services_outlined, AppLocalizations.of(context).reasonLabel, _getSelectedReason(AppLocalizations.of(context))?.label ?? ''),
+      (Icons.local_hospital_outlined, AppLocalizations.of(context).serviceCenterLabel, loc?.name ?? ''),
       if (loc?.operatingHours != null)
-        (Icons.access_time_outlined, 'เวลาทำการ', loc!.operatingHours!),
-      (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
-      (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
+        (Icons.access_time_outlined, AppLocalizations.of(context).operatingHours, loc!.operatingHours!),
+      (Icons.event_outlined, AppLocalizations.of(context).dateLabel, _selectedDate != null ? '${_selectedDate!.day} ${AppLocalizations.of(context).monthsFull[_selectedDate!.month]} ${_selectedDate!.year + 543}' : ''),
+      (Icons.schedule_outlined, AppLocalizations.of(context).timeLabel, '${_timeSlot ?? ''} ${AppLocalizations.of(context).timeWithUnit}'),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.white,
-      appBar: _buildAppBar('นัดพบแพทย์', () => setState(() => _step = 0)),
+      appBar: _buildAppBar(AppLocalizations.of(context).bookingTitle, () => setState(() => _step = 0)),
       body: Column(
         children: [
           Container(
@@ -644,7 +623,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               child: Column(
                 children: [
                   _SectionCard(
-                    title: 'สรุปการนัดหมาย',
+                    title: AppLocalizations.of(context).bookingAppointmentSummary,
                     icon: Icons.event_note_outlined,
                     child: Column(
                       children: [
@@ -694,7 +673,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text('บันทึกเพิ่มเติม',
+                                Text(AppLocalizations.of(context).bookingNoteLabel,
                                     style: GoogleFonts.googleSans(
                                         fontSize: 14,
                                         color: AppColors.textHint)),
@@ -725,7 +704,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานบริการล่วงหน้าอย่างน้อย 24 ชม.',
+                            AppLocalizations.of(context).bookingCancelNote,
                             style: GoogleFonts.googleSans(
                               fontSize: 13,
                               color: AppColors.textPrimary,
@@ -746,13 +725,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             child: Column(
               children: [
                 _PrimaryBtn(
-                  label: 'ยืนยันการนัดหมาย',
+                  label: AppLocalizations.of(context).confirmAppointment,
                   onPressed: _isSubmitting ? null : _submitBooking,
                   isLoading: _isSubmitting,
                 ),
                 const SizedBox(height: 10),
                 _OutlinedBtn(
-                  label: 'แก้ไข',
+                  label: AppLocalizations.of(context).edit,
                   onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
                 ),
               ],
@@ -777,10 +756,10 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           elevation: 24,
           shadowColor: Colors.black38,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: Text('กรุณาเข้าสู่ระบบ',
+          title: Text(AppLocalizations.of(context).pleaseLogin,
               style: GoogleFonts.googleSans(
                   fontSize: 18, fontWeight: FontWeight.bold)),
-          content: Text('คุณต้องเข้าสู่ระบบก่อนจึงจะนัดพบแพทย์ได้',
+          content: Text(AppLocalizations.of(context).loginToBookDoctor,
               style: GoogleFonts.googleSans(fontSize: 15, height: 1.6)),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
@@ -792,7 +771,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
                 if (loggedIn == true && mounted) _submitBooking();
               },
-              label: 'เข้าสู่ระบบ',
+              label: AppLocalizations.of(context).loginBtn,
               fontSize: 15,
             ),
             const SizedBox(height: 8),
@@ -807,7 +786,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(24)),
                 ),
-                child: Text('ยกเลิก',
+                child: Text(AppLocalizations.of(context).cancel,
                     style: GoogleFonts.googleSans(
                         fontSize: 15, fontWeight: FontWeight.bold)),
               ),
@@ -836,7 +815,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+          content: Text(AppLocalizations.current.generalErrorRetry,
               style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
@@ -851,16 +830,16 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
   Widget _buildSuccess() {
     final infoRows = [
-      (Icons.local_hospital_outlined, 'สถานบริการ', _selectedLocation?.name ?? ''),
-      (Icons.event_outlined, 'วันที่', _selectedDate?.fullLabel ?? ''),
-      (Icons.schedule_outlined, 'เวลา', '${_timeSlot ?? ''} น.'),
-      (Icons.medical_services_outlined, 'เรื่อง', _selectedReason?.label ?? ''),
+      (Icons.local_hospital_outlined, AppLocalizations.of(context).serviceCenterLabel, _selectedLocation?.name ?? ''),
+      (Icons.event_outlined, AppLocalizations.of(context).dateLabel, _selectedDate != null ? '${_selectedDate!.day} ${AppLocalizations.of(context).monthsFull[_selectedDate!.month]} ${_selectedDate!.year + 543}' : ''),
+      (Icons.schedule_outlined, AppLocalizations.of(context).timeLabel, '${_timeSlot ?? ''} ${AppLocalizations.of(context).timeWithUnit}'),
+      (Icons.medical_services_outlined, AppLocalizations.of(context).reasonLabel, _getSelectedReason(AppLocalizations.of(context))?.label ?? ''),
     ];
 
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: _buildAppBar(
-        'นัดพบแพทย์',
+        AppLocalizations.of(context).bookingTitle,
         () => Navigator.of(context).popUntil((r) => r.isFirst),
       ),
       body: Column(
@@ -889,7 +868,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             ),
             const SizedBox(height: 20),
             Text(
-              'นัดหมายสำเร็จ!',
+              AppLocalizations.of(context).bookingSuccess,
               style: GoogleFonts.googleSans(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -898,12 +877,12 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             ),
             const SizedBox(height: 6),
             Text(
-              'เราได้รับคำขอนัดหมายของคุณแล้ว',
+              AppLocalizations.of(context).bookingSuccessMessage,
               style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
             _SectionCard(
-              title: 'รายละเอียดการนัดหมาย',
+              title: AppLocalizations.of(context).appointmentDetailsTitle,
               icon: Icons.event_note_outlined,
               child: Column(
                 children: infoRows
@@ -943,7 +922,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               ),
             ),
             Text(
-              'รหัสอ้างอิง: $_refNum',
+              AppLocalizations.of(context).referencePrefix(_refNum),
               style: GoogleFonts.googleSans(fontSize: 14, color: AppColors.textHint),
             ),
             const SizedBox(height: 20),
@@ -958,7 +937,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'สิ่งที่ควรทำก่อนวันนัด',
+                    AppLocalizations.of(context).preTodoTitle,
                     style: GoogleFonts.googleSans(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -993,13 +972,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             ),
             const SizedBox(height: 28),
             _PrimaryBtn(
-              label: 'กลับหน้าบริการ',
+              label: AppLocalizations.of(context).backToService,
               onPressed: () =>
                   Navigator.of(context).popUntil((r) => r.isFirst),
             ),
             const SizedBox(height: 10),
             _OutlinedBtn(
-              label: 'ดูประวัติการนัด',
+              label: AppLocalizations.of(context).appointmentHistoryTitle,
               onPressed: () => Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                     builder: (_) => const AppointmentHistoryPage()),
@@ -1038,7 +1017,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       actions: [
         IconButton(
           icon: const Icon(Icons.history, color: AppColors.primary),
-          tooltip: 'ประวัติการนัด',
+          tooltip: AppLocalizations.of(context).appointmentHistoryTitle,
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const AppointmentHistoryPage()),
           ),

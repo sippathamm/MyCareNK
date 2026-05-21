@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import 'forgot_password_recovery_code_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -46,7 +47,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'ลืมรหัสผ่าน',
+          AppLocalizations.of(context).forgotPasswordTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -82,7 +83,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'กรอกชื่อผู้ใช้งานของคุณ',
+                  AppLocalizations.of(context).enterYourUsername,
                   style: GoogleFonts.googleSans(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -91,7 +92,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'ยืนยันตัวตนด้วยรหัสกู้ยืน',
+                  AppLocalizations.of(context).verifyWithRecoveryCode,
                   style: GoogleFonts.googleSans(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -110,7 +111,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     controller: _usernameController,
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
-                      hintText: 'ชื่อผู้ใช้งาน',
+                      hintText: AppLocalizations.of(context).usernameHint,
                       hintStyle: GoogleFonts.googleSans(
                         color: Colors.grey[400],
                         fontSize: 14,
@@ -124,13 +125,13 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'กรุณากรอกชื่อผู้ใช้งาน';
+                        return AppLocalizations.current.usernameRequired;
                       }
                       if (value.trim().length < 4) {
-                        return 'ชื่อผู้ใช้งานต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
+                        return AppLocalizations.current.usernameTooShort;
                       }
                       if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
-                        return 'ชื่อผู้ใช้งานต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น';
+                        return AppLocalizations.current.usernameInvalidChars;
                       }
                       return null;
                     },
@@ -141,7 +142,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                 GradientButton(
                   onPressed: _onNext,
-                  label: 'ถัดไป',
+                  label: AppLocalizations.of(context).next,
                 ),
               ],
             ),

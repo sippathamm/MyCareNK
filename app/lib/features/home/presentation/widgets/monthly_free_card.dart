@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/constants/app_constants.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class MonthlyFreeCard extends StatefulWidget {
   /// Incrementing this key from the parent re-triggers all animations.
@@ -186,6 +187,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   }
 
   Widget _buildCondomCard(int remaining) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       width: double.infinity,
@@ -209,7 +211,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'ถุงยางอนามัย',
+            l10n.condoms,
             style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -217,7 +219,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             ),
           ),
           Text(
-            'สิทธิ์รับฟรีเดือนนี้',
+            l10n.freeQuotaThisMonth,
             style: GoogleFonts.googleSans(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -243,7 +245,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                       ),
                     ),
                     TextSpan(
-                      text: 'ชิ้น',
+                      text: l10n.pieces,
                       style: GoogleFonts.googleSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -274,9 +276,9 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
           Text(
             _isLoggedIn
                 ? (_daysUntilReset != null
-                    ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
-                    : 'จะรีเซ็ตในอีก – วัน')
-                : 'เข้าสู่ระบบเพื่อดูสิทธิ์ของคุณ',
+                    ? l10n.resetInDaysMsg(_daysUntilReset!)
+                    : '–')
+                : l10n.loginToViewQuota,
             style: GoogleFonts.googleSans(
               fontSize: 12,
               fontWeight: FontWeight.w400,
@@ -289,6 +291,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
   }
 
   Widget _buildLubricantCard(int remaining) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 8),
       width: double.infinity,
@@ -312,7 +315,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'เจลหล่อลื่น',
+            l10n.lubricant,
             style: GoogleFonts.googleSans(
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -320,7 +323,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
             ),
           ),
           Text(
-            'สิทธิ์รับฟรีเดือนนี้',
+            l10n.freeQuotaThisMonth,
             style: GoogleFonts.googleSans(
               fontSize: 18,
               fontWeight: FontWeight.w600,
@@ -346,7 +349,7 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
                       ),
                     ),
                     TextSpan(
-                      text: 'ชิ้น',
+                      text: l10n.pieces,
                       style: GoogleFonts.googleSans(
                         fontSize: 18,
                         fontWeight: FontWeight.w500,
@@ -377,9 +380,9 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
           Text(
             _isLoggedIn
                 ? (_daysUntilReset != null
-                    ? 'จะรีเซ็ตในอีก $_daysUntilReset วัน'
-                    : 'จะรีเซ็ตในอีก – วัน')
-                : 'เข้าสู่ระบบเพื่อดูสิทธิ์ของคุณ',
+                    ? l10n.resetInDaysMsg(_daysUntilReset!)
+                    : '–')
+                : l10n.loginToViewQuota,
             style: GoogleFonts.googleSans(
               fontSize: 12,
               fontWeight: FontWeight.w400,

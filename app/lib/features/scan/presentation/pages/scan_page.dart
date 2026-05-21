@@ -8,6 +8,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 enum _ScanResultType {
   loading,
@@ -79,7 +80,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     if (result == null || result.barcodes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('ไม่พบ QR Code ในรูปภาพนี้'),
+          content: Text(AppLocalizations.current.qrNotFoundInImage),
           backgroundColor: AppColors.textPrimary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -115,7 +116,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'รับถุงยางอนามัยสำเร็จ',
+                AppLocalizations.of(context).receiveSuccess,
                 style: GoogleFonts.googleSans(),
               ),
               backgroundColor: AppColors.statusCompleted,
@@ -155,9 +156,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'สแกน QR Code',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context).scanTitle,
+                    style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -203,9 +204,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'วาง QR Code ไว้ในกรอบ',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context).scanSubtitle,
+                    style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -214,7 +215,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'ระบบจะสแกนโดยอัตโนมัติ',
+                    AppLocalizations.of(context).scanHint,
                     style: TextStyle(
                       color: AppColors.white.withValues(alpha: 0.6),
                       fontSize: 12,
@@ -236,18 +237,18 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                           color: AppColors.white.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.photo_library_outlined,
                             color: AppColors.white,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'เลือกจากรูปภาพ',
-                            style: TextStyle(
+                            AppLocalizations.of(context).selectFromGallery,
+                            style: const TextStyle(
                               color: AppColors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -623,7 +624,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
             const CircularProgressIndicator(color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
-              'กำลังตรวจสอบ QR Code...',
+              AppLocalizations.of(context).scanChecking,
               style: GoogleFonts.googleSans(
                 fontSize: 14,
                 color: AppColors.textMuted,
@@ -653,7 +654,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         GradientButton(
           height: 52,
           onPressed: _isConfirming ? null : _confirmReceive,
-          label: 'ยืนยันการรับ',
+          label: AppLocalizations.of(context).confirmReceive,
           isLoading: _isConfirming,
           gradientColors: GradientButton.completedGradient,
         ),
@@ -674,7 +675,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'รหัสอ้างอิง',
+              AppLocalizations.of(context).referenceNumber,
               style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Text(
@@ -716,10 +717,10 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
 
   Widget _buildStatusTracker(CondomRequestModel request) {
     final steps = [
-      (label: 'รอดำเนินการ', status: RequestStatus.pending,   color: AppColors.primary),
-      (label: 'กำลังเตรียม', status: RequestStatus.preparing,  color: AppColors.statusPreparing),
-      (label: 'พร้อมรับ',    status: RequestStatus.ready,      color: AppColors.statusReady),
-      (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
+      (label: AppLocalizations.of(context).statusPending, status: RequestStatus.pending,   color: AppColors.primary),
+      (label: AppLocalizations.of(context).statusPreparing, status: RequestStatus.preparing,  color: AppColors.statusPreparing),
+      (label: AppLocalizations.of(context).statusReady, status: RequestStatus.ready,      color: AppColors.statusReady),
+      (label: AppLocalizations.of(context).statusCompleted, status: RequestStatus.completed,  color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.status == request.status);
     const double nodeSize = 28;
@@ -996,7 +997,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.block_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'ไม่สามารถรับได้',
+          title: AppLocalizations.of(context).cannotReceiveTitle,
         ),
         const SizedBox(height: 12),
         Text(
@@ -1026,19 +1027,19 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     if (_requestData != null) {
       switch (_requestData!.status) {
         case RequestStatus.pending:
-          chipLabel = 'รอดำเนินการ';
+          chipLabel = AppLocalizations.of(context).statusPending;
           chipColor = AppColors.primary;
           break;
         case RequestStatus.preparing:
-          chipLabel = 'กำลังเตรียม';
+          chipLabel = AppLocalizations.of(context).statusPreparing;
           chipColor = AppColors.statusPreparing;
           break;
         case RequestStatus.cancelledByUser:
-          chipLabel = 'ยกเลิกโดยคุณ';
+          chipLabel = AppLocalizations.of(context).statusCancelledByUser;
           chipColor = Colors.grey[600]!;
           break;
         case RequestStatus.cancelledByStaff:
-          chipLabel = 'ยกเลิกโดยเจ้าหน้าที่';
+          chipLabel = AppLocalizations.of(context).statusCancelledByStaff;
           chipColor = Colors.grey[600]!;
           break;
         default:
@@ -1059,7 +1060,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.warning_amber_outlined,
           iconColor: AppColors.primary,
           iconBgColor: AppColors.primaryShadow,
-          title: 'ยังไม่พร้อมรับ',
+          title: AppLocalizations.of(context).notReadyTitle,
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -1067,7 +1068,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           spacing: 6,
           runSpacing: 4,
           children: [
-            Text('คำขอยังอยู่ในสถานะ', style: textStyle),
+            Text(AppLocalizations.of(context).notReadyMsg1, style: textStyle),
             _statusChip(chipLabel, chipColor),
           ],
         ),
@@ -1077,9 +1078,9 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           spacing: 4,
           runSpacing: 4,
           children: [
-            Text('สามารถรับถุงยางอนามัยได้เมื่อสถานะเป็น', style: textStyle),
+            Text(AppLocalizations.of(context).notReadyMsg2, style: textStyle),
             _statusChip('พร้อมรับ', AppColors.statusReady),
-            Text('เท่านั้น', style: textStyle),
+            Text(AppLocalizations.of(context).notReadyMsg3, style: textStyle),
           ],
         ),
         if (_requestData != null) ...[
@@ -1136,7 +1137,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         ),
         const SizedBox(height: 12),
         Text(
-          'ไม่พบข้อมูลที่ตรงกับ QR Code นี้',
+          AppLocalizations.of(context).notYoursMsg,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1157,11 +1158,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.lock_outline,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'กรุณาเข้าสู่ระบบ',
+          title: AppLocalizations.of(context).pleaseLogin,
         ),
         const SizedBox(height: 12),
         Text(
-          'คุณต้องเข้าสู่ระบบก่อนจึงจะสแกน QR Code ได้',
+          AppLocalizations.of(context).notLoggedInScan,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1179,7 +1180,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
             if (loggedIn == true) {
               messenger.showSnackBar(
                 SnackBar(
-                  content: Text('เข้าสู่ระบบแล้ว',
+                  content: Text(AppLocalizations.current.loggedIn,
                       style: GoogleFonts.googleSans()),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
@@ -1187,7 +1188,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
               );
             }
           },
-          label: 'เข้าสู่ระบบ',
+          label: AppLocalizations.of(context).loginBtn,
         ),
       ],
     );
@@ -1202,11 +1203,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.error_outline,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'เกิดข้อผิดพลาด',
+          title: AppLocalizations.of(context).errorOccurredTitle,
         ),
         const SizedBox(height: 12),
         Text(
-          'ไม่สามารถตรวจสอบ QR Code ได้ในขณะนี้ กรุณาลองอีกครั้ง',
+          AppLocalizations.of(context).qrError,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1266,7 +1267,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     return GradientButton(
       height: 48,
       onPressed: widget.onRescan,
-      label: 'สแกนอีกครั้ง',
+      label: AppLocalizations.of(context).scanAgain,
     );
   }
 

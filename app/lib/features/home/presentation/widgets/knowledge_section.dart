@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../knowledge/presentation/pages/article_detail_page.dart';
 import '../../../knowledge/presentation/pages/article_list_page.dart';
 
@@ -88,7 +89,7 @@ class _KnowledgeSectionState extends State<KnowledgeSection> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'บทความ',
+                AppLocalizations.of(context).articles,
                 style: GoogleFonts.googleSans(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -102,7 +103,7 @@ class _KnowledgeSectionState extends State<KnowledgeSection> {
                 child: Row(
                   children: [
                     Text(
-                      'ดูทั้งหมด',
+                      AppLocalizations.of(context).viewAll,
                       style: GoogleFonts.googleSans(
                         color: AppColors.primary,
                         fontSize: 14,

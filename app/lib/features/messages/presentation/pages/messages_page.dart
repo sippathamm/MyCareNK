@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 // ---------------------------------------------------------------------------
 // Local data models
@@ -107,60 +108,60 @@ class _TypeConfig {
   });
 }
 
-final _typeConfigs = <_MsgType, _TypeConfig>{
+Map<_MsgType, _TypeConfig> _buildTypeConfigs(AppLocalizations l10n) => {
   _MsgType.submitted: _TypeConfig(
     icon: Icons.assignment_outlined,
     iconColor: AppColors.primary,
     iconBg: AppColors.statusPendingLight,
-    label: 'รอดำเนินการ',
+    label: l10n.statusPending,
   ),
   _MsgType.preparing: _TypeConfig(
     icon: Icons.inventory_2_outlined,
     iconColor: AppColors.statusPreparing,
     iconBg: AppColors.statusPreparingLight,
-    label: 'กำลังเตรียม',
+    label: l10n.statusPreparing,
   ),
   _MsgType.ready: _TypeConfig(
     icon: Icons.local_shipping_outlined,
     iconColor: AppColors.statusReady,
     iconBg: AppColors.statusReadyLight,
-    label: 'พร้อมรับ',
+    label: l10n.statusReady,
   ),
   _MsgType.completed: _TypeConfig(
     icon: Icons.check_circle_outline,
     iconColor: AppColors.statusCompleted,
     iconBg: AppColors.statusCompletedLight,
-    label: 'สำเร็จ',
+    label: l10n.statusSuccess,
   ),
   _MsgType.cancelled: _TypeConfig(
     icon: Icons.cancel_outlined,
     iconColor: Colors.grey,
-    iconBg: Color(0xFFEEEEEE),
-    label: 'ยกเลิก',
+    iconBg: const Color(0xFFEEEEEE),
+    label: l10n.statusCancelled,
   ),
   _MsgType.apptPending: _TypeConfig(
     icon: Icons.calendar_today_outlined,
     iconColor: AppColors.primary,
     iconBg: AppColors.statusPendingLight,
-    label: 'รอยืนยัน',
+    label: l10n.statusPendingAppt,
   ),
   _MsgType.apptConfirmed: _TypeConfig(
     icon: Icons.event_available_outlined,
     iconColor: AppColors.statusReady,
     iconBg: AppColors.statusReadyLight,
-    label: 'ยืนยันแล้ว',
+    label: l10n.statusConfirmedAppt,
   ),
   _MsgType.apptCompleted: _TypeConfig(
     icon: Icons.check_circle_outline,
     iconColor: AppColors.statusCompleted,
     iconBg: AppColors.statusCompletedLight,
-    label: 'เสร็จสิ้น',
+    label: l10n.statusCompleted,
   ),
   _MsgType.apptCancelled: _TypeConfig(
     icon: Icons.cancel_outlined,
     iconColor: Colors.grey,
-    iconBg: Color(0xFFEEEEEE),
-    label: 'ยกเลิก',
+    iconBg: const Color(0xFFEEEEEE),
+    label: l10n.statusCancelled,
   ),
 };
 
@@ -495,9 +496,9 @@ class _MessagesPageState extends State<MessagesPage> {
         titleSpacing: 24,
         title: Row(
           children: [
-            const Text(
-              'แจ้งเตือน',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context).messagesTitle,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -535,7 +536,7 @@ class _MessagesPageState extends State<MessagesPage> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'อ่านทั้งหมด',
+                  AppLocalizations.of(context).readAll,
                   style: GoogleFonts.googleSans(
                     fontSize: 13,
                     color: AppColors.primary,
@@ -598,7 +599,7 @@ class _MessagesPageState extends State<MessagesPage> {
           Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'กรุณาเข้าสู่ระบบ',
+            AppLocalizations.of(context).pleaseLogin,
             style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
@@ -614,7 +615,7 @@ class _MessagesPageState extends State<MessagesPage> {
           Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
           const SizedBox(height: 12),
           Text(
-            'ยังไม่มีการแจ้งเตือน',
+            AppLocalizations.of(context).noMessages,
             style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
@@ -702,9 +703,11 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final g = widget.group;
+    final typeConfigs = _buildTypeConfigs(l10n);
     final latestCfg =
-        _typeConfigs[g.latestMessage.type] ?? _typeConfigs[_MsgType.submitted]!;
+        typeConfigs[g.latestMessage.type] ?? typeConfigs[_MsgType.submitted]!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -904,7 +907,8 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cfg = _typeConfigs[msg.type] ?? _typeConfigs[_MsgType.submitted]!;
+    final typeConfigs = _buildTypeConfigs(AppLocalizations.of(context));
+    final cfg = typeConfigs[msg.type] ?? typeConfigs[_MsgType.submitted]!;
     final bodyStyle = GoogleFonts.googleSans(
       fontSize: 14,
       color: AppColors.textPrimary,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../../core/models/service_center_model.dart';
 
 class ServiceCenterDetailPage extends StatefulWidget {
@@ -41,6 +42,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
   @override
   Widget build(BuildContext context) {
     final center = widget.center;
+    final l10n = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: AppColors.white,
@@ -97,13 +99,13 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                   const SizedBox(height: 20),
                   _buildSection(
                     icon: Icons.access_time_outlined,
-                    title: 'เวลาทำการ',
+                    title: l10n.operatingHours,
                     content: center.operatingHours,
                   ),
                   const SizedBox(height: 20),
                   _buildSection(
                     icon: Icons.info_outline,
-                    title: 'เกี่ยวกับ',
+                    title: l10n.about,
                     content: center.description?.isNotEmpty == true
                         ? center.description
                         : null,
@@ -111,7 +113,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                   const SizedBox(height: 20),
                   _buildSection(
                     icon: Icons.location_on_outlined,
-                    title: 'ที่อยู่',
+                    title: l10n.address,
                     content: center.address?.isNotEmpty == true
                         ? center.address
                         : null,
@@ -120,7 +122,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                     const SizedBox(height: 20),
                     _buildTimesSection(
                       icon: Icons.inventory_2_outlined,
-                      title: 'เวลารับถุงยางอนามัย',
+                      title: l10n.condomPickupTime,
                       times: center.pickupTimes,
                     ),
                   ],
@@ -128,7 +130,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                     const SizedBox(height: 20),
                     _buildTimesSection(
                       icon: Icons.event_outlined,
-                      title: 'เวลานัดพบแพทย์',
+                      title: l10n.appointmentTimeLabel,
                       times: center.appointmentTimes,
                     ),
                   ],
@@ -152,6 +154,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
     required String? content,
   }) {
     final hasContent = content != null && content.isNotEmpty;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -170,7 +173,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
         ),
         const SizedBox(height: 8),
         Text(
-          hasContent ? content : 'ไม่มีข้อมูล',
+          hasContent ? content : l10n.noData,
           style: GoogleFonts.googleSans(
             fontSize: 15,
             color: hasContent ? AppColors.textPrimary : AppColors.textHint,
@@ -185,6 +188,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
     required String title,
     required List<String> times,
   }) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -204,7 +208,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
         const SizedBox(height: 8),
         if (times.isEmpty)
           Text(
-            'ไม่มีข้อมูล',
+            l10n.noData,
             style: GoogleFonts.googleSans(
               fontSize: 15,
               color: AppColors.textHint,
@@ -236,6 +240,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
   }
 
   Widget _buildContactsSection(List<Map<String, String>> contacts) {
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -244,7 +249,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
             const Icon(Icons.phone_outlined, size: 18, color: AppColors.primary),
             const SizedBox(width: 8),
             Text(
-              'ข้อมูลติดต่อ',
+              l10n.contactInfo,
               style: GoogleFonts.googleSans(
                 fontSize: 15,
                 color: AppColors.textSecondary,
@@ -255,7 +260,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
         const SizedBox(height: 8),
         if (contacts.isEmpty)
           Text(
-            'ไม่มีข้อมูล',
+            l10n.noData,
             style: GoogleFonts.googleSans(
               fontSize: 15,
               color: AppColors.textHint,
@@ -274,6 +279,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
 
   Widget _buildLocationSection(double? lat, double? lng) {
     final hasLocation = lat != null && lng != null;
+    final l10n = AppLocalizations.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -282,7 +288,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
             const Icon(Icons.map_outlined, size: 18, color: AppColors.primary),
             const SizedBox(width: 8),
             Text(
-              'ตำแหน่งที่ตั้ง',
+              l10n.locationLabel,
               style: GoogleFonts.googleSans(
                 fontSize: 15,
                 color: AppColors.textSecondary,
@@ -293,7 +299,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
         const SizedBox(height: 8),
         if (!hasLocation)
           Text(
-            'ไม่มีข้อมูล',
+            l10n.noData,
             style: GoogleFonts.googleSans(
               fontSize: 15,
               color: AppColors.textHint,
@@ -345,7 +351,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                           color: AppColors.white, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'ดูบน Google Maps',
+                        l10n.viewOnGoogleMaps,
                         style: GoogleFonts.googleSans(
                           color: AppColors.white,
                           fontSize: 16,

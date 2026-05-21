@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../home/presentation/pages/home_navigator.dart';
 import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
@@ -79,15 +80,15 @@ class _MainScreenState extends State<MainScreen> {
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'หน้าหลัก',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: AppLocalizations.of(context).navHome,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view),
-            activeIcon: Icon(Icons.grid_view, color: AppColors.primary),
-            label: 'บริการ',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.grid_view),
+            activeIcon: const Icon(Icons.grid_view, color: AppColors.primary),
+            label: AppLocalizations.of(context).navService,
           ),
           BottomNavigationBarItem(
             icon: Container(
@@ -105,7 +106,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
               child: const Icon(Icons.camera_alt_outlined, color: AppColors.white),
             ),
-            label: 'สแกน',
+            label: AppLocalizations.of(context).navScan,
           ),
           BottomNavigationBarItem(
             icon: ValueListenableBuilder<int>(
@@ -132,11 +133,11 @@ class _MainScreenState extends State<MainScreen> {
                 child: const Icon(Icons.chat_bubble),
               ),
             ),
-            label: 'แจ้งเตือน',
+            label: AppLocalizations.of(context).navMessages,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'ตั้งค่า',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.settings_outlined),
+            label: AppLocalizations.of(context).navSettings,
           ),
         ],
       ),
