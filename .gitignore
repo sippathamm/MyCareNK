@@ -17,3 +17,6 @@
 
 # CLAUDE.md (local-only AI instructions)
 CLAUDE.md
+
+# Local VS Code settings
+settings.local.json
