@@ -13,14 +13,16 @@ class PrivacyPolicyPage extends StatefulWidget {
   final String? gender;
   final DateTime? dateOfBirth;
   final String nationality;
+  final bool readOnly;
 
   const PrivacyPolicyPage({
     super.key,
-    required this.username,
-    required this.password,
-    required this.gender,
-    required this.dateOfBirth,
-    required this.nationality,
+    this.username = '',
+    this.password = '',
+    this.gender,
+    this.dateOfBirth,
+    this.nationality = '',
+    this.readOnly = false,
   });
 
   @override
@@ -170,7 +172,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
               child: _buildContent(),
             ),
           ),
-          _buildBottomBar(),
+          if (!widget.readOnly) _buildBottomBar(),
         ],
       ),
     );
