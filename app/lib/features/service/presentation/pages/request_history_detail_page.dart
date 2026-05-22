@@ -6,6 +6,7 @@ import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class RequestHistoryDetailPage extends StatefulWidget {
   final CondomRequestModel data;
@@ -86,7 +87,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'รายละเอียดคำขอ',
+          AppLocalizations.of(context).requestDetails,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -165,7 +166,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
     // Format Date
     final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
-    String dateStr = '${formattedDate.day} ${formatMonthTH(formattedDate.month)} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} น.';
+    final l10n = AppLocalizations.of(context);
+    String dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month - 1]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -175,7 +177,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'รหัสอ้างอิง',
+              AppLocalizations.of(context).referenceNumber,
               style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Row(
@@ -198,7 +200,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(
-                          'คัดลอกรหัสอ้างอิงแล้ว',
+                          AppLocalizations.of(context).copiedRefCode,
                           style: GoogleFonts.googleSans(),
                         ),
                         duration: const Duration(seconds: 2),
@@ -269,18 +271,18 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         ]),
         const SizedBox(height: 4),
         Row(children: [
-          labelText('รอดำเนินการ', AppColors.textSecondary, false),
+          labelText(AppLocalizations.of(context).statusPending, AppColors.textSecondary, false),
           const Expanded(child: SizedBox()),
-          labelText('ยกเลิก', Colors.grey.shade600, true),
+          labelText(AppLocalizations.of(context).statusCancelled, Colors.grey.shade600, true),
         ]),
       ]);
     }
 
     final steps = [
-      (label: 'รอดำเนินการ', status: RequestStatus.pending,   color: AppColors.primary),
-      (label: 'กำลังเตรียม', status: RequestStatus.preparing,  color: AppColors.statusPreparing),
-      (label: 'พร้อมรับ',    status: RequestStatus.ready,      color: AppColors.statusReady),
-      (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
+      (label: AppLocalizations.of(context).statusPending, status: RequestStatus.pending,   color: AppColors.primary),
+      (label: AppLocalizations.of(context).statusPreparing, status: RequestStatus.preparing,  color: AppColors.statusPreparing),
+      (label: AppLocalizations.of(context).statusReady, status: RequestStatus.ready,      color: AppColors.statusReady),
+      (label: AppLocalizations.of(context).statusCompleted, status: RequestStatus.completed,  color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.status == status);
     final n = steps.length;
@@ -465,7 +467,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       header: Row(children: [
         const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('ถุงยางอนามัย',
+        Text(AppLocalizations.of(context).condoms,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -473,14 +475,14 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         children: [
           ..._currentData.condomQuantities.entries
               .where((e) => e.value > 0)
-              .map((e) => _buildInfoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+              .map((e) => _buildInfoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('รวม',
+              Text(AppLocalizations.of(context).total,
                   style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.bold)),
               Text(
-                '$totalCondoms ชิ้น',
+                '$totalCondoms ${AppLocalizations.of(context).pieces}',
                 style: GoogleFonts.googleSans(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -500,11 +502,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       header: Row(children: [
         const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('เพิ่มเติม',
+        Text(AppLocalizations.of(context).extra,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
-      content: _buildInfoRow('เจลหล่อลื่น', '${_currentData.lubricantQuantity} ชิ้น'),
+      content: _buildInfoRow(AppLocalizations.of(context).lubricant, '${_currentData.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
@@ -513,7 +515,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.selectedDate != null && _currentData.selectedDate!.contains('-')) {
       try {
         DateTime parsedDate = DateTime.parse(_currentData.selectedDate!);
-        outputDate = '${parsedDate.day} ${formatMonthTH(parsedDate.month)} ${parsedDate.year + 543}';
+        outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = _currentData.selectedDate!;
       }
@@ -523,7 +525,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.selectedTime != null && _currentData.selectedTime!.contains(':')) {
       final splitted = _currentData.selectedTime!.split(':');
       if (splitted.length >= 2) {
-        outputTime = '${splitted[0]}:${splitted[1]} น.';
+        outputTime = '${splitted[0]}:${splitted[1]} ${AppLocalizations.of(context).timeWithUnit}';
       }
     }
 
@@ -531,15 +533,15 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       header: Row(children: [
         const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('สถานบริการ วันที่และเวลารับ',
+        Text(AppLocalizations.of(context).serviceAndDateTime,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
         children: [
-          _buildInfoRow('สถานบริการ', _currentData.selectedServiceCenter ?? '-'),
-          _buildInfoRow('วันที่', outputDate),
-          _buildInfoRow('เวลา', outputTime),
+          _buildInfoRow(AppLocalizations.of(context).serviceCenterLabel, _currentData.selectedServiceCenter ?? '-'),
+          _buildInfoRow(AppLocalizations.of(context).dateLabel, outputDate),
+          _buildInfoRow(AppLocalizations.of(context).timeLabel, outputTime),
         ],
       ),
     );
@@ -552,7 +554,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       header: Row(children: [
         const Icon(Icons.comment_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('ฝากข้อความ',
+        Text(AppLocalizations.of(context).messageLabel,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -575,7 +577,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       header: Row(children: [
         const Icon(Icons.info_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('เหตุผลที่ยกเลิก',
+        Text(AppLocalizations.of(context).cancelReason,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -634,7 +636,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('ยกเลิกคำขอเรียบร้อยแล้ว', style: GoogleFonts.googleSans()),
+        content: Text(AppLocalizations.current.cancelSuccess, style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ));
@@ -642,7 +644,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('เกิดข้อผิดพลาดในการยกเลิกคำขอ', style: GoogleFonts.googleSans()),
+        content: Text(AppLocalizations.current.cancelError, style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
       ));
@@ -661,11 +663,11 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         shadowColor: Colors.black38,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'ยืนยันการยกเลิกคำขอ',
+          AppLocalizations.of(context).cancelRequestTitle,
           style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?\nการยกเลิกจะคืนสิทธิ์การรับให้กับคุณทันที',
+          AppLocalizations.of(context).cancelRequestMessage,
           style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -673,7 +675,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           GradientButton(
             height: 46,
             onPressed: () => Navigator.of(ctx).pop(true),
-            label: 'ยืนยันยกเลิก',
+            label: AppLocalizations.of(context).confirmCancel,
             gradientColors: GradientButton.errorGradient,
             fontSize: 15,
           ),
@@ -689,7 +691,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
-              child: Text('ไม่ยกเลิก',
+              child: Text(AppLocalizations.of(context).keepRequest,
                   style: GoogleFonts.googleSans(
                       fontSize: 15, fontWeight: FontWeight.bold)),
             ),
@@ -707,7 +709,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       children: [
         GradientButton(
           onPressed: () => Navigator.of(context).pop(),
-          label: 'ตกลง',
+          label: AppLocalizations.of(context).ok,
         ),
         if (canCancel) ...[
           const SizedBox(height: 10),
@@ -731,7 +733,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                           strokeWidth: 2, color: AppColors.error),
                     )
                   : Text(
-                      'ยกเลิกคำขอ',
+                      AppLocalizations.of(context).cancelRequestSectionTitle,
                       style: GoogleFonts.googleSans(
                           fontSize: 16, fontWeight: FontWeight.bold),
                     ),
@@ -742,21 +744,4 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     );
   }
 
-  String formatMonthTH(int month) {
-    switch (month) {
-      case 1: return 'มกราคม';
-      case 2: return 'กุมภาพันธ์';
-      case 3: return 'มีนาคม';
-      case 4: return 'เมษายน';
-      case 5: return 'พฤษภาคม';
-      case 6: return 'มิถุนายน';
-      case 7: return 'กรกฎาคม';
-      case 8: return 'สิงหาคม';
-      case 9: return 'กันยายน';
-      case 10: return 'ตุลาคม';
-      case 11: return 'พฤศจิกายน';
-      case 12: return 'ธันวาคม';
-      default: return '';
-    }
-  }
 }

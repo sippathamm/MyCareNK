@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -68,11 +69,11 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
         shadowColor: Colors.black38,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
-          'กรุณาเข้าสู่ระบบ',
+          AppLocalizations.of(context).pleaseLogin,
           style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'คุณต้องเข้าสู่ระบบก่อนจึงจะอ่านบทความได้',
+          AppLocalizations.of(context).loginToReadArticle,
           style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -91,7 +92,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 Navigator.of(context).pop();
               }
             },
-            label: 'เข้าสู่ระบบ',
+            label: AppLocalizations.of(context).loginBtn,
             fontSize: 15,
           ),
           const SizedBox(height: 8),
@@ -109,7 +110,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
               ),
               child: Text(
-                'ยกเลิก',
+                AppLocalizations.of(context).cancel,
                 style: GoogleFonts.googleSans(fontSize: 15, fontWeight: FontWeight.bold),
               ),
             ),
@@ -156,7 +157,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     } catch (_) {
       if (!mounted) return;
       setState(() {
-        _error = 'โหลดบทความไม่สำเร็จ';
+        _error = AppLocalizations.current.loadArticleError;
         _loading = false;
       });
     }
@@ -164,14 +165,10 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
   static String _formatDateTime(String isoDate) {
     final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
-    const months = [
-      '',
-      'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-    ];
+    final l10n = AppLocalizations.current;
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${months[dt.month]} ${dt.year + 543} $h:$m น.';
+    return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────
@@ -224,7 +221,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
               const SizedBox(height: 12),
               OutlinedButton(
                 onPressed: _fetchArticle,
-                child: Text('ลองใหม่', style: GoogleFonts.googleSans()),
+                child: Text(AppLocalizations.of(context).tryAgain, style: GoogleFonts.googleSans()),
               ),
             ],
           ),
@@ -797,7 +794,7 @@ class _YouTubeThumbnail extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    'เปิดใน YouTube',
+                    AppLocalizations.of(context).openInYouTube,
                     style: GoogleFonts.googleSans(
                       color: Colors.white,
                       fontSize: 13,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 // ---------------------------------------------------------------------------
 // Local data models
@@ -72,14 +73,10 @@ class _RequestGroup {
 // Thai date helpers
 // ---------------------------------------------------------------------------
 
-const _thaiMonths = [
-  'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-  'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-];
-
 String _formatThaiDate(DateTime utc) {
   final dt = utc.add(const Duration(hours: 7));
-  return '${dt.day} ${_thaiMonths[dt.month - 1]} ${dt.year + 543}';
+  final l10n = AppLocalizations.current;
+  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543}';
 }
 
 String _formatTime(DateTime utc) {
@@ -107,60 +104,60 @@ class _TypeConfig {
   });
 }
 
-final _typeConfigs = <_MsgType, _TypeConfig>{
+Map<_MsgType, _TypeConfig> _buildTypeConfigs(AppLocalizations l10n) => {
   _MsgType.submitted: _TypeConfig(
     icon: Icons.assignment_outlined,
     iconColor: AppColors.primary,
     iconBg: AppColors.statusPendingLight,
-    label: 'รอดำเนินการ',
+    label: l10n.statusPending,
   ),
   _MsgType.preparing: _TypeConfig(
     icon: Icons.inventory_2_outlined,
     iconColor: AppColors.statusPreparing,
     iconBg: AppColors.statusPreparingLight,
-    label: 'กำลังเตรียม',
+    label: l10n.statusPreparing,
   ),
   _MsgType.ready: _TypeConfig(
     icon: Icons.local_shipping_outlined,
     iconColor: AppColors.statusReady,
     iconBg: AppColors.statusReadyLight,
-    label: 'พร้อมรับ',
+    label: l10n.statusReady,
   ),
   _MsgType.completed: _TypeConfig(
     icon: Icons.check_circle_outline,
     iconColor: AppColors.statusCompleted,
     iconBg: AppColors.statusCompletedLight,
-    label: 'สำเร็จ',
+    label: l10n.statusSuccess,
   ),
   _MsgType.cancelled: _TypeConfig(
     icon: Icons.cancel_outlined,
     iconColor: Colors.grey,
-    iconBg: Color(0xFFEEEEEE),
-    label: 'ยกเลิก',
+    iconBg: const Color(0xFFEEEEEE),
+    label: l10n.statusCancelled,
   ),
   _MsgType.apptPending: _TypeConfig(
     icon: Icons.calendar_today_outlined,
     iconColor: AppColors.primary,
     iconBg: AppColors.statusPendingLight,
-    label: 'รอยืนยัน',
+    label: l10n.statusPendingAppt,
   ),
   _MsgType.apptConfirmed: _TypeConfig(
     icon: Icons.event_available_outlined,
     iconColor: AppColors.statusReady,
     iconBg: AppColors.statusReadyLight,
-    label: 'ยืนยันแล้ว',
+    label: l10n.statusConfirmedAppt,
   ),
   _MsgType.apptCompleted: _TypeConfig(
     icon: Icons.check_circle_outline,
     iconColor: AppColors.statusCompleted,
     iconBg: AppColors.statusCompletedLight,
-    label: 'เสร็จสิ้น',
+    label: l10n.statusCompleted,
   ),
   _MsgType.apptCancelled: _TypeConfig(
     icon: Icons.cancel_outlined,
     iconColor: Colors.grey,
-    iconBg: Color(0xFFEEEEEE),
-    label: 'ยกเลิก',
+    iconBg: const Color(0xFFEEEEEE),
+    label: l10n.statusCancelled,
   ),
 };
 
@@ -168,9 +165,27 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
 // Build message text from event_type + metadata
 // ---------------------------------------------------------------------------
 
+List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
+  final spans = <InlineSpan>[];
+  String remaining = full;
+  for (final part in boldParts) {
+    final idx = remaining.indexOf(part);
+    if (idx < 0) {
+      spans.add(TextSpan(text: remaining));
+      return spans;
+    }
+    if (idx > 0) spans.add(TextSpan(text: remaining.substring(0, idx)));
+    spans.add(TextSpan(text: part, style: const TextStyle(fontWeight: FontWeight.bold)));
+    remaining = remaining.substring(idx + part.length);
+  }
+  if (remaining.isNotEmpty) spans.add(TextSpan(text: remaining));
+  return spans;
+}
+
 (String, List<InlineSpan>?) _buildAppointmentMessage(
   String eventType,
   Map<String, dynamic> metadata,
+  AppLocalizations l10n,
 ) {
   switch (eventType) {
     case 'confirmed':
@@ -181,45 +196,23 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
       if (dateRaw.isNotEmpty) {
         try {
           final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${_thaiMonths[d.month - 1]} ${d.year + 543}';
+          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
         } catch (_) {}
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
-      final dateTimeLabel = '$datePart เวลา $timePart น.';
-      return (
-        'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
-        <InlineSpan>[
-          const TextSpan(text: 'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ '),
-          TextSpan(
-            text: serviceCenter,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const TextSpan(text: ' ภายในวันที่ '),
-          TextSpan(
-            text: dateTimeLabel,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final dateTimeLabel = '$datePart ${l10n.timeLabel} $timePart ${l10n.timeWithUnit}';
+      final full = l10n.msgApptConfirmed(serviceCenter, dateTimeLabel);
+      return (full, _buildBoldSpans(full, [serviceCenter, dateTimeLabel]));
     case 'completed':
-      return ('การนัดหมายของคุณเสร็จสิ้นแล้ว', null);
+      return (l10n.msgApptCompleted, null);
     case 'cancelled_by_user':
-      return ('คุณได้ยกเลิกการนัดหมายนี้แล้ว', null);
+      return (l10n.msgApptCancelledByUser, null);
     case 'cancelled_by_staff':
-      return (
-        'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
-        <InlineSpan>[
-          const TextSpan(
-            text: 'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
-          ),
-          const TextSpan(
-            text: 'บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final path = l10n.msgApptCancelledByStaffPath;
+      final full = l10n.msgApptCancelledByStaff(path);
+      return (full, _buildBoldSpans(full, [path]));
     default: // pending
-      return ('ระบบได้รับการนัดหมายของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน', null);
+      return (l10n.msgApptPending, null);
   }
 }
 
@@ -227,13 +220,14 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
   String sourceType,
   String eventType,
   Map<String, dynamic> metadata,
+  AppLocalizations l10n,
 ) {
   if (sourceType == 'doctor_appointment') {
-    return _buildAppointmentMessage(eventType, metadata);
+    return _buildAppointmentMessage(eventType, metadata, l10n);
   }
   switch (eventType) {
     case 'preparing':
-      return ('เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ', null);
+      return (l10n.msgCondomPreparing, null);
 
     case 'ready':
       final dateRaw = metadata['selected_date'] as String? ?? '';
@@ -243,49 +237,27 @@ final _typeConfigs = <_MsgType, _TypeConfig>{
       if (dateRaw.isNotEmpty) {
         try {
           final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${_thaiMonths[d.month - 1]} ${d.year + 543}';
+          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
         } catch (_) {}
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
-      final dateTimeLabel = '$datePart เวลา $timePart น.';
-      return (
-        'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
-        <InlineSpan>[
-          const TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ '),
-          TextSpan(
-            text: serviceCenter,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const TextSpan(text: ' ภายในวันที่ '),
-          TextSpan(
-            text: dateTimeLabel,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final dateTimeLabel = '$datePart ${l10n.timeLabel} $timePart ${l10n.timeWithUnit}';
+      final full = l10n.msgCondomReady(serviceCenter, dateTimeLabel);
+      return (full, _buildBoldSpans(full, [serviceCenter, dateTimeLabel]));
 
     case 'completed':
-      return ('คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว', null);
+      return (l10n.msgCondomReceived, null);
 
     case 'cancelled_by_staff':
-      return (
-        'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
-        <InlineSpan>[
-          const TextSpan(
-            text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
-          ),
-          const TextSpan(
-            text: 'บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final path = l10n.msgCondomCancelledByStaffPath;
+      final full = l10n.msgCondomCancelledByStaff(path);
+      return (full, _buildBoldSpans(full, [path]));
 
     case 'cancelled_by_user':
-      return ('คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว', null);
+      return (l10n.msgCondomCancelledByUser, null);
 
     default: // pending
-      return ('ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ', null);
+      return (l10n.msgCondomPending, null);
   }
 }
 
@@ -390,7 +362,7 @@ class _MessagesPageState extends State<MessagesPage> {
         final refNum = n['reference_number'] as String? ?? sourceId;
         final eventType = n['event_type'] as String? ?? '';
         final metadata = (n['metadata'] as Map<String, dynamic>?) ?? {};
-        final (text, textSpans) = _buildMessage(sourceType, eventType, metadata);
+        final (text, textSpans) = _buildMessage(sourceType, eventType, metadata, AppLocalizations.current);
 
         final item = _MsgItem(
           id: n['id'] as String,
@@ -495,9 +467,9 @@ class _MessagesPageState extends State<MessagesPage> {
         titleSpacing: 24,
         title: Row(
           children: [
-            const Text(
-              'แจ้งเตือน',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context).messagesTitle,
+              style: const TextStyle(
                 color: AppColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -512,7 +484,7 @@ class _MessagesPageState extends State<MessagesPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '$unread ใหม่',
+                  AppLocalizations.of(context).unreadCount(unread),
                   style: GoogleFonts.googleSans(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -535,7 +507,7 @@ class _MessagesPageState extends State<MessagesPage> {
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: Text(
-                  'อ่านทั้งหมด',
+                  AppLocalizations.of(context).readAll,
                   style: GoogleFonts.googleSans(
                     fontSize: 13,
                     color: AppColors.primary,
@@ -598,7 +570,7 @@ class _MessagesPageState extends State<MessagesPage> {
           Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'กรุณาเข้าสู่ระบบ',
+            AppLocalizations.of(context).pleaseLogin,
             style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
@@ -614,7 +586,7 @@ class _MessagesPageState extends State<MessagesPage> {
           Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
           const SizedBox(height: 12),
           Text(
-            'ยังไม่มีการแจ้งเตือน',
+            AppLocalizations.of(context).noMessages,
             style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
@@ -702,9 +674,11 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final g = widget.group;
+    final typeConfigs = _buildTypeConfigs(l10n);
     final latestCfg =
-        _typeConfigs[g.latestMessage.type] ?? _typeConfigs[_MsgType.submitted]!;
+        typeConfigs[g.latestMessage.type] ?? typeConfigs[_MsgType.submitted]!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -904,7 +878,8 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cfg = _typeConfigs[msg.type] ?? _typeConfigs[_MsgType.submitted]!;
+    final typeConfigs = _buildTypeConfigs(AppLocalizations.of(context));
+    final cfg = typeConfigs[msg.type] ?? typeConfigs[_MsgType.submitted]!;
     final bodyStyle = GoogleFonts.googleSans(
       fontSize: 14,
       color: AppColors.textPrimary,
@@ -991,7 +966,7 @@ class _MessageBubble extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${_formatTime(msg.createdAt)} น.',
+                          '${_formatTime(msg.createdAt)} ${AppLocalizations.of(context).timeWithUnit}',
                           style: GoogleFonts.googleSans(
                             fontSize: 11,
                             color: Colors.grey[400],

@@ -8,6 +8,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 enum _ScanResultType {
   loading,
@@ -79,7 +80,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     if (result == null || result.barcodes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('ไม่พบ QR Code ในรูปภาพนี้'),
+          content: Text(AppLocalizations.current.qrNotFoundInImage),
           backgroundColor: AppColors.textPrimary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -115,7 +116,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                'รับถุงยางอนามัยสำเร็จ',
+                AppLocalizations.of(context).receiveSuccess,
                 style: GoogleFonts.googleSans(),
               ),
               backgroundColor: AppColors.statusCompleted,
@@ -155,9 +156,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'สแกน QR Code',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context).scanTitle,
+                    style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -203,9 +204,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Text(
-                    'วาง QR Code ไว้ในกรอบ',
-                    style: TextStyle(
+                  Text(
+                    AppLocalizations.of(context).scanSubtitle,
+                    style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -214,7 +215,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'ระบบจะสแกนโดยอัตโนมัติ',
+                    AppLocalizations.of(context).scanHint,
                     style: TextStyle(
                       color: AppColors.white.withValues(alpha: 0.6),
                       fontSize: 12,
@@ -236,18 +237,18 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                           color: AppColors.white.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.photo_library_outlined,
                             color: AppColors.white,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
-                            'เลือกจากรูปภาพ',
-                            style: TextStyle(
+                            AppLocalizations.of(context).selectFromGallery,
+                            style: const TextStyle(
                               color: AppColors.white,
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
@@ -623,7 +624,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
             const CircularProgressIndicator(color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
-              'กำลังตรวจสอบ QR Code...',
+              AppLocalizations.of(context).scanChecking,
               style: GoogleFonts.googleSans(
                 fontSize: 14,
                 color: AppColors.textMuted,
@@ -653,7 +654,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         GradientButton(
           height: 52,
           onPressed: _isConfirming ? null : _confirmReceive,
-          label: 'ยืนยันการรับ',
+          label: AppLocalizations.of(context).confirmReceive,
           isLoading: _isConfirming,
           gradientColors: GradientButton.completedGradient,
         ),
@@ -662,9 +663,10 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _buildPreviewHeader(CondomRequestModel request) {
+    final l10n = AppLocalizations.of(context);
     final dt = request.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
-        '${dt.day} ${_monthTH(dt.month)} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} น.';
+        '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -674,7 +676,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'รหัสอ้างอิง',
+              AppLocalizations.of(context).referenceNumber,
               style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
             ),
             Text(
@@ -716,10 +718,10 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
 
   Widget _buildStatusTracker(CondomRequestModel request) {
     final steps = [
-      (label: 'รอดำเนินการ', status: RequestStatus.pending,   color: AppColors.primary),
-      (label: 'กำลังเตรียม', status: RequestStatus.preparing,  color: AppColors.statusPreparing),
-      (label: 'พร้อมรับ',    status: RequestStatus.ready,      color: AppColors.statusReady),
-      (label: 'เสร็จสิ้น',   status: RequestStatus.completed,  color: AppColors.statusCompleted),
+      (label: AppLocalizations.of(context).statusPending, status: RequestStatus.pending,   color: AppColors.primary),
+      (label: AppLocalizations.of(context).statusPreparing, status: RequestStatus.preparing,  color: AppColors.statusPreparing),
+      (label: AppLocalizations.of(context).statusReady, status: RequestStatus.ready,      color: AppColors.statusReady),
+      (label: AppLocalizations.of(context).statusCompleted, status: RequestStatus.completed,  color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.status == request.status);
     const double nodeSize = 28;
@@ -802,7 +804,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       header: Row(children: [
         const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('ถุงยางอนามัย',
+        Text(AppLocalizations.of(context).condoms,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -810,14 +812,14 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         children: [
           ...request.condomQuantities.entries
               .where((e) => e.value > 0)
-              .map((e) => _infoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+              .map((e) => _infoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('รวม',
+              Text(AppLocalizations.of(context).total,
                   style: GoogleFonts.googleSans(
                       fontSize: 16, fontWeight: FontWeight.bold)),
-              Text('$total ชิ้น',
+              Text('$total ${AppLocalizations.of(context).pieces}',
                   style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -836,42 +838,43 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       header: Row(children: [
         const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('เพิ่มเติม',
+        Text(AppLocalizations.of(context).extra,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
-      content: _infoRow('เจลหล่อลื่น', '${request.lubricantQuantity} ชิ้น'),
+      content: _infoRow(AppLocalizations.of(context).lubricant, '${request.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
   Widget _buildLocationCard(CondomRequestModel request) {
+    final l10n = AppLocalizations.of(context);
     String outputDate = request.selectedDate ?? '-';
     if (request.selectedDate != null && request.selectedDate!.contains('-')) {
       try {
         final d = DateTime.parse(request.selectedDate!);
-        outputDate = '${d.day} ${_monthTH(d.month)} ${d.year + 543}';
+        outputDate = '${d.day} ${l10n.monthsFull[d.month - 1]} ${d.year + 543}';
       } catch (_) {}
     }
 
     String outputTime = '-';
     if (request.selectedTime != null && request.selectedTime!.contains(':')) {
       final parts = request.selectedTime!.split(':');
-      if (parts.length >= 2) outputTime = '${parts[0]}:${parts[1]} น.';
+      if (parts.length >= 2) outputTime = '${parts[0]}:${parts[1]} ${l10n.timeWithUnit}';
     }
 
     return _card(
       header: Row(children: [
         const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('สถานบริการ วันที่และเวลารับ',
+        Text(l10n.pickupSectionTitle,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
         children: [
-          _infoRow('สถานบริการ', request.selectedServiceCenter ?? '-'),
-          _infoRow('วันที่', outputDate),
-          _infoRow('เวลา', outputTime),
+          _infoRow(l10n.serviceCenterLabel, request.selectedServiceCenter ?? '-'),
+          _infoRow(l10n.dateLabel, outputDate),
+          _infoRow(l10n.timeLabel, outputTime),
         ],
       ),
     );
@@ -884,7 +887,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       header: Row(children: [
         const Icon(Icons.comment_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('ฝากข้อความ',
+        Text(AppLocalizations.of(context).messageLabel,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -978,13 +981,14 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _buildAlreadyReceived() {
+    final l10n = AppLocalizations.of(context);
     String receivedAt = '-';
     String refNumber = '-';
 
     if (_requestData != null) {
       final dt = _requestData!.updatedAt.toUtc().add(const Duration(hours: 7));
       receivedAt =
-          '${dt.day} ${_monthTH(dt.month)} ${dt.year + 543} เวลา ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} น.';
+          '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543} ${l10n.timeLabel} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
       refNumber = _requestData!.referenceNumber;
     }
 
@@ -996,11 +1000,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.block_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'ไม่สามารถรับได้',
+          title: l10n.cannotReceiveTitle,
         ),
         const SizedBox(height: 12),
         Text(
-          'คุณรับถุงยางอนามัยคำขอนี้ไปแล้ว เมื่อ $receivedAt',
+          l10n.alreadyReceivedMsg(receivedAt),
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1008,7 +1012,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         ),
         const SizedBox(height: 6),
         Text(
-          'รหัสอ้างอิง: $refNumber',
+          l10n.referencePrefix(refNumber),
           style: GoogleFonts.googleSans(
             fontSize: 12,
             color: AppColors.textSecondary,
@@ -1026,19 +1030,19 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     if (_requestData != null) {
       switch (_requestData!.status) {
         case RequestStatus.pending:
-          chipLabel = 'รอดำเนินการ';
+          chipLabel = AppLocalizations.of(context).statusPending;
           chipColor = AppColors.primary;
           break;
         case RequestStatus.preparing:
-          chipLabel = 'กำลังเตรียม';
+          chipLabel = AppLocalizations.of(context).statusPreparing;
           chipColor = AppColors.statusPreparing;
           break;
         case RequestStatus.cancelledByUser:
-          chipLabel = 'ยกเลิกโดยคุณ';
+          chipLabel = AppLocalizations.of(context).statusCancelledByUser;
           chipColor = Colors.grey[600]!;
           break;
         case RequestStatus.cancelledByStaff:
-          chipLabel = 'ยกเลิกโดยเจ้าหน้าที่';
+          chipLabel = AppLocalizations.of(context).statusCancelledByStaff;
           chipColor = Colors.grey[600]!;
           break;
         default:
@@ -1059,7 +1063,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.warning_amber_outlined,
           iconColor: AppColors.primary,
           iconBgColor: AppColors.primaryShadow,
-          title: 'ยังไม่พร้อมรับ',
+          title: AppLocalizations.of(context).notReadyTitle,
         ),
         const SizedBox(height: 12),
         Wrap(
@@ -1067,7 +1071,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           spacing: 6,
           runSpacing: 4,
           children: [
-            Text('คำขอยังอยู่ในสถานะ', style: textStyle),
+            Text(AppLocalizations.of(context).notReadyMsg1, style: textStyle),
             _statusChip(chipLabel, chipColor),
           ],
         ),
@@ -1077,15 +1081,15 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           spacing: 4,
           runSpacing: 4,
           children: [
-            Text('สามารถรับถุงยางอนามัยได้เมื่อสถานะเป็น', style: textStyle),
-            _statusChip('พร้อมรับ', AppColors.statusReady),
-            Text('เท่านั้น', style: textStyle),
+            Text(AppLocalizations.of(context).notReadyMsg2, style: textStyle),
+            _statusChip(AppLocalizations.of(context).statusReady, AppColors.statusReady),
+            Text(AppLocalizations.of(context).notReadyMsg3, style: textStyle),
           ],
         ),
         if (_requestData != null) ...[
           const SizedBox(height: 6),
           Text(
-            'รหัสอ้างอิง: ${_requestData!.referenceNumber}',
+            AppLocalizations.of(context).referencePrefix(_requestData!.referenceNumber),
             style: GoogleFonts.googleSans(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -1107,11 +1111,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.block_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'QR Code ไม่ใช่ของคุณ',
+          title: AppLocalizations.of(context).qrNotYoursTitle,
         ),
         const SizedBox(height: 12),
         Text(
-          'QR Code นี้เป็นของผู้ใช้งานท่านอื่น ไม่สามารถใช้งานได้',
+          AppLocalizations.of(context).qrNotYoursBody,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1132,11 +1136,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.qr_code_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'QR Code ไม่ถูกต้อง',
+          title: AppLocalizations.of(context).qrInvalidTitle,
         ),
         const SizedBox(height: 12),
         Text(
-          'ไม่พบข้อมูลที่ตรงกับ QR Code นี้',
+          AppLocalizations.of(context).notYoursMsg,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1157,11 +1161,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.lock_outline,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'กรุณาเข้าสู่ระบบ',
+          title: AppLocalizations.of(context).pleaseLogin,
         ),
         const SizedBox(height: 12),
         Text(
-          'คุณต้องเข้าสู่ระบบก่อนจึงจะสแกน QR Code ได้',
+          AppLocalizations.of(context).notLoggedInScan,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1179,7 +1183,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
             if (loggedIn == true) {
               messenger.showSnackBar(
                 SnackBar(
-                  content: Text('เข้าสู่ระบบแล้ว',
+                  content: Text(AppLocalizations.current.loggedIn,
                       style: GoogleFonts.googleSans()),
                   backgroundColor: AppColors.success,
                   behavior: SnackBarBehavior.floating,
@@ -1187,7 +1191,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
               );
             }
           },
-          label: 'เข้าสู่ระบบ',
+          label: AppLocalizations.of(context).loginBtn,
         ),
       ],
     );
@@ -1202,11 +1206,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.error_outline,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'เกิดข้อผิดพลาด',
+          title: AppLocalizations.of(context).errorOccurredTitle,
         ),
         const SizedBox(height: 12),
         Text(
-          'ไม่สามารถตรวจสอบ QR Code ได้ในขณะนี้ กรุณาลองอีกครั้ง',
+          AppLocalizations.of(context).qrError,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1266,26 +1270,8 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     return GradientButton(
       height: 48,
       onPressed: widget.onRescan,
-      label: 'สแกนอีกครั้ง',
+      label: AppLocalizations.of(context).scanAgain,
     );
   }
 
-  String _monthTH(int month) {
-    const months = [
-      '',
-      'มกราคม',
-      'กุมภาพันธ์',
-      'มีนาคม',
-      'เมษายน',
-      'พฤษภาคม',
-      'มิถุนายน',
-      'กรกฎาคม',
-      'สิงหาคม',
-      'กันยายน',
-      'ตุลาคม',
-      'พฤศจิกายน',
-      'ธันวาคม',
-    ];
-    return month >= 1 && month <= 12 ? months[month] : '';
-  }
 }

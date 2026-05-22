@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import 'request_history_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class CondomRequestSuccessPage extends StatelessWidget {
   final Map<int, int> quantities;
@@ -27,32 +28,29 @@ class CondomRequestSuccessPage extends StatelessWidget {
   int get _totalSelected =>
       quantities.values.fold(0, (sum, c) => sum + c);
 
-  String _formatDate(DateTime? date) {
+  String _formatDate(DateTime? date, AppLocalizations l10n) {
     if (date == null) return '-';
-    const months = [
-      '', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
-    ];
-    return '${date.day} ${months[date.month]} ${date.year + 543}';
+    return '${date.day} ${l10n.monthsFull[date.month]} ${date.year + 543}';
   }
 
-  String _formatTime(TimeOfDay? time) {
+  String _formatTime(TimeOfDay? time, AppLocalizations l10n) {
     if (time == null) return '-';
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} น.';
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final infoRows = [
-      (Icons.local_hospital_outlined, 'สถานบริการ', selectedServiceCenter ?? '-'),
-      (Icons.event_outlined, 'วันที่', _formatDate(selectedDate)),
-      (Icons.schedule_outlined, 'เวลา', _formatTime(selectedTime)),
+      (Icons.local_hospital_outlined, l10n.serviceCenterLabel, selectedServiceCenter ?? '-'),
+      (Icons.event_outlined, l10n.dateLabel, _formatDate(selectedDate, l10n)),
+      (Icons.schedule_outlined, l10n.timeLabel, _formatTime(selectedTime, l10n)),
       if (_totalSelected > 0)
-        (Icons.inventory_2_outlined, 'ถุงยางอนามัย', '$_totalSelected ชิ้น'),
+        (Icons.inventory_2_outlined, l10n.condoms, '$_totalSelected ${l10n.pieces}'),
       if (lubricantQuantity > 0)
-        (Icons.add_circle_outline, 'เจลหล่อลื่น', '$lubricantQuantity ชิ้น'),
+        (Icons.add_circle_outline, l10n.lubricant, '$lubricantQuantity ${l10n.pieces}'),
       if (message.isNotEmpty)
-        (Icons.comment_outlined, 'ฝากข้อความ', message),
+        (Icons.comment_outlined, l10n.messageLabel, message),
     ];
 
     return Scaffold(
@@ -67,7 +65,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
               Navigator.of(context).popUntil((route) => route.isFirst),
         ),
         title: Text(
-          'รับถุงยางอนามัย',
+          l10n.requestPageTitle,
           style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -77,7 +75,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.history, color: AppColors.primary),
-            tooltip: 'ประวัติคำขอ',
+            tooltip: l10n.requestHistory,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const RequestHistoryPage()),
             ),
@@ -91,7 +89,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(2),
+            child: _buildStepIndicator(2, context),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -112,7 +110,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'ส่งคำขอสำเร็จ!',
+                    l10n.requestSuccessTitle,
                     style: GoogleFonts.googleSans(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
@@ -120,7 +118,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'เราได้รับคำขอถุงยางอนามัยของคุณแล้ว',
+                    l10n.requestSuccessMessage,
                     style: GoogleFonts.googleSans(
                         fontSize: 15, color: AppColors.textSecondary),
                     textAlign: TextAlign.center,
@@ -159,7 +157,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                                 const Icon(Icons.event_note_outlined,
                                     color: Colors.white, size: 18),
                                 const SizedBox(width: 8),
-                                Text('รายละเอียดคำขอ',
+                                Text(l10n.requestDetails,
                                     style: GoogleFonts.googleSans(
                                         color: Colors.white,
                                         fontSize: 16,
@@ -223,7 +221,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    'รหัสอ้างอิง: $referenceNumber',
+                    l10n.referencePrefix(referenceNumber),
                     style: GoogleFonts.googleSans(
                         fontSize: 14, color: AppColors.textHint),
                   ),
@@ -231,7 +229,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                   GradientButton(
                     onPressed: () => Navigator.of(context)
                         .popUntil((route) => route.isFirst),
-                    label: 'กลับหน้าบริการ',
+                    label: l10n.backToService,
                   ),
                   const SizedBox(height: 10),
                   SizedBox(
@@ -252,7 +250,7 @@ class CondomRequestSuccessPage extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(24)),
                       ),
-                      child: Text('ดูประวัติคำขอ',
+                      child: Text(l10n.viewRequestHistory,
                           style: GoogleFonts.googleSans(
                               fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
@@ -266,8 +264,9 @@ class CondomRequestSuccessPage extends StatelessWidget {
     );
   }
 
-  Widget _buildStepIndicator(int step) {
-    const labels = ['กรอกข้อมูล', 'ยืนยัน', 'สำเร็จ'];
+  Widget _buildStepIndicator(int step, BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final labels = [l10n.stepForm, l10n.stepConfirm, l10n.stepSuccess];
     const double nodeSize = 34;
     const double gap = 6;
     final n = labels.length;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
+import '../../../../../core/l10n/locale_provider.dart';
 
 class _Language {
   final String flag;
@@ -26,10 +28,25 @@ class _LanguageSwitcherState extends State<LanguageSwitcher> {
   _Language _selected = _languages.first;
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final currentCode = LocaleProvider.of(context).locale.languageCode;
+    final match = _languages.where((l) => l.code == currentCode).firstOrNull;
+    if (match != null && match.code != _selected.code) {
+      _selected = match;
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final provider = LocaleProvider.of(context);
+
     return PopupMenuButton<_Language>(
-      tooltip: 'เปลี่ยนภาษา',
-      onSelected: (lang) => setState(() => _selected = lang),
+      tooltip: AppLocalizations.of(context).changeLanguage,
+      onSelected: (lang) {
+        setState(() => _selected = lang);
+        provider.onLocaleChange(Locale(lang.code));
+      },
       offset: const Offset(0, 50),
       color: AppColors.avatarBackground,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -53,7 +70,7 @@ class _LanguageSwitcherState extends State<LanguageSwitcher> {
                           : AppColors.textPrimary,
                     ),
                   ),
-                      const Spacer(),
+                  const Spacer(),
                   Opacity(
                     opacity: _selected.code == lang.code ? 1.0 : 0.0,
                     child: const Icon(Icons.check, color: AppColors.primary, size: 18),
@@ -72,21 +89,21 @@ class _LanguageSwitcherState extends State<LanguageSwitcher> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-              Text(_selected.flag, style: const TextStyle(fontSize: 20)),
-              const SizedBox(width: 6),
-              Text(
-                _selected.name,
-                style: GoogleFonts.googleSans(
-                  color: AppColors.avatarIcon,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(width: 4),
-              const Icon(
-                Icons.keyboard_arrow_down,
+            Text(_selected.flag, style: const TextStyle(fontSize: 20)),
+            const SizedBox(width: 6),
+            Text(
+              _selected.name,
+              style: GoogleFonts.googleSans(
                 color: AppColors.avatarIcon,
-                size: 18,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+            const SizedBox(width: 4),
+            const Icon(
+              Icons.keyboard_arrow_down,
+              color: AppColors.avatarIcon,
+              size: 18,
+            ),
           ],
         ),
       ),

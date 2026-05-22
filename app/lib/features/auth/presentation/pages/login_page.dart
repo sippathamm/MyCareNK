@@ -6,6 +6,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import 'register_page.dart';
 import 'forgot_password_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -49,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.current.incorrectCredentials, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -59,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.current.loginErrorMsg, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -83,7 +84,7 @@ class _LoginPageState extends State<LoginPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'เข้าสู่ระบบ',
+          AppLocalizations.of(context).loginTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -128,7 +129,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'ยินดีต้อนรับ',
+                        AppLocalizations.of(context).loginWelcome,
                         style: GoogleFonts.googleSans(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -137,7 +138,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'เข้าสู่ระบบเพื่อใช้บริการ MyCareNK',
+                        AppLocalizations.of(context).loginSubtitle,
                         style: GoogleFonts.googleSans(
                           fontSize: 15,
                           color: AppColors.textSecondary,
@@ -156,7 +157,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                      hintText: 'ชื่อผู้ใช้งาน',
+                      hintText: AppLocalizations.of(context).usernameHint,
                       hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -166,13 +167,13 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
-                        return 'กรุณากรอกชื่อผู้ใช้งาน';
+                        return AppLocalizations.current.usernameRequired;
                       }
                       if (value.trim().length < 4) {
-                        return 'ชื่อผู้ใช้งานต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
+                        return AppLocalizations.current.usernameTooShort;
                       }
                       if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
-                        return 'ชื่อผู้ใช้งานต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น';
+                        return AppLocalizations.current.usernameInvalidChars;
                       }
                       return null;
                     },
@@ -188,7 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                      hintText: 'รหัสผ่าน',
+                      hintText: AppLocalizations.of(context).passwordHint,
                       hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
@@ -206,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'กรุณากรอกรหัสผ่าน';
+                        return AppLocalizations.current.passwordRequired;
                       }
                       return null;
                     },
@@ -227,7 +228,7 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     },
                     child: Text(
-                      'ลืมรหัสผ่าน?',
+                      AppLocalizations.of(context).forgotPassword,
                       style: GoogleFonts.googleSans(color: AppColors.primary),
                     ),
                   ),
@@ -238,7 +239,7 @@ class _LoginPageState extends State<LoginPage> {
                 // Login Button
                 GradientButton(
                   onPressed: _isLoading ? null : _login,
-                  label: 'เข้าสู่ระบบ',
+                  label: AppLocalizations.of(context).loginBtn,
                   isLoading: _isLoading,
                 ),
 
@@ -270,7 +271,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     child: Text(
-                      'สร้างบัญชีใหม่',
+                      AppLocalizations.of(context).createNewAccount,
                       style: GoogleFonts.googleSans(
                         fontSize: 16.0,
                         fontWeight: FontWeight.bold,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class EmergencyButton extends StatelessWidget {
   const EmergencyButton({super.key});
@@ -27,8 +28,8 @@ class EmergencyButton extends StatelessWidget {
         child: InkWell(
           onTap: () async {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('"1669" ถูกกด'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context).emergencyPressed),
                 behavior: SnackBarBehavior.floating,
               ),
             );
@@ -58,7 +59,7 @@ class EmergencyButton extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      'เจ็บป่วยฉุกเฉิน',
+                      AppLocalizations.of(context).emergencyCall,
                       style: GoogleFonts.googleSans(
                         color: AppColors.white.withValues(alpha: 0.9),
                         fontSize: 12,

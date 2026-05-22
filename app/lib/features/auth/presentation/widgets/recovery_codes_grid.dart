@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 /// Shared widget that displays recovery codes in a grid with a copy-all button.
 /// Used by RecoveryCodesDisplayPage.
@@ -49,7 +50,7 @@ class RecoveryCodesGrid extends StatelessWidget {
               Clipboard.setData(ClipboardData(text: recoveryCodes.join(', ')));
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
-                  content: Text('คัดลอกรหัสทั้งหมดแล้ว', style: GoogleFonts.googleSans()),
+                  content: Text(AppLocalizations.of(context).allCopied, style: GoogleFonts.googleSans()),
                   behavior: SnackBarBehavior.floating,
                 ),
               );
@@ -63,7 +64,7 @@ class RecoveryCodesGrid extends StatelessWidget {
             ),
             icon: const Icon(Icons.copy_outlined, size: 18),
             label: Text(
-              'คัดลอกรหัสทั้งหมด',
+              AppLocalizations.of(context).copyAll,
               style: GoogleFonts.googleSans(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,

@@ -4,20 +4,21 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/doctor_appointment_model.dart';
 import 'appointment_history_detail_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Filter descriptor ────────────────────────────────────────────────────────
 
 typedef _Filter = ({String? key, String label, Color color});
 
-const _kFilters = <_Filter>[
-  (key: null,        label: 'ทั้งหมด',             color: AppColors.primary),
-  (key: 'pending',   label: 'รอยืนยัน',            color: AppColors.primary),
-  (key: 'confirmed', label: 'ยืนยันแล้ว',           color: AppColors.statusReady),
-  (key: 'completed', label: 'เสร็จสิ้น',            color: AppColors.statusCompleted),
-  (key: 'cancelled', label: 'ยกเลิก',              color: _kCancelledColor),
-];
-
 const Color _kCancelledColor = Color(0xFF757575);
+
+List<_Filter> _buildFilters(AppLocalizations l10n) => [
+  (key: null,        label: l10n.all,                 color: AppColors.primary),
+  (key: 'pending',   label: l10n.statusPendingAppt,   color: AppColors.primary),
+  (key: 'confirmed', label: l10n.statusConfirmedAppt, color: AppColors.statusReady),
+  (key: 'completed', label: l10n.statusCompleted,     color: AppColors.statusCompleted),
+  (key: 'cancelled', label: l10n.statusCancelled,     color: _kCancelledColor),
+];
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -147,7 +148,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'ประวัติการนัด',
+          AppLocalizations.of(context).appointmentHistoryTitle,
           style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -179,9 +180,9 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                             ? 1
                             : filtered.length,
                         itemBuilder: (context, index) {
-                          if (!_isLoggedIn) return _buildEmptyState(Icons.lock_outline, 'กรุณาเข้าสู่ระบบ');
-                          if (_appointments.isEmpty) return _buildEmptyState(Icons.event_busy_outlined, 'ยังไม่มีการนัดหมาย');
-                          if (filtered.isEmpty) return _buildEmptyState(Icons.search_off_outlined, 'ไม่พบรายการ');
+                          if (!_isLoggedIn) return _buildEmptyState(Icons.lock_outline, AppLocalizations.of(context).pleaseLogin);
+                          if (_appointments.isEmpty) return _buildEmptyState(Icons.event_busy_outlined, AppLocalizations.of(context).noAppointments);
+                          if (filtered.isEmpty) return _buildEmptyState(Icons.search_off_outlined, AppLocalizations.of(context).noMatchingAppts);
                           return _buildAppointmentCard(filtered[index]);
                         },
                       ),
@@ -243,7 +244,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
       child: TextField(
         onChanged: (val) => setState(() => _searchQuery = val),
         decoration: InputDecoration(
-          hintText: 'ค้นหารหัสอ้างอิง',
+          hintText: AppLocalizations.of(context).searchApptRefCode,
           hintStyle: GoogleFonts.googleSans(color: Colors.grey[600], fontSize: 14),
           suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
@@ -259,7 +260,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
       clipBehavior: Clip.none,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: Row(
-        children: _kFilters
+        children: _buildFilters(AppLocalizations.of(context))
             .map((f) => Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: _buildFilterChip(f),
@@ -316,7 +317,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
     final cfg = _statusConfig(data.appointmentStatus);
     final date = data.selectedDate;
     final dateStr =
-        '${date.day} ${_monthTH(date.month)} ${date.year + 543}, ${data.selectedTime} น.';
+        '${date.day} ${AppLocalizations.of(context).monthsFull[date.month]} ${date.year + 543}, ${data.selectedTime} ${AppLocalizations.of(context).timeWithUnit}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -347,7 +348,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('รหัสอ้างอิง',
+                      Text(AppLocalizations.of(context).referenceNumber,
                           style: GoogleFonts.googleSans(
                               color: Colors.grey[500], fontSize: 12)),
                       Text(data.referenceNumber,
@@ -395,7 +396,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('รายละเอียด',
+                    Text(AppLocalizations.of(context).details,
                         style: GoogleFonts.googleSans(
                             color: cfg.iconColor,
                             fontSize: 14,
@@ -430,13 +431,14 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
 
   ({Color iconBg, Color iconColor, Color badgeColor, String label, IconData icon})
       _statusConfig(String status) {
+    final l10n = AppLocalizations.of(context);
     switch (status) {
       case 'pending':
         return (
           iconBg: AppColors.statusPendingLight,
           iconColor: AppColors.primary,
           badgeColor: AppColors.primary,
-          label: 'รอยืนยัน',
+          label: l10n.statusPendingAppt,
           icon: Icons.schedule_outlined,
         );
       case 'confirmed':
@@ -444,7 +446,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           iconBg: AppColors.statusReadyLight,
           iconColor: AppColors.statusReady,
           badgeColor: AppColors.statusReady,
-          label: 'ยืนยันแล้ว',
+          label: l10n.statusConfirmedAppt,
           icon: Icons.event_available_outlined,
         );
       case 'completed':
@@ -452,7 +454,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           iconBg: AppColors.statusCompletedLight,
           iconColor: AppColors.statusCompleted,
           badgeColor: AppColors.statusCompleted,
-          label: 'เสร็จสิ้น',
+          label: l10n.statusCompleted,
           icon: Icons.check_circle_outline,
         );
       default: // cancelled_by_user / cancelled_by_staff
@@ -461,18 +463,10 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           iconColor: Colors.grey.shade600,
           badgeColor: Colors.grey.shade600,
           label: status == 'cancelled_by_staff'
-              ? 'ยกเลิกโดยเจ้าหน้าที่'
-              : 'ยกเลิกโดยคุณ',
+              ? l10n.statusCancelledByStaff
+              : l10n.statusCancelledByUser,
           icon: Icons.cancel_outlined,
         );
     }
-  }
-
-  String _monthTH(int month) {
-    const months = [
-      '', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
-    ];
-    return months[month];
   }
 }

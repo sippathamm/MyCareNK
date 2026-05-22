@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/models/doctor_appointment_model.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class AppointmentHistoryDetailPage extends StatefulWidget {
   final DoctorAppointmentModel data;
@@ -88,11 +89,11 @@ class _AppointmentHistoryDetailPageState
         elevation: 24,
         shadowColor: Colors.black38,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text('ยืนยันการยกเลิกนัดหมาย',
+        title: Text(AppLocalizations.of(context).cancelAppointmentTitle,
             style: GoogleFonts.googleSans(
                 fontSize: 18, fontWeight: FontWeight.bold)),
         content: Text(
-          'คุณต้องการยกเลิกการนัดหมายนี้ใช่หรือไม่?\nการยกเลิกไม่สามารถเปลี่ยนแปลงได้',
+          AppLocalizations.of(context).cancelAppointmentMessage,
           style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
         ),
         actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -100,7 +101,7 @@ class _AppointmentHistoryDetailPageState
           GradientButton(
             height: 46,
             onPressed: () => Navigator.of(ctx).pop(true),
-            label: 'ยืนยันยกเลิก',
+            label: AppLocalizations.of(context).cancelApptBtn,
             gradientColors: GradientButton.errorGradient,
             fontSize: 15,
           ),
@@ -116,7 +117,7 @@ class _AppointmentHistoryDetailPageState
                 shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(24)),
               ),
-              child: Text('ไม่ยกเลิก',
+              child: Text(AppLocalizations.of(context).keepRequest,
                   style: GoogleFonts.googleSans(
                       fontSize: 15, fontWeight: FontWeight.bold)),
             ),
@@ -137,7 +138,7 @@ class _AppointmentHistoryDetailPageState
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('ยกเลิกนัดหมายเรียบร้อยแล้ว',
+        content: Text(AppLocalizations.current.cancelApptSuccess,
             style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
@@ -146,7 +147,7 @@ class _AppointmentHistoryDetailPageState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('เกิดข้อผิดพลาดในการยกเลิกนัดหมาย',
+        content: Text(AppLocalizations.current.cancelApptError,
             style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
@@ -172,7 +173,7 @@ class _AppointmentHistoryDetailPageState
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'รายละเอียดการนัดหมาย',
+          AppLocalizations.of(context).appointmentDetailsTitle,
           style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -218,9 +219,9 @@ class _AppointmentHistoryDetailPageState
     final cfg = _statusConfig(_data.appointmentStatus);
     final updated = _data.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
-        '${updated.day} ${_monthTH(updated.month)} ${updated.year + 543} '
+        '${updated.day} ${AppLocalizations.of(context).monthsFull[updated.month]} ${updated.year + 543} '
         '${updated.hour.toString().padLeft(2, '0')}:'
-        '${updated.minute.toString().padLeft(2, '0')} น.';
+        '${updated.minute.toString().padLeft(2, '0')} ${AppLocalizations.of(context).timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -229,7 +230,7 @@ class _AppointmentHistoryDetailPageState
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('รหัสอ้างอิง',
+            Text(AppLocalizations.of(context).referenceNumber,
                 style: GoogleFonts.googleSans(
                     color: Colors.grey[500], fontSize: 12)),
             Row(
@@ -250,7 +251,7 @@ class _AppointmentHistoryDetailPageState
                     Clipboard.setData(
                         ClipboardData(text: _data.referenceNumber));
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text('คัดลอกรหัสอ้างอิงแล้ว',
+                      content: Text(AppLocalizations.current.copiedApptRefCode,
                           style: GoogleFonts.googleSans()),
                       duration: const Duration(seconds: 2),
                       behavior: SnackBarBehavior.floating,
@@ -317,7 +318,9 @@ class _AppointmentHistoryDetailPageState
 
     if (isCancelled) {
       final cancelLabel =
-          status == 'cancelled_by_staff' ? 'ยกเลิกโดยเจ้าหน้าที่' : 'ยกเลิกโดยคุณ';
+          status == 'cancelled_by_staff'
+              ? AppLocalizations.of(context).statusCancelledByStaff
+              : AppLocalizations.of(context).statusCancelledByUser;
       return Column(children: [
         Row(children: [
           circle(AppColors.primary, Icons.check, null, true),
@@ -328,7 +331,7 @@ class _AppointmentHistoryDetailPageState
         ]),
         const SizedBox(height: 4),
         Row(children: [
-          Text('รอยืนยัน',
+          Text(AppLocalizations.of(context).statusPendingAppt,
               style: GoogleFonts.googleSans(
                   fontSize: 11, color: AppColors.textSecondary)),
           const Expanded(child: SizedBox()),
@@ -342,9 +345,9 @@ class _AppointmentHistoryDetailPageState
     }
 
     final steps = [
-      (label: 'รอยืนยัน',  value: 'pending',   color: AppColors.primary),
-      (label: 'ยืนยันแล้ว', value: 'confirmed', color: AppColors.statusReady),
-      (label: 'เสร็จสิ้น',  value: 'completed', color: AppColors.statusCompleted),
+      (label: AppLocalizations.of(context).statusPendingAppt,  value: 'pending',   color: AppColors.primary),
+      (label: AppLocalizations.of(context).statusConfirmedAppt, value: 'confirmed', color: AppColors.statusReady),
+      (label: AppLocalizations.of(context).statusCompleted,     value: 'completed', color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.value == status);
     final n = steps.length;
@@ -485,14 +488,13 @@ class _AppointmentHistoryDetailPageState
         const Icon(Icons.medical_services_outlined,
             color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('เรื่องที่ต้องการพบแพทย์',
+        Text(AppLocalizations.of(context).apptSubjectSection,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
         children: [
-          _buildInfoRow(
-              'เรื่อง', DoctorAppointmentModel.reasonLabel(_data.reason)),
+          _buildInfoRow(AppLocalizations.of(context).reasonLabel, DoctorAppointmentModel.reasonLabel(_data.reason)),
         ],
       ),
     );
@@ -501,21 +503,21 @@ class _AppointmentHistoryDetailPageState
   Widget _buildLocationCard() {
     final date = _data.selectedDate;
     final dateStr =
-        '${date.day} ${_monthTH(date.month)} ${date.year + 543}';
+        '${date.day} ${AppLocalizations.of(context).monthsFull[date.month]} ${date.year + 543}';
 
     return _buildCard(
       header: Row(children: [
         const Icon(Icons.local_hospital_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('สถานบริการ วันที่ และเวลารับ',
+        Text(AppLocalizations.of(context).apptServiceDateTime,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
         children: [
-          _buildInfoRow('สถานบริการ', _data.selectedServiceCenter),
-          _buildInfoRow('วันที่', dateStr),
-          _buildInfoRow('เวลา', '${_data.selectedTime} น.'),
+          _buildInfoRow(AppLocalizations.of(context).serviceCenterLabel, _data.selectedServiceCenter),
+          _buildInfoRow(AppLocalizations.of(context).dateLabel, dateStr),
+          _buildInfoRow(AppLocalizations.of(context).timeLabel, '${_data.selectedTime} ${AppLocalizations.of(context).timeWithUnit}'),
         ],
       ),
     );
@@ -526,7 +528,7 @@ class _AppointmentHistoryDetailPageState
       header: Row(children: [
         const Icon(Icons.notes_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('บันทึกเพิ่มเติม',
+        Text(AppLocalizations.of(context).additionalNotesSection,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -545,7 +547,7 @@ class _AppointmentHistoryDetailPageState
       header: Row(children: [
         const Icon(Icons.info_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('เหตุผลที่ยกเลิก',
+        Text(AppLocalizations.of(context).cancelReasonSection,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -565,7 +567,7 @@ class _AppointmentHistoryDetailPageState
       children: [
         GradientButton(
           onPressed: () => Navigator.of(context).pop(),
-          label: 'ตกลง',
+          label: AppLocalizations.of(context).ok,
           gradientColors: GradientButton.lubricantGradient,
         ),
         if (canCancel) ...[
@@ -588,7 +590,7 @@ class _AppointmentHistoryDetailPageState
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppColors.error),
                     )
-                  : Text('ยกเลิกนัด',
+                  : Text(AppLocalizations.of(context).cancelApptBtn,
                       style: GoogleFonts.googleSans(
                           fontSize: 16, fontWeight: FontWeight.bold)),
             ),
@@ -630,11 +632,4 @@ class _AppointmentHistoryDetailPageState
     }
   }
 
-  String _monthTH(int month) {
-    const months = [
-      '', 'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
-      'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
-    ];
-    return months[month];
-  }
 }

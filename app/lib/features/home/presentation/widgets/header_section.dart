@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import 'language_switcher.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 
@@ -34,10 +35,10 @@ class _HeaderSectionState extends State<HeaderSection> {
                   final loggedIn = await Navigator.of(context, rootNavigator: true)
                       .push<bool>(MaterialPageRoute(builder: (context) => const LoginPage()));
                   if (loggedIn == true) {
+                    final l10n = AppLocalizations.current;
                     messenger.showSnackBar(
                       SnackBar(
-                        content: Text('เข้าสู่ระบบแล้ว',
-                            style: GoogleFonts.googleSans()),
+                        content: Text(l10n.loggedIn, style: GoogleFonts.googleSans()),
                         backgroundColor: AppColors.success,
                         behavior: SnackBarBehavior.floating,
                       ),
@@ -81,14 +82,14 @@ class _HeaderSectionState extends State<HeaderSection> {
                     'User';
 
                 return PopupMenuButton<String>(
-                  tooltip: 'บัญชีผู้ใช้',
+                  tooltip: AppLocalizations.of(context).accountTooltip,
                   onSelected: (value) async {
                     if (value == 'logout') {
                       await Supabase.instance.client.auth.signOut();
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('ออกจากระบบแล้ว', style: GoogleFonts.googleSans()),
+                            content: Text(AppLocalizations.current.loggedOut, style: GoogleFonts.googleSans()),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
@@ -110,7 +111,7 @@ class _HeaderSectionState extends State<HeaderSection> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'ออกจากระบบ',
+                            AppLocalizations.of(context).logout,
                             style: GoogleFonts.googleSans(
                               color: AppColors.error,
                             ),

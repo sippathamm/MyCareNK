@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/recovery_service.dart';
 import 'forgot_password_reset_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class ForgotPasswordRecoveryCodePage extends StatefulWidget {
   final String username;
@@ -51,7 +52,7 @@ class _ForgotPasswordRecoveryCodePageState
     if (recoveryCode.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('กรุณากรอกรหัสกู้คืนให้ครบ 6 หลัก', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.current.incompleteSixDigit, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -82,7 +83,7 @@ class _ForgotPasswordRecoveryCodePageState
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(result.error ?? 'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง', style: GoogleFonts.googleSans()),
+            content: Text(result.error ?? AppLocalizations.current.incorrectUsernameOrCode, style: GoogleFonts.googleSans()),
             backgroundColor: AppColors.error,
             behavior: SnackBarBehavior.floating,
           ),
@@ -92,7 +93,7 @@ class _ForgotPasswordRecoveryCodePageState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.current.generalErrorRetry, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -116,7 +117,7 @@ class _ForgotPasswordRecoveryCodePageState
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'ลืมรหัสผ่าน',
+          AppLocalizations.of(context).forgotPasswordTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -150,7 +151,7 @@ class _ForgotPasswordRecoveryCodePageState
               const SizedBox(height: 16),
 
               Text(
-                'กรอกรหัสกู้คืนบัญชี',
+                AppLocalizations.of(context).enterRecoveryCode,
                 style: GoogleFonts.googleSans(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -159,7 +160,7 @@ class _ForgotPasswordRecoveryCodePageState
               ),
               const SizedBox(height: 6),
               Text(
-                'กรอกรหัส 6 หลักที่บันทึกไว้',
+                AppLocalizations.of(context).enterSixDigitCode,
                 style: GoogleFonts.googleSans(
                   fontSize: 15,
                   color: AppColors.textSecondary,
@@ -211,7 +212,7 @@ class _ForgotPasswordRecoveryCodePageState
 
               GradientButton(
                 onPressed: _isLoading ? null : _onNext,
-                label: 'ถัดไป',
+                label: AppLocalizations.of(context).next,
                 isLoading: _isLoading,
               ),
             ],

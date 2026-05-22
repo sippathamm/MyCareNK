@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../../core/models/service_center_model.dart';
 import '../../../../../core/services/service_center_service.dart';
 import 'service_center_detail_page.dart';
@@ -46,7 +47,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'สถานบริการ',
+          AppLocalizations.of(context).serviceCenters,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -94,7 +95,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
           Icon(Icons.lock_outline, size: 64, color: Colors.grey[300]),
           const SizedBox(height: 16),
           Text(
-            'กรุณาเข้าสู่ระบบ',
+            AppLocalizations.of(context).pleaseLogin,
             style: GoogleFonts.googleSans(fontSize: 16, color: Colors.grey[400]),
           ),
         ],
@@ -121,7 +122,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
             const Icon(Icons.error_outline, color: AppColors.error, size: 48),
             const SizedBox(height: 12),
             Text(
-              'เกิดข้อผิดพลาด',
+              AppLocalizations.of(context).errorOccurred,
               style: GoogleFonts.googleSans(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -147,7 +148,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
                   borderRadius: BorderRadius.circular(24),
                 ),
               ),
-              child: Text('ลองอีกครั้ง', style: GoogleFonts.googleSans()),
+              child: Text(AppLocalizations.of(context).retry, style: GoogleFonts.googleSans()),
             ),
           ],
         ),
@@ -164,7 +165,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
               color: AppColors.textHint, size: 48),
           const SizedBox(height: 12),
           Text(
-            'ไม่มีสถานบริการ',
+            AppLocalizations.of(context).noServiceCenters,
             style: GoogleFonts.googleSans(
               fontSize: 15,
               color: AppColors.textSecondary,
