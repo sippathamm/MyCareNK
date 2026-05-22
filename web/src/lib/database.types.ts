@@ -155,15 +155,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_condom_requests_service_center"
-            columns: ["selected_service_center"]
-            isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
       doctor_appointments: {
         Row: {
@@ -211,15 +203,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_doctor_appointments_service_center"
-            columns: ["selected_service_center"]
-            isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
       inventory_logs: {
         Row: {
@@ -259,13 +243,6 @@ export type Database = {
           service_center?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_inventory_logs_service_center"
-            columns: ["service_center"]
-            isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
-          },
           {
             foreignKeyName: "inventory_logs_reference_request_id_fkey"
             columns: ["reference_request_id"]
@@ -361,7 +338,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_service_center_inventory_service_center"
+            foreignKeyName: "service_center_inventory_service_center_fkey"
             columns: ["service_center"]
             isOneToOne: true
             referencedRelation: "service_centers"
@@ -372,6 +349,9 @@ export type Database = {
       service_centers: {
         Row: {
           address: string | null
+          appointment_service_enabled: boolean
+          appointment_times: string[]
+          condom_service_enabled: boolean
           contacts: Json
           created_at: string
           description: string | null
@@ -382,10 +362,14 @@ export type Database = {
           longitude: number | null
           name: string
           operating_hours: string | null
+          pickup_times: string[]
           updated_at: string
         }
         Insert: {
           address?: string | null
+          appointment_service_enabled?: boolean
+          appointment_times?: string[]
+          condom_service_enabled?: boolean
           contacts?: Json
           created_at?: string
           description?: string | null
@@ -396,10 +380,14 @@ export type Database = {
           longitude?: number | null
           name: string
           operating_hours?: string | null
+          pickup_times?: string[]
           updated_at?: string
         }
         Update: {
           address?: string | null
+          appointment_service_enabled?: boolean
+          appointment_times?: string[]
+          condom_service_enabled?: boolean
           contacts?: Json
           created_at?: string
           description?: string | null
@@ -410,6 +398,7 @@ export type Database = {
           longitude?: number | null
           name?: string
           operating_hours?: string | null
+          pickup_times?: string[]
           updated_at?: string
         }
         Relationships: []
@@ -465,7 +454,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notification_reads_notification_id_fkey"
+            foreignKeyName: "staff_notification_reads_notification_id_fkey"
             columns: ["notification_id"]
             isOneToOne: false
             referencedRelation: "staff_notifications"
@@ -479,7 +468,9 @@ export type Database = {
           event_type: string
           id: string
           metadata: Json
+          notify_staff: boolean
           reference_number: string
+          service_center: string | null
           source_id: string
           source_type: string
         }
@@ -488,7 +479,9 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
+          notify_staff?: boolean
           reference_number?: string
+          service_center?: string | null
           source_id: string
           source_type: string
         }
@@ -497,7 +490,9 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
+          notify_staff?: boolean
           reference_number?: string
+          service_center?: string | null
           source_id?: string
           source_type?: string
         }
@@ -536,7 +531,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "fk_staff_profiles_service_center"
+            foreignKeyName: "staff_profiles_service_center_fkey"
             columns: ["service_center"]
             isOneToOne: false
             referencedRelation: "service_centers"
@@ -716,10 +711,7 @@ export type Database = {
         }
         Returns: string
       }
-      dearmor: { Args: { "": string }; Returns: string }
       delete_service_center: { Args: { p_name: string }; Returns: undefined }
-      gen_random_uuid: { Args: never; Returns: string }
-      gen_salt: { Args: { "": string }; Returns: string }
       get_appointment_status_log: {
         Args: {
           p_date_from?: string
@@ -900,6 +892,10 @@ export type Database = {
       get_service_centers: {
         Args: never
         Returns: {
+          address: string | null
+          appointment_service_enabled: boolean
+          appointment_times: string[]
+          condom_service_enabled: boolean
           contacts: Json
           created_at: string
           description: string | null
@@ -909,6 +905,8 @@ export type Database = {
           latitude: number | null
           longitude: number | null
           name: string
+          operating_hours: string | null
+          pickup_times: string[]
           updated_at: string
         }[]
         SetofOptions: {
@@ -938,6 +936,7 @@ export type Database = {
           performed_by: string
           target_full_name: string
           target_id: string
+          target_staff_user_id: string
         }[]
       }
       get_staff_workload: {
@@ -989,10 +988,6 @@ export type Database = {
         }
         Returns: undefined
       }
-      pgp_armor_headers: {
-        Args: { "": string }
-        Returns: Record<string, unknown>[]
-      }
       save_recovery_codes: {
         Args: { secret_codes: string[] }
         Returns: undefined
@@ -1004,6 +999,9 @@ export type Database = {
       upsert_service_center: {
         Args: {
           p_address?: string
+          p_appointment_service_enabled?: boolean
+          p_appointment_times?: string[]
+          p_condom_service_enabled?: boolean
           p_contacts?: Json
           p_description?: string
           p_display_order?: number
@@ -1012,6 +1010,7 @@ export type Database = {
           p_longitude?: number
           p_name: string
           p_operating_hours?: string
+          p_pickup_times?: string[]
         }
         Returns: undefined
       }
@@ -1043,9 +1042,9 @@ export type Database = {
       appointment_status:
         | "pending"
         | "confirmed"
+        | "completed"
         | "cancelled_by_user"
         | "cancelled_by_staff"
-        | "completed"
       article_status: "draft" | "scheduled" | "published" | "hidden"
       audit_action:
         | "role_updated"
@@ -1195,9 +1194,9 @@ export const Constants = {
       appointment_status: [
         "pending",
         "confirmed",
+        "completed",
         "cancelled_by_user",
         "cancelled_by_staff",
-        "completed",
       ],
       article_status: ["draft", "scheduled", "published", "hidden"],
       audit_action: [
