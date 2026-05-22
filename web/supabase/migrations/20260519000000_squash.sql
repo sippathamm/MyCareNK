@@ -1413,7 +1413,7 @@ CREATE OR REPLACE FUNCTION public.save_recovery_codes(secret_codes text[])
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO 'public', 'extensions'
 AS $$
 DECLARE
     current_user_id UUID;
@@ -1433,7 +1433,7 @@ CREATE OR REPLACE FUNCTION public.verify_recovery_code(p_username text, p_recove
 RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO 'public', 'extensions'
 AS $function$
 DECLARE
     v_user_id           UUID;
@@ -1504,7 +1504,7 @@ CREATE OR REPLACE FUNCTION public.verify_recovery_code_and_reset_password(
 ) RETURNS json
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path TO 'public'
+SET search_path TO 'public', 'extensions'
 AS $function$
 DECLARE
     v_user_id           UUID;
