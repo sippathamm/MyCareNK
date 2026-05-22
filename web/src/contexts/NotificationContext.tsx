@@ -100,8 +100,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const serviceCenter = profile?.service_center ?? null;
 
   const readIdsRef = useRef<Set<string>>(new Set());
-  const roleRef = useRef(role);
-  const serviceCenterRef = useRef(serviceCenter);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [toastOpen, setToastOpen] = useState(false);
@@ -110,10 +108,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastIsAppointment, setToastIsAppointment] = useState(false);
   const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
 
-  // Keep refs in sync for stable callbacks
+  // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
-  useEffect(() => { roleRef.current = role; }, [role]);
-  useEffect(() => { serviceCenterRef.current = serviceCenter; }, [serviceCenter]);
 
   // Resume AudioContext on any user interaction (bypass browser autoplay policy)
   useEffect(() => {
@@ -130,87 +126,59 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Initial load: fetch notifications + read state from DB
+  // RLS handles filtering automatically:
+  //   staff       → notify_staff=true AND service_center=own SC
+  //   admin/super → all rows
   useEffect(() => {
     if (!userId || roleLoading) return;
 
     let cancelled = false;
 
     (async () => {
-      const { data: readsData } = await supabase
-        .from('staff_notification_reads')
-        .select('notification_id')
-        .eq('staff_user_id', userId);
+      const [{ data: readsData }, { data: notifData }] = await Promise.all([
+        supabase
+          .from('staff_notification_reads')
+          .select('notification_id')
+          .eq('staff_user_id', userId),
+        supabase
+          .from('staff_notifications')
+          .select('id, source_type, source_id, reference_number, event_type, notify_staff, service_center, metadata, created_at')
+          .order('created_at', { ascending: false })
+          .limit(MAX_NOTIFICATIONS),
+      ]);
 
       if (cancelled) return;
 
       const ids = new Set<string>((readsData ?? []).map(r => r.notification_id));
-
-      let notifData: Tables<'staff_notifications'>[] = [];
-
-      if (role === 'staff' && serviceCenter) {
-        const [{ data: requests }, { data: appointments }] = await Promise.all([
-          supabase.from('condom_requests').select('id').eq('selected_service_center', serviceCenter),
-          supabase.from('doctor_appointments').select('id').eq('selected_service_center', serviceCenter),
-        ]);
-
-        if (cancelled) return;
-
-        const requestIds = (requests ?? []).map(r => r.id);
-        const appointmentIds = (appointments ?? []).map(r => r.id);
-        const allSourceIds = [...requestIds, ...appointmentIds];
-
-        if (allSourceIds.length > 0) {
-          const { data } = await supabase
-            .from('staff_notifications')
-            .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
-            .in('source_id', allSourceIds)
-            .order('created_at', { ascending: false })
-            .limit(MAX_NOTIFICATIONS);
-
-          if (cancelled) return;
-          notifData = data ?? [];
-        }
-      } else {
-        const { data } = await supabase
-          .from('staff_notifications')
-          .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
-          .order('created_at', { ascending: false })
-          .limit(MAX_NOTIFICATIONS);
-        notifData = data ?? [];
-      }
-
-      if (cancelled) return;
-
       setReadIds(ids);
-      setNotifications(notifData.map(r => ({ ...r, is_read: ids.has(r.id) })));
+      setNotifications((notifData ?? []).map(r => ({ ...r, is_read: ids.has(r.id) })));
     })();
 
     return () => { cancelled = true; };
-  }, [userId, role, serviceCenter, roleLoading]);
+  }, [userId, roleLoading]);
 
   // Realtime: new notification inserted
+  // staff → server-side filter by service_center; RLS additionally enforces notify_staff=true
+  // admin/superadmin → no filter, receive all events
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || roleLoading) return;
+
+    const scFilter = role === 'staff' && serviceCenter
+      ? `service_center=eq.${serviceCenter}`
+      : undefined;
 
     const channel = supabase
       .channel('notification-inserts')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'staff_notifications' },
-        async (payload) => {
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'staff_notifications',
+          ...(scFilter ? { filter: scFilter } : {}),
+        },
+        (payload) => {
           const row = payload.new as Tables<'staff_notifications'>;
-
-          // For staff: only show notifications for their service center
-          if (roleRef.current === 'staff' && serviceCenterRef.current) {
-            const table = row.source_type === 'doctor_appointment' ? 'doctor_appointments' : 'condom_requests';
-            const { data: src } = await supabase
-              .from(table)
-              .select('selected_service_center')
-              .eq('id', row.source_id)
-              .single();
-            if (src?.selected_service_center !== serviceCenterRef.current) return;
-          }
-
           const isAppointment = row.source_type === 'doctor_appointment';
           const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
@@ -226,7 +194,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userId]);
+  }, [userId, role, serviceCenter, roleLoading]);
 
   // Realtime: notification deleted (sync across devices)
   useEffect(() => {
