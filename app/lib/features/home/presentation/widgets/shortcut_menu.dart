@@ -95,7 +95,7 @@ class ShortcutMenu extends StatelessWidget {
                   case _ShortcutType.guide:
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('"$label" ถูกกด'),
+                        content: Text(AppLocalizations.of(context).shortcutPressed(label)),
                         behavior: SnackBarBehavior.floating,
                       ),
                     );

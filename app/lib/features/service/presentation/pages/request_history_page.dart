@@ -398,7 +398,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     if (data.selectedDate != null && data.selectedDate!.contains('-')) {
       try {
         DateTime parsedDate = DateTime.parse(data.selectedDate!);
-        outputDate = '${parsedDate.day} ${formatMonthTH(parsedDate.month)} ${parsedDate.year + 543}';
+        outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = data.selectedDate!;
       }
@@ -408,7 +408,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     if (data.selectedTime != null && data.selectedTime!.contains(':')) {
        final splitted = data.selectedTime!.split(':');
        if(splitted.length >= 2) {
-          outputTime = '${splitted[0]}:${splitted[1]} น.';
+          outputTime = '${splitted[0]}:${splitted[1]} ${AppLocalizations.of(context).timeWithUnit}';
        }
     }
     String dateStr = '$outputDate, $outputTime';
@@ -563,21 +563,4 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     );
   }
 
-  String formatMonthTH(int month) {
-    switch (month) {
-      case 1: return 'มกราคม';
-      case 2: return 'กุมภาพันธ์';
-      case 3: return 'มีนาคม';
-      case 4: return 'เมษายน';
-      case 5: return 'พฤษภาคม';
-      case 6: return 'มิถุนายน';
-      case 7: return 'กรกฎาคม';
-      case 8: return 'สิงหาคม';
-      case 9: return 'กันยายน';
-      case 10: return 'ตุลาคม';
-      case 11: return 'พฤศจิกายน';
-      case 12: return 'ธันวาคม';
-      default: return '';
-    }
-  }
 }

@@ -226,7 +226,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                 border: Border.all(color: AppColors.primaryLight),
               ),
               child: Text(
-                '$t น.',
+                '$t ${AppLocalizations.of(context).timeWithUnit}',
                 style: GoogleFonts.googleSans(
                   fontSize: 14,
                   color: AppColors.primary,

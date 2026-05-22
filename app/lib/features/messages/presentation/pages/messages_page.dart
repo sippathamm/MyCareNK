@@ -73,14 +73,10 @@ class _RequestGroup {
 // Thai date helpers
 // ---------------------------------------------------------------------------
 
-const _thaiMonths = [
-  'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-  'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-];
-
 String _formatThaiDate(DateTime utc) {
   final dt = utc.add(const Duration(hours: 7));
-  return '${dt.day} ${_thaiMonths[dt.month - 1]} ${dt.year + 543}';
+  final l10n = AppLocalizations.current;
+  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543}';
 }
 
 String _formatTime(DateTime utc) {
@@ -169,9 +165,27 @@ Map<_MsgType, _TypeConfig> _buildTypeConfigs(AppLocalizations l10n) => {
 // Build message text from event_type + metadata
 // ---------------------------------------------------------------------------
 
+List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
+  final spans = <InlineSpan>[];
+  String remaining = full;
+  for (final part in boldParts) {
+    final idx = remaining.indexOf(part);
+    if (idx < 0) {
+      spans.add(TextSpan(text: remaining));
+      return spans;
+    }
+    if (idx > 0) spans.add(TextSpan(text: remaining.substring(0, idx)));
+    spans.add(TextSpan(text: part, style: const TextStyle(fontWeight: FontWeight.bold)));
+    remaining = remaining.substring(idx + part.length);
+  }
+  if (remaining.isNotEmpty) spans.add(TextSpan(text: remaining));
+  return spans;
+}
+
 (String, List<InlineSpan>?) _buildAppointmentMessage(
   String eventType,
   Map<String, dynamic> metadata,
+  AppLocalizations l10n,
 ) {
   switch (eventType) {
     case 'confirmed':
@@ -182,45 +196,23 @@ Map<_MsgType, _TypeConfig> _buildTypeConfigs(AppLocalizations l10n) => {
       if (dateRaw.isNotEmpty) {
         try {
           final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${_thaiMonths[d.month - 1]} ${d.year + 543}';
+          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
         } catch (_) {}
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
-      final dateTimeLabel = '$datePart เวลา $timePart น.';
-      return (
-        'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
-        <InlineSpan>[
-          const TextSpan(text: 'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ '),
-          TextSpan(
-            text: serviceCenter,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const TextSpan(text: ' ภายในวันที่ '),
-          TextSpan(
-            text: dateTimeLabel,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final dateTimeLabel = '$datePart ${l10n.timeLabel} $timePart ${l10n.timeWithUnit}';
+      final full = l10n.msgApptConfirmed(serviceCenter, dateTimeLabel);
+      return (full, _buildBoldSpans(full, [serviceCenter, dateTimeLabel]));
     case 'completed':
-      return ('การนัดหมายของคุณเสร็จสิ้นแล้ว', null);
+      return (l10n.msgApptCompleted, null);
     case 'cancelled_by_user':
-      return ('คุณได้ยกเลิกการนัดหมายนี้แล้ว', null);
+      return (l10n.msgApptCancelledByUser, null);
     case 'cancelled_by_staff':
-      return (
-        'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
-        <InlineSpan>[
-          const TextSpan(
-            text: 'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
-          ),
-          const TextSpan(
-            text: 'บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final path = l10n.msgApptCancelledByStaffPath;
+      final full = l10n.msgApptCancelledByStaff(path);
+      return (full, _buildBoldSpans(full, [path]));
     default: // pending
-      return ('ระบบได้รับการนัดหมายของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน', null);
+      return (l10n.msgApptPending, null);
   }
 }
 
@@ -228,13 +220,14 @@ Map<_MsgType, _TypeConfig> _buildTypeConfigs(AppLocalizations l10n) => {
   String sourceType,
   String eventType,
   Map<String, dynamic> metadata,
+  AppLocalizations l10n,
 ) {
   if (sourceType == 'doctor_appointment') {
-    return _buildAppointmentMessage(eventType, metadata);
+    return _buildAppointmentMessage(eventType, metadata, l10n);
   }
   switch (eventType) {
     case 'preparing':
-      return ('เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ', null);
+      return (l10n.msgCondomPreparing, null);
 
     case 'ready':
       final dateRaw = metadata['selected_date'] as String? ?? '';
@@ -244,49 +237,27 @@ Map<_MsgType, _TypeConfig> _buildTypeConfigs(AppLocalizations l10n) => {
       if (dateRaw.isNotEmpty) {
         try {
           final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${_thaiMonths[d.month - 1]} ${d.year + 543}';
+          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
         } catch (_) {}
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
-      final dateTimeLabel = '$datePart เวลา $timePart น.';
-      return (
-        'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ $serviceCenter ภายในวันที่ $dateTimeLabel',
-        <InlineSpan>[
-          const TextSpan(text: 'ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ '),
-          TextSpan(
-            text: serviceCenter,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-          const TextSpan(text: ' ภายในวันที่ '),
-          TextSpan(
-            text: dateTimeLabel,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final dateTimeLabel = '$datePart ${l10n.timeLabel} $timePart ${l10n.timeWithUnit}';
+      final full = l10n.msgCondomReady(serviceCenter, dateTimeLabel);
+      return (full, _buildBoldSpans(full, [serviceCenter, dateTimeLabel]));
 
     case 'completed':
-      return ('คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว', null);
+      return (l10n.msgCondomReceived, null);
 
     case 'cancelled_by_staff':
-      return (
-        'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
-        <InlineSpan>[
-          const TextSpan(
-            text: 'คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ ',
-          ),
-          const TextSpan(
-            text: 'บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-        ],
-      );
+      final path = l10n.msgCondomCancelledByStaffPath;
+      final full = l10n.msgCondomCancelledByStaff(path);
+      return (full, _buildBoldSpans(full, [path]));
 
     case 'cancelled_by_user':
-      return ('คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว', null);
+      return (l10n.msgCondomCancelledByUser, null);
 
     default: // pending
-      return ('ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ', null);
+      return (l10n.msgCondomPending, null);
   }
 }
 
@@ -391,7 +362,7 @@ class _MessagesPageState extends State<MessagesPage> {
         final refNum = n['reference_number'] as String? ?? sourceId;
         final eventType = n['event_type'] as String? ?? '';
         final metadata = (n['metadata'] as Map<String, dynamic>?) ?? {};
-        final (text, textSpans) = _buildMessage(sourceType, eventType, metadata);
+        final (text, textSpans) = _buildMessage(sourceType, eventType, metadata, AppLocalizations.current);
 
         final item = _MsgItem(
           id: n['id'] as String,
@@ -513,7 +484,7 @@ class _MessagesPageState extends State<MessagesPage> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Text(
-                  '$unread ใหม่',
+                  AppLocalizations.of(context).unreadCount(unread),
                   style: GoogleFonts.googleSans(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
@@ -995,7 +966,7 @@ class _MessageBubble extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${_formatTime(msg.createdAt)} น.',
+                          '${_formatTime(msg.createdAt)} ${AppLocalizations.of(context).timeWithUnit}',
                           style: GoogleFonts.googleSans(
                             fontSize: 11,
                             color: Colors.grey[400],

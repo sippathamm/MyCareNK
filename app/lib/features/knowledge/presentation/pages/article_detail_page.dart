@@ -165,14 +165,10 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
 
   static String _formatDateTime(String isoDate) {
     final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
-    const months = [
-      '',
-      'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-    ];
+    final l10n = AppLocalizations.current;
     final h = dt.hour.toString().padLeft(2, '0');
     final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${months[dt.month]} ${dt.year + 543} $h:$m น.';
+    return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────

@@ -639,14 +639,14 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 width: 1.5),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Text(
-            '$t น.',
+          child: Builder(builder: (context) => Text(
+            '$t ${AppLocalizations.of(context).timeWithUnit}',
             style: GoogleFonts.googleSans(
               fontSize: 15,
               fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
               color: sel ? Colors.white : AppColors.textPrimary,
             ),
-          ),
+          )),
         ),
       );
     }

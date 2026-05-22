@@ -946,9 +946,9 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   ),
                   const SizedBox(height: 10),
                   ...[
-                    'งดอาหาร 4–6 ชม. ก่อนตรวจเลือด (ถ้ามี)',
-                    'นำบัตรประชาชนมาด้วย',
-                    'มาก่อนเวลานัด 15 นาที',
+                    AppLocalizations.of(context).bookingInstruction1,
+                    AppLocalizations.of(context).bookingInstruction2,
+                    AppLocalizations.of(context).bookingInstruction3,
                   ].map((t) => Padding(
                         padding: const EdgeInsets.only(bottom: 6),
                         child: Row(

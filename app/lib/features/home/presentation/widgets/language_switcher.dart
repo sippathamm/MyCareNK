@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../../core/l10n/locale_provider.dart';
 
 class _Language {
@@ -41,7 +42,7 @@ class _LanguageSwitcherState extends State<LanguageSwitcher> {
     final provider = LocaleProvider.of(context);
 
     return PopupMenuButton<_Language>(
-      tooltip: 'เปลี่ยนภาษา',
+      tooltip: AppLocalizations.of(context).changeLanguage,
       onSelected: (lang) {
         setState(() => _selected = lang);
         provider.onLocaleChange(Locale(lang.code));

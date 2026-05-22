@@ -663,9 +663,10 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _buildPreviewHeader(CondomRequestModel request) {
+    final l10n = AppLocalizations.of(context);
     final dt = request.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
-        '${dt.day} ${_monthTH(dt.month)} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} น.';
+        '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -803,7 +804,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       header: Row(children: [
         const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('ถุงยางอนามัย',
+        Text(AppLocalizations.of(context).condoms,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -811,14 +812,14 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         children: [
           ...request.condomQuantities.entries
               .where((e) => e.value > 0)
-              .map((e) => _infoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+              .map((e) => _infoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('รวม',
+              Text(AppLocalizations.of(context).total,
                   style: GoogleFonts.googleSans(
                       fontSize: 16, fontWeight: FontWeight.bold)),
-              Text('$total ชิ้น',
+              Text('$total ${AppLocalizations.of(context).pieces}',
                   style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -837,42 +838,43 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       header: Row(children: [
         const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('เพิ่มเติม',
+        Text(AppLocalizations.of(context).extra,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
-      content: _infoRow('เจลหล่อลื่น', '${request.lubricantQuantity} ชิ้น'),
+      content: _infoRow(AppLocalizations.of(context).lubricant, '${request.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
   Widget _buildLocationCard(CondomRequestModel request) {
+    final l10n = AppLocalizations.of(context);
     String outputDate = request.selectedDate ?? '-';
     if (request.selectedDate != null && request.selectedDate!.contains('-')) {
       try {
         final d = DateTime.parse(request.selectedDate!);
-        outputDate = '${d.day} ${_monthTH(d.month)} ${d.year + 543}';
+        outputDate = '${d.day} ${l10n.monthsFull[d.month - 1]} ${d.year + 543}';
       } catch (_) {}
     }
 
     String outputTime = '-';
     if (request.selectedTime != null && request.selectedTime!.contains(':')) {
       final parts = request.selectedTime!.split(':');
-      if (parts.length >= 2) outputTime = '${parts[0]}:${parts[1]} น.';
+      if (parts.length >= 2) outputTime = '${parts[0]}:${parts[1]} ${l10n.timeWithUnit}';
     }
 
     return _card(
       header: Row(children: [
         const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('สถานบริการ วันที่และเวลารับ',
+        Text(l10n.pickupSectionTitle,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
       content: Column(
         children: [
-          _infoRow('สถานบริการ', request.selectedServiceCenter ?? '-'),
-          _infoRow('วันที่', outputDate),
-          _infoRow('เวลา', outputTime),
+          _infoRow(l10n.serviceCenterLabel, request.selectedServiceCenter ?? '-'),
+          _infoRow(l10n.dateLabel, outputDate),
+          _infoRow(l10n.timeLabel, outputTime),
         ],
       ),
     );
@@ -885,7 +887,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       header: Row(children: [
         const Icon(Icons.comment_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text('ฝากข้อความ',
+        Text(AppLocalizations.of(context).messageLabel,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -979,13 +981,14 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
   }
 
   Widget _buildAlreadyReceived() {
+    final l10n = AppLocalizations.of(context);
     String receivedAt = '-';
     String refNumber = '-';
 
     if (_requestData != null) {
       final dt = _requestData!.updatedAt.toUtc().add(const Duration(hours: 7));
       receivedAt =
-          '${dt.day} ${_monthTH(dt.month)} ${dt.year + 543} เวลา ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} น.';
+          '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543} ${l10n.timeLabel} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
       refNumber = _requestData!.referenceNumber;
     }
 
@@ -997,11 +1000,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.block_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: AppLocalizations.of(context).cannotReceiveTitle,
+          title: l10n.cannotReceiveTitle,
         ),
         const SizedBox(height: 12),
         Text(
-          'คุณรับถุงยางอนามัยคำขอนี้ไปแล้ว เมื่อ $receivedAt',
+          l10n.alreadyReceivedMsg(receivedAt),
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1009,7 +1012,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         ),
         const SizedBox(height: 6),
         Text(
-          'รหัสอ้างอิง: $refNumber',
+          l10n.referencePrefix(refNumber),
           style: GoogleFonts.googleSans(
             fontSize: 12,
             color: AppColors.textSecondary,
@@ -1079,14 +1082,14 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           runSpacing: 4,
           children: [
             Text(AppLocalizations.of(context).notReadyMsg2, style: textStyle),
-            _statusChip('พร้อมรับ', AppColors.statusReady),
+            _statusChip(AppLocalizations.of(context).statusReady, AppColors.statusReady),
             Text(AppLocalizations.of(context).notReadyMsg3, style: textStyle),
           ],
         ),
         if (_requestData != null) ...[
           const SizedBox(height: 6),
           Text(
-            'รหัสอ้างอิง: ${_requestData!.referenceNumber}',
+            AppLocalizations.of(context).referencePrefix(_requestData!.referenceNumber),
             style: GoogleFonts.googleSans(
               fontSize: 12,
               color: AppColors.textSecondary,
@@ -1108,11 +1111,11 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.block_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'QR Code ไม่ใช่ของคุณ',
+          title: AppLocalizations.of(context).qrNotYoursTitle,
         ),
         const SizedBox(height: 12),
         Text(
-          'QR Code นี้เป็นของผู้ใช้งานท่านอื่น ไม่สามารถใช้งานได้',
+          AppLocalizations.of(context).qrNotYoursBody,
           style: GoogleFonts.googleSans(
             fontSize: 14,
             color: AppColors.textSecondary,
@@ -1133,7 +1136,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           icon: Icons.qr_code_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
-          title: 'QR Code ไม่ถูกต้อง',
+          title: AppLocalizations.of(context).qrInvalidTitle,
         ),
         const SizedBox(height: 12),
         Text(
@@ -1271,22 +1274,4 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     );
   }
 
-  String _monthTH(int month) {
-    const months = [
-      '',
-      'มกราคม',
-      'กุมภาพันธ์',
-      'มีนาคม',
-      'เมษายน',
-      'พฤษภาคม',
-      'มิถุนายน',
-      'กรกฎาคม',
-      'สิงหาคม',
-      'กันยายน',
-      'ตุลาคม',
-      'พฤศจิกายน',
-      'ธันวาคม',
-    ];
-    return month >= 1 && month <= 12 ? months[month] : '';
-  }
 }

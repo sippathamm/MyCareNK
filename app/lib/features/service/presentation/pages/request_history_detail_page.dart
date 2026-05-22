@@ -166,7 +166,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
 
     // Format Date
     final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
-    String dateStr = '${formattedDate.day} ${formatMonthTH(formattedDate.month)} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} น.';
+    final l10n = AppLocalizations.of(context);
+    String dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month - 1]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -474,14 +475,14 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         children: [
           ..._currentData.condomQuantities.entries
               .where((e) => e.value > 0)
-              .map((e) => _buildInfoRow('ขนาด ${e.key} มม.', '${e.value} ชิ้น')),
+              .map((e) => _buildInfoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(AppLocalizations.of(context).total,
                   style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.bold)),
               Text(
-                '$totalCondoms ชิ้น',
+                '$totalCondoms ${AppLocalizations.of(context).pieces}',
                 style: GoogleFonts.googleSans(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
@@ -505,7 +506,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
-      content: _buildInfoRow('เจลหล่อลื่น', '${_currentData.lubricantQuantity} ชิ้น'),
+      content: _buildInfoRow(AppLocalizations.of(context).lubricant, '${_currentData.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
@@ -514,7 +515,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.selectedDate != null && _currentData.selectedDate!.contains('-')) {
       try {
         DateTime parsedDate = DateTime.parse(_currentData.selectedDate!);
-        outputDate = '${parsedDate.day} ${formatMonthTH(parsedDate.month)} ${parsedDate.year + 543}';
+        outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = _currentData.selectedDate!;
       }
@@ -524,7 +525,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.selectedTime != null && _currentData.selectedTime!.contains(':')) {
       final splitted = _currentData.selectedTime!.split(':');
       if (splitted.length >= 2) {
-        outputTime = '${splitted[0]}:${splitted[1]} น.';
+        outputTime = '${splitted[0]}:${splitted[1]} ${AppLocalizations.of(context).timeWithUnit}';
       }
     }
 
@@ -743,21 +744,4 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     );
   }
 
-  String formatMonthTH(int month) {
-    switch (month) {
-      case 1: return 'มกราคม';
-      case 2: return 'กุมภาพันธ์';
-      case 3: return 'มีนาคม';
-      case 4: return 'เมษายน';
-      case 5: return 'พฤษภาคม';
-      case 6: return 'มิถุนายน';
-      case 7: return 'กรกฎาคม';
-      case 8: return 'สิงหาคม';
-      case 9: return 'กันยายน';
-      case 10: return 'ตุลาคม';
-      case 11: return 'พฤศจิกายน';
-      case 12: return 'ธันวาคม';
-      default: return '';
-    }
-  }
 }

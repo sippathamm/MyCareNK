@@ -28,8 +28,8 @@ class EmergencyButton extends StatelessWidget {
         child: InkWell(
           onTap: () async {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('"1669" ถูกกด'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context).emergencyPressed),
                 behavior: SnackBarBehavior.floating,
               ),
             );
