@@ -247,6 +247,7 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(AppLocalizations.of(context).allCopied,
                     style: GoogleFonts.googleSans()),
+                backgroundColor: AppColors.success,
                 behavior: SnackBarBehavior.floating,
               ));
             },

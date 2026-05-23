@@ -440,6 +440,7 @@ class _SettingsPageState extends State<SettingsPage> {
           AppLocalizations.current.loggedOut,
           style: GoogleFonts.googleSans(),
         ),
+        backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ),
     );

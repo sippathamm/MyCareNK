@@ -203,6 +203,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
                           AppLocalizations.of(context).copiedRefCode,
                           style: GoogleFonts.googleSans(),
                         ),
+                        backgroundColor: AppColors.success,
                         duration: const Duration(seconds: 2),
                         behavior: SnackBarBehavior.floating,
                       ),
