@@ -100,41 +100,44 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildInputBox(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(children: [
-                        Icon(Icons.phone_outlined, color: Colors.grey[400], size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _phoneController,
-                            keyboardType: TextInputType.phone,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                              LengthLimitingTextInputFormatter(10),
-                            ],
-                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: l10n.phoneNumberHint,
-                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return l10n.phoneNumberRequired;
-                              }
-                              if (value.length != 10) {
-                                return l10n.phoneNumberInvalid;
-                              }
-                              if (!value.startsWith('0')) {
-                                return l10n.phoneNumberInvalid;
-                              }
-                              return null;
-                            },
-                          ),
+                    FormField<void>(
+                      autovalidateMode: AutovalidateMode.disabled,
+                      validator: (_) {
+                        final v = _phoneController.text;
+                        if (v.isEmpty) return l10n.phoneNumberRequired;
+                        if (v.length != 10 || !v.startsWith('0')) return l10n.phoneNumberInvalid;
+                        return null;
+                      },
+                      builder: (field) => _buildFieldContainer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.phone_outlined, color: Colors.grey[400], size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: _phoneController,
+                                  keyboardType: TextInputType.phone,
+                                  inputFormatters: [
+                                    FilteringTextInputFormatter.digitsOnly,
+                                    LengthLimitingTextInputFormatter(10),
+                                  ],
+                                  style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: l10n.phoneNumberHint,
+                                    hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                            if (field.hasError) _buildErrorText(field.errorText!),
+                          ],
                         ),
-                      ]),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -146,33 +149,39 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
                     ),
                     const SizedBox(height: 12),
 
-                    _buildInputBox(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(children: [
-                        Icon(Icons.badge_outlined, color: Colors.grey[400], size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _nicknameController,
-                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: l10n.nicknameHint,
-                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return l10n.nicknameRequired;
-                              }
-                              if (value.trim().length > 50) {
-                                return l10n.nicknameTooLong;
-                              }
-                              return null;
-                            },
-                          ),
+                    FormField<void>(
+                      autovalidateMode: AutovalidateMode.disabled,
+                      validator: (_) {
+                        final v = _nicknameController.text.trim();
+                        if (v.isEmpty) return l10n.nicknameRequired;
+                        if (v.length > 50) return l10n.nicknameTooLong;
+                        return null;
+                      },
+                      builder: (field) => _buildFieldContainer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.badge_outlined, color: Colors.grey[400], size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: _nicknameController,
+                                  style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: l10n.nicknameHint,
+                                    hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                            if (field.hasError) _buildErrorText(field.errorText!),
+                          ],
                         ),
-                      ]),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -261,14 +270,24 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
     );
   }
 
-  Widget _buildInputBox({required Widget child, EdgeInsets? padding}) {
+  Widget _buildFieldContainer({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
       ),
-      padding: padding,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: child,
+    );
+  }
+
+  Widget _buildErrorText(String message) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        message,
+        style: GoogleFonts.googleSans(color: AppColors.error, fontSize: 12),
+      ),
     );
   }
 }

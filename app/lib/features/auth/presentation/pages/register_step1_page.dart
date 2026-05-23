@@ -77,37 +77,40 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildInputBox(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(children: [
-                        Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _usernameController,
-                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: l10n.usernameHint,
-                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.trim().isEmpty) {
-                                return AppLocalizations.current.usernameRequired;
-                              }
-                              final val = value.trim();
-                              if (val.length < 4 || val.length > 20) {
-                                return AppLocalizations.current.usernameRange;
-                              }
-                              if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(val)) {
-                                return AppLocalizations.current.usernameInvalidChars;
-                              }
-                              return null;
-                            },
-                          ),
+                    FormField<void>(
+                      autovalidateMode: AutovalidateMode.disabled,
+                      validator: (_) {
+                        final v = _usernameController.text.trim();
+                        if (v.isEmpty) return AppLocalizations.current.usernameRequired;
+                        if (v.length < 4 || v.length > 20) return AppLocalizations.current.usernameRange;
+                        if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(v)) return AppLocalizations.current.usernameInvalidChars;
+                        return null;
+                      },
+                      builder: (field) => _buildFieldContainer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: _usernameController,
+                                  style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: l10n.usernameHint,
+                                    hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                  ),
+                                ),
+                              ),
+                            ]),
+                            if (field.hasError) _buildErrorText(field.errorText!),
+                          ],
                         ),
-                      ]),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -119,41 +122,45 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                     ),
                     const SizedBox(height: 12),
 
-                    _buildInputBox(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(children: [
-                        Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscurePassword,
-                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: l10n.passwordHint,
-                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                              suffixIcon: _buildPasswordToggle(
-                                obscure: _obscurePassword,
-                                onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                    FormField<void>(
+                      autovalidateMode: AutovalidateMode.disabled,
+                      validator: (_) {
+                        final v = _passwordController.text;
+                        if (v.isEmpty) return AppLocalizations.current.passwordRequired;
+                        if (v.length < 8) return AppLocalizations.current.passwordTooShort;
+                        if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(v)) return AppLocalizations.current.passwordStrength;
+                        return null;
+                      },
+                      builder: (field) => _buildFieldContainer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: _passwordController,
+                                  obscureText: _obscurePassword,
+                                  style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: l10n.passwordHint,
+                                    hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                    suffixIcon: _buildPasswordToggle(
+                                      obscure: _obscurePassword,
+                                      onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return AppLocalizations.current.passwordRequired;
-                              }
-                              if (value.length < 8) {
-                                return AppLocalizations.current.passwordTooShort;
-                              }
-                              if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(value)) {
-                                return AppLocalizations.current.passwordStrength;
-                              }
-                              return null;
-                            },
-                          ),
+                            ]),
+                            if (field.hasError) _buildErrorText(field.errorText!),
+                          ],
                         ),
-                      ]),
+                      ),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -165,38 +172,44 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                     ),
                     const SizedBox(height: 12),
 
-                    _buildInputBox(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Row(children: [
-                        Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: TextFormField(
-                            controller: _confirmPasswordController,
-                            obscureText: _obscureConfirmPassword,
-                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                            decoration: InputDecoration(
-                              hintText: l10n.confirmPasswordHint,
-                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                              border: InputBorder.none,
-                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
-                              suffixIcon: _buildPasswordToggle(
-                                obscure: _obscureConfirmPassword,
-                                onTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                    FormField<void>(
+                      autovalidateMode: AutovalidateMode.disabled,
+                      validator: (_) {
+                        final v = _confirmPasswordController.text;
+                        if (v.isEmpty) return AppLocalizations.current.confirmPasswordRequired;
+                        if (v != _passwordController.text) return AppLocalizations.current.passwordMismatch;
+                        return null;
+                      },
+                      builder: (field) => _buildFieldContainer(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(children: [
+                              Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: TextField(
+                                  controller: _confirmPasswordController,
+                                  obscureText: _obscureConfirmPassword,
+                                  style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                                  decoration: InputDecoration(
+                                    hintText: l10n.confirmPasswordHint,
+                                    hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                    border: InputBorder.none,
+                                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                    suffixIcon: _buildPasswordToggle(
+                                      obscure: _obscureConfirmPassword,
+                                      onTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                                    ),
+                                  ),
+                                ),
                               ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return AppLocalizations.current.confirmPasswordRequired;
-                              }
-                              if (value != _passwordController.text) {
-                                return AppLocalizations.current.passwordMismatch;
-                              }
-                              return null;
-                            },
-                          ),
+                            ]),
+                            if (field.hasError) _buildErrorText(field.errorText!),
+                          ],
                         ),
-                      ]),
+                      ),
                     ),
                   ],
                 ),
@@ -214,14 +227,24 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
     );
   }
 
-  Widget _buildInputBox({required Widget child, EdgeInsets? padding}) {
+  Widget _buildFieldContainer({required Widget child}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
       ),
-      padding: padding,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: child,
+    );
+  }
+
+  Widget _buildErrorText(String message) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        message,
+        style: GoogleFonts.googleSans(color: AppColors.error, fontSize: 12),
+      ),
     );
   }
 
