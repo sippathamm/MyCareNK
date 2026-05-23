@@ -196,24 +196,28 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                         child: GestureDetector(
                           onTap: _pickDateOfBirth,
                           child: _buildInputBox(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: AbsorbPointer(
-                              child: TextFormField(
-                                key: ValueKey(_selectedDateOfBirth),
-                                initialValue: _selectedDateOfBirth == null
-                                    ? ''
-                                    : '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year + 543}',
-                                style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                                decoration: InputDecoration(
-                                  prefixIcon: Icon(Icons.calendar_today,
-                                      color: Colors.grey[400], size: 20),
-                                  prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                                  hintText: l10n.dateOfBirth,
-                                  hintStyle: GoogleFonts.googleSans(
-                                      color: Colors.grey[400], fontSize: 14),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                              child: Row(children: [
+                                Icon(Icons.calendar_today, color: Colors.grey[400], size: 20),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextFormField(
+                                    key: ValueKey(_selectedDateOfBirth),
+                                    initialValue: _selectedDateOfBirth == null
+                                        ? ''
+                                        : '${_selectedDateOfBirth!.day}/${_selectedDateOfBirth!.month}/${_selectedDateOfBirth!.year + 543}',
+                                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                                    decoration: InputDecoration(
+                                      hintText: l10n.dateOfBirth,
+                                      hintStyle: GoogleFonts.googleSans(
+                                          color: Colors.grey[400], fontSize: 14),
+                                      border: InputBorder.none,
+                                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                  ),
                                 ),
-                              ),
+                              ]),
                             ),
                           ),
                         ),

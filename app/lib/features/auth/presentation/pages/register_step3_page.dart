@@ -101,35 +101,40 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildInputBox(
-                      child: TextFormField(
-                        controller: _phoneController,
-                        keyboardType: TextInputType.phone,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                          LengthLimitingTextInputFormatter(10),
-                        ],
-                        style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.phone_outlined, color: Colors.grey[400]),
-                          hintText: l10n.phoneNumberHint,
-                          hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                          border: InputBorder.none,
-                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(children: [
+                        Icon(Icons.phone_outlined, color: Colors.grey[400], size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _phoneController,
+                            keyboardType: TextInputType.phone,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                              LengthLimitingTextInputFormatter(10),
+                            ],
+                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: l10n.phoneNumberHint,
+                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return l10n.phoneNumberRequired;
+                              }
+                              if (value.length != 10) {
+                                return l10n.phoneNumberInvalid;
+                              }
+                              if (!value.startsWith('0')) {
+                                return l10n.phoneNumberInvalid;
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return l10n.phoneNumberRequired;
-                          }
-                          if (value.length != 10) {
-                            return l10n.phoneNumberInvalid;
-                          }
-                          if (!value.startsWith('0')) {
-                            return l10n.phoneNumberInvalid;
-                          }
-                          return null;
-                        },
-                      ),
+                      ]),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -142,27 +147,32 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
                     const SizedBox(height: 12),
 
                     _buildInputBox(
-                      child: TextFormField(
-                        controller: _nicknameController,
-                        style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.badge_outlined, color: Colors.grey[400]),
-                          hintText: l10n.nicknameHint,
-                          hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                          border: InputBorder.none,
-                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(children: [
+                        Icon(Icons.badge_outlined, color: Colors.grey[400], size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _nicknameController,
+                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: l10n.nicknameHint,
+                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return l10n.nicknameRequired;
+                              }
+                              if (value.trim().length > 50) {
+                                return l10n.nicknameTooLong;
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return l10n.nicknameRequired;
-                          }
-                          if (value.trim().length > 50) {
-                            return l10n.nicknameTooLong;
-                          }
-                          return null;
-                        },
-                      ),
+                      ]),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -251,12 +261,13 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
     );
   }
 
-  Widget _buildInputBox({required Widget child}) {
+  Widget _buildInputBox({required Widget child, EdgeInsets? padding}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12),
       ),
+      padding: padding,
       child: child,
     );
   }
