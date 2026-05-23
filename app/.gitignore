@@ -50,3 +50,9 @@ app.*.map.json
 
 # Claude Code
 CLAUDE.md
+
+# Desktop/web platform directories
+linux/
+macos/
+web/
+windows/
