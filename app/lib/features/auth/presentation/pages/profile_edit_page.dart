@@ -172,9 +172,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildReadOnlyField(label: l10n.usernameLabel, value: _username),
+                    _buildReadOnlyField(label: l10n.usernameLabel, value: _username, icon: Icons.person_outline),
                     const SizedBox(height: 20),
-                    _buildReadOnlyField(label: l10n.dateOfBirth, value: _formatDateToBE(_dateOfBirth)),
+                    _buildReadOnlyField(label: l10n.dateOfBirth, value: _formatDateToBE(_dateOfBirth), icon: Icons.calendar_today),
                     const SizedBox(height: 20),
                     const Divider(height: 1),
                     const SizedBox(height: 20),
@@ -190,6 +190,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                       label: l10n.phoneNumberHint,
                       controller: _phoneController,
                       hint: l10n.phoneNumberHint,
+                      icon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -201,6 +202,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                       label: l10n.nicknameHint,
                       controller: _nicknameController,
                       hint: l10n.nicknameHint,
+                      icon: Icons.badge_outlined,
                     ),
                   ],
                 ),
@@ -220,7 +222,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     return '$day/$month/${year + 543}';
   }
 
-  Widget _buildReadOnlyField({required String label, required String value}) {
+  Widget _buildReadOnlyField({required String label, required String value, IconData? icon}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -235,10 +237,18 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             color: Colors.grey[100],
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            value.isEmpty ? '—' : value,
-            style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textMuted),
-          ),
+          child: Row(children: [
+            if (icon != null) ...[
+              Icon(icon, color: Colors.grey[400], size: 20),
+              const SizedBox(width: 10),
+            ],
+            Expanded(
+              child: Text(
+                value.isEmpty ? '—' : value,
+                style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textMuted),
+              ),
+            ),
+          ]),
         ),
       ],
     );
@@ -259,18 +269,24 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _gender,
-              isExpanded: true,
-              hint: Text(l10n.selectGender,
-                  style: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14)),
-              style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
-              items: [
-                DropdownMenuItem(value: 'ชาย', child: Text(l10n.male)),
-                DropdownMenuItem(value: 'หญิง', child: Text(l10n.female)),
-              ],
-              onChanged: (v) => setState(() => _gender = v),
-            ),
+            child: Row(children: [
+              Icon(Icons.wc, color: Colors.grey[400], size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButton<String>(
+                  value: _gender,
+                  isExpanded: true,
+                  hint: Text(l10n.selectGender,
+                      style: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14)),
+                  style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
+                  items: [
+                    DropdownMenuItem(value: 'ชาย', child: Text(l10n.male)),
+                    DropdownMenuItem(value: 'หญิง', child: Text(l10n.female)),
+                  ],
+                  onChanged: (v) => setState(() => _gender = v),
+                ),
+              ),
+            ]),
           ),
         ),
       ],
@@ -293,15 +309,21 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _healthCoverage,
-              isExpanded: true,
-              hint: Text(l10n.healthCoverage,
-                  style: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14)),
-              style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
-              items: options.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
-              onChanged: (v) => setState(() => _healthCoverage = v),
-            ),
+            child: Row(children: [
+              Icon(Icons.local_hospital_outlined, color: Colors.grey[400], size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButton<String>(
+                  value: _healthCoverage,
+                  isExpanded: true,
+                  hint: Text(l10n.healthCoverage,
+                      style: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14)),
+                  style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
+                  items: options.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+                  onChanged: (v) => setState(() => _healthCoverage = v),
+                ),
+              ),
+            ]),
           ),
         ),
       ],
@@ -312,6 +334,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     required String label,
     required TextEditingController controller,
     required String hint,
+    IconData? icon,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
   }) {
@@ -333,10 +356,14 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             inputFormatters: inputFormatters,
             style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
             decoration: InputDecoration(
+              prefixIcon: icon != null ? Icon(icon, color: Colors.grey[400], size: 20) : null,
               hintText: hint,
               hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: icon != null ? 0 : 16,
+                vertical: 14,
+              ),
             ),
           ),
         ),
@@ -365,15 +392,21 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _nationality,
-              isExpanded: true,
-              style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
-              items: ['ไทย', 'ลาว', 'พม่า', 'อื่นๆ'].map((nat) {
-                return DropdownMenuItem(value: nat, child: Text(labels[nat]!));
-              }).toList(),
-              onChanged: (v) => setState(() => _nationality = v!),
-            ),
+            child: Row(children: [
+              Icon(Icons.language, color: Colors.grey[400], size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: DropdownButton<String>(
+                  value: _nationality,
+                  isExpanded: true,
+                  style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
+                  items: ['ไทย', 'ลาว', 'พม่า', 'อื่นๆ'].map((nat) {
+                    return DropdownMenuItem(value: nat, child: Text(labels[nat]!));
+                  }).toList(),
+                  onChanged: (v) => setState(() => _nationality = v!),
+                ),
+              ),
+            ]),
           ),
         ),
         if (_nationality == 'อื่นๆ') ...[
