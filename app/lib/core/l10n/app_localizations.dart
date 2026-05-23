@@ -306,6 +306,10 @@ class AppLocalizations {
   // ─── Recovery Codes Display (after password change) ───────────────────────
   String get changePasswordTitle =>
       _t('เปลี่ยนรหัสผ่าน', 'ປ່ຽນລະຫັດຜ່ານ', 'စကားဝှက်ပြောင်း');
+  String get changePasswordSubtitle =>
+      _t('กรอกรหัสผ่านปัจจุบันและรหัสผ่านใหม่ของคุณ',
+          'ໃສ່ລະຫັດຜ່ານປັດຈຸບັນແລະລະຫັດຜ່ານໃໝ່',
+          'လက်ရှိနှင့် စကားဝှက်အသစ် ထည့်ပါ');
   String get passwordChangedSuccess =>
       _t('เปลี่ยนรหัสผ่านสำเร็จ!', 'ປ່ຽນລະຫັດຜ່ານສຳເລັດ!', 'စကားဝှက် ပြောင်းပြီးပါပြီ!');
   String get newCodesCreated =>
