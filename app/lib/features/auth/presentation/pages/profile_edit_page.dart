@@ -350,20 +350,27 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             color: Colors.grey[100],
             borderRadius: BorderRadius.circular(12),
           ),
-          child: TextFormField(
-            controller: controller,
-            keyboardType: keyboardType,
-            inputFormatters: inputFormatters,
-            style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
-            decoration: InputDecoration(
-              prefixIcon: icon != null ? Icon(icon, color: Colors.grey[400], size: 20) : null,
-              prefixIconConstraints: icon != null ? const BoxConstraints(minWidth: 48, minHeight: 48) : null,
-              hintText: hint,
-              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-              border: InputBorder.none,
-              contentPadding: EdgeInsets.fromLTRB(icon != null ? 0 : 16, 14, 16, 14),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(children: [
+            if (icon != null) ...[
+              Icon(icon, color: Colors.grey[400], size: 20),
+              const SizedBox(width: 12),
+            ],
+            Expanded(
+              child: TextField(
+                controller: controller,
+                keyboardType: keyboardType,
+                inputFormatters: inputFormatters,
+                style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
+                decoration: InputDecoration(
+                  hintText: hint,
+                  hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+              ),
             ),
-          ),
+          ]),
         ),
       ],
     );
