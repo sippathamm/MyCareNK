@@ -124,36 +124,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
             key: _formKey,
             child: Column(
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.04),
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryBackground,
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: AppColors.primaryLight, width: 1.5),
-                  ),
-                  child: const Icon(Icons.lock_outline, color: AppColors.primary, size: 44),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.changePasswordTitle,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  l10n.changePasswordSubtitle,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    color: AppColors.textSecondary,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
                 _buildField(
                   controller: _currentController,
                   hint: l10n.changePasswordCurrentHint,
