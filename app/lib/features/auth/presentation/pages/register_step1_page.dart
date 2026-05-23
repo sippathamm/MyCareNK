@@ -78,31 +78,36 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildInputBox(
-                      child: TextFormField(
-                        controller: _usernameController,
-                        style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                          hintText: l10n.usernameHint,
-                          hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                          border: InputBorder.none,
-                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(children: [
+                        Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _usernameController,
+                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: l10n.usernameHint,
+                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return AppLocalizations.current.usernameRequired;
+                              }
+                              final val = value.trim();
+                              if (val.length < 4 || val.length > 20) {
+                                return AppLocalizations.current.usernameRange;
+                              }
+                              if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(val)) {
+                                return AppLocalizations.current.usernameInvalidChars;
+                              }
+                              return null;
+                            },
+                          ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return AppLocalizations.current.usernameRequired;
-                          }
-                          final val = value.trim();
-                          if (val.length < 4 || val.length > 20) {
-                            return AppLocalizations.current.usernameRange;
-                          }
-                          if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(val)) {
-                            return AppLocalizations.current.usernameInvalidChars;
-                          }
-                          return null;
-                        },
-                      ),
+                      ]),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -115,35 +120,40 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                     const SizedBox(height: 12),
 
                     _buildInputBox(
-                      child: TextFormField(
-                        controller: _passwordController,
-                        obscureText: _obscurePassword,
-                        style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                          hintText: l10n.passwordHint,
-                          hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                          border: InputBorder.none,
-                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                          suffixIcon: _buildPasswordToggle(
-                            obscure: _obscurePassword,
-                            onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(children: [
+                        Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscurePassword,
+                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: l10n.passwordHint,
+                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              suffixIcon: _buildPasswordToggle(
+                                obscure: _obscurePassword,
+                                onTap: () => setState(() => _obscurePassword = !_obscurePassword),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppLocalizations.current.passwordRequired;
+                              }
+                              if (value.length < 8) {
+                                return AppLocalizations.current.passwordTooShort;
+                              }
+                              if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(value)) {
+                                return AppLocalizations.current.passwordStrength;
+                              }
+                              return null;
+                            },
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppLocalizations.current.passwordRequired;
-                          }
-                          if (value.length < 8) {
-                            return AppLocalizations.current.passwordTooShort;
-                          }
-                          if (!RegExp(r'^(?=.*[a-zA-Z])(?=.*\d).+$').hasMatch(value)) {
-                            return AppLocalizations.current.passwordStrength;
-                          }
-                          return null;
-                        },
-                      ),
+                      ]),
                     ),
                     const SizedBox(height: 4),
                     Padding(
@@ -156,32 +166,37 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                     const SizedBox(height: 12),
 
                     _buildInputBox(
-                      child: TextFormField(
-                        controller: _confirmPasswordController,
-                        obscureText: _obscureConfirmPassword,
-                        style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                        decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                          hintText: l10n.confirmPasswordHint,
-                          hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                          border: InputBorder.none,
-                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                          suffixIcon: _buildPasswordToggle(
-                            obscure: _obscureConfirmPassword,
-                            onTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Row(children: [
+                        Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextFormField(
+                            controller: _confirmPasswordController,
+                            obscureText: _obscureConfirmPassword,
+                            style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                            decoration: InputDecoration(
+                              hintText: l10n.confirmPasswordHint,
+                              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                              border: InputBorder.none,
+                              contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              suffixIcon: _buildPasswordToggle(
+                                obscure: _obscureConfirmPassword,
+                                onTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+                              ),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return AppLocalizations.current.confirmPasswordRequired;
+                              }
+                              if (value != _passwordController.text) {
+                                return AppLocalizations.current.passwordMismatch;
+                              }
+                              return null;
+                            },
                           ),
                         ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return AppLocalizations.current.confirmPasswordRequired;
-                          }
-                          if (value != _passwordController.text) {
-                            return AppLocalizations.current.passwordMismatch;
-                          }
-                          return null;
-                        },
-                      ),
+                      ]),
                     ),
                   ],
                 ),
