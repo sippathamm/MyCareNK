@@ -81,7 +81,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.current.qrNotFoundInImage),
-          backgroundColor: AppColors.textPrimary,
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -119,7 +119,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                 AppLocalizations.of(context).receiveSuccess,
                 style: GoogleFonts.googleSans(),
               ),
-              backgroundColor: AppColors.statusCompleted,
+              backgroundColor: AppColors.success,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
