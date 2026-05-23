@@ -174,7 +174,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                   children: [
                     _buildReadOnlyField(label: l10n.usernameLabel, value: _username),
                     const SizedBox(height: 20),
-                    _buildReadOnlyField(label: l10n.dateOfBirth, value: _dateOfBirth),
+                    _buildReadOnlyField(label: l10n.dateOfBirth, value: _formatDateToBE(_dateOfBirth)),
                     const SizedBox(height: 20),
                     const Divider(height: 1),
                     const SizedBox(height: 20),
@@ -183,6 +183,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     _buildNationalityField(l10n),
                     const SizedBox(height: 20),
                     _buildHealthCoverageField(l10n),
+                    const SizedBox(height: 20),
+                    const Divider(height: 1),
                     const SizedBox(height: 20),
                     _buildEditableTextField(
                       label: l10n.phoneNumberHint,
@@ -205,6 +207,17 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
               ),
             ),
     );
+  }
+
+  String _formatDateToBE(String isoDate) {
+    if (isoDate.isEmpty) return '';
+    final parts = isoDate.split('-');
+    if (parts.length != 3) return isoDate;
+    final year = int.tryParse(parts[0]);
+    final month = int.tryParse(parts[1]);
+    final day = int.tryParse(parts[2]);
+    if (year == null || month == null || day == null) return isoDate;
+    return '$day/$month/${year + 543}';
   }
 
   Widget _buildReadOnlyField({required String label, required String value}) {
