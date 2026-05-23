@@ -9,11 +9,13 @@ import '../../../../../core/l10n/app_localizations.dart';
 class RecoveryCodesGrid extends StatelessWidget {
   final List<String> recoveryCodes;
   final String? footerText;
+  final bool showCopyButton;
 
   const RecoveryCodesGrid({
     super.key,
     required this.recoveryCodes,
     this.footerText,
+    this.showCopyButton = true,
   });
 
   @override
@@ -42,6 +44,7 @@ class RecoveryCodesGrid extends StatelessWidget {
           ),
           const SizedBox(height: 20),
         ],
+        if (showCopyButton)
         SizedBox(
           width: double.infinity,
           height: 48,

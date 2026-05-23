@@ -6,6 +6,7 @@ import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
 import '../../../service/presentation/pages/request_history_page.dart';
+import 'settings_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -64,11 +65,11 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory),
+          HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory, onGoToSettings: () => _onItemTapped(4)),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
           MessagesPage(unreadNotifier: _messagesUnreadNotifier, refreshKey: _messagesRefreshKey),
-          const Center(child: Text('Settings Screen Placeholder')),
+          const SettingsPage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
