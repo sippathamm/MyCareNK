@@ -29,7 +29,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
 
   String? _gender;
   DateTime? _selectedDateOfBirth;
-  String _nationality = 'ไทย';
+  String? _nationality;
   final _customNationalityController = TextEditingController();
   String? _healthCoverage;
 
@@ -81,6 +81,15 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
       return;
     }
 
+    if (_nationality == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(l10n.nationalityRequired, style: GoogleFonts.googleSans()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
+
     if (_nationality == 'อื่นๆ' && _customNationalityController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(l10n.nationalityRequired, style: GoogleFonts.googleSans()),
@@ -101,7 +110,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
 
     final nationalityValue = _nationality == 'อื่นๆ'
         ? _customNationalityController.text.trim()
-        : _nationality;
+        : _nationality!;
 
     Navigator.of(context).push(MaterialPageRoute(
       builder: (_) => RegisterStep3Page(
@@ -224,6 +233,8 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                           child: DropdownButton<String>(
                             value: _nationality,
                             isExpanded: true,
+                            hint: Text(l10n.nationality,
+                                style: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14)),
                             icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey[400]),
                             items: [
                               DropdownMenuItem(
@@ -239,7 +250,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                                   value: 'อื่นๆ',
                                   child: Text(l10n.nationalityOther, style: GoogleFonts.googleSans())),
                             ],
-                            onChanged: (v) => setState(() => _nationality = v ?? 'ไทย'),
+                            onChanged: (v) => setState(() => _nationality = v),
                           ),
                         ),
                       ]),
@@ -252,7 +263,6 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                         controller: _customNationalityController,
                         style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                         decoration: InputDecoration(
-                          prefixIcon: Icon(Icons.language, color: Colors.grey[400]),
                           hintText: l10n.specifyNationality,
                           hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                           border: InputBorder.none,
@@ -269,7 +279,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                     child: DropdownButtonHideUnderline(
                       child: Row(children: [
                         Icon(Icons.local_hospital_outlined,
-                            color: _healthCoverage == null ? Colors.grey[400] : AppColors.primary,
+                            color: Colors.grey[400],
                             size: 20),
                         const SizedBox(width: 8),
                         Expanded(
