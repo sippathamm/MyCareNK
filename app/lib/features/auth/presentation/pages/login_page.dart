@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/gradient_button.dart';
-import 'register_page.dart';
+import 'register_step1_page.dart';
 import 'forgot_password_page.dart';
 import '../../../../core/l10n/app_localizations.dart';
 
@@ -256,7 +256,7 @@ class _LoginPageState extends State<LoginPage> {
                             final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
+                                builder: (context) => const RegisterStep1Page(),
                               ),
                             );
                             if (result == true && context.mounted) {
