@@ -121,12 +121,30 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
           child: const Icon(Icons.shield_outlined, color: AppColors.primary, size: 44),
         ),
         const SizedBox(height: 20),
-        Text(
-          l10n.recoveryCodesManageTitle,
-          style: GoogleFonts.googleSans(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.primaryBackground,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppColors.primaryLight),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  l10n.recoveryCodesCannotRetrieve,
+                  style: GoogleFonts.googleSans(
+                    fontSize: 14,
+                    color: AppColors.textPrimary,
+                    height: 1.55,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 32),
