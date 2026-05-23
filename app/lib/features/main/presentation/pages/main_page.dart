@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../home/presentation/pages/home_navigator.dart';
@@ -26,8 +29,26 @@ class _MainScreenState extends State<MainScreen> {
   // Unread count จาก MessagesPage — ใช้แสดง badge บน nav bar
   final ValueNotifier<int> _messagesUnreadNotifier = ValueNotifier(0);
 
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (!mounted) return;
+      if (state.event == AuthChangeEvent.signedOut) {
+        _messagesUnreadNotifier.value = 0;
+        setState(() => _messagesRefreshKey++);
+      } else if (state.event == AuthChangeEvent.signedIn) {
+        setState(() => _messagesRefreshKey++);
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _homeVisibilityNotifier.dispose();
     _messagesUnreadNotifier.dispose();
     super.dispose();

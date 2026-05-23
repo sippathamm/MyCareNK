@@ -292,6 +292,7 @@ class _MessagesPageState extends State<MessagesPage> {
   void didUpdateWidget(MessagesPage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.refreshKey != widget.refreshKey) {
+      _setupRealtime();
       _fetchData();
     }
   }
@@ -307,6 +308,8 @@ class _MessagesPageState extends State<MessagesPage> {
   }
 
   void _setupRealtime() {
+    _subscription?.unsubscribe();
+    _subscription = null;
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) return;
 
@@ -331,7 +334,10 @@ class _MessagesPageState extends State<MessagesPage> {
   Future<void> _fetchData() async {
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) {
-      if (mounted) setState(() { _isLoggedIn = false; _isLoading = false; });
+      if (mounted) {
+        setState(() { _groups = []; _isLoggedIn = false; _isLoading = false; });
+        _notifyUnread();
+      }
       return;
     }
     final userId = session.user.id;
@@ -391,6 +397,7 @@ class _MessagesPageState extends State<MessagesPage> {
       if (mounted) {
         setState(() {
           _groups = groups;
+          _isLoggedIn = true;
           _isLoading = false;
         });
         _notifyUnread();
