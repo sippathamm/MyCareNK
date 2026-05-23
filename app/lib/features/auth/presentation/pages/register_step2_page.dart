@@ -266,7 +266,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                           hintText: l10n.specifyNationality,
                           hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                         ),
                       ),
                     ),
