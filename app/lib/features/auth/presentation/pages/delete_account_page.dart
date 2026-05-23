@@ -98,9 +98,21 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           ),
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: GradientButton(
+            onPressed: (canDelete && !_isLoading) ? _deleteAccount : null,
+            label: l10n.deleteAccountTitle,
+            isLoading: _isLoading,
+            gradientColors: GradientButton.errorGradient,
+          ),
+        ),
+      ),
       body: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           child: Column(
             children: [
               Container(
@@ -181,13 +193,6 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 32),
-              GradientButton(
-                onPressed: (canDelete && !_isLoading) ? _deleteAccount : null,
-                label: l10n.deleteAccountTitle,
-                isLoading: _isLoading,
-                gradientColors: GradientButton.errorGradient,
               ),
             ],
           ),

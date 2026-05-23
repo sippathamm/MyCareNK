@@ -129,11 +129,24 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           ),
         ),
       ),
+      bottomNavigationBar: _loading
+          ? null
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+                child: GradientButton(
+                  onPressed: _saving ? null : _save,
+                  label: AppLocalizations.of(context).confirm,
+                  isLoading: _saving,
+                ),
+              ),
+            ),
       body: _loading
           ? const Center(child: CircularProgressIndicator(color: AppColors.primary))
           : SafeArea(
+              bottom: false,
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -146,12 +159,6 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     _buildGenderField(l10n),
                     const SizedBox(height: 20),
                     _buildNationalityField(l10n),
-                    const SizedBox(height: 32),
-                    GradientButton(
-                      onPressed: _saving ? null : _save,
-                      label: AppLocalizations.of(context).confirm,
-                      isLoading: _saving,
-                    ),
                   ],
                 ),
               ),

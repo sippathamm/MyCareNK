@@ -55,7 +55,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           ),
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: GradientButton(
+            onPressed: _onNext,
+            label: AppLocalizations.of(context).next,
+          ),
+        ),
+      ),
       body: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Form(
@@ -138,12 +148,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                   ),
                 ),
 
-                const SizedBox(height: 48),
-
-                GradientButton(
-                  onPressed: _onNext,
-                  label: AppLocalizations.of(context).next,
-                ),
               ],
             ),
           ),
