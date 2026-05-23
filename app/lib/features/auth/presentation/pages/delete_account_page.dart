@@ -101,11 +101,38 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          child: GradientButton(
-            onPressed: (canDelete && !_isLoading) ? _deleteAccount : null,
-            label: l10n.deleteAccountTitle,
-            isLoading: _isLoading,
-            gradientColors: GradientButton.errorGradient,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Checkbox(
+                    value: _confirmed,
+                    onChanged: (v) => setState(() => _confirmed = v ?? false),
+                    activeColor: AppColors.error,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _confirmed = !_confirmed),
+                      child: Text(
+                        l10n.deleteAccountConfirmCheck,
+                        style: GoogleFonts.googleSans(
+                            fontSize: 14, color: AppColors.textPrimary),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              GradientButton(
+                onPressed: (canDelete && !_isLoading) ? _deleteAccount : null,
+                label: l10n.deleteAccountTitle,
+                isLoading: _isLoading,
+                gradientColors: GradientButton.errorGradient,
+              ),
+            ],
           ),
         ),
       ),
@@ -171,28 +198,6 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Checkbox(
-                    value: _confirmed,
-                    onChanged: (v) => setState(() => _confirmed = v ?? false),
-                    activeColor: AppColors.error,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4)),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _confirmed = !_confirmed),
-                      child: Text(
-                        l10n.deleteAccountConfirmCheck,
-                        style: GoogleFonts.googleSans(
-                            fontSize: 14, color: AppColors.textPrimary),
-                      ),
-                    ),
-                  ),
-                ],
               ),
             ],
           ),
