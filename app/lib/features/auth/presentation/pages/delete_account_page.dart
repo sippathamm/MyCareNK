@@ -4,7 +4,6 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../../core/l10n/app_localizations.dart';
-import 'login_page.dart';
 
 class DeleteAccountPage extends StatefulWidget {
   const DeleteAccountPage({super.key});
@@ -41,6 +40,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
       );
 
       await Supabase.instance.client.rpc('delete_own_account');
+      await Supabase.instance.client.auth.signOut();
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -48,10 +48,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
       ));
-      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (_) => false,
-      );
+      Navigator.of(context).pop();
     } on AuthException {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(

@@ -39,7 +39,10 @@ class _MainScreenState extends State<MainScreen> {
       if (!mounted) return;
       if (state.event == AuthChangeEvent.signedOut) {
         _messagesUnreadNotifier.value = 0;
-        setState(() => _messagesRefreshKey++);
+        setState(() {
+          _currentIndex = 0;
+          _messagesRefreshKey++;
+        });
       } else if (state.event == AuthChangeEvent.signedIn) {
         setState(() => _messagesRefreshKey++);
       }
