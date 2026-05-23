@@ -106,7 +106,18 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
           ),
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: GradientButton(
+            onPressed: _isLoading ? null : _onConfirm,
+            label: AppLocalizations.of(context).confirm,
+            isLoading: _isLoading,
+          ),
+        ),
+      ),
       body: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 32.0),
           child: Form(
@@ -250,13 +261,6 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                   ),
                 ),
 
-                const SizedBox(height: 48),
-
-                GradientButton(
-                  onPressed: _isLoading ? null : _onConfirm,
-                  label: AppLocalizations.of(context).confirm,
-                  isLoading: _isLoading,
-                ),
               ],
             ),
           ),
