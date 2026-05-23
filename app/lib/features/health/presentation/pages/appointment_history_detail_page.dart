@@ -83,44 +83,27 @@ class _AppointmentHistoryDetailPageState
   Future<void> _confirmCancel() async {
     final confirmed = await showDialog<bool>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.white,
-        elevation: 24,
-        shadowColor: Colors.black38,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(AppLocalizations.of(context).cancelAppointmentTitle,
             style: GoogleFonts.googleSans(
-                fontSize: 18, fontWeight: FontWeight.bold)),
+                fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         content: Text(
           AppLocalizations.of(context).cancelAppointmentMessage,
-          style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
+          style: GoogleFonts.googleSans(color: AppColors.textSecondary),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          GradientButton(
-            height: 46,
-            onPressed: () => Navigator.of(ctx).pop(true),
-            label: AppLocalizations.of(context).cancelApptBtn,
-            gradientColors: GradientButton.errorGradient,
-            fontSize: 15,
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: Text(AppLocalizations.of(context).keepRequest,
+                style: GoogleFonts.googleSans(color: AppColors.textSecondary)),
           ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: FilledButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEEEEEE),
-                foregroundColor: AppColors.textPrimary,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text(AppLocalizations.of(context).keepRequest,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 15, fontWeight: FontWeight.bold)),
-            ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            child: Text(AppLocalizations.of(context).cancelApptBtn,
+                style: GoogleFonts.googleSans(
+                    color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
