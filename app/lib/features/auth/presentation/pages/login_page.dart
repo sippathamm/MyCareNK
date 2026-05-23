@@ -152,62 +152,72 @@ class _LoginPageState extends State<LoginPage> {
 
                 // Username Field
                 _buildInputBox(
-                  child: TextFormField(
-                    controller: _usernameController,
-                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                      prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                      hintText: AppLocalizations.of(context).usernameHint,
-                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(children: [
+                    Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _usernameController,
+                        style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context).usernameHint,
+                          hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return AppLocalizations.current.usernameRequired;
+                          }
+                          if (value.trim().length < 4) {
+                            return AppLocalizations.current.usernameTooShort;
+                          }
+                          if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
+                            return AppLocalizations.current.usernameInvalidChars;
+                          }
+                          return null;
+                        },
+                      ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return AppLocalizations.current.usernameRequired;
-                      }
-                      if (value.trim().length < 4) {
-                        return AppLocalizations.current.usernameTooShort;
-                      }
-                      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
-                        return AppLocalizations.current.usernameInvalidChars;
-                      }
-                      return null;
-                    },
-                  ),
+                  ]),
                 ),
                 const SizedBox(height: 16.0),
 
                 // Password Field
                 _buildInputBox(
-                  child: TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                      prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
-                      hintText: AppLocalizations.of(context).passwordHint,
-                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey[400],
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(children: [
+                    Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _passwordController,
+                        obscureText: _obscurePassword,
+                        style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                        decoration: InputDecoration(
+                          hintText: AppLocalizations.of(context).passwordHint,
+                          hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                              color: Colors.grey[400],
+                            ),
+                            onPressed: () =>
+                                setState(() => _obscurePassword = !_obscurePassword),
+                          ),
                         ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return AppLocalizations.current.passwordRequired;
+                          }
+                          return null;
+                        },
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return AppLocalizations.current.passwordRequired;
-                      }
-                      return null;
-                    },
-                  ),
+                  ]),
                 ),
                 const SizedBox(height: 4.0),
 
@@ -283,12 +293,13 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildInputBox({required Widget child}) {
+  Widget _buildInputBox({required Widget child, EdgeInsets? padding}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
         borderRadius: BorderRadius.circular(12.0),
       ),
+      padding: padding,
       child: child,
     );
   }
