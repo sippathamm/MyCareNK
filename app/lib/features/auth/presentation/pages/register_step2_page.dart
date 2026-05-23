@@ -167,7 +167,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                           child: DropdownButtonHideUnderline(
                             child: Row(children: [
                               Icon(Icons.wc, color: Colors.grey[400], size: 20),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: DropdownButton<String>(
                                   value: _gender,
@@ -206,12 +206,12 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                                 decoration: InputDecoration(
                                   prefixIcon: Icon(Icons.calendar_today,
                                       color: Colors.grey[400], size: 20),
+                                  prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                                   hintText: l10n.dateOfBirth,
                                   hintStyle: GoogleFonts.googleSans(
                                       color: Colors.grey[400], fontSize: 14),
                                   border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 16, vertical: 16),
+                                  contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                                 ),
                               ),
                             ),
@@ -228,7 +228,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                     child: DropdownButtonHideUnderline(
                       child: Row(children: [
                         Icon(Icons.language, color: Colors.grey[400], size: 20),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButton<String>(
                             value: _nationality,
@@ -281,7 +281,7 @@ class _RegisterStep2PageState extends State<RegisterStep2Page> {
                         Icon(Icons.local_hospital_outlined,
                             color: Colors.grey[400],
                             size: 20),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: DropdownButton<String>(
                             value: _healthCoverage,
