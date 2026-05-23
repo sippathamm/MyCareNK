@@ -112,16 +112,6 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
     return Column(
       children: [
         Container(
-          width: 88,
-          height: 88,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: AppColors.primaryBackground,
-          ),
-          child: const Icon(Icons.shield_outlined, color: AppColors.primary, size: 44),
-        ),
-        const SizedBox(height: 20),
-        Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(

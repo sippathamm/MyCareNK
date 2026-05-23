@@ -121,7 +121,7 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                       child: Text(
                         l10n.deleteAccountWarning,
                         style: GoogleFonts.googleSans(
-                          fontSize: 13,
+                          fontSize: 14,
                           color: AppColors.error,
                           height: 1.55,
                         ),
