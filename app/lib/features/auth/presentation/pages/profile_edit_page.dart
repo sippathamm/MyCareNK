@@ -140,9 +140,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     _buildReadOnlyField(label: l10n.usernameLabel, value: _username),
                     const SizedBox(height: 20),
                     _buildReadOnlyField(label: l10n.dateOfBirth, value: _dateOfBirth),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+                    const Divider(height: 1),
+                    const SizedBox(height: 20),
                     _buildGenderField(l10n),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                     _buildNationalityField(l10n),
                     const SizedBox(height: 32),
                     GradientButton(

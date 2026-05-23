@@ -49,7 +49,7 @@ class _SettingsPageState extends State<SettingsPage> {
           l10n.navSettings,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
-            fontSize: 22,
+            fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),

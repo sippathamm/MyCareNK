@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
@@ -128,33 +129,6 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
             color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.primaryBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primaryLight),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  l10n.recoveryCodesCannotRetrieve,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 13,
-                    color: AppColors.textPrimary,
-                    height: 1.55,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
         const SizedBox(height: 32),
         GradientButton(
           onPressed: _isGenerating ? null : _regenerate,
@@ -196,33 +170,6 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
           ),
         ),
         const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: BoxDecoration(
-            color: AppColors.primaryBackground,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.primaryLight),
-          ),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.info_outline, color: AppColors.primary, size: 18),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  l10n.oldCodesExpired,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 13,
-                    color: AppColors.textPrimary,
-                    height: 1.5,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -270,6 +217,7 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
                   child: RecoveryCodesGrid(
                     recoveryCodes: _newCodes!,
                     footerText: l10n.newCodesHint,
+                    showCopyButton: false,
                   ),
                 ),
               ],
@@ -280,6 +228,36 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
         GradientButton(
           onPressed: () => Navigator.of(context).pop(),
           label: l10n.statusCompleted,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: _newCodes!.join(', ')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(AppLocalizations.of(context).allCopied,
+                    style: GoogleFonts.googleSans()),
+                behavior: SnackBarBehavior.floating,
+              ));
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.primary),
+              foregroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            icon: const Icon(Icons.copy_outlined, size: 18),
+            label: Text(
+              l10n.copyAll,
+              style: GoogleFonts.googleSans(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ),
       ],
     );
