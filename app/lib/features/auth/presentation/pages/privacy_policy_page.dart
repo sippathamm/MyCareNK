@@ -13,6 +13,9 @@ class PrivacyPolicyPage extends StatefulWidget {
   final String? gender;
   final DateTime? dateOfBirth;
   final String nationality;
+  final String healthCoverage;
+  final String? phoneNumber;
+  final String? nickname;
   final bool readOnly;
 
   const PrivacyPolicyPage({
@@ -22,6 +25,9 @@ class PrivacyPolicyPage extends StatefulWidget {
     this.gender,
     this.dateOfBirth,
     this.nationality = '',
+    this.healthCoverage = '',
+    this.phoneNumber,
+    this.nickname,
     this.readOnly = false,
   });
 
@@ -83,6 +89,9 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           'nationality': widget.nationality,
           'date_of_birth':
               widget.dateOfBirth!.toIso8601String().split('T')[0],
+          'health_coverage': widget.healthCoverage.isEmpty ? null : widget.healthCoverage,
+          'phone_number': widget.phoneNumber,
+          'nickname': widget.nickname,
         });
       }
 

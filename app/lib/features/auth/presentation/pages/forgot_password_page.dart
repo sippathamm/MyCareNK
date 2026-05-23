@@ -112,39 +112,51 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 const SizedBox(height: 32),
 
                 // Username field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextFormField(
-                    controller: _usernameController,
-                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: AppLocalizations.of(context).usernameHint,
-                      hintStyle: GoogleFonts.googleSans(
-                        color: Colors.grey[400],
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 16.0,
-                      ),
+                FormField<void>(
+                  autovalidateMode: AutovalidateMode.disabled,
+                  validator: (_) {
+                    final v = _usernameController.text.trim();
+                    if (v.isEmpty) return AppLocalizations.current.usernameRequired;
+                    if (v.length < 4) return AppLocalizations.current.usernameTooShort;
+                    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(v)) return AppLocalizations.current.usernameInvalidChars;
+                    return null;
+                  },
+                  builder: (field) => Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return AppLocalizations.current.usernameRequired;
-                      }
-                      if (value.trim().length < 4) {
-                        return AppLocalizations.current.usernameTooShort;
-                      }
-                      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
-                        return AppLocalizations.current.usernameInvalidChars;
-                      }
-                      return null;
-                    },
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _usernameController,
+                              style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context).usernameHint,
+                                hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ]),
+                        if (field.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Text(
+                              field.errorText!,
+                              style: GoogleFonts.googleSans(color: AppColors.error, fontSize: 12),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
 
