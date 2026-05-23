@@ -236,6 +236,7 @@ class _AppointmentHistoryDetailPageState
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                       content: Text(AppLocalizations.current.copiedApptRefCode,
                           style: GoogleFonts.googleSans()),
+                      backgroundColor: AppColors.success,
                       duration: const Duration(seconds: 2),
                       behavior: SnackBarBehavior.floating,
                     ));
