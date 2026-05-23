@@ -73,9 +73,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     } on AuthException catch (e) {
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
-      final msg = e.message.toLowerCase().contains('invalid')
+      final lower = e.message.toLowerCase();
+      final msg = lower.contains('invalid login')
           ? l10n.changePasswordWrongCurrent
-          : l10n.generalErrorRetry;
+          : (lower.contains('commonly used') || lower.contains('leaked') || lower.contains('weak'))
+              ? l10n.passwordLeaked
+              : l10n.generalErrorRetry;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(msg, style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.error,
