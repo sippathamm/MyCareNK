@@ -255,6 +255,12 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         ),
         centerTitle: true,
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+          child: _buildBottomActions(l10n, questions),
+        ),
+      ),
       body: Column(
         children: [
           if (_step >= 0 && !_isDone && cur != null) _buildProgress(cur),
@@ -281,6 +287,44 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBottomActions(AppLocalizations l10n, List<_Question> questions) {
+    if (_isDone) {
+      final risk = _calcRisk(_answers);
+      final cfg = _kRiskConfigs[risk]!;
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (cfg.hasCta) ...[
+            _PrimaryBtn(
+              label: l10n.bookDoctorTitle,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) =>
+                      DoctorBookingPage(initialReason: cfg.bookingReason),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          _OutlinedBtn(label: l10n.reassess, onPressed: _reset),
+        ],
+      );
+    }
+    if (_step == -1) {
+      return _PrimaryBtn(label: l10n.startAssessment, onPressed: _handleNext);
+    }
+    return AnimatedOpacity(
+      opacity: _selected != null ? 1.0 : 0.45,
+      duration: const Duration(milliseconds: 150),
+      child: _PrimaryBtn(
+        label: _step == _totalQ - 1
+            ? l10n.viewAssessmentResult
+            : l10n.next,
+        onPressed: _selected != null ? _handleNext : null,
       ),
     );
   }
@@ -445,8 +489,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             ),
           ),
         ),
-        const SizedBox(height: 28),
-        _PrimaryBtn(label: AppLocalizations.of(context).startAssessment, onPressed: _handleNext),
       ],
     );
   }
@@ -551,17 +593,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         ),
         const SizedBox(height: 20),
         ...q.options.map((opt) => _buildOption(opt)),
-        const SizedBox(height: 24),
-        AnimatedOpacity(
-          opacity: _selected != null ? 1.0 : 0.45,
-          duration: const Duration(milliseconds: 150),
-          child: _PrimaryBtn(
-            label: _step == _totalQ - 1
-                ? AppLocalizations.of(context).viewAssessmentResult
-                : AppLocalizations.of(context).next,
-            onPressed: _selected != null ? _handleNext : null,
-          ),
-        ),
       ],
     );
   }
@@ -767,20 +798,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         _buildKnowledgeBox(),
         const SizedBox(height: 20),
         _AnswerSummary(answers: Map.from(_answers), questions: questions),
-        const SizedBox(height: 20),
-        if (cfg.hasCta) ...[
-          _PrimaryBtn(
-            label: AppLocalizations.of(context).bookDoctorTitle,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) =>
-                    DoctorBookingPage(initialReason: cfg.bookingReason),
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-        ],
-        _OutlinedBtn(label: AppLocalizations.of(context).reassess, onPressed: _reset),
       ],
     );
   }

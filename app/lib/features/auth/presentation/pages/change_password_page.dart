@@ -117,9 +117,20 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           ),
         ),
       ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          child: GradientButton(
+            onPressed: (_isLoading || !_canSubmit) ? null : _submit,
+            label: l10n.confirm,
+            isLoading: _isLoading,
+          ),
+        ),
+      ),
       body: SafeArea(
+        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -158,12 +169,6 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     if (v != _newController.text) return l10n.passwordMismatch;
                     return null;
                   },
-                ),
-                const SizedBox(height: 32),
-                GradientButton(
-                  onPressed: (_isLoading || !_canSubmit) ? null : _submit,
-                  label: l10n.confirm,
-                  isLoading: _isLoading,
                 ),
               ],
             ),
