@@ -215,6 +215,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   }
 
   Widget _buildNationalityField(AppLocalizations l10n) {
+    final labels = {
+      'ไทย': l10n.nationalityThai,
+      'ลาว': l10n.nationalityLao,
+      'พม่า': l10n.nationalityMyanmar,
+      'อื่นๆ': l10n.nationalityOther,
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -222,26 +228,22 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             style: GoogleFonts.googleSans(
                 fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
         const SizedBox(height: 8),
-        RadioGroup<String>(
-          groupValue: _nationality,
-          onChanged: (v) => setState(() => _nationality = v!),
-          child: Column(
-            children: ['ไทย', 'ลาว', 'พม่า', 'อื่นๆ'].map((nat) {
-              final labels = {
-                'ไทย': l10n.nationalityThai,
-                'ลาว': l10n.nationalityLao,
-                'พม่า': l10n.nationalityMyanmar,
-                'อื่นๆ': l10n.nationalityOther,
-              };
-              return RadioListTile<String>(
-                value: nat,
-                activeColor: AppColors.primary,
-                contentPadding: EdgeInsets.zero,
-                title: Text(labels[nat]!,
-                    style: GoogleFonts.googleSans(
-                        fontSize: 15, color: AppColors.textPrimary)),
-              );
-            }).toList(),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _nationality,
+              isExpanded: true,
+              style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
+              items: ['ไทย', 'ลาว', 'พม่า', 'อื่นๆ'].map((nat) {
+                return DropdownMenuItem(value: nat, child: Text(labels[nat]!));
+              }).toList(),
+              onChanged: (v) => setState(() => _nationality = v!),
+            ),
           ),
         ),
         if (_nationality == 'อื่นๆ') ...[

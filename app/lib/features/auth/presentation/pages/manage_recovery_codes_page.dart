@@ -169,6 +169,34 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
     return Column(
       children: [
         Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: AppColors.statusCompletedLight,
+            border: Border.all(color: AppColors.statusCompleted, width: 3),
+          ),
+          child: const Icon(Icons.check, color: AppColors.statusCompleted, size: 48),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          l10n.recoveryCodesRegenerateSuccess,
+          style: GoogleFonts.googleSans(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          l10n.newCodesCreated,
+          style: GoogleFonts.googleSans(
+            fontSize: 15,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Container(
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
@@ -194,7 +222,7 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
             ],
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
@@ -247,6 +275,11 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
               ],
             ),
           ),
+        ),
+        const SizedBox(height: 24),
+        GradientButton(
+          onPressed: () => Navigator.of(context).pop(),
+          label: l10n.statusCompleted,
         ),
       ],
     );

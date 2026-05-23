@@ -161,27 +161,26 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                 ),
               ),
               const SizedBox(height: 16),
-              InkWell(
-                onTap: () => setState(() => _confirmed = !_confirmed),
-                borderRadius: BorderRadius.circular(8),
-                child: Row(
-                  children: [
-                    Checkbox(
-                      value: _confirmed,
-                      onChanged: (v) => setState(() => _confirmed = v ?? false),
-                      activeColor: AppColors.error,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(4)),
-                    ),
-                    Expanded(
+              Row(
+                children: [
+                  Checkbox(
+                    value: _confirmed,
+                    onChanged: (v) => setState(() => _confirmed = v ?? false),
+                    activeColor: AppColors.error,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(4)),
+                  ),
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () => setState(() => _confirmed = !_confirmed),
                       child: Text(
                         l10n.deleteAccountConfirmCheck,
                         style: GoogleFonts.googleSans(
                             fontSize: 14, color: AppColors.textPrimary),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
               const SizedBox(height: 32),
               GradientButton(

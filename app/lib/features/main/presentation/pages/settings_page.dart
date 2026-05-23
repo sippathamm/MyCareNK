@@ -43,13 +43,13 @@ class _SettingsPageState extends State<SettingsPage> {
         backgroundColor: AppColors.white,
         elevation: 0,
         scrolledUnderElevation: 0,
-        centerTitle: true,
         automaticallyImplyLeading: false,
+        titleSpacing: 24,
         title: Text(
           l10n.navSettings,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
-            fontSize: 18,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
