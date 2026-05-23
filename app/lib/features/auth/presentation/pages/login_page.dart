@@ -157,13 +157,11 @@ class _LoginPageState extends State<LoginPage> {
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                       hintText: AppLocalizations.of(context).usernameHint,
                       hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 16.0,
-                      ),
+                      contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                     ),
                     validator: (value) {
                       if (value == null || value.trim().isEmpty) {
@@ -189,13 +187,11 @@ class _LoginPageState extends State<LoginPage> {
                     style: GoogleFonts.googleSans(color: AppColors.textPrimary),
                     decoration: InputDecoration(
                       prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
+                      prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
                       hintText: AppLocalizations.of(context).passwordHint,
                       hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                       border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 16.0,
-                      ),
+                      contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_off : Icons.visibility,

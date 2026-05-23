@@ -240,7 +240,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           child: Row(children: [
             if (icon != null) ...[
               Icon(icon, color: Colors.grey[400], size: 20),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
             ],
             Expanded(
               child: Text(
@@ -271,7 +271,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           child: DropdownButtonHideUnderline(
             child: Row(children: [
               Icon(Icons.wc, color: Colors.grey[400], size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: DropdownButton<String>(
                   value: _gender,
@@ -311,7 +311,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           child: DropdownButtonHideUnderline(
             child: Row(children: [
               Icon(Icons.local_hospital_outlined, color: Colors.grey[400], size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: DropdownButton<String>(
                   value: _healthCoverage,
@@ -357,13 +357,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
             style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
             decoration: InputDecoration(
               prefixIcon: icon != null ? Icon(icon, color: Colors.grey[400], size: 20) : null,
+              prefixIconConstraints: icon != null ? const BoxConstraints(minWidth: 48, minHeight: 48) : null,
               hintText: hint,
               hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
               border: InputBorder.none,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: icon != null ? 0 : 16,
-                vertical: 14,
-              ),
+              contentPadding: EdgeInsets.fromLTRB(icon != null ? 0 : 16, 14, 16, 14),
             ),
           ),
         ),
@@ -394,7 +392,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
           child: DropdownButtonHideUnderline(
             child: Row(children: [
               Icon(Icons.language, color: Colors.grey[400], size: 20),
-              const SizedBox(width: 8),
+              const SizedBox(width: 12),
               Expanded(
                 child: DropdownButton<String>(
                   value: _nationality,
