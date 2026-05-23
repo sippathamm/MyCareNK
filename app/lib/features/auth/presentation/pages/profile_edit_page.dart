@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
@@ -21,8 +22,11 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   String? _gender;
   String _nationality = 'ไทย';
   String _customNationality = '';
+  String? _healthCoverage;
 
   final _customNationalityController = TextEditingController();
+  final _phoneController = TextEditingController();
+  final _nicknameController = TextEditingController();
 
   @override
   void initState() {
@@ -33,6 +37,8 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
   @override
   void dispose() {
     _customNationalityController.dispose();
+    _phoneController.dispose();
+    _nicknameController.dispose();
     super.dispose();
   }
 
@@ -41,7 +47,7 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
     if (userId == null) return;
     final data = await Supabase.instance.client
         .from('user_profiles')
-        .select('username, gender, nationality, date_of_birth')
+        .select('username, gender, nationality, date_of_birth, health_coverage, phone_number, nickname')
         .eq('user_id', userId)
         .maybeSingle();
     if (!mounted) return;
@@ -54,9 +60,12 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
         _nationality = isStandard ? nat : 'อื่นๆ';
         _customNationality = isStandard ? '' : nat;
         _dateOfBirth = data['date_of_birth'] as String? ?? '';
+        _healthCoverage = data['health_coverage'] as String?;
         if (!isStandard) {
           _customNationalityController.text = _customNationality;
         }
+        _phoneController.text = data['phone_number'] as String? ?? '';
+        _nicknameController.text = data['nickname'] as String? ?? '';
         _loading = false;
       });
     } else {
@@ -76,6 +85,16 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       ));
       return;
     }
+    final phone = _phoneController.text.trim();
+    if (phone.isNotEmpty && (phone.length != 10 || !phone.startsWith('0'))) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(AppLocalizations.of(context).phoneNumberInvalid,
+            style: GoogleFonts.googleSans()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ));
+      return;
+    }
     setState(() => _saving = true);
     try {
       final natValue = _nationality == 'อื่นๆ'
@@ -84,6 +103,9 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
       await Supabase.instance.client.from('user_profiles').update({
         'gender': _gender,
         'nationality': natValue,
+        'health_coverage': _healthCoverage,
+        'phone_number': phone.isEmpty ? null : phone,
+        'nickname': _nicknameController.text.trim().isEmpty ? null : _nicknameController.text.trim(),
       }).eq('user_id', userId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -159,6 +181,25 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                     _buildGenderField(l10n),
                     const SizedBox(height: 20),
                     _buildNationalityField(l10n),
+                    const SizedBox(height: 20),
+                    _buildHealthCoverageField(l10n),
+                    const SizedBox(height: 20),
+                    _buildEditableTextField(
+                      label: l10n.phoneNumberHint,
+                      controller: _phoneController,
+                      hint: l10n.phoneNumberHint,
+                      keyboardType: TextInputType.phone,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(10),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    _buildEditableTextField(
+                      label: l10n.nicknameHint,
+                      controller: _nicknameController,
+                      hint: l10n.nicknameHint,
+                    ),
                   ],
                 ),
               ),
@@ -216,6 +257,73 @@ class _ProfileEditPageState extends State<ProfileEditPage> {
                 DropdownMenuItem(value: 'หญิง', child: Text(l10n.female)),
               ],
               onChanged: (v) => setState(() => _gender = v),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHealthCoverageField(AppLocalizations l10n) {
+    const options = ['จ่ายเงินเอง', 'บัตรประกันสุขภาพต่างด้าว', 'ไม่มี/ไม่ทราบ'];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(l10n.healthCoverage,
+            style: GoogleFonts.googleSans(
+                fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _healthCoverage,
+              isExpanded: true,
+              hint: Text(l10n.healthCoverage,
+                  style: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14)),
+              style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
+              items: options.map((opt) => DropdownMenuItem(value: opt, child: Text(opt))).toList(),
+              onChanged: (v) => setState(() => _healthCoverage = v),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEditableTextField({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label,
+            style: GoogleFonts.googleSans(
+                fontSize: 13, fontWeight: FontWeight.w600, color: AppColors.textSecondary)),
+        const SizedBox(height: 8),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.grey[100],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: TextFormField(
+            controller: controller,
+            keyboardType: keyboardType,
+            inputFormatters: inputFormatters,
+            style: GoogleFonts.googleSans(color: AppColors.textPrimary, fontSize: 15),
+            decoration: InputDecoration(
+              hintText: hint,
+              hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+              border: InputBorder.none,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             ),
           ),
         ),
