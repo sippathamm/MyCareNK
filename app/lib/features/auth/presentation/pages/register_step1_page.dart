@@ -86,7 +86,8 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                           hintText: l10n.usernameHint,
                           hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
@@ -123,7 +124,8 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                           hintText: l10n.passwordHint,
                           hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                           suffixIcon: _buildPasswordToggle(
                             obscure: _obscurePassword,
                             onTap: () => setState(() => _obscurePassword = !_obscurePassword),
@@ -163,7 +165,8 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                           hintText: l10n.confirmPasswordHint,
                           hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                           suffixIcon: _buildPasswordToggle(
                             obscure: _obscureConfirmPassword,
                             onTap: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),

@@ -114,7 +114,8 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
                           hintText: l10n.phoneNumberHint,
                           hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                         ),
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -149,7 +150,8 @@ class _RegisterStep3PageState extends State<RegisterStep3Page> {
                           hintText: l10n.nicknameHint,
                           hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                          prefixIconConstraints: const BoxConstraints(minWidth: 48, minHeight: 48),
+                          contentPadding: const EdgeInsets.fromLTRB(0, 16, 16, 16),
                         ),
                         validator: (value) {
                           if (value == null || value.trim().isEmpty) {
