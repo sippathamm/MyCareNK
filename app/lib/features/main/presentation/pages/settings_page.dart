@@ -57,7 +57,8 @@ class _SettingsPageState extends State<SettingsPage> {
       body: StreamBuilder<AuthState>(
         stream: Supabase.instance.client.auth.onAuthStateChange,
         builder: (context, snapshot) {
-          final session = snapshot.data?.session ??
+          final session =
+              snapshot.data?.session ??
               Supabase.instance.client.auth.currentSession;
           final isLoggedIn = session != null;
           return SingleChildScrollView(
@@ -70,21 +71,27 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.person_outline,
                     title: l10n.profileTitle,
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ProfileEditPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const ProfileEditPage(),
+                      ),
                     ),
                   ),
                   _buildTile(
                     icon: Icons.lock_outline,
                     title: l10n.changePasswordTitle,
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ChangePasswordPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const ChangePasswordPage(),
+                      ),
                     ),
                   ),
                   _buildTile(
                     icon: Icons.shield_outlined,
                     title: l10n.recoveryCodesManageTitle,
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ManageRecoveryCodesPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const ManageRecoveryCodesPage(),
+                      ),
                     ),
                   ),
                   _buildDivider(),
@@ -122,7 +129,9 @@ class _SettingsPageState extends State<SettingsPage> {
                     titleColor: AppColors.error,
                     iconColor: AppColors.error,
                     onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const DeleteAccountPage()),
+                      MaterialPageRoute(
+                        builder: (_) => const DeleteAccountPage(),
+                      ),
                     ),
                   ),
                 ],
@@ -172,7 +181,11 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
       trailing: showChevron
-          ? const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20)
+          ? const Icon(
+              Icons.chevron_right,
+              color: AppColors.textSecondary,
+              size: 20,
+            )
           : null,
       onTap: onTap,
     );
@@ -181,7 +194,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildVersionTile(AppLocalizations l10n) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-      leading: const Icon(Icons.info_outline, color: AppColors.primary, size: 22),
+      leading: const Icon(
+        Icons.info_outline,
+        color: AppColors.primary,
+        size: 22,
+      ),
       title: Text(
         l10n.appVersion,
         style: GoogleFonts.googleSans(
@@ -203,7 +220,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildLanguageTile(BuildContext context, AppLocalizations l10n) {
     final provider = LocaleProvider.of(context);
     final currentCode = provider.locale.languageCode;
-    final langLabels = {'th': '🇹🇭 ไทย', 'lo': '🇱🇦 ລາວ', 'my': '🇲🇲 မြန်မာ'};
+    final langLabels = {
+      'th': '🇹🇭 ไทย',
+      'lo': '🇱🇦 ລາວ',
+      'my': '🇲🇲 မြန်မာ',
+    };
     final currentLabel = langLabels[currentCode] ?? '🇹🇭 ไทย';
 
     return ListTile(
@@ -229,7 +250,11 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+          const Icon(
+            Icons.chevron_right,
+            color: AppColors.textSecondary,
+            size: 20,
+          ),
         ],
       ),
       onTap: () => _showLanguageSheet(context, l10n, provider),
@@ -289,8 +314,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     name,
                     style: GoogleFonts.googleSans(
                       fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                      color: isSelected
+                          ? AppColors.primary
+                          : AppColors.textPrimary,
                     ),
                   ),
                   trailing: isSelected
@@ -332,7 +361,7 @@ class _SettingsPageState extends State<SettingsPage> {
             Text(
               l10n.pleaseLogin,
               style: GoogleFonts.googleSans(
-                fontSize: 16,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: AppColors.textPrimary,
               ),
@@ -341,16 +370,17 @@ class _SettingsPageState extends State<SettingsPage> {
             Text(
               l10n.notLoggedInSettingsBody,
               style: GoogleFonts.googleSans(
-                fontSize: 13,
+                fontSize: 15,
                 color: AppColors.textSecondary,
               ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             GradientButton(
-              onPressed: () => Navigator.of(context, rootNavigator: true).push(
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-              ),
+              onPressed: () => Navigator.of(
+                context,
+                rootNavigator: true,
+              ).push(MaterialPageRoute(builder: (_) => const LoginPage())),
               label: l10n.loginBtn,
             ),
           ],
@@ -359,7 +389,10 @@ class _SettingsPageState extends State<SettingsPage> {
     );
   }
 
-  Future<void> _confirmLogout(BuildContext context, AppLocalizations l10n) async {
+  Future<void> _confirmLogout(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
     final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
@@ -368,7 +401,10 @@ class _SettingsPageState extends State<SettingsPage> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           l10n.logout,
-          style: GoogleFonts.googleSans(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
+          style: GoogleFonts.googleSans(
+            fontWeight: FontWeight.bold,
+            color: AppColors.textPrimary,
+          ),
         ),
         content: Text(
           l10n.logoutConfirmMessage,
@@ -377,14 +413,20 @@ class _SettingsPageState extends State<SettingsPage> {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(l10n.cancel,
-                style: GoogleFonts.googleSans(color: AppColors.textSecondary)),
+            child: Text(
+              l10n.cancel,
+              style: GoogleFonts.googleSans(color: AppColors.textSecondary),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(l10n.logout,
-                style: GoogleFonts.googleSans(
-                    color: AppColors.error, fontWeight: FontWeight.bold)),
+            child: Text(
+              l10n.logout,
+              style: GoogleFonts.googleSans(
+                color: AppColors.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -394,8 +436,10 @@ class _SettingsPageState extends State<SettingsPage> {
     if (!mounted) return;
     messenger.showSnackBar(
       SnackBar(
-        content: Text(AppLocalizations.current.loggedOut,
-            style: GoogleFonts.googleSans()),
+        content: Text(
+          AppLocalizations.current.loggedOut,
+          style: GoogleFonts.googleSans(),
+        ),
         behavior: SnackBarBehavior.floating,
       ),
     );
