@@ -49,7 +49,7 @@ class DoctorAppointmentModel {
       const {
         'pep': 'รับยา PEP (ฉุกเฉิน)',
         'prep': 'รับยา PrEP',
-        'hiv': 'ตรวจเลือด HIV',
+        'hiv': 'ตรวจ HIV',
         'consult': 'ปรึกษาทั่วไป',
       }[key] ??
       key;

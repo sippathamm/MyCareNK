@@ -810,7 +810,7 @@ class AppLocalizations {
       _t('รับยา PEP (ฉุกเฉิน)', 'ຮັບຢາ PEP (ສຸກເສີນ)', 'PEP ဆေးရယူ (အရေးပေါ်)');
   String get reasonPrEP => _t('รับยา PrEP', 'ຮັບຢາ PrEP', 'PrEP ဆေးရယူ');
   String get reasonHIV =>
-      _t('ตรวจเลือด HIV', 'ກວດເລືອດ HIV', 'HIV သွေးစစ်');
+      _t('ตรวจ HIV', 'ກວດ HIV', 'HIV စစ်');
   String get reasonConsult =>
       _t('ปรึกษาทั่วไป', 'ປຶກສາທົ່ວໄປ', 'ကျန်းမာရေး တိုင်ပင်');
   String get bookingSelectService =>
