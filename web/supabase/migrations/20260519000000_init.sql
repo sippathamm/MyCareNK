@@ -1,9 +1,8 @@
 -- ============================================================
--- SQUASH MIGRATION — MyCareNK
--- Project: timuuxjeffzqtsqnjbnz | ap-southeast-1
--- Generated: 2026-05-19
--- Replaces 131 individual migrations with a single clean schema.
--- Apply to a CLEAN Supabase project (no data preservation needed).
+-- INIT MIGRATION — MyCareNK
+-- Project: acvgazsivfvztwoyyecu | ap-southeast-1
+-- Generated: 2026-05-24
+-- Single authoritative schema. Apply to a CLEAN Supabase project.
 -- ============================================================
 
 
@@ -289,8 +288,16 @@ SET search_path TO 'public'
 AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.request_status IS DISTINCT FROM NEW.request_status THEN
-    INSERT INTO staff_notifications (source_type, source_id, reference_number, event_type, service_center)
-    VALUES ('condom_request', NEW.id, NEW.reference_number, NEW.request_status::text, NEW.selected_service_center);
+    INSERT INTO staff_notifications
+      (source_type, source_id, reference_number, event_type, service_center, notify_staff)
+    VALUES (
+      'condom_request',
+      NEW.id,
+      NEW.reference_number,
+      NEW.request_status::text,
+      NEW.selected_service_center,
+      NEW.request_status = 'pending'
+    );
   END IF;
   RETURN NEW;
 END;
@@ -362,8 +369,16 @@ SET search_path TO 'public'
 AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    INSERT INTO staff_notifications (source_type, source_id, reference_number, event_type, service_center)
-    VALUES ('doctor_appointment', NEW.id, NEW.reference_number, NEW.appointment_status::text, NEW.selected_service_center);
+    INSERT INTO staff_notifications
+      (source_type, source_id, reference_number, event_type, service_center, notify_staff)
+    VALUES (
+      'doctor_appointment',
+      NEW.id,
+      NEW.reference_number,
+      NEW.appointment_status::text,
+      NEW.selected_service_center,
+      NEW.appointment_status = 'pending'
+    );
   END IF;
   RETURN NEW;
 END;
@@ -450,6 +465,39 @@ END;
 $$;
 
 
+-- ── auth.users cascade ─────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.handle_user_deleted()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  UPDATE public.condom_requests      SET handled_by  = NULL WHERE handled_by  = OLD.id;
+  UPDATE public.doctor_appointments  SET handled_by  = NULL WHERE handled_by  = OLD.id;
+  UPDATE public.request_status_logs  SET changed_by  = NULL WHERE changed_by  = OLD.id;
+  UPDATE public.appointment_status_logs SET changed_by = NULL WHERE changed_by = OLD.id;
+  UPDATE public.inventory_logs       SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.staff_audit_logs     SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.articles             SET created_by   = NULL WHERE created_by   = OLD.id;
+
+  DELETE FROM public.staff_notification_reads WHERE staff_user_id = OLD.id;
+  DELETE FROM public.staff_profiles           WHERE staff_user_id = OLD.id;
+  DELETE FROM public.user_notification_reads  WHERE user_id       = OLD.id;
+  DELETE FROM public.user_notifications       WHERE user_id       = OLD.id;
+  DELETE FROM public.user_recovery_codes      WHERE user_id       = OLD.id;
+  DELETE FROM public.recovery_attempts        WHERE user_id       = OLD.id;
+  DELETE FROM public.user_monthly_quotas      WHERE user_id       = OLD.id;
+  DELETE FROM public.request_status_logs
+    WHERE request_id IN (SELECT id FROM public.condom_requests WHERE user_id = OLD.id);
+  DELETE FROM public.condom_requests      WHERE user_id = OLD.id;
+  DELETE FROM public.doctor_appointments  WHERE user_id = OLD.id;
+  DELETE FROM public.user_profiles        WHERE user_id = OLD.id;
+  RETURN OLD;
+END;
+$$;
+
+
 -- ============================================================
 -- SECTION 4: TABLES (in FK dependency order)
 -- ============================================================
@@ -522,6 +570,10 @@ CREATE POLICY "Users can insert their own profile"
 CREATE POLICY "Users can update their own profile"
   ON public.user_profiles FOR UPDATE
   TO authenticated USING ((SELECT auth.uid()) = user_id);
+
+CREATE POLICY "Staff can read all user profiles"
+  ON public.user_profiles FOR SELECT
+  TO authenticated USING (is_staff());
 
 
 -- ── 3. user_monthly_quotas ─────────────────────────────────
@@ -679,28 +731,36 @@ CREATE TABLE public.staff_notifications (
   source_id        uuid        NOT NULL,
   metadata         jsonb       NOT NULL DEFAULT '{}',
   service_center   text,
+  notify_staff     boolean     NOT NULL DEFAULT false,
   CONSTRAINT staff_notifications_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Staff can view their notifications"
-  ON public.staff_notifications FOR SELECT
-  TO authenticated USING (
-    is_superadmin() OR
-    service_center = (
-      SELECT sp.service_center FROM staff_profiles sp
-      WHERE sp.staff_user_id = (SELECT auth.uid())
+-- staff: see only notify_staff=true at own SC; admin/superadmin: see everything
+CREATE POLICY "staff_notifications_select"
+  ON public.staff_notifications FOR SELECT TO authenticated
+  USING (
+    is_admin() OR is_superadmin()
+    OR (
+      notify_staff = true
+      AND service_center = (
+        SELECT sp.service_center FROM staff_profiles sp
+        WHERE sp.staff_user_id = (SELECT auth.uid())
+      )
     )
   );
 
-CREATE POLICY "Staff can delete their notifications"
-  ON public.staff_notifications FOR DELETE
-  TO authenticated USING (
-    is_superadmin() OR
-    service_center = (
-      SELECT sp.service_center FROM staff_profiles sp
-      WHERE sp.staff_user_id = (SELECT auth.uid())
+CREATE POLICY "staff_notifications_delete"
+  ON public.staff_notifications FOR DELETE TO authenticated
+  USING (
+    is_admin() OR is_superadmin()
+    OR (
+      notify_staff = true
+      AND service_center = (
+        SELECT sp.service_center FROM staff_profiles sp
+        WHERE sp.staff_user_id = (SELECT auth.uid())
+      )
     )
   );
 
@@ -926,7 +986,7 @@ CREATE TRIGGER restore_quota_on_staff_cancel_pending
   ) EXECUTE FUNCTION restore_quota_on_staff_cancel_pending();
 
 CREATE TRIGGER notify_staff_on_request_change
-  AFTER INSERT OR UPDATE ON public.condom_requests
+  AFTER INSERT OR UPDATE OF request_status ON public.condom_requests
   FOR EACH ROW EXECUTE FUNCTION handle_staff_request_notification();
 
 CREATE TRIGGER notify_user_on_request_change
@@ -1085,7 +1145,7 @@ CREATE TRIGGER track_appointment_status
   FOR EACH ROW EXECUTE FUNCTION track_appointment_status();
 
 CREATE TRIGGER notify_staff_on_appointment_change
-  AFTER INSERT OR UPDATE ON public.doctor_appointments
+  AFTER INSERT OR UPDATE OF appointment_status ON public.doctor_appointments
   FOR EACH ROW EXECUTE FUNCTION handle_staff_appointment_notification();
 
 CREATE TRIGGER notify_user_on_appointment_change
@@ -1174,6 +1234,12 @@ CREATE TRIGGER set_article_status_trigger
 CREATE TRIGGER snapshot_published_content_trigger
   BEFORE UPDATE OF has_draft ON public.articles
   FOR EACH ROW EXECUTE FUNCTION snapshot_published_content();
+
+
+-- ── Cascade delete trigger on auth.users ───────────────────
+CREATE TRIGGER on_auth_user_deleted
+  BEFORE DELETE ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_user_deleted();
 
 
 -- ============================================================
@@ -1816,20 +1882,20 @@ BEGIN
     WHERE il.action = 'fulfillment' AND il.created_at >= NOW() - INTERVAL '30 days'
     GROUP BY il.service_center
   )
-  SELECT sci.service_center,
-    COALESCE(sc.is_active, true)        AS is_active,
-    sci.condom_qty,
-    sci.lubricant_qty,
-    COALESCE(b.condom_daily_burn, 0)    AS condom_daily_burn,
-    COALESCE(b.lubricant_daily_burn, 0) AS lubricant_daily_burn,
+  SELECT sc.name                                    AS service_center,
+    sc.is_active,
+    COALESCE(sci.condom_qty, 0)                     AS condom_qty,
+    COALESCE(sci.lubricant_qty, 0)                  AS lubricant_qty,
+    COALESCE(b.condom_daily_burn, 0)                AS condom_daily_burn,
+    COALESCE(b.lubricant_daily_burn, 0)             AS lubricant_daily_burn,
     CASE WHEN COALESCE(b.condom_daily_burn, 0) = 0 THEN NULL
-         ELSE ROUND(sci.condom_qty::numeric / b.condom_daily_burn, 1) END AS condom_days_left,
+         ELSE ROUND(COALESCE(sci.condom_qty, 0)::numeric / b.condom_daily_burn, 1) END AS condom_days_left,
     CASE WHEN COALESCE(b.lubricant_daily_burn, 0) = 0 THEN NULL
-         ELSE ROUND(sci.lubricant_qty::numeric / b.lubricant_daily_burn, 1) END AS lubricant_days_left
-  FROM service_center_inventory sci
-  LEFT JOIN service_centers sc ON sc.name = sci.service_center
-  LEFT JOIN burn b ON b.service_center = sci.service_center
-  ORDER BY sci.service_center;
+         ELSE ROUND(COALESCE(sci.lubricant_qty, 0)::numeric / b.lubricant_daily_burn, 1) END AS lubricant_days_left
+  FROM service_centers sc
+  LEFT JOIN service_center_inventory sci ON sci.service_center = sc.name
+  LEFT JOIN burn b ON b.service_center = sc.name
+  ORDER BY sc.display_order, sc.name;
 END;
 $$;
 
@@ -2126,15 +2192,16 @@ CREATE OR REPLACE FUNCTION public.get_staff_audit_log(
   p_limit        integer     DEFAULT 50,
   p_offset       integer     DEFAULT 0
 ) RETURNS TABLE(
-  id              uuid,
-  performed_by    uuid,
-  full_name       text,
-  action          public.audit_action,
-  target_id       uuid,
-  target_full_name text,
-  old_value       jsonb,
-  new_value       jsonb,
-  created_at      timestamptz
+  id                   uuid,
+  performed_by         uuid,
+  full_name            text,
+  action               public.audit_action,
+  target_id            uuid,
+  target_staff_user_id uuid,
+  target_full_name     text,
+  old_value            jsonb,
+  new_value            jsonb,
+  created_at           timestamptz
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -2144,22 +2211,23 @@ BEGIN
   IF NOT is_superadmin() THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
   SELECT al.id, al.performed_by,
-    COALESCE(sp.first_name || ' ' || sp.last_name, 'ระบบ') AS full_name,
+    COALESCE(sp.first_name || ' ' || sp.last_name, 'ระบบ'),
     al.action, al.target_id,
+    tsp.staff_user_id,
     COALESCE(
       tsp.first_name || ' ' || tsp.last_name,
       NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
       NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
-    ) AS target_full_name,
+    ),
     al.old_value, al.new_value, al.created_at
   FROM public.staff_audit_logs al
   LEFT JOIN staff_profiles sp  ON sp.staff_user_id = al.performed_by
-  LEFT JOIN staff_profiles tsp ON tsp.staff_user_id = al.target_id
-  WHERE (p_performed_by IS NULL OR al.performed_by                = p_performed_by)
-    AND (p_action       IS NULL OR al.action::text                = p_action)
-    AND (p_target_id    IS NULL OR al.target_id::text ILIKE '%' || p_target_id || '%')
-    AND (p_date_from    IS NULL OR al.created_at                 >= p_date_from)
-    AND (p_date_to      IS NULL OR al.created_at                 <= p_date_to)
+  LEFT JOIN staff_profiles tsp ON tsp.id = al.target_id
+  WHERE (p_performed_by IS NULL OR al.performed_by                       = p_performed_by)
+    AND (p_action       IS NULL OR al.action::text                       = p_action)
+    AND (p_target_id    IS NULL OR tsp.staff_user_id::text ILIKE '%' || p_target_id || '%')
+    AND (p_date_from    IS NULL OR al.created_at                        >= p_date_from)
+    AND (p_date_to      IS NULL OR al.created_at                        <= p_date_to)
   ORDER BY al.created_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2226,6 +2294,24 @@ $$;
 -- ============================================================
 -- SECTION 6: REVOKE + GRANTs
 -- ============================================================
+
+-- ── Schema + table grants ───────────────────────────────────
+GRANT USAGE ON SCHEMA public TO anon, authenticated;
+
+-- authenticated: full table access (RLS enforces fine-grained control)
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+REVOKE ALL ON ALL TABLES IN SCHEMA public FROM anon;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO authenticated;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO authenticated;
+
+-- service_role: bypasses RLS — needs explicit table-level grants
+GRANT ALL ON ALL TABLES    IN SCHEMA public TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
+GRANT ALL ON ALL ROUTINES  IN SCHEMA public TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES    TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES  TO service_role;
 
 -- Start from a clean slate: revoke PUBLIC pseudo-role AND explicit Supabase grants
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC, anon, authenticated;
