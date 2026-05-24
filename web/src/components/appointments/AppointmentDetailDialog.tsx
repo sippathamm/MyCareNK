@@ -27,6 +27,8 @@ export interface AppointmentData {
   handled_by: string | null;
   created_at: string;
   updated_at: string;
+  phone_number: string | null;
+  nickname: string | null;
 }
 
 interface AppointmentDetailDialogProps {
@@ -154,6 +156,18 @@ export default function AppointmentDetailDialog({
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">เรื่องที่ต้องการพบแพทย์</Typography>
                   <Typography variant="body1">{REASON_LABELS[appointment.reason] ?? appointment.reason}</Typography>
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+
+                <Typography variant="subtitle1" fontWeight="bold">ข้อมูลติดต่อ</Typography>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="subtitle2" color="text.secondary">ชื่อที่ใช้เรียก</Typography>
+                  <Typography variant="body1">{appointment.nickname ?? '-'}</Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="subtitle2" color="text.secondary">เบอร์โทรศัพท์</Typography>
+                  <Typography variant="body1">{appointment.phone_number ?? '-'}</Typography>
                 </Box>
 
                 {appointment.note && (
