@@ -2376,3 +2376,17 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.staff_notification_reads;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.user_notifications;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.user_notification_reads;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.user_monthly_quotas;
+
+-- ============================================================
+-- SECTION: BACKFILL
+-- ============================================================
+
+-- Ensure every service center has a corresponding inventory row.
+-- Guards against centers created before init_service_center_inventory was wired up.
+INSERT INTO public.service_center_inventory (service_center, condom_qty, lubricant_qty)
+SELECT sc.name, 0, 0
+FROM public.service_centers sc
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.service_center_inventory sci
+  WHERE sci.service_center = sc.name
+);
