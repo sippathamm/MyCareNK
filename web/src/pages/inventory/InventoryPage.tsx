@@ -190,6 +190,11 @@ export default function InventoryPage() {
     refetch();
   }, [refetch]);
 
+  const handleManageClose = useCallback(() => {
+    setManageOpen(false);
+    refetch();
+  }, [refetch]);
+
   if (roleLoading) return null;
 
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
@@ -389,7 +394,7 @@ export default function InventoryPage() {
       {/* Service center management dialog */}
       <ServiceCenterManagementDialog
         open={manageOpen}
-        onClose={() => setManageOpen(false)}
+        onClose={handleManageClose}
       />
     </Box>
   );
