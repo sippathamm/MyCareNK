@@ -2,16 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { RequestData } from '../components/requests/RequestDetailDialog';
 
-type RequestRow = RequestData & {
-  user_profiles?: { phone_number: string | null; nickname: string | null } | null;
-};
+type ContactInfo = { phone_number: string | null; nickname: string | null };
 
-function formatRow(row: RequestRow): RequestData {
+function formatRow(row: RequestData, contact?: ContactInfo): RequestData {
   return {
     ...row,
     selected_time: row.selected_time?.slice(0, 5) ?? null,
-    phone_number: row.user_profiles?.phone_number ?? null,
-    nickname: row.user_profiles?.nickname ?? null,
+    phone_number: contact?.phone_number ?? null,
+    nickname: contact?.nickname ?? null,
   };
 }
 
@@ -28,18 +26,31 @@ export function useRequests() {
       .select(
         'id, reference_number, user_id, selected_date, selected_time, selected_service_center, ' +
         'condom_quantities, lubricant_quantity, message, request_status, cancel_reason, ' +
-        'handled_by, completed_at, created_at, updated_at, ' +
-        'user_profiles(phone_number, nickname)'
+        'handled_by, completed_at, created_at, updated_at'
       )
       .order('created_at', { ascending: false });
 
     if (error) {
       setError(error.message);
-    } else {
-      setRequests(
-        (data ?? []).map(r => formatRow(r as unknown as RequestRow))
-      );
+      setLoading(false);
+      return;
     }
+
+    const rows = (data ?? []) as unknown as RequestData[];
+    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+
+    let contactMap: Record<string, ContactInfo> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, phone_number, nickname')
+        .in('user_id', userIds);
+      for (const p of profiles ?? []) {
+        contactMap[p.user_id] = { phone_number: p.phone_number, nickname: p.nickname };
+      }
+    }
+
+    setRequests(rows.map(r => formatRow(r, contactMap[r.user_id])));
     setLoading(false);
   }, []);
 
@@ -56,10 +67,10 @@ export function useRequests() {
         { event: '*', schema: 'public', table: 'condom_requests' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newRow = formatRow(payload.new as unknown as RequestRow);
+            const newRow = formatRow(payload.new as unknown as RequestData);
             setRequests(prev => [newRow, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            const updatedRow = formatRow(payload.new as unknown as RequestRow);
+            const updatedRow = formatRow(payload.new as unknown as RequestData);
             setRequests(prev =>
               prev.map(r => r.id === updatedRow.id ? { ...r, ...updatedRow } : r)
             );
