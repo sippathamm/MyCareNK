@@ -60,10 +60,25 @@ export function useAppointments() {
         { event: '*', schema: 'public', table: 'doctor_appointments' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setAppointments(prev => [payload.new as AppointmentData, ...prev]);
+            const newRow = payload.new as unknown as AppointmentData;
+            supabase
+              .from('user_profiles')
+              .select('user_id, phone_number, nickname')
+              .eq('user_id', newRow.user_id)
+              .single()
+              .then(({ data: profile }) => {
+                setAppointments(prev => [{
+                  ...newRow,
+                  phone_number: profile?.phone_number ?? null,
+                  nickname: profile?.nickname ?? null,
+                }, ...prev]);
+              });
           } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as unknown as AppointmentData;
             setAppointments(prev =>
-              prev.map(a => a.id === (payload.new as AppointmentData).id ? payload.new as AppointmentData : a)
+              prev.map(a => a.id === updated.id
+                ? { ...updated, phone_number: a.phone_number, nickname: a.nickname }
+                : a)
             );
           } else if (payload.eventType === 'DELETE') {
             const deletedId = (payload.old as { id?: string }).id;
