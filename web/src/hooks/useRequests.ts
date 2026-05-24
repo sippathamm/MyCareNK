@@ -67,12 +67,24 @@ export function useRequests() {
         { event: '*', schema: 'public', table: 'condom_requests' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newRow = formatRow(payload.new as unknown as RequestData);
-            setRequests(prev => [newRow, ...prev]);
+            const newRow = payload.new as unknown as RequestData;
+            supabase
+              .from('user_profiles')
+              .select('user_id, phone_number, nickname')
+              .eq('user_id', newRow.user_id)
+              .single()
+              .then(({ data: profile }) => {
+                const contact = profile
+                  ? { phone_number: profile.phone_number, nickname: profile.nickname }
+                  : undefined;
+                setRequests(prev => [formatRow(newRow, contact), ...prev]);
+              });
           } else if (payload.eventType === 'UPDATE') {
             const updatedRow = formatRow(payload.new as unknown as RequestData);
             setRequests(prev =>
-              prev.map(r => r.id === updatedRow.id ? { ...r, ...updatedRow } : r)
+              prev.map(r => r.id === updatedRow.id
+                ? { ...updatedRow, phone_number: r.phone_number, nickname: r.nickname }
+                : r)
             );
           } else if (payload.eventType === 'DELETE') {
             const deletedId = (payload.old as { id?: string }).id;
