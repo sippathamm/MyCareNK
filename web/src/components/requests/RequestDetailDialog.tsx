@@ -218,7 +218,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   <Typography variant="body1">{request.nickname ?? '-'}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เบอร์โทรศัพท์</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">หมายเลขโทรศัพท์</Typography>
                   <Typography variant="body1">{request.phone_number ?? '-'}</Typography>
                 </Box>
 

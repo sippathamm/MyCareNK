@@ -166,7 +166,7 @@ export default function AppointmentDetailDialog({
                   <Typography variant="body1">{appointment.nickname ?? '-'}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เบอร์โทรศัพท์</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">หมายเลขโทรศัพท์</Typography>
                   <Typography variant="body1">{appointment.phone_number ?? '-'}</Typography>
                 </Box>
 
