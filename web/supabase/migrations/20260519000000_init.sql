@@ -248,6 +248,11 @@ BEGIN
            lubricant_qty = lubricant_qty - NEW.lubricant_quantity,
            updated_at    = now()
      WHERE service_center = NEW.selected_service_center;
+
+    INSERT INTO public.inventory_logs
+      (service_center, action, condom_delta, lubricant_delta, reference_request_id, performed_by)
+    VALUES
+      (NEW.selected_service_center, 'fulfillment', -v_condom_total, -NEW.lubricant_quantity, NEW.id, NEW.handled_by);
   END IF;
   RETURN NEW;
 END;
