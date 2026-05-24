@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { AppointmentData } from '../components/appointments/AppointmentDetailDialog';
 
+type AppointmentRow = AppointmentData & {
+  user_profiles?: { phone_number: string | null; nickname: string | null } | null;
+};
+
 export function useAppointments() {
   const [appointments, setAppointments] = useState<AppointmentData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -15,14 +19,24 @@ export function useAppointments() {
       .select(
         'id, reference_number, user_id, reason, selected_service_center, ' +
         'selected_date, selected_time, note, appointment_status, cancel_reason, ' +
-        'handled_by, created_at, updated_at'
+        'handled_by, created_at, updated_at, ' +
+        'user_profiles(phone_number, nickname)'
       )
       .order('created_at', { ascending: false });
 
     if (error) {
       setError(error.message);
     } else {
-      setAppointments(data as unknown as AppointmentData[]);
+      setAppointments(
+        (data ?? []).map((a) => {
+          const row = a as unknown as AppointmentRow;
+          return {
+            ...row,
+            phone_number: row.user_profiles?.phone_number ?? null,
+            nickname: row.user_profiles?.nickname ?? null,
+          } as AppointmentData;
+        })
+      );
     }
     setLoading(false);
   }, []);

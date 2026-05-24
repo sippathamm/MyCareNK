@@ -2,10 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 import type { RequestData } from '../components/requests/RequestDetailDialog';
 
-function formatRow(row: RequestData): RequestData {
+type RequestRow = RequestData & {
+  user_profiles?: { phone_number: string | null; nickname: string | null } | null;
+};
+
+function formatRow(row: RequestRow): RequestData {
   return {
     ...row,
     selected_time: row.selected_time?.slice(0, 5) ?? null,
+    phone_number: row.user_profiles?.phone_number ?? null,
+    nickname: row.user_profiles?.nickname ?? null,
   };
 }
 
@@ -20,9 +26,10 @@ export function useRequests() {
     const { data, error } = await supabase
       .from('condom_requests')
       .select(
-        'id, reference_number, selected_date, selected_time, selected_service_center, ' +
+        'id, reference_number, user_id, selected_date, selected_time, selected_service_center, ' +
         'condom_quantities, lubricant_quantity, message, request_status, cancel_reason, ' +
-        'handled_by, completed_at, created_at, updated_at'
+        'handled_by, completed_at, created_at, updated_at, ' +
+        'user_profiles(phone_number, nickname)'
       )
       .order('created_at', { ascending: false });
 
@@ -30,7 +37,7 @@ export function useRequests() {
       setError(error.message);
     } else {
       setRequests(
-        (data ?? []).map(r => formatRow(r as unknown as RequestData))
+        (data ?? []).map(r => formatRow(r as unknown as RequestRow))
       );
     }
     setLoading(false);
@@ -49,12 +56,12 @@ export function useRequests() {
         { event: '*', schema: 'public', table: 'condom_requests' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newRow = formatRow(payload.new as unknown as RequestData);
+            const newRow = formatRow(payload.new as unknown as RequestRow);
             setRequests(prev => [newRow, ...prev]);
           } else if (payload.eventType === 'UPDATE') {
-            const updatedRow = formatRow(payload.new as unknown as RequestData);
+            const updatedRow = formatRow(payload.new as unknown as RequestRow);
             setRequests(prev =>
-              prev.map(r => r.id === updatedRow.id ? updatedRow : r)
+              prev.map(r => r.id === updatedRow.id ? { ...r, ...updatedRow } : r)
             );
           } else if (payload.eventType === 'DELETE') {
             const deletedId = (payload.old as { id?: string }).id;

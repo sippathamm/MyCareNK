@@ -8,6 +8,7 @@ import type { Enums } from '../../lib/database.types';
 export interface RequestData {
   id: string;
   reference_number: string;
+  user_id: string;
   selected_date: string | null;
   selected_time: string | null;
   selected_service_center: string;
@@ -20,6 +21,8 @@ export interface RequestData {
   created_at: string;
   updated_at: string;
   request_status: Enums<'request_status'>;
+  phone_number: string | null;
+  nickname: string | null;
 }
 
 interface RequestDetailDialogProps {
@@ -205,6 +208,18 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                       {request.lubricant_quantity > 0 ? `${request.lubricant_quantity} ซอง` : 'ไม่ต้องการ'}
                     </Typography>
                   </Box>
+                </Box>
+
+                <Divider sx={{ my: 1 }} />
+
+                <Typography variant="subtitle1" fontWeight="bold">ข้อมูลติดต่อ</Typography>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="subtitle2" color="text.secondary">ชื่อที่ใช้เรียก</Typography>
+                  <Typography variant="body1">{request.nickname ?? '-'}</Typography>
+                </Box>
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="subtitle2" color="text.secondary">เบอร์โทรศัพท์</Typography>
+                  <Typography variant="body1">{request.phone_number ?? '-'}</Typography>
                 </Box>
 
                 {request.message && (
