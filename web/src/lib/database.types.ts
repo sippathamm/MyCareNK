@@ -630,8 +630,11 @@ export type Database = {
           created_at: string | null
           date_of_birth: string | null
           gender: string | null
+          health_coverage: string | null
           id: string
           nationality: string | null
+          nickname: string | null
+          phone_number: string | null
           user_id: string
           username: string
         }
@@ -639,8 +642,11 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           gender?: string | null
+          health_coverage?: string | null
           id?: string
           nationality?: string | null
+          nickname?: string | null
+          phone_number?: string | null
           user_id: string
           username?: string
         }
@@ -648,8 +654,11 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           gender?: string | null
+          health_coverage?: string | null
           id?: string
           nationality?: string | null
+          nickname?: string | null
+          phone_number?: string | null
           user_id?: string
           username?: string
         }

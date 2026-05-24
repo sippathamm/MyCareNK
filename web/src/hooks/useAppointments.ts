@@ -21,9 +21,29 @@ export function useAppointments() {
 
     if (error) {
       setError(error.message);
-    } else {
-      setAppointments(data as unknown as AppointmentData[]);
+      setLoading(false);
+      return;
     }
+
+    const rows = (data ?? []) as unknown as AppointmentData[];
+    const userIds = [...new Set(rows.map(a => a.user_id).filter(Boolean))];
+
+    let contactMap: Record<string, { phone_number: string | null; nickname: string | null }> = {};
+    if (userIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from('user_profiles')
+        .select('user_id, phone_number, nickname')
+        .in('user_id', userIds);
+      for (const p of profiles ?? []) {
+        contactMap[p.user_id] = { phone_number: p.phone_number, nickname: p.nickname };
+      }
+    }
+
+    setAppointments(rows.map(a => ({
+      ...a,
+      phone_number: contactMap[a.user_id]?.phone_number ?? null,
+      nickname: contactMap[a.user_id]?.nickname ?? null,
+    })));
     setLoading(false);
   }, []);
 
