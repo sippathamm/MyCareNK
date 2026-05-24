@@ -245,7 +245,7 @@ export default function InventoryPage() {
           sx={{ mb: 3, borderRadius: 2 }}
         >
           <AlertTitle sx={{ fontWeight: 700 }}>
-            แจ้งเตือน: สถานบริการยังไม่ได้เติมสต็อกเริ่มต้น ({zeroStockItems.length} สถานบริการ)
+            สถานบริการยังไม่ได้เติมสต็อกเริ่มต้น ({zeroStockItems.length} สถานบริการ)
           </AlertTitle>
           {zeroStockItems.map((r) => {
             const parts: string[] = [];
@@ -268,7 +268,7 @@ export default function InventoryPage() {
           sx={{ mb: 3, borderRadius: 2 }}
         >
           <AlertTitle sx={{ fontWeight: 700 }}>
-            แจ้งเตือน: ถุงยางอนามัย/เจลหล่อลื่นใกล้หมด ({lowStockItems.length} สถานบริการ)
+            ถุงยางอนามัย/เจลหล่อลื่นใกล้หมด ({lowStockItems.length} สถานบริการ)
           </AlertTitle>
           {lowStockItems.map((r) => {
             const parts: string[] = [];
