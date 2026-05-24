@@ -1,12 +1,13 @@
 import { useState, useCallback } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, LinearProgress,
-  Alert, AlertTitle, Chip, Skeleton, Divider, Button,
+  Alert, AlertTitle, Chip, Skeleton, Divider, Button, Paper,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import TuneIcon from '@mui/icons-material/Tune';
+import AddBusinessIcon from '@mui/icons-material/AddBusiness';
 import { useInventoryForecast, type InventoryForecastRow } from '../../hooks/useInventoryForecast';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import RestockModal from './RestockModal';
@@ -289,6 +290,36 @@ export default function InventoryPage() {
         <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
           {error}
         </Alert>
+      )}
+
+      {/* Empty state — no service centers */}
+      {!loading && !error && visibleForecast.length === 0 && (
+        <Paper
+          elevation={0}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 2,
+            py: 8,
+            px: 4,
+            borderRadius: 3,
+            border: '1.5px dashed',
+            borderColor: 'divider',
+            textAlign: 'center',
+          }}
+        >
+          <AddBusinessIcon sx={{ fontSize: 48, color: 'text.disabled' }} />
+          <Typography variant="h5" fontWeight="bold" color="text.primary">
+            ยังไม่มีสถานบริการ
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {isAdminOrSuperadmin
+              ? 'กดปุ่ม "จัดการสถานบริการ" ด้านบนเพื่อเพิ่มสถานบริการใหม่'
+              : 'ติดต่อผู้ดูแลระบบเพื่อเพิ่มสถานบริการ'}
+          </Typography>
+        </Paper>
       )}
 
       {role === 'staff' ? (
