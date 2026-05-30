@@ -159,24 +159,20 @@ class GuideInfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color bg;
-    final Color borderColor;
     final Color textColor;
     final IconData iconData;
 
     switch (type) {
       case GuideInfoBoxType.tip:
         bg = AppColors.primaryBackground;
-        borderColor = AppColors.primary;
         textColor = AppColors.primaryDark;
         iconData = Icons.lightbulb_outline;
       case GuideInfoBoxType.note:
         bg = AppColors.statusPreparingLight;
-        borderColor = AppColors.statusPreparing;
         textColor = AppColors.infoNoteText;
         iconData = Icons.info_outline;
       case GuideInfoBoxType.important:
         bg = AppColors.errorLight;
-        borderColor = AppColors.error;
         textColor = AppColors.errorDark;
         iconData = Icons.warning_amber_rounded;
     }
@@ -187,7 +183,6 @@ class GuideInfoBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: bg,
         borderRadius: BorderRadius.circular(12),
-        border: Border(left: BorderSide(color: borderColor, width: 4)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -199,7 +194,7 @@ class GuideInfoBox extends StatelessWidget {
               text,
               style: GoogleFonts.googleSans(
                 fontSize: 14,
-                color: textColor,
+                color: AppColors.textPrimary,
                 height: 1.5,
               ),
             ),

@@ -84,6 +84,7 @@ class _GuidePageState extends State<GuidePage> {
               onPressed: _scrollToTop,
               backgroundColor: AppColors.primary,
               foregroundColor: AppColors.white,
+              shape: const CircleBorder(),
               child: const Icon(Icons.keyboard_arrow_up),
             )
           : null,
@@ -221,7 +222,7 @@ class _GuidePageState extends State<GuidePage> {
           text,
           style: GoogleFonts.googleSans(
             fontSize: 14,
-            color: AppColors.textSecondary,
+            color: AppColors.textPrimary,
             height: 1.6,
           ),
         ),
