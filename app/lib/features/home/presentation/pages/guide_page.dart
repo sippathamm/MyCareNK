@@ -53,56 +53,16 @@ class _GuidePageState extends State<GuidePage> {
         slivers: [
           SliverList(
             delegate: SliverChildListDelegate([
-              _buildHero(),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
                 child: Column(
                   children: [
                     _buildTOC(),
                     ..._buildSections(),
-                    _buildFooter(),
                   ],
                 ),
               ),
             ]),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHero() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 40, 24, 36),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [AppColors.primaryDark, AppColors.primary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-      ),
-      child: Column(
-        children: [
-          const Text('📖', style: TextStyle(fontSize: 52)),
-          const SizedBox(height: 12),
-          Text(
-            'คู่มือการใช้งาน MyCareNK',
-            style: GoogleFonts.googleSans(
-              color: AppColors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'แอปสำหรับรับบริการด้านสุขภาพจากหน่วยงานในพื้นที่หนองคาย',
-            style: GoogleFonts.googleSans(
-              color: AppColors.white.withValues(alpha: 0.9),
-              fontSize: 14,
-            ),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
@@ -123,16 +83,16 @@ class _GuidePageState extends State<GuidePage> {
       'ตั้งค่า',
     ];
     return Container(
-      margin: const EdgeInsets.only(top: 20, bottom: 16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: AppColors.cardShadowMedium,
-            blurRadius: 12,
-            offset: Offset(0, 2),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -717,19 +677,5 @@ class _GuidePageState extends State<GuidePage> {
     );
   }
 
-  Widget _buildFooter() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 32),
-      child: Center(
-        child: Text(
-          'MyCareNK · คู่มือสำหรับผู้ใช้งาน · ปรับปรุงล่าสุด พ.ค. 2568',
-          style: GoogleFonts.googleSans(
-            fontSize: 13,
-            color: AppColors.textHint,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ),
-    );
-  }
 }
+

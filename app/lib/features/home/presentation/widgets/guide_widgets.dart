@@ -24,22 +24,22 @@ class GuideSection extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
             color: AppColors.cardShadowMedium,
-            blurRadius: 12,
-            offset: Offset(0, 2),
+            blurRadius: 10,
+            offset: Offset(0, 4),
           ),
         ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   colors: [AppColors.primaryDark, AppColors.primary],
@@ -82,7 +82,7 @@ class GuideSection extends StatelessWidget {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: children,
