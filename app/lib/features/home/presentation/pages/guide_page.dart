@@ -54,11 +54,14 @@ class _GuidePageState extends State<GuidePage> {
           SliverList(
             delegate: SliverChildListDelegate([
               Padding(
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
                 child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _buildTOC(),
-                    ..._buildSections(),
+                    ..._buildSections().expand(
+                      (s) => [const SizedBox(height: 20), s],
+                    ),
                   ],
                 ),
               ),
@@ -83,7 +86,6 @@ class _GuidePageState extends State<GuidePage> {
       'ตั้งค่า',
     ];
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.white,
