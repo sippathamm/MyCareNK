@@ -327,3 +327,78 @@ class GuideTable extends StatelessWidget {
     );
   }
 }
+
+class GuideWidgetTable extends StatelessWidget {
+  final List<String> headers;
+  final List<List<Widget>> rows;
+  final List<int>? columnFlex;
+
+  const GuideWidgetTable({
+    super.key,
+    required this.headers,
+    required this.rows,
+    this.columnFlex,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final flex = columnFlex ?? List.filled(headers.length, 1);
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 8),
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.grey.shade100),
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: headers.asMap().entries.map((e) {
+              return Expanded(
+                flex: flex[e.key],
+                child: Container(
+                  color: AppColors.primaryBackground,
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                  child: Text(
+                    e.value,
+                    style: GoogleFonts.googleSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.primaryDark,
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+          ...rows.asMap().entries.map((entry) {
+            final i = entry.key;
+            final row = entry.value;
+            final isLast = i == rows.length - 1;
+            return Container(
+              decoration: isLast
+                  ? null
+                  : BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Colors.grey.shade100),
+                      ),
+                    ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: row.asMap().entries.map((cellEntry) {
+                  return Expanded(
+                    flex: flex[cellEntry.key],
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                      child: cellEntry.value,
+                    ),
+                  );
+                }).toList(),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}

@@ -233,71 +233,29 @@ class _GuidePageState extends State<GuidePage> {
         child: Divider(height: 1, color: Color(0xFFF0F0F0)),
       );
 
-  Widget _statusFlow(List<(GuideStatusType, String)> statuses) {
-    final items = <Widget>[];
-    for (var i = 0; i < statuses.length; i++) {
-      final (status, label) = statuses[i];
-      items.add(GuideStatusBadge(status: status, label: label));
-      if (i < statuses.length - 1) {
-        items.add(
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              '→',
-              style: GoogleFonts.googleSans(
-                fontSize: 16,
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-        );
-      }
-    }
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Wrap(
-        spacing: 4,
-        runSpacing: 8,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        children: items,
-      ),
-    );
-  }
+  Widget _iconCell(IconData icon, {Color color = AppColors.textSecondary}) =>
+      Center(child: Icon(icon, size: 20, color: color));
 
-  Widget _buildStatusRows(List<(GuideStatusType, String, String)> rows) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Column(
-        children: rows.asMap().entries.map((entry) {
-          final i = entry.key;
-          final (status, label, description) = entry.value;
-          return Padding(
-            padding: EdgeInsets.only(bottom: i < rows.length - 1 ? 10 : 0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                GuideStatusBadge(status: status, label: label),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 4),
-                    child: Text(
-                      description,
-                      style: GoogleFonts.googleSans(
-                        fontSize: 14,
-                        color: AppColors.textSecondary,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
+  Widget _iconCircleCell(IconData icon, Color iconColor, Color bg) => Center(
+        child: Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(color: bg, shape: BoxShape.circle),
+          child: Icon(icon, color: iconColor, size: 18),
+        ),
+      );
+
+  Widget _statusCell(GuideStatusType status, String label) =>
+      GuideStatusBadge(status: status, label: label);
+
+  Widget _textCell(String text) => Text(
+        text,
+        style: GoogleFonts.googleSans(
+          fontSize: 13,
+          color: AppColors.textPrimary,
+          height: 1.4,
+        ),
+      );
 
   Widget _buildSection1() {
     return GuideSection(
@@ -345,27 +303,59 @@ class _GuidePageState extends State<GuidePage> {
       children: [
         _h('2.1 เมนูด้านล่าง'),
         _p('แถบเมนูด้านล่างมี 5 แท็บ กดเพื่อสลับระหว่างส่วนต่าง ๆ ของแอป'),
-        _buildTabsVisual(),
-        const SizedBox(height: 12),
-        const GuideTable(
-          headers: ['แท็บ', 'ใช้ทำอะไร'],
+        GuideWidgetTable(
+          headers: const ['ไอคอน', 'แท็บ', 'ใช้ทำอะไร'],
+          columnFlex: const [1, 2, 4],
           rows: [
-            ['หน้าหลัก', 'ดูโควตารายเดือน ข่าวสารและประกาศ และเมนูลัด'],
-            ['บริการ', 'รับถุงยางอนามัย ประเมินความเสี่ยงการติดเชื้อ HIV นัดพบแพทย์'],
-            ['สแกน', 'สแกน QR Code เพื่อยืนยันการรับถุงยางอนามัยที่สถานบริการ'],
-            ['แจ้งเตือน', 'ดูการแจ้งเตือนและอัปเดตสถานะคำขอ'],
-            ['ตั้งค่า', 'แก้ไขข้อมูลส่วนตัว เปลี่ยนรหัสผ่าน และอื่น ๆ'],
+            [
+              _iconCell(Icons.home_outlined, color: AppColors.primary),
+              _textCell('หน้าหลัก'),
+              _textCell('ดูโควตารายเดือน ข่าวสารและประกาศ และเมนูลัด'),
+            ],
+            [
+              _iconCell(Icons.grid_view, color: AppColors.primary),
+              _textCell('บริการ'),
+              _textCell('รับถุงยางอนามัย ประเมินความเสี่ยง HIV นัดพบแพทย์'),
+            ],
+            [
+              _iconCell(Icons.camera_alt_outlined, color: AppColors.primary),
+              _textCell('สแกน'),
+              _textCell('สแกน QR Code เพื่อยืนยันการรับถุงยางอนามัยที่สถานบริการ'),
+            ],
+            [
+              _iconCell(Icons.chat_bubble_outline, color: AppColors.primary),
+              _textCell('แจ้งเตือน'),
+              _textCell('ดูการแจ้งเตือนและอัปเดตสถานะคำขอ'),
+            ],
+            [
+              _iconCell(Icons.settings_outlined, color: AppColors.primary),
+              _textCell('ตั้งค่า'),
+              _textCell('แก้ไขข้อมูลส่วนตัว เปลี่ยนรหัสผ่าน และอื่น ๆ'),
+            ],
           ],
         ),
         _div(),
         _h('2.2 เมนูลัดบนหน้าหลัก'),
         _p('ด้านล่างโควตารายเดือนมีปุ่มลัด 3 ปุ่ม'),
-        const GuideTable(
-          headers: ['ปุ่ม', 'พาไปที่'],
+        GuideWidgetTable(
+          headers: const ['ไอคอน', 'ปุ่ม', 'พาไปที่'],
+          columnFlex: const [1, 2, 3],
           rows: [
-            ['สถานบริการ', 'รายชื่อและรายละเอียดสถานบริการทั้งหมด'],
-            ['คู่มือการใช้', 'คู่มือฉบับนี้'],
-            ['ประวัติคำขอ', 'รายการการรับถุงยางอนามัยที่ผ่านมา'],
+            [
+              _iconCircleCell(Icons.location_on_outlined, AppColors.statusReady, AppColors.statusReadyLight),
+              _textCell('สถานบริการ'),
+              _textCell('รายชื่อและรายละเอียดสถานบริการทั้งหมด'),
+            ],
+            [
+              _iconCircleCell(Icons.menu_book_outlined, AppColors.lubricant, AppColors.statusPreparingLight),
+              _textCell('คู่มือการใช้'),
+              _textCell('คู่มือฉบับนี้'),
+            ],
+            [
+              _iconCircleCell(Icons.receipt_long_outlined, AppColors.statusCompleted, AppColors.statusCompletedLight),
+              _textCell('ประวัติคำขอ'),
+              _textCell('รายการการรับถุงยางอนามัยที่ผ่านมา'),
+            ],
           ],
         ),
         _div(),
@@ -383,56 +373,6 @@ class _GuidePageState extends State<GuidePage> {
           text: 'โควตาจะเริ่มนับใหม่ทุกต้นเดือน',
         ),
       ],
-    );
-  }
-
-  Widget _buildTabsVisual() {
-    final tabs = [
-      (Icons.home_outlined, 'หน้าหลัก', true),
-      (Icons.medical_services_outlined, 'บริการ', false),
-      (Icons.qr_code_scanner, 'สแกน', false),
-      (Icons.notifications_outlined, 'แจ้งเตือน', false),
-      (Icons.settings_outlined, 'ตั้งค่า', false),
-    ];
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: tabs.map((tab) {
-        final (icon, label, isActive) = tab;
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            gradient: isActive
-                ? const LinearGradient(
-                    colors: [AppColors.primaryDark, AppColors.primary],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  )
-                : null,
-            color: isActive ? null : AppColors.primaryBackground,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                size: 22,
-                color: isActive ? AppColors.white : AppColors.primaryDark,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: GoogleFonts.googleSans(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: isActive ? AppColors.white : AppColors.primaryDark,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
     );
   }
 
@@ -461,19 +401,17 @@ class _GuidePageState extends State<GuidePage> {
         _div(),
         _h('3.2 การติดตามสถานะคำขอ'),
         _p('หลังส่งคำขอแล้ว เจ้าหน้าที่จะดำเนินการตามขั้นตอนดังนี้'),
-        _statusFlow([
-          (GuideStatusType.pending, 'รอดำเนินการ'),
-          (GuideStatusType.preparing, 'กำลังเตรียม'),
-          (GuideStatusType.ready, 'พร้อมรับ'),
-          (GuideStatusType.completed, 'เสร็จสิ้น'),
-        ]),
-        _buildStatusRows([
-          (GuideStatusType.pending, 'รอดำเนินการ', 'เจ้าหน้าที่ได้รับคำขอแล้ว กำลังตรวจสอบ'),
-          (GuideStatusType.preparing, 'กำลังเตรียม', 'เจ้าหน้าที่กำลังจัดเตรียมถุงยางอนามัยและเจลหล่อลื่น'),
-          (GuideStatusType.ready, 'พร้อมรับ', 'ถุงยางอนามัยพร้อมให้รับแล้ว สามารถมารับได้เลย'),
-          (GuideStatusType.completed, 'เสร็จสิ้น', 'ยืนยันการรับถุงยางอนามัยเรียบร้อยแล้ว'),
-          (GuideStatusType.cancelled, 'ยกเลิก', 'คำขอถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)'),
-        ]),
+        GuideWidgetTable(
+          headers: const ['สถานะ', 'คำอธิบาย'],
+          columnFlex: const [2, 3],
+          rows: [
+            [_statusCell(GuideStatusType.pending, 'รอดำเนินการ'), _textCell('เจ้าหน้าที่ได้รับคำขอแล้ว กำลังตรวจสอบ')],
+            [_statusCell(GuideStatusType.preparing, 'กำลังเตรียม'), _textCell('เจ้าหน้าที่กำลังจัดเตรียมถุงยางอนามัยและเจลหล่อลื่น')],
+            [_statusCell(GuideStatusType.ready, 'พร้อมรับ'), _textCell('ถุงยางอนามัยพร้อมให้รับแล้ว สามารถมารับได้เลย')],
+            [_statusCell(GuideStatusType.completed, 'เสร็จสิ้น'), _textCell('ยืนยันการรับถุงยางอนามัยเรียบร้อยแล้ว')],
+            [_statusCell(GuideStatusType.cancelled, 'ยกเลิก'), _textCell('คำขอถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)')],
+          ],
+        ),
         const GuideInfoBox(
           type: GuideInfoBoxType.note,
           text: 'แอปจะแจ้งเตือนในแท็บ "แจ้งเตือน" ทุกครั้งที่สถานะเปลี่ยน',
@@ -502,11 +440,20 @@ class _GuidePageState extends State<GuidePage> {
         ]),
         _div(),
         _h('4.2 ตัวเลือกเพิ่มเติม'),
-        const GuideTable(
-          headers: ['ตัวเลือก', 'วิธีใช้'],
+        GuideWidgetTable(
+          headers: const ['ไอคอน', 'ตัวเลือก', 'วิธีใช้'],
+          columnFlex: const [1, 2, 3],
           rows: [
-            ['ไฟฉาย', 'กดไอคอนไฟฉายมุมขวาบน เพื่อเปิด/ปิดแสงในที่มืด'],
-            ['เลือกจากรูปภาพ', 'กดปุ่ม "เลือกจากรูปภาพ" ด้านล่าง หากมีภาพ QR อยู่ในโทรศัพท์'],
+            [
+              _iconCell(Icons.flashlight_on),
+              _textCell('ไฟฉาย'),
+              _textCell('กดไอคอนไฟฉายมุมขวาบน เพื่อเปิด/ปิดแสงในที่มืด'),
+            ],
+            [
+              _iconCell(Icons.photo_library_outlined),
+              _textCell('เลือกจากรูปภาพ'),
+              _textCell('กดปุ่ม "เลือกจากรูปภาพ" ด้านล่าง หากมีภาพ QR อยู่ในโทรศัพท์'),
+            ],
           ],
         ),
         _div(),
@@ -564,17 +511,16 @@ class _GuidePageState extends State<GuidePage> {
         _div(),
         _h('6.2 การติดตามสถานะการนัดหมาย'),
         _p('หลังส่งคำนัดหมายแล้ว เจ้าหน้าที่จะดำเนินการตามขั้นตอนดังนี้'),
-        _statusFlow([
-          (GuideStatusType.pending, 'รอยืนยัน'),
-          (GuideStatusType.ready, 'ยืนยันแล้ว'),
-          (GuideStatusType.completed, 'เสร็จสิ้น'),
-        ]),
-        _buildStatusRows([
-          (GuideStatusType.pending, 'รอยืนยัน', 'ส่งคำนัดหมายแล้ว รอเจ้าหน้าที่ยืนยัน'),
-          (GuideStatusType.ready, 'ยืนยันแล้ว', 'เจ้าหน้าที่ยืนยันการนัดเรียบร้อยแล้ว พร้อมไปพบแพทย์ตามวันเวลาที่นัด'),
-          (GuideStatusType.completed, 'เสร็จสิ้น', 'พบแพทย์เรียบร้อยแล้ว'),
-          (GuideStatusType.cancelled, 'ยกเลิก', 'การนัดถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)'),
-        ]),
+        GuideWidgetTable(
+          headers: const ['สถานะ', 'คำอธิบาย'],
+          columnFlex: const [2, 3],
+          rows: [
+            [_statusCell(GuideStatusType.pending, 'รอยืนยัน'), _textCell('ส่งคำนัดหมายแล้ว รอเจ้าหน้าที่ยืนยัน')],
+            [_statusCell(GuideStatusType.ready, 'ยืนยันแล้ว'), _textCell('เจ้าหน้าที่ยืนยันการนัดเรียบร้อยแล้ว พร้อมไปพบแพทย์ตามวันเวลาที่นัด')],
+            [_statusCell(GuideStatusType.completed, 'เสร็จสิ้น'), _textCell('พบแพทย์เรียบร้อยแล้ว')],
+            [_statusCell(GuideStatusType.cancelled, 'ยกเลิก'), _textCell('การนัดถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)')],
+          ],
+        ),
         const GuideInfoBox(
           type: GuideInfoBoxType.note,
           text: 'แอปจะแจ้งเตือนในแท็บ "แจ้งเตือน" ทุกครั้งที่สถานะการนัดหมายเปลี่ยน',
@@ -644,17 +590,70 @@ class _GuidePageState extends State<GuidePage> {
       children: [
         _h('9.1 การดูการแจ้งเตือน'),
         _p('กดแท็บ "แจ้งเตือน" เพื่อดูการแจ้งเตือนทั้งหมด'),
-        _p('ระบบจะแจ้งเตือนให้อัตโนมัติเมื่อมีการเปลี่ยนแปลงสถานะที่เกี่ยวข้องกับคุณ เช่น'),
-        const GuideTable(
-          headers: ['เหตุการณ์', 'ตัวอย่างการแจ้งเตือน'],
-          rows: [
-            ['คำขอถุงยางอนามัย', 'เจ้าหน้าที่เริ่มจัดเตรียม, ถุงยางอนามัยพร้อมรับแล้ว'],
-            ['การนัดพบแพทย์', 'เจ้าหน้าที่ยืนยันการนัด, การนัดถูกยกเลิก'],
-          ],
-        ),
+        _p('ระบบจะแจ้งเตือนอัตโนมัติทุกครั้งที่มีการเปลี่ยนแปลงสถานะที่เกี่ยวข้องกับคุณ'),
         const GuideInfoBox(
           type: GuideInfoBoxType.tip,
           text: 'ไอคอนแท็บแจ้งเตือนจะแสดงตัวเลขสีแดงหากมีการแจ้งเตือนที่ยังไม่ได้อ่าน',
+        ),
+        _div(),
+        _h('การแจ้งเตือนเกี่ยวกับคำขอถุงยางอนามัย'),
+        GuideWidgetTable(
+          headers: const ['สถานะ', 'ข้อความแจ้งเตือน'],
+          columnFlex: const [2, 3],
+          rows: [
+            [
+              _statusCell(GuideStatusType.pending, 'รอดำเนินการ'),
+              _textCell('ระบบได้รับคำขอของคุณเรียบร้อย รอเจ้าหน้าที่ดำเนินการ'),
+            ],
+            [
+              _statusCell(GuideStatusType.preparing, 'กำลังเตรียม'),
+              _textCell('เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ'),
+            ],
+            [
+              _statusCell(GuideStatusType.ready, 'พร้อมรับ'),
+              _textCell('ถุงยางอนามัยของคุณพร้อมรับแล้ว กรุณามารับที่ [สถานบริการ] ภายในวันที่ [วันที่ เวลา น.]'),
+            ],
+            [
+              _statusCell(GuideStatusType.completed, 'เสร็จสิ้น'),
+              _textCell('คุณได้รับถุงยางอนามัยเรียบร้อยแล้ว'),
+            ],
+            [
+              _statusCell(GuideStatusType.cancelled, 'ยกเลิก (คุณ)'),
+              _textCell('คุณได้ยกเลิกคำขอนี้เรียบร้อยแล้ว'),
+            ],
+            [
+              _statusCell(GuideStatusType.cancelled, 'ยกเลิก (เจ้าหน้าที่)'),
+              _textCell('คำขอนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > รับถุงยางอนามัย > ประวัติคำขอ > รายละเอียด > เหตุผล'),
+            ],
+          ],
+        ),
+        _div(),
+        _h('การแจ้งเตือนเกี่ยวกับการนัดพบแพทย์'),
+        GuideWidgetTable(
+          headers: const ['สถานะ', 'ข้อความแจ้งเตือน'],
+          columnFlex: const [2, 3],
+          rows: [
+            [
+              _statusCell(GuideStatusType.pending, 'รอยืนยัน'),
+              _textCell('ระบบได้รับการนัดหมายของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน'),
+            ],
+            [
+              _statusCell(GuideStatusType.ready, 'ยืนยันแล้ว'),
+              _textCell('การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ [สถานบริการ] ภายในวันที่ [วันที่ เวลา น.]'),
+            ],
+            [
+              _statusCell(GuideStatusType.completed, 'เสร็จสิ้น'),
+              _textCell('การนัดหมายของคุณเสร็จสิ้นแล้ว'),
+            ],
+            [
+              _statusCell(GuideStatusType.cancelled, 'ยกเลิก (คุณ)'),
+              _textCell('คุณได้ยกเลิกการนัดหมายนี้แล้ว'),
+            ],
+            [
+              _statusCell(GuideStatusType.cancelled, 'ยกเลิก (เจ้าหน้าที่)'),
+              _textCell('การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ บริการ > นัดพบแพทย์ > ประวัติการนัด > รายละเอียด > เหตุผล'),
+            ],
+          ],
         ),
       ],
     );
