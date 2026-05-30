@@ -13,6 +13,36 @@ class GuidePage extends StatefulWidget {
 
 class _GuidePageState extends State<GuidePage> {
   final List<GlobalKey> _sectionKeys = List.generate(10, (_) => GlobalKey());
+  final ScrollController _scrollController = ScrollController();
+  bool _showGoToTop = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final show = _scrollController.offset > 300;
+    if (show != _showGoToTop) {
+      setState(() => _showGoToTop = show);
+    }
+  }
+
+  void _scrollToTop() {
+    _scrollController.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
 
   void _scrollToSection(int index) {
     final ctx = _sectionKeys[index].currentContext;
@@ -49,7 +79,16 @@ class _GuidePageState extends State<GuidePage> {
           ),
         ),
       ),
+      floatingActionButton: _showGoToTop
+          ? FloatingActionButton.small(
+              onPressed: _scrollToTop,
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.white,
+              child: const Icon(Icons.keyboard_arrow_up),
+            )
+          : null,
       body: CustomScrollView(
+        controller: _scrollController,
         slivers: [
           SliverList(
             delegate: SliverChildListDelegate([
@@ -224,13 +263,48 @@ class _GuidePageState extends State<GuidePage> {
     );
   }
 
+  Widget _buildStatusRows(List<(GuideStatusType, String, String)> rows) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Column(
+        children: rows.asMap().entries.map((entry) {
+          final i = entry.key;
+          final (status, label, description) = entry.value;
+          return Padding(
+            padding: EdgeInsets.only(bottom: i < rows.length - 1 ? 10 : 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GuideStatusBadge(status: status, label: label),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      description,
+                      style: GoogleFonts.googleSans(
+                        fontSize: 14,
+                        color: AppColors.textSecondary,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
   Widget _buildSection1() {
     return GuideSection(
       key: _sectionKeys[0],
       number: 1,
       title: 'เริ่มต้นใช้งาน',
       children: [
-        _h('📝 1.1 การสร้างบัญชีใหม่'),
+        _h('1.1 การสร้างบัญชีใหม่'),
         _p('การสร้างบัญชีใหม่แบ่งออกเป็น 5 ขั้นตอน ทำตามลำดับจนครบ'),
         const GuideStepList(steps: [
           'ชื่อผู้ใช้งานและรหัสผ่าน — กรอกชื่อผู้ใช้ที่ต้องการ (ภาษาอังกฤษหรือตัวเลข) และตั้งรหัสผ่านอย่างน้อย 8 ตัวอักษร จากนั้นยืนยันรหัสผ่านอีกครั้ง',
@@ -245,14 +319,14 @@ class _GuidePageState extends State<GuidePage> {
           text: 'รหัสกู้คืนบัญชีจะแสดงเพียงครั้งเดียวตอนสร้างบัญชีใหม่ หากหายแล้วต้องสร้างชุดใหม่ในเมนูตั้งค่า',
         ),
         _div(),
-        _h('🔑 1.2 การเข้าสู่ระบบ'),
+        _h('1.2 การเข้าสู่ระบบ'),
         _p('กรอกชื่อผู้ใช้และรหัสผ่านที่ตั้งไว้ตอนสร้างบัญชี แล้วกด "เข้าสู่ระบบ"'),
         const GuideInfoBox(
           type: GuideInfoBoxType.tip,
           text: 'กดไอคอนตาเพื่อสลับแสดง/ซ่อนรหัสผ่านขณะพิมพ์',
         ),
         _div(),
-        _h('🔒 1.3 ลืมรหัสผ่าน'),
+        _h('1.3 ลืมรหัสผ่าน'),
         _p('กดลิงก์ "ลืมรหัสผ่าน?" ในหน้าเข้าสู่ระบบ แล้วกรอกชื่อผู้ใช้ของคุณ จากนั้นระบุรหัสกู้คืนบัญชี 1 ใน 6 รหัสที่บันทึกไว้ตอนสร้างบัญชี ระบบจะให้ตั้งรหัสผ่านใหม่ได้ทันที'),
         const GuideInfoBox(
           type: GuideInfoBoxType.important,
@@ -268,39 +342,39 @@ class _GuidePageState extends State<GuidePage> {
       number: 2,
       title: 'หน้าหลักและการนำทาง',
       children: [
-        _h('📱 2.1 เมนูด้านล่าง'),
+        _h('2.1 เมนูด้านล่าง'),
         _p('แถบเมนูด้านล่างมี 5 แท็บ กดเพื่อสลับระหว่างส่วนต่าง ๆ ของแอป'),
         _buildTabsVisual(),
         const SizedBox(height: 12),
         const GuideTable(
           headers: ['แท็บ', 'ใช้ทำอะไร'],
           rows: [
-            ['🏠 หน้าหลัก', 'ดูโควตารายเดือน ข่าวสารและประกาศ และเมนูลัด'],
-            ['🏥 บริการ', 'รับถุงยางอนามัย ประเมินความเสี่ยงการติดเชื้อ HIV นัดพบแพทย์'],
-            ['📷 สแกน', 'สแกน QR Code เพื่อยืนยันการรับถุงยางอนามัยที่สถานบริการ'],
-            ['🔔 แจ้งเตือน', 'ดูการแจ้งเตือนและอัปเดตสถานะคำขอ'],
-            ['⚙️ ตั้งค่า', 'แก้ไขข้อมูลส่วนตัว เปลี่ยนรหัสผ่าน และอื่น ๆ'],
+            ['หน้าหลัก', 'ดูโควตารายเดือน ข่าวสารและประกาศ และเมนูลัด'],
+            ['บริการ', 'รับถุงยางอนามัย ประเมินความเสี่ยงการติดเชื้อ HIV นัดพบแพทย์'],
+            ['สแกน', 'สแกน QR Code เพื่อยืนยันการรับถุงยางอนามัยที่สถานบริการ'],
+            ['แจ้งเตือน', 'ดูการแจ้งเตือนและอัปเดตสถานะคำขอ'],
+            ['ตั้งค่า', 'แก้ไขข้อมูลส่วนตัว เปลี่ยนรหัสผ่าน และอื่น ๆ'],
           ],
         ),
         _div(),
-        _h('⚡ 2.2 เมนูลัดบนหน้าหลัก'),
+        _h('2.2 เมนูลัดบนหน้าหลัก'),
         _p('ด้านล่างโควตารายเดือนมีปุ่มลัด 3 ปุ่ม'),
         const GuideTable(
           headers: ['ปุ่ม', 'พาไปที่'],
           rows: [
-            ['📍 สถานบริการ', 'รายชื่อและรายละเอียดสถานบริการทั้งหมด'],
-            ['📖 คู่มือการใช้', 'คู่มือฉบับนี้'],
-            ['🧾 ประวัติคำขอ', 'รายการการรับถุงยางอนามัยที่ผ่านมา'],
+            ['สถานบริการ', 'รายชื่อและรายละเอียดสถานบริการทั้งหมด'],
+            ['คู่มือการใช้', 'คู่มือฉบับนี้'],
+            ['ประวัติคำขอ', 'รายการการรับถุงยางอนามัยที่ผ่านมา'],
           ],
         ),
         _div(),
-        _h('📊 2.3 การ์ดโควตารายเดือน'),
+        _h('2.3 การ์ดโควตารายเดือน'),
         _p('การ์ดบนหน้าหลักแสดงจำนวนที่ใช้ไปแล้วเทียบกับสิทธิ์ทั้งหมดในเดือนนี้'),
         const GuideTable(
           headers: ['รายการ', 'สิทธิ์ต่อเดือน'],
           rows: [
-            ['🟠 ถุงยางอนามัย', 'สูงสุด 60 ชิ้น'],
-            ['🔵 เจลหล่อลื่น', 'สูงสุด 30 ชิ้น'],
+            ['ถุงยางอนามัย', 'สูงสุด 60 ชิ้น'],
+            ['เจลหล่อลื่น', 'สูงสุด 30 ชิ้น'],
           ],
         ),
         const GuideInfoBox(
@@ -313,11 +387,11 @@ class _GuidePageState extends State<GuidePage> {
 
   Widget _buildTabsVisual() {
     final tabs = [
-      ('🏠', 'หน้าหลัก', true),
-      ('🏥', 'บริการ', false),
-      ('📷', 'สแกน', false),
-      ('🔔', 'แจ้งเตือน', false),
-      ('⚙️', 'ตั้งค่า', false),
+      (Icons.home_outlined, 'หน้าหลัก', true),
+      (Icons.medical_services_outlined, 'บริการ', false),
+      (Icons.qr_code_scanner, 'สแกน', false),
+      (Icons.notifications_outlined, 'แจ้งเตือน', false),
+      (Icons.settings_outlined, 'ตั้งค่า', false),
     ];
     return Wrap(
       spacing: 8,
@@ -340,7 +414,11 @@ class _GuidePageState extends State<GuidePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(icon, style: const TextStyle(fontSize: 22)),
+              Icon(
+                icon,
+                size: 22,
+                color: isActive ? AppColors.white : AppColors.primaryDark,
+              ),
               const SizedBox(height: 4),
               Text(
                 label,
@@ -363,7 +441,7 @@ class _GuidePageState extends State<GuidePage> {
       number: 3,
       title: 'การรับถุงยางอนามัยและเจลหล่อลื่น',
       children: [
-        _h('📦 3.1 วิธีส่งคำขอ'),
+        _h('3.1 วิธีส่งคำขอ'),
         _p('ไปที่แท็บ "บริการ" แล้วกด "รับถุงยางอนามัย"'),
         const GuideStepList(steps: [
           'ถุงยางอนามัย — มีให้เลือก 4 ขนาด (49 / 52 / 54 / 56 มม.) กดปุ่ม + / − เพื่อเพิ่มหรือลดจำนวนในแต่ละขนาด',
@@ -380,30 +458,27 @@ class _GuidePageState extends State<GuidePage> {
           text: 'จำนวนที่ขอจะหักจากโควตาเดือนนี้ทันทีที่ยืนยัน ระบบจะแจ้งเตือนหากเกินสิทธิ์',
         ),
         _div(),
-        _h('🔄 3.2 การติดตามสถานะคำขอ'),
+        _h('3.2 การติดตามสถานะคำขอ'),
         _p('หลังส่งคำขอแล้ว เจ้าหน้าที่จะดำเนินการตามขั้นตอนดังนี้'),
         _statusFlow([
-          (GuideStatusType.pending, '🟠 รอดำเนินการ'),
-          (GuideStatusType.preparing, '🔵 กำลังเตรียม'),
-          (GuideStatusType.ready, '🟣 พร้อมรับ'),
-          (GuideStatusType.completed, '🟢 เสร็จสิ้น'),
+          (GuideStatusType.pending, 'รอดำเนินการ'),
+          (GuideStatusType.preparing, 'กำลังเตรียม'),
+          (GuideStatusType.ready, 'พร้อมรับ'),
+          (GuideStatusType.completed, 'เสร็จสิ้น'),
         ]),
-        const GuideTable(
-          headers: ['สถานะ', 'หมายความว่า'],
-          rows: [
-            ['🟠 รอดำเนินการ', 'เจ้าหน้าที่ได้รับคำขอแล้ว กำลังตรวจสอบ'],
-            ['🔵 กำลังเตรียม', 'เจ้าหน้าที่กำลังจัดเตรียมถุงยางอนามัยและเจลหล่อลื่น'],
-            ['🟣 พร้อมรับ', 'ถุงยางอนามัยพร้อมให้รับแล้ว สามารถมารับได้เลย'],
-            ['🟢 เสร็จสิ้น', 'ยืนยันการรับถุงยางอนามัยเรียบร้อยแล้ว'],
-            ['⚫ ยกเลิก', 'คำขอถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)'],
-          ],
-        ),
+        _buildStatusRows([
+          (GuideStatusType.pending, 'รอดำเนินการ', 'เจ้าหน้าที่ได้รับคำขอแล้ว กำลังตรวจสอบ'),
+          (GuideStatusType.preparing, 'กำลังเตรียม', 'เจ้าหน้าที่กำลังจัดเตรียมถุงยางอนามัยและเจลหล่อลื่น'),
+          (GuideStatusType.ready, 'พร้อมรับ', 'ถุงยางอนามัยพร้อมให้รับแล้ว สามารถมารับได้เลย'),
+          (GuideStatusType.completed, 'เสร็จสิ้น', 'ยืนยันการรับถุงยางอนามัยเรียบร้อยแล้ว'),
+          (GuideStatusType.cancelled, 'ยกเลิก', 'คำขอถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)'),
+        ]),
         const GuideInfoBox(
           type: GuideInfoBoxType.note,
           text: 'แอปจะแจ้งเตือนในแท็บ "แจ้งเตือน" ทุกครั้งที่สถานะเปลี่ยน',
         ),
         _div(),
-        _h('🧾 3.3 ประวัติคำขอ'),
+        _h('3.3 ประวัติคำขอ'),
         _p('ดูคำขอทั้งหมดได้ที่เมนูลัด "ประวัติคำขอ" บนหน้าหลัก หรือกดไอคอนประวัติที่มุมขวาบนในหน้ารับถุงยางอนามัย'),
         _p('กดแต่ละรายการเพื่อดูรายละเอียด เช่น สถานะปัจจุบัน จำนวนถุงยางอนามัยแต่ละขนาด จำนวนเจลหล่อลื่น สถานบริการ วันที่และเวลารับ และข้อความที่ฝาก'),
       ],
@@ -416,7 +491,7 @@ class _GuidePageState extends State<GuidePage> {
       number: 4,
       title: 'การสแกน QR Code เพื่อรับถุงยางอนามัย',
       children: [
-        _h('📷 4.1 วิธีสแกน'),
+        _h('4.1 วิธีสแกน'),
         _p('เมื่อคำขอมีสถานะ "พร้อมรับ" ให้ไปที่สถานบริการและทำตามขั้นตอน'),
         const GuideStepList(steps: [
           'กดแท็บ "สแกน"',
@@ -425,7 +500,7 @@ class _GuidePageState extends State<GuidePage> {
           'กด "ยืนยันการรับ" เพื่อเสร็จสิ้น',
         ]),
         _div(),
-        _h('🔦 4.2 ตัวเลือกเพิ่มเติม'),
+        _h('4.2 ตัวเลือกเพิ่มเติม'),
         const GuideTable(
           headers: ['ตัวเลือก', 'วิธีใช้'],
           rows: [
@@ -434,7 +509,7 @@ class _GuidePageState extends State<GuidePage> {
           ],
         ),
         _div(),
-        _h('❓ 4.3 ข้อความที่อาจพบ'),
+        _h('4.3 ข้อความที่อาจพบ'),
         const GuideTable(
           headers: ['ข้อความ', 'สาเหตุ'],
           rows: [
@@ -454,7 +529,7 @@ class _GuidePageState extends State<GuidePage> {
       number: 5,
       title: 'แบบประเมินความเสี่ยงการติดเชื้อ HIV',
       children: [
-        _h('🩺 5.1 วิธีทำแบบประเมิน'),
+        _h('5.1 วิธีทำแบบประเมิน'),
         _p('ไปที่แท็บ "บริการ" แล้วกด "ประเมินความเสี่ยงการติดเชื้อ HIV"'),
         _p('ตอบคำถามตามความเป็นจริงทีละข้อ คำถามแบ่งออกเป็น 2 หมวด ได้แก่ พฤติกรรมทางเพศ และพฤติกรรมสุขภาพและโรคติดต่อ'),
         _p('เมื่อตอบครบ ระบบจะแสดงผลระดับความเสี่ยงพร้อมคำแนะนำ'),
@@ -463,7 +538,7 @@ class _GuidePageState extends State<GuidePage> {
           text: 'ผลประเมินนี้เป็นแนวทางเบื้องต้นเท่านั้น ไม่ใช่การวินิจฉัยทางการแพทย์',
         ),
         _div(),
-        _h('📅 5.2 นัดพบแพทย์ต่อจากผลประเมิน'),
+        _h('5.2 นัดพบแพทย์ต่อจากผลประเมิน'),
         _p('หากต้องการปรึกษาแพทย์เพิ่มเติม กดปุ่ม "นัดพบแพทย์" ที่แสดงบนหน้าผลประเมิน ระบบจะพาไปยังหน้านัดหมายโดยตรง'),
       ],
     );
@@ -475,7 +550,7 @@ class _GuidePageState extends State<GuidePage> {
       number: 6,
       title: 'การนัดพบแพทย์',
       children: [
-        _h('📅 6.1 วิธีส่งคำนัดหมาย'),
+        _h('6.1 วิธีส่งคำนัดหมาย'),
         _p('ไปที่แท็บ "บริการ" แล้วกด "นัดพบแพทย์"'),
         const GuideStepList(steps: [
           'เรื่องที่ต้องการพบแพทย์ — เช่น รับยา PEP (ฉุกเฉิน), รับยา PrEP, ตรวจ HIV หรือปรึกษาทั่วไป',
@@ -486,28 +561,25 @@ class _GuidePageState extends State<GuidePage> {
           'กด "ถัดไป" เพื่อดูหน้ายืนยัน ตรวจสอบให้ถูกต้องแล้วกด "ยืนยัน"',
         ]),
         _div(),
-        _h('🔄 6.2 การติดตามสถานะการนัดหมาย'),
+        _h('6.2 การติดตามสถานะการนัดหมาย'),
         _p('หลังส่งคำนัดหมายแล้ว เจ้าหน้าที่จะดำเนินการตามขั้นตอนดังนี้'),
         _statusFlow([
-          (GuideStatusType.pending, '🟠 รอยืนยัน'),
-          (GuideStatusType.completed, '🟢 ยืนยันแล้ว'),
-          (GuideStatusType.completed, '✅ เสร็จสิ้น'),
+          (GuideStatusType.pending, 'รอยืนยัน'),
+          (GuideStatusType.ready, 'ยืนยันแล้ว'),
+          (GuideStatusType.completed, 'เสร็จสิ้น'),
         ]),
-        const GuideTable(
-          headers: ['สถานะ', 'หมายความว่า'],
-          rows: [
-            ['🟠 รอยืนยัน', 'ส่งคำนัดหมายแล้ว รอเจ้าหน้าที่ยืนยัน'],
-            ['🟢 ยืนยันแล้ว', 'เจ้าหน้าที่ยืนยันการนัดเรียบร้อยแล้ว พร้อมไปพบแพทย์ตามวันเวลาที่นัด'],
-            ['✅ เสร็จสิ้น', 'พบแพทย์เรียบร้อยแล้ว'],
-            ['⚫ ยกเลิก', 'การนัดถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)'],
-          ],
-        ),
+        _buildStatusRows([
+          (GuideStatusType.pending, 'รอยืนยัน', 'ส่งคำนัดหมายแล้ว รอเจ้าหน้าที่ยืนยัน'),
+          (GuideStatusType.ready, 'ยืนยันแล้ว', 'เจ้าหน้าที่ยืนยันการนัดเรียบร้อยแล้ว พร้อมไปพบแพทย์ตามวันเวลาที่นัด'),
+          (GuideStatusType.completed, 'เสร็จสิ้น', 'พบแพทย์เรียบร้อยแล้ว'),
+          (GuideStatusType.cancelled, 'ยกเลิก', 'การนัดถูกยกเลิก (โดยคุณหรือเจ้าหน้าที่)'),
+        ]),
         const GuideInfoBox(
           type: GuideInfoBoxType.note,
           text: 'แอปจะแจ้งเตือนในแท็บ "แจ้งเตือน" ทุกครั้งที่สถานะการนัดหมายเปลี่ยน',
         ),
         _div(),
-        _h('🗂️ 6.3 ประวัติการนัดหมาย'),
+        _h('6.3 ประวัติการนัดหมาย'),
         _p('ดูการนัดหมายทั้งหมดได้ที่ "บริการ → นัดพบแพทย์ → ประวัติการนัด"'),
         _p('กดแต่ละรายการเพื่อดูรายละเอียด เช่น สถานะปัจจุบัน เรื่องที่นัด สถานบริการ วันที่และเวลานัด และบันทึกเพิ่มเติม'),
       ],
@@ -520,7 +592,7 @@ class _GuidePageState extends State<GuidePage> {
       number: 7,
       title: 'บทความ',
       children: [
-        _h('📰 7.1 การอ่านบทความสุขภาพ'),
+        _h('7.1 การอ่านบทความสุขภาพ'),
         _p('บทความความรู้ด้านสุขภาพแสดงอยู่ที่ส่วนล่างของหน้าหลัก ภายใต้หัวข้อ "บทความ"'),
         const GuideStepList(steps: [
           'กดการ์ดบทความที่สนใจเพื่ออ่านเนื้อหาเต็ม',
@@ -541,22 +613,22 @@ class _GuidePageState extends State<GuidePage> {
       number: 8,
       title: 'สถานบริการ',
       children: [
-        _h('📍 8.1 การดูรายการสถานบริการ'),
+        _h('8.1 การดูรายการสถานบริการ'),
         _p('กดปุ่ม "สถานบริการ" จากเมนูลัดบนหน้าหลัก จะแสดงรายชื่อสถานบริการทั้งหมดที่เปิดให้บริการ'),
         _p('กดที่สถานบริการใดก็ได้เพื่อดูรายละเอียด'),
         _div(),
-        _h('🏢 8.2 รายละเอียดสถานบริการ'),
+        _h('8.2 รายละเอียดสถานบริการ'),
         _p('หน้ารายละเอียดแสดงข้อมูลดังนี้'),
         const GuideTable(
           headers: ['ข้อมูล', 'รายละเอียด'],
           rows: [
-            ['⏰ เวลาทำการ', 'วันและเวลาเปิด-ปิด'],
-            ['📖 เกี่ยวกับ', 'คำอธิบายสถานบริการ'],
-            ['📌 ที่อยู่', 'ที่ตั้ง'],
-            ['🧴 เวลารับถุงยางอนามัย', 'ช่วงเวลาที่รับถุงยางอนามัยได้ (ถ้ามี)'],
-            ['🩺 เวลานัดแพทย์', 'ช่วงเวลาที่นัดได้ (ถ้ามี)'],
-            ['📞 ข้อมูลติดต่อ', 'ช่องทางติดต่อ'],
-            ['🗺️ ตำแหน่งที่ตั้ง', 'แผนที่แสดงจุดที่ตั้ง'],
+            ['เวลาทำการ', 'วันและเวลาเปิด-ปิด'],
+            ['เกี่ยวกับ', 'คำอธิบายสถานบริการ'],
+            ['ที่อยู่', 'ที่ตั้ง'],
+            ['เวลารับถุงยางอนามัย', 'ช่วงเวลาที่รับถุงยางอนามัยได้ (ถ้ามี)'],
+            ['เวลานัดแพทย์', 'ช่วงเวลาที่นัดได้ (ถ้ามี)'],
+            ['ข้อมูลติดต่อ', 'ช่องทางติดต่อ'],
+            ['ตำแหน่งที่ตั้ง', 'แผนที่แสดงจุดที่ตั้ง'],
           ],
         ),
       ],
@@ -569,14 +641,14 @@ class _GuidePageState extends State<GuidePage> {
       number: 9,
       title: 'แจ้งเตือน',
       children: [
-        _h('🔔 9.1 การดูการแจ้งเตือน'),
+        _h('9.1 การดูการแจ้งเตือน'),
         _p('กดแท็บ "แจ้งเตือน" เพื่อดูการแจ้งเตือนทั้งหมด'),
         _p('ระบบจะแจ้งเตือนให้อัตโนมัติเมื่อมีการเปลี่ยนแปลงสถานะที่เกี่ยวข้องกับคุณ เช่น'),
         const GuideTable(
           headers: ['เหตุการณ์', 'ตัวอย่างการแจ้งเตือน'],
           rows: [
-            ['🟠 คำขอถุงยางอนามัย', 'เจ้าหน้าที่เริ่มจัดเตรียม, ถุงยางอนามัยพร้อมรับแล้ว'],
-            ['📅 การนัดพบแพทย์', 'เจ้าหน้าที่ยืนยันการนัด, การนัดถูกยกเลิก'],
+            ['คำขอถุงยางอนามัย', 'เจ้าหน้าที่เริ่มจัดเตรียม, ถุงยางอนามัยพร้อมรับแล้ว'],
+            ['การนัดพบแพทย์', 'เจ้าหน้าที่ยืนยันการนัด, การนัดถูกยกเลิก'],
           ],
         ),
         const GuideInfoBox(
@@ -593,7 +665,7 @@ class _GuidePageState extends State<GuidePage> {
       number: 10,
       title: 'ตั้งค่า',
       children: [
-        _h('👤 10.1 การแก้ไขข้อมูลส่วนตัว'),
+        _h('10.1 การแก้ไขข้อมูลส่วนตัว'),
         _p('ไปที่แท็บ "ตั้งค่า" แล้วกด "ข้อมูลส่วนตัว"'),
         _p('ข้อมูลที่แก้ไขได้ ได้แก่ เพศ สัญชาติ ประเภทสิทธิ์การรักษา หมายเลขโทรศัพท์ และชื่อที่ใช้เรียก'),
         const GuideInfoBox(
@@ -601,7 +673,7 @@ class _GuidePageState extends State<GuidePage> {
           text: 'ชื่อผู้ใช้งานและวันเดือนปีเกิดไม่สามารถแก้ไขได้หลังจากสร้างบัญชีแล้ว',
         ),
         _div(),
-        _h('🔐 10.2 การเปลี่ยนรหัสผ่าน'),
+        _h('10.2 การเปลี่ยนรหัสผ่าน'),
         _p('ไปที่แท็บ "ตั้งค่า" แล้วกด "เปลี่ยนรหัสผ่าน"'),
         const GuideStepList(steps: [
           'กรอกรหัสผ่านปัจจุบัน',
@@ -609,7 +681,7 @@ class _GuidePageState extends State<GuidePage> {
           'ยืนยันรหัสผ่านใหม่อีกครั้ง แล้วกด "เปลี่ยนรหัสผ่าน"',
         ]),
         _div(),
-        _h('🛡️ 10.3 รหัสกู้คืนบัญชี'),
+        _h('10.3 รหัสกู้คืนบัญชี'),
         _p('รหัสกู้คืนบัญชีคือรหัสฉุกเฉิน 6 รหัสสำหรับตั้งรหัสผ่านใหม่เมื่อลืมรหัสผ่าน'),
         const GuideInfoBox(
           type: GuideInfoBoxType.important,
@@ -626,11 +698,11 @@ class _GuidePageState extends State<GuidePage> {
           text: 'กดปุ่ม "คัดลอกรหัสทั้งหมด" เพื่อบันทึกรหัสไว้ในโน้ตหรือที่ปลอดภัยอื่น ๆ',
         ),
         _div(),
-        _h('🌐 10.4 การเปลี่ยนภาษา'),
+        _h('10.4 การเปลี่ยนภาษา'),
         _p('ไปที่แท็บ "ตั้งค่า" แล้วกด "ภาษา" เลือกภาษาที่ต้องการ'),
         _buildLanguageBadges(),
         _div(),
-        _h('🗑️ 10.5 การลบบัญชี'),
+        _h('10.5 การลบบัญชี'),
         _p('ไปที่แท็บ "ตั้งค่า" แล้วกด "ลบบัญชี"'),
         const GuideInfoBox(
           type: GuideInfoBoxType.important,
@@ -648,9 +720,9 @@ class _GuidePageState extends State<GuidePage> {
 
   Widget _buildLanguageBadges() {
     final langs = [
-      ('🇹🇭 ภาษาไทย', AppColors.primaryBackground, AppColors.primaryDark),
-      ('🇱🇦 ພາສາລາວ', AppColors.statusPreparingLight, AppColors.lubricantDark),
-      ('🇲🇲 မြန်မာဘာသာ', AppColors.statusReadyLight, AppColors.statusReady),
+      ('ภาษาไทย', AppColors.primaryBackground, AppColors.primaryDark),
+      ('ພາສາລາວ', AppColors.statusPreparingLight, AppColors.lubricantDark),
+      ('မြန်မာဘာသာ', AppColors.statusReadyLight, AppColors.statusReady),
     ];
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -678,6 +750,4 @@ class _GuidePageState extends State<GuidePage> {
       ),
     );
   }
-
 }
-

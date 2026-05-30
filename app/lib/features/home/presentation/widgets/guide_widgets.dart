@@ -161,24 +161,24 @@ class GuideInfoBox extends StatelessWidget {
     final Color bg;
     final Color borderColor;
     final Color textColor;
-    final String icon;
+    final IconData iconData;
 
     switch (type) {
       case GuideInfoBoxType.tip:
         bg = AppColors.primaryBackground;
         borderColor = AppColors.primary;
         textColor = AppColors.primaryDark;
-        icon = '💡';
+        iconData = Icons.lightbulb_outline;
       case GuideInfoBoxType.note:
         bg = AppColors.statusPreparingLight;
         borderColor = AppColors.statusPreparing;
         textColor = AppColors.infoNoteText;
-        icon = 'ℹ️';
+        iconData = Icons.info_outline;
       case GuideInfoBoxType.important:
         bg = AppColors.errorLight;
         borderColor = AppColors.error;
         textColor = AppColors.errorDark;
-        icon = '⚠️';
+        iconData = Icons.warning_amber_rounded;
     }
 
     return Container(
@@ -192,7 +192,7 @@ class GuideInfoBox extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(icon, style: const TextStyle(fontSize: 18)),
+          Icon(iconData, size: 18, color: textColor),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
