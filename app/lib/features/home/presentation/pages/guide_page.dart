@@ -234,9 +234,13 @@ class _GuidePageState extends State<GuidePage> {
       );
 
   Widget _iconCell(IconData icon, {Color color = AppColors.textSecondary}) =>
-      Center(child: Icon(icon, size: 20, color: color));
+      Align(
+        alignment: Alignment.centerLeft,
+        child: Icon(icon, size: 20, color: color),
+      );
 
-  Widget _iconCircleCell(IconData icon, Color iconColor, Color bg) => Center(
+  Widget _iconCircleCell(IconData icon, Color iconColor, Color bg) => Align(
+        alignment: Alignment.centerLeft,
         child: Container(
           width: 32,
           height: 32,
