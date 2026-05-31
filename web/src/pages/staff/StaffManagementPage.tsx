@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
-  Box, Typography, Paper, Chip, Button, IconButton, Tooltip,
+  Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
   TextField, MenuItem, CircularProgress, Alert,
 } from '@mui/material';
@@ -372,7 +372,17 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
         open={confirmDowngradeOpen}
         icon={<WarningAmberRoundedIcon color="warning" />}
         title="ยืนยันการลดระดับสิทธิ์"
-        body={`คุณกำลังลดระดับสิทธิ์จาก "${ROLE_LABEL[staff?.role ?? '']}" เป็น "${ROLE_LABEL[role]}" การดำเนินการนี้อาจส่งผลต่อการเข้าถึงระบบของเจ้าหน้าที่`}
+        body={
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+              <Typography variant="body2" color="text.secondary">คุณกำลังลดระดับสิทธิ์จาก</Typography>
+              <Chip label={ROLE_LABEL[staff?.role ?? '']} size="small" sx={{ fontWeight: 600, ...(ROLE_CHIP_SX[staff?.role ?? ''] ?? {}) }} />
+              <Typography variant="body2" color="text.secondary">เป็น</Typography>
+              <Chip label={ROLE_LABEL[role]} size="small" sx={{ fontWeight: 600, ...(ROLE_CHIP_SX[role] ?? {}) }} />
+            </Stack>
+            <Typography variant="body2" color="text.secondary">การดำเนินการนี้อาจส่งผลต่อการเข้าถึงระบบของเจ้าหน้าที่</Typography>
+          </Box>
+        }
         confirmLabel="ยืนยัน"
         confirmColor="warning"
         loading={submitting}

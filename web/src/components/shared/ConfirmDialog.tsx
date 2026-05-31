@@ -1,13 +1,13 @@
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Divider, CircularProgress,
+  Button, Typography, Box, Divider, CircularProgress,
 } from '@mui/material';
 
 interface ConfirmDialogProps {
   open: boolean;
   icon: React.ReactNode;
   title: string;
-  body?: string;
+  body?: React.ReactNode;
   confirmLabel?: string;
   confirmColor?: 'primary' | 'error' | 'success' | 'info' | 'warning' | 'secondary';
   confirmDisabled?: boolean;
@@ -31,9 +31,11 @@ export default function ConfirmDialog({
       <Divider />
       <DialogContent sx={{ pt: 2.5 }}>
         {body && (
-          <Typography variant="body2" color="text.secondary" sx={{ mb: children ? 2 : 0 }}>
-            {body}
-          </Typography>
+          <Box sx={{ mb: children ? 2 : 0 }}>
+            {typeof body === 'string' ? (
+              <Typography variant="body2" color="text.secondary">{body}</Typography>
+            ) : body}
+          </Box>
         )}
         {children}
       </DialogContent>

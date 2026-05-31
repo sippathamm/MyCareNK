@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Box, Divider, TextField, Chip,
+  Button, Typography, Box, Divider, TextField, Chip, Stack,
 } from '@mui/material';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -207,7 +207,13 @@ export default function AppointmentDetailDialog({
         open={isConfirming}
         icon={<EventAvailableOutlinedIcon color="primary" />}
         title="ยืนยันนัดหมาย"
-        body="คุณต้องการยืนยันนัดหมายนี้ใช่หรือไม่?"
+        body={
+          <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น</Typography>
+            <Chip label="ยืนยันแล้ว" size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />
+            <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
+          </Stack>
+        }
         confirmLabel="ยืนยัน"
         confirmColor="primary"
         loading={statusUpdating}
@@ -220,7 +226,13 @@ export default function AppointmentDetailDialog({
         open={isCompleting}
         icon={<CheckCircleOutlineIcon color="success" />}
         title="ยืนยันการเสร็จสิ้น"
-        body={'คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น "เสร็จสิ้น" ใช่หรือไม่?'}
+        body={
+          <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น</Typography>
+            <Chip label="เสร็จสิ้น" size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />
+            <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
+          </Stack>
+        }
         confirmLabel="ยืนยัน"
         confirmColor="success"
         loading={statusUpdating}
