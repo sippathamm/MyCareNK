@@ -402,8 +402,7 @@ class _MessagesPageState extends State<MessagesPage> {
         });
         _notifyUnread();
       }
-    } catch (e) {
-      debugPrint('MessagesPage fetch error: $e');
+    } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
   }

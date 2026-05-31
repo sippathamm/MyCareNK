@@ -89,8 +89,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching history: $e');
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -397,7 +396,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     String outputDate = data.selectedDate ?? '-';
     if (data.selectedDate != null && data.selectedDate!.contains('-')) {
       try {
-        DateTime parsedDate = DateTime.parse(data.selectedDate!);
+        final parsedDate = DateTime.parse(data.selectedDate!);
         outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = data.selectedDate!;
@@ -411,7 +410,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           outputTime = '${splitted[0]}:${splitted[1]} ${AppLocalizations.of(context).timeWithUnit}';
        }
     }
-    String dateStr = '$outputDate, $outputTime';
+    final dateStr = '$outputDate, $outputTime';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

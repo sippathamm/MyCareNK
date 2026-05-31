@@ -48,8 +48,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           _currentData = CondomRequestModel.fromJson(response);
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching data: $e');
+    } catch (_) {
+      // Realtime channel will retry; keep showing the snapshot we already have.
     }
   }
 
@@ -167,7 +167,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     // Format Date
     final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
     final l10n = AppLocalizations.of(context);
-    String dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month - 1]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
+    final dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month - 1]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -461,7 +461,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildQuantityCard() {
-    int totalCondoms = _currentData.condomQuantities.values.fold(0, (sum, val) => sum + val);
+    final totalCondoms = _currentData.condomQuantities.values.fold(0, (sum, val) => sum + val);
     if (totalCondoms == 0) return const SizedBox();
 
     return _buildCard(
@@ -515,7 +515,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     String outputDate = _currentData.selectedDate ?? '-';
     if (_currentData.selectedDate != null && _currentData.selectedDate!.contains('-')) {
       try {
-        DateTime parsedDate = DateTime.parse(_currentData.selectedDate!);
+        final parsedDate = DateTime.parse(_currentData.selectedDate!);
         outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = _currentData.selectedDate!;

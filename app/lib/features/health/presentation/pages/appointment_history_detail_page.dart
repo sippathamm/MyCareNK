@@ -73,8 +73,8 @@ class _AppointmentHistoryDetailPageState
           _data = DoctorAppointmentModel.fromMap(response);
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching appointment: $e');
+    } catch (_) {
+      // Detail view keeps the data passed in via constructor if refetch fails.
     }
   }
 

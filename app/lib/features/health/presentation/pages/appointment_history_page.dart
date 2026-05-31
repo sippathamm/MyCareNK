@@ -102,8 +102,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching appointments: $e');
+    } catch (_) {
       if (mounted) setState(() => _isLoading = false);
     }
   }

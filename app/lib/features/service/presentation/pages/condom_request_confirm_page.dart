@@ -136,8 +136,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           ),
         );
       }
-    } catch (error) {
-      debugPrint('Error saving condom request: $error');
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

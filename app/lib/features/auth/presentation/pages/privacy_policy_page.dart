@@ -101,8 +101,8 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
       final recoveryCodes = RecoveryService.generateRecoveryCodes();
       try {
         await recoveryService.saveRecoveryCodes(recoveryCodes);
-      } catch (e) {
-        debugPrint('เกิดข้อผิดพลาดในการบันทึกรหัสกู้คืน: $e');
+      } catch (_) {
+        // Codes are still shown on the next screen; user can regenerate later.
       }
 
       if (!mounted) return;

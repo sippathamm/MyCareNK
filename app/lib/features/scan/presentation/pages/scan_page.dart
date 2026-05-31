@@ -465,12 +465,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         _resultType = _ScanResultType.preview;
         _requestData = request;
       });
-    } catch (e) {
-      String msg = e.toString();
-      try {
-        msg = (e as dynamic).message as String? ?? e.toString();
-      } catch (_) {}
-      debugPrint('[QR Scanner] processQrCode: $msg');
+    } catch (_) {
       if (mounted) setState(() => _resultType = _ScanResultType.error);
     }
   }
@@ -491,16 +486,9 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       if (!mounted) return;
 
       int httpStatus = 500;
-      String responseMessage = e.toString();
       try {
         httpStatus = (e as dynamic).status as int? ?? 500;
-        final details = (e as dynamic).details;
-        if (details is Map<String, dynamic>) {
-          responseMessage = details['message'] as String? ?? e.toString();
-        }
       } catch (_) {}
-
-      debugPrint('[QR Scanner] verify-receive: $responseMessage');
 
       if (httpStatus == 409) {
         await _refetchForAlreadyReceived();
@@ -542,12 +530,8 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           _requestData = CondomRequestModel.fromJson(response);
         }
       }
-    } catch (e) {
-      String msg = e.toString();
-      try {
-        msg = (e as dynamic).message as String? ?? e.toString();
-      } catch (_) {}
-      debugPrint('[QR Scanner] refetch: $msg');
+    } catch (_) {
+      // Already-received state is set in the finally block.
     } finally {
       if (mounted) {
         setState(() {
