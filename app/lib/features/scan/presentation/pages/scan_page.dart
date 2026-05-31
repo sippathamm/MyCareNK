@@ -148,7 +148,22 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          MobileScanner(controller: _controller, onDetect: _onDetect),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final cx = constraints.maxWidth / 2;
+              final cy = constraints.maxHeight / 2 - 40;
+              final scanWindow = Rect.fromCenter(
+                center: Offset(cx, cy),
+                width: _OverlayPainter._frameSize,
+                height: _OverlayPainter._frameSize,
+              );
+              return MobileScanner(
+                controller: _controller,
+                onDetect: _onDetect,
+                scanWindow: scanWindow,
+              );
+            },
+          ),
           _ScannerOverlay(),
           SafeArea(
             child: Padding(
