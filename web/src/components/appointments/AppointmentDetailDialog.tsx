@@ -1,8 +1,12 @@
 import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, Typography, Box, Divider, TextField, Chip, CircularProgress,
+  Button, Typography, Box, Divider, TextField, Chip,
 } from '@mui/material';
+import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
+import ConfirmDialog from '../shared/ConfirmDialog';
 import type { Enums } from '../../lib/database.types';
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -97,34 +101,20 @@ export default function AppointmentDetailDialog({
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      {appointment && (
-        <>
-          <DialogTitle sx={{ pb: 1 }}>
-            <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
-              รายละเอียดการนัดหมาย
-            </Typography>
-            <Typography component="div" variant="caption" color="text.secondary">
-              {appointment.reference_number}
-            </Typography>
-          </DialogTitle>
+    <>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+        {appointment && (
+          <>
+            <DialogTitle sx={{ pb: 1 }}>
+              <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
+                รายละเอียดการนัดหมาย
+              </Typography>
+              <Typography component="div" variant="caption" color="text.secondary">
+                {appointment.reference_number}
+              </Typography>
+            </DialogTitle>
 
-          <DialogContent dividers>
-            {isConfirming ? (
-              <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
-                <Typography variant="h6" color="primary.main" fontWeight="bold">ยืนยันนัดหมาย</Typography>
-                <Typography variant="body1" color="text.secondary">
-                  คุณต้องการยืนยันนัดหมายนี้ใช่หรือไม่?
-                </Typography>
-              </Box>
-            ) : isCompleting ? (
-              <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
-                <Typography variant="h6" color="success.main" fontWeight="bold">ยืนยันการเสร็จสิ้น</Typography>
-                <Typography variant="body1" color="text.secondary">
-                  คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น "เสร็จสิ้น" ใช่หรือไม่?
-                </Typography>
-              </Box>
-            ) : (
+            <DialogContent dividers>
               <Box display="flex" flexDirection="column" gap={2}>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">ส่งคำขอเมื่อ</Typography>
@@ -187,90 +177,84 @@ export default function AppointmentDetailDialog({
                     </Typography>
                   </Box>
                 )}
-
-                {isCancelling && (
-                  <Box>
-                    <TextField
-                      fullWidth
-                      label="ระบุเหตุผลที่ยกเลิก"
-                      multiline
-                      rows={3}
-                      value={cancelReason}
-                      onChange={(e) => setCancelReason(e.target.value)}
-                      error={cancelReason.trim() === ''}
-                      helperText={cancelReason.trim() === '' ? 'จำเป็นต้องระบุเหตุผล' : ''}
-                      color="error"
-                      autoFocus
-                    />
-                  </Box>
-                )}
               </Box>
-            )}
-          </DialogContent>
+            </DialogContent>
 
-          <DialogActions sx={{ p: 2 }}>
-            {isConfirming ? (
-              <>
-                <Button onClick={() => setIsConfirming(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
-                <Button
-                  onClick={handleConfirm}
-                  variant="contained"
-                  color="primary"
-                  disabled={statusUpdating}
-                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  ยืนยัน
+            <DialogActions sx={{ p: 2 }}>
+              <Button onClick={handleClose} color="inherit">ปิด</Button>
+              {appointment.appointment_status === 'pending' && (
+                <Button onClick={() => setIsCancelling(true)} color="error" variant="outlined">
+                  ยกเลิกนัดหมาย
                 </Button>
-              </>
-            ) : isCompleting ? (
-              <>
-                <Button onClick={() => setIsCompleting(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
-                <Button
-                  onClick={handleComplete}
-                  variant="contained"
-                  color="success"
-                  disabled={statusUpdating}
-                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  ยืนยัน
+              )}
+              {appointment.appointment_status === 'pending' && (
+                <Button onClick={() => setIsConfirming(true)} color="primary" variant="contained">
+                  ยืนยันนัดหมาย
                 </Button>
-              </>
-            ) : isCancelling ? (
-              <>
-                <Button onClick={() => setIsCancelling(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
-                <Button
-                  onClick={handleCancelConfirm}
-                  color="error"
-                  variant="contained"
-                  disabled={!cancelReason.trim() || statusUpdating}
-                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  ยืนยันการยกเลิก
+              )}
+              {appointment.appointment_status === 'confirmed' && (
+                <Button onClick={() => setIsCompleting(true)} color="success" variant="contained">
+                  เสร็จสิ้น
                 </Button>
-              </>
-            ) : (
-              <>
-                <Button onClick={handleClose} color="inherit">ปิด</Button>
-                {appointment.appointment_status === 'pending' && (
-                  <Button onClick={() => setIsCancelling(true)} color="error" variant="outlined">
-                    ยกเลิกนัดหมาย
-                  </Button>
-                )}
-                {appointment.appointment_status === 'pending' && (
-                  <Button onClick={() => setIsConfirming(true)} color="primary" variant="contained">
-                    ยืนยันนัดหมาย
-                  </Button>
-                )}
-                {appointment.appointment_status === 'confirmed' && (
-                  <Button onClick={() => setIsCompleting(true)} color="success" variant="contained">
-                    เสร็จสิ้น
-                  </Button>
-                )}
-              </>
-            )}
-          </DialogActions>
-        </>
-      )}
-    </Dialog>
+              )}
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
+
+      {/* Confirm: Confirm Appointment */}
+      <ConfirmDialog
+        open={isConfirming}
+        icon={<EventAvailableOutlinedIcon color="primary" />}
+        title="ยืนยันนัดหมาย"
+        body="คุณต้องการยืนยันนัดหมายนี้ใช่หรือไม่?"
+        confirmLabel="ยืนยัน"
+        confirmColor="primary"
+        loading={statusUpdating}
+        onConfirm={handleConfirm}
+        onCancel={() => setIsConfirming(false)}
+      />
+
+      {/* Confirm: Complete */}
+      <ConfirmDialog
+        open={isCompleting}
+        icon={<CheckCircleOutlineIcon color="success" />}
+        title="ยืนยันการเสร็จสิ้น"
+        body={'คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น "เสร็จสิ้น" ใช่หรือไม่?'}
+        confirmLabel="ยืนยัน"
+        confirmColor="success"
+        loading={statusUpdating}
+        onConfirm={handleComplete}
+        onCancel={() => setIsCompleting(false)}
+      />
+
+      {/* Confirm: Cancel Appointment */}
+      <ConfirmDialog
+        open={isCancelling}
+        icon={<CancelOutlinedIcon color="error" />}
+        title="ยกเลิกนัดหมาย"
+        body="กรุณาระบุเหตุผลที่ยกเลิก"
+        confirmLabel="ยืนยันการยกเลิก"
+        confirmColor="error"
+        confirmDisabled={!cancelReason.trim()}
+        loading={statusUpdating}
+        onConfirm={handleCancelConfirm}
+        onCancel={() => { setIsCancelling(false); setCancelReason(''); }}
+        maxWidth="sm"
+      >
+        <TextField
+          fullWidth
+          label="เหตุผลที่ยกเลิก"
+          multiline
+          rows={3}
+          value={cancelReason}
+          onChange={(e) => setCancelReason(e.target.value)}
+          error={cancelReason.trim() === ''}
+          helperText={cancelReason.trim() === '' ? 'จำเป็นต้องระบุเหตุผล' : ''}
+          color="error"
+          autoFocus
+        />
+      </ConfirmDialog>
+    </>
   );
 }

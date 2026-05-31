@@ -15,6 +15,7 @@ import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { supabase } from '../../lib/supabase';
 import type { ServiceCenterRow } from '../../hooks/useServiceCenters';
+import ConfirmDialog from '../shared/ConfirmDialog';
 
 interface Props {
   open: boolean;
@@ -77,17 +78,18 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
   const [staffBlockDialog, setStaffBlockDialog] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [addedName, setAddedName] = useState<string | null>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const errorRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
     setError(null);
     setAddedName(null);
-    setConfirmDelete(false);
+    setConfirmDeleteOpen(false);
     setStaffBlockDialog(false);
     setScheduleTab('condom');
     if (center) {
@@ -128,6 +130,12 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setApptAfternoon(DEFAULT_APPT_AFTERNOON);
     }
   }, [open, center]);
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }, [error]);
 
   const handleClose = () => {
     if (saving || uploading || deleting) return;
@@ -348,15 +356,13 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     onSuccess();
   };
 
-  const handleDelete = async () => {
+  const handleDeleteConfirm = async () => {
     if (!center) return;
-    if (!confirmDelete) { setConfirmDelete(true); return; }
-
     setDeleting(true);
     setError(null);
     const { error: deleteError } = await supabase.rpc('delete_service_center', { p_name: center.name });
     setDeleting(false);
-    setConfirmDelete(false);
+    setConfirmDeleteOpen(false);
 
     if (deleteError) {
       if (deleteError.message.includes('ยังมีเจ้าหน้าที่')) {
@@ -702,14 +708,8 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
             <Divider sx={{ mb: 2, mt: 1 }} />
 
-            {confirmDelete && (
-              <Alert severity="warning" sx={{ mt: 2, borderRadius: 1.5 }}>
-                คุณแน่ใจหรือไม่ว่าต้องการลบสถานบริการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้ กดปุ่ม "ลบ" อีกครั้งเพื่อยืนยัน
-              </Alert>
-            )}
-
             {error && (
-              <Alert severity="error" sx={{ mt: 2, borderRadius: 1.5 }}>
+              <Alert ref={errorRef} severity="error" sx={{ mt: 2, borderRadius: 1.5 }}>
                 {error}
               </Alert>
             )}
@@ -725,12 +725,11 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
                 <Button
                   variant="contained"
                   color="error"
-                  startIcon={deleting ? undefined : <DeleteIcon />}
-                  endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
-                  onClick={handleDelete}
+                  startIcon={<DeleteIcon />}
+                  onClick={() => setConfirmDeleteOpen(true)}
                   disabled={!canDelete || saving || deleting}
                 >
-                  {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
+                  ลบ
                 </Button>
               </span>
             </Tooltip>
@@ -767,6 +766,19 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         <Button onClick={onSuccess} variant="contained">ปิด</Button>
       </DialogActions>
     </Dialog>
+
+    {/* Confirm delete */}
+    <ConfirmDialog
+      open={confirmDeleteOpen}
+      icon={<DeleteOutlineIcon color="error" />}
+      title="ยืนยันการลบสถานบริการ"
+      body="คุณแน่ใจหรือไม่ว่าต้องการลบสถานบริการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+      confirmLabel="ลบ"
+      confirmColor="error"
+      loading={deleting}
+      onConfirm={handleDeleteConfirm}
+      onCancel={() => setConfirmDeleteOpen(false)}
+    />
 
     {/* Staff-still-assigned warning dialog */}
     <Dialog open={staffBlockDialog} onClose={() => setStaffBlockDialog(false)} maxWidth="xs" fullWidth>

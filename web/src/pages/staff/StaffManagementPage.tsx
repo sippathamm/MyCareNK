@@ -9,6 +9,8 @@ import type { GridColDef } from '@mui/x-data-grid';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
@@ -18,6 +20,7 @@ import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 import type { Enums } from '../../lib/database.types';
+import ConfirmDialog from '../../components/shared/ConfirmDialog';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -228,8 +231,8 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
   const [role, setRole] = useState<Enums<'role'>>('staff');
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmDowngrade, setConfirmDowngrade] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDowngradeOpen, setConfirmDowngradeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -241,20 +244,15 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
       setServiceCenter(staff.service_center);
       setRole(staff.role);
       setError(null);
-      setConfirmDelete(false);
-      setConfirmDowngrade(false);
+      setConfirmDeleteOpen(false);
+      setConfirmDowngradeOpen(false);
     }
   }, [staff]);
 
-  const handleClose = () => { setError(null); setConfirmDelete(false); setConfirmDowngrade(false); onClose(); };
+  const handleClose = () => { setError(null); setConfirmDeleteOpen(false); setConfirmDowngradeOpen(false); onClose(); };
 
-  const handleSave = async () => {
+  const doSave = async () => {
     if (!staff) return;
-    const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
-    if (isDowngrade && !confirmDowngrade) {
-      setConfirmDowngrade(true);
-      return;
-    }
     setSubmitting(true);
     setError(null);
     const emailChanged = email !== staff.email;
@@ -264,9 +262,21 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
     handleClose();
   };
 
-  const handleDelete = async () => {
+  const handleSave = async () => {
     if (!staff) return;
-    if (!confirmDelete) { setConfirmDelete(true); return; }
+    const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
+    if (isDowngrade) { setConfirmDowngradeOpen(true); return; }
+    await doSave();
+  };
+
+  const handleDowngradeConfirm = async () => {
+    setConfirmDowngradeOpen(false);
+    await doSave();
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!staff) return;
+    setConfirmDeleteOpen(false);
     setDeleting(true);
     const err = await onDelete(staff.staff_user_id);
     setDeleting(false);
@@ -277,81 +287,99 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
   const isRestricted = currentRole === 'admin' && staff?.role === 'superadmin';
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
-      <DialogContent dividers>
-        {isRestricted && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            ผู้ดูแลไม่สามารถแก้ไขหรือลบบัญชีผู้ดูแลสูงสุดได้
-          </Alert>
-        )}
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted} />
-            <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
-          </Box>
-          <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
-          <TextField
-            select label="สถานบริการ" value={serviceCenter}
-            onChange={e => setServiceCenter(e.target.value)} fullWidth disabled={isRestricted}
-          >
-            {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
-          </TextField>
-          <TextField
-            select label="ระดับสิทธิ์" value={role}
-            onChange={e => { setRole(e.target.value as Enums<'role'>); setConfirmDowngrade(false); }} fullWidth disabled={isRestricted}
-          >
-            {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
-          </TextField>
-          <Divider sx={{ my: 1 }} />
-          {staff && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="subtitle2" color="text.secondary">เพิ่มเมื่อ</Typography>
-                <Typography variant="body1">{formatDateTime(staff.created_at)}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="subtitle2" color="text.secondary">แก้ไขเมื่อ</Typography>
-                <Typography variant="body1">{formatDateTime(staff.updated_at ?? undefined)}</Typography>
-              </Box>
+    <>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+        <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
+        <DialogContent dividers>
+          {isRestricted && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              ผู้ดูแลไม่สามารถแก้ไขหรือลบบัญชีผู้ดูแลสูงสุดได้
+            </Alert>
+          )}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted} />
+              <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
             </Box>
-          )}
-          {confirmDowngrade && (
-            <Alert severity="warning">
-              คุณกำลังลดระดับสิทธิ์จาก <strong>{ROLE_LABEL[staff?.role ?? '']}</strong> เป็น <strong>{ROLE_LABEL[role]}</strong> กดปุ่ม "บันทึก" อีกครั้งเพื่อยืนยัน
-            </Alert>
-          )}
-          {confirmDelete && (
-            <Alert severity="warning">
-              คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้ กดปุ่ม "ลบ" อีกครั้งเพื่อยืนยัน
-            </Alert>
-          )}
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button
-          variant="contained"
-          color="error"
-          startIcon={deleting ? undefined : <DeleteIcon />}
-          endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
-          onClick={handleDelete}
-          disabled={deleting || isRestricted || (staff?.staff_user_id === currentUserId)}
-          sx={{ mr: 'auto' }}
-        >
-          {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
-        </Button>
-        <Button onClick={handleClose} color="inherit">ยกเลิก</Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={submitting || isRestricted}
-          endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-        >
-          บันทึก
-        </Button>
-      </DialogActions>
-    </Dialog>
+            <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
+            <TextField
+              select label="สถานบริการ" value={serviceCenter}
+              onChange={e => setServiceCenter(e.target.value)} fullWidth disabled={isRestricted}
+            >
+              {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+            </TextField>
+            <TextField
+              select label="ระดับสิทธิ์" value={role}
+              onChange={e => setRole(e.target.value as Enums<'role'>)} fullWidth disabled={isRestricted}
+            >
+              {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+            </TextField>
+            <Divider sx={{ my: 1 }} />
+            {staff && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="subtitle2" color="text.secondary">เพิ่มเมื่อ</Typography>
+                  <Typography variant="body1">{formatDateTime(staff.created_at)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="subtitle2" color="text.secondary">แก้ไขเมื่อ</Typography>
+                  <Typography variant="body1">{formatDateTime(staff.updated_at ?? undefined)}</Typography>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={deleting ? undefined : <DeleteIcon />}
+            endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+            onClick={() => setConfirmDeleteOpen(true)}
+            disabled={deleting || isRestricted || (staff?.staff_user_id === currentUserId)}
+            sx={{ mr: 'auto' }}
+          >
+            ลบ
+          </Button>
+          <Button onClick={handleClose} color="inherit">ยกเลิก</Button>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={submitting || isRestricted}
+            endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            บันทึก
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirm: Delete staff */}
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        icon={<DeleteOutlineIcon color="error" />}
+        title="ยืนยันการลบบัญชี"
+        body="คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+        confirmLabel="ลบ"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
+
+      {/* Confirm: Role downgrade */}
+      <ConfirmDialog
+        open={confirmDowngradeOpen}
+        icon={<WarningAmberRoundedIcon color="warning" />}
+        title="ยืนยันการลดระดับสิทธิ์"
+        body={`คุณกำลังลดระดับสิทธิ์จาก "${ROLE_LABEL[staff?.role ?? '']}" เป็น "${ROLE_LABEL[role]}" การดำเนินการนี้อาจส่งผลต่อการเข้าถึงระบบของเจ้าหน้าที่`}
+        confirmLabel="ยืนยัน"
+        confirmColor="warning"
+        loading={submitting}
+        onConfirm={handleDowngradeConfirm}
+        onCancel={() => setConfirmDowngradeOpen(false)}
+      />
+    </>
   );
 }
 
