@@ -8,7 +8,7 @@ import type { Enums } from '../../lib/database.types';
 export interface RequestData {
   id: string;
   reference_number: string;
-  user_id: string;
+  user_id: string | null;
   selected_date: string | null;
   selected_time: string | null;
   selected_service_center: string;

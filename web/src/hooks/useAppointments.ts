@@ -26,7 +26,7 @@ export function useAppointments() {
     }
 
     const rows = (data ?? []) as unknown as AppointmentData[];
-    const userIds = [...new Set(rows.map(a => a.user_id).filter(Boolean))];
+    const userIds = [...new Set(rows.map(a => a.user_id).filter((id): id is string => Boolean(id)))];
 
     let contactMap: Record<string, { phone_number: string | null; nickname: string | null }> = {};
     if (userIds.length > 0) {
@@ -41,8 +41,8 @@ export function useAppointments() {
 
     setAppointments(rows.map(a => ({
       ...a,
-      phone_number: contactMap[a.user_id]?.phone_number ?? null,
-      nickname: contactMap[a.user_id]?.nickname ?? null,
+      phone_number: (a.user_id ? contactMap[a.user_id]?.phone_number : null) ?? null,
+      nickname: (a.user_id ? contactMap[a.user_id]?.nickname : null) ?? null,
     })));
     setLoading(false);
   }, []);
@@ -61,11 +61,14 @@ export function useAppointments() {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newRow = payload.new as unknown as AppointmentData;
-            supabase
-              .from('user_profiles')
-              .select('user_id, phone_number, nickname')
-              .eq('user_id', newRow.user_id)
-              .single()
+            (newRow.user_id
+              ? supabase
+                  .from('user_profiles')
+                  .select('user_id, phone_number, nickname')
+                  .eq('user_id', newRow.user_id)
+                  .single()
+              : Promise.resolve({ data: null })
+            )
               .then(({ data: profile }) => {
                 setAppointments(prev => [{
                   ...newRow,

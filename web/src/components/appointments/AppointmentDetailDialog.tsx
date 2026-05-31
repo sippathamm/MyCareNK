@@ -16,7 +16,7 @@ export const REASON_LABELS: Record<string, string> = {
 export interface AppointmentData {
   id: string;
   reference_number: string;
-  user_id: string;
+  user_id: string | null;
   reason: string;
   selected_service_center: string;
   selected_date: string;

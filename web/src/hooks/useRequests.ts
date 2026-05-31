@@ -37,7 +37,7 @@ export function useRequests() {
     }
 
     const rows = (data ?? []) as unknown as RequestData[];
-    const userIds = [...new Set(rows.map(r => r.user_id).filter(Boolean))];
+    const userIds = [...new Set(rows.map(r => r.user_id).filter((id): id is string => Boolean(id)))];
 
     let contactMap: Record<string, ContactInfo> = {};
     if (userIds.length > 0) {
@@ -50,7 +50,7 @@ export function useRequests() {
       }
     }
 
-    setRequests(rows.map(r => formatRow(r, contactMap[r.user_id])));
+    setRequests(rows.map(r => formatRow(r, r.user_id ? contactMap[r.user_id] : undefined)));
     setLoading(false);
   }, []);
 
@@ -68,11 +68,14 @@ export function useRequests() {
         (payload) => {
           if (payload.eventType === 'INSERT') {
             const newRow = payload.new as unknown as RequestData;
-            supabase
-              .from('user_profiles')
-              .select('user_id, phone_number, nickname')
-              .eq('user_id', newRow.user_id)
-              .single()
+            (newRow.user_id
+              ? supabase
+                  .from('user_profiles')
+                  .select('user_id, phone_number, nickname')
+                  .eq('user_id', newRow.user_id)
+                  .single()
+              : Promise.resolve({ data: null })
+            )
               .then(({ data: profile }) => {
                 const contact = profile
                   ? { phone_number: profile.phone_number, nickname: profile.nickname }
