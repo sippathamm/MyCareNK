@@ -471,6 +471,10 @@ $$;
 
 
 -- ── auth.users cascade ─────────────────────────────────────
+-- Fires BEFORE DELETE on auth.users.
+-- Nullifies audit/history references so records are preserved.
+-- condom_requests and doctor_appointments are NOT deleted here;
+-- their user_id FKs use ON DELETE SET NULL, which fires after this trigger.
 CREATE OR REPLACE FUNCTION public.handle_user_deleted()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -478,26 +482,31 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  UPDATE public.condom_requests      SET handled_by  = NULL WHERE handled_by  = OLD.id;
-  UPDATE public.doctor_appointments  SET handled_by  = NULL WHERE handled_by  = OLD.id;
-  UPDATE public.request_status_logs  SET changed_by  = NULL WHERE changed_by  = OLD.id;
-  UPDATE public.appointment_status_logs SET changed_by = NULL WHERE changed_by = OLD.id;
-  UPDATE public.inventory_logs       SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.staff_audit_logs     SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.articles             SET created_by   = NULL WHERE created_by   = OLD.id;
+  -- Nullify staff audit/log references to preserve history
+  UPDATE public.condom_requests         SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.doctor_appointments     SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.request_status_logs     SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.inventory_logs          SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.staff_audit_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.articles                SET created_by   = NULL WHERE created_by   = OLD.id;
 
+  -- Delete staff data (no-op for end-users)
   DELETE FROM public.staff_notification_reads WHERE staff_user_id = OLD.id;
   DELETE FROM public.staff_profiles           WHERE staff_user_id = OLD.id;
-  DELETE FROM public.user_notification_reads  WHERE user_id       = OLD.id;
-  DELETE FROM public.user_notifications       WHERE user_id       = OLD.id;
-  DELETE FROM public.user_recovery_codes      WHERE user_id       = OLD.id;
-  DELETE FROM public.recovery_attempts        WHERE user_id       = OLD.id;
-  DELETE FROM public.user_monthly_quotas      WHERE user_id       = OLD.id;
-  DELETE FROM public.request_status_logs
-    WHERE request_id IN (SELECT id FROM public.condom_requests WHERE user_id = OLD.id);
-  DELETE FROM public.condom_requests      WHERE user_id = OLD.id;
-  DELETE FROM public.doctor_appointments  WHERE user_id = OLD.id;
-  DELETE FROM public.user_profiles        WHERE user_id = OLD.id;
+
+  -- Delete end-user personal data
+  DELETE FROM public.user_notification_reads WHERE user_id = OLD.id;
+  DELETE FROM public.user_notifications      WHERE user_id = OLD.id;
+  DELETE FROM public.user_recovery_codes     WHERE user_id = OLD.id;
+  DELETE FROM public.recovery_attempts       WHERE user_id = OLD.id;
+  DELETE FROM public.user_monthly_quotas     WHERE user_id = OLD.id;
+
+  -- Delete user profile
+  -- condom_requests, doctor_appointments and their logs are preserved;
+  -- user_id will be SET NULL by FK after this trigger returns.
+  DELETE FROM public.user_profiles WHERE user_id = OLD.id;
+
   RETURN OLD;
 END;
 $$;
@@ -882,7 +891,7 @@ CREATE TRIGGER update_service_center_inventory_updated_at
 -- ── 13. condom_requests ────────────────────────────────────
 CREATE TABLE public.condom_requests (
   id                      uuid                  NOT NULL DEFAULT gen_random_uuid(),
-  user_id                 uuid                  NOT NULL,
+  user_id                 uuid,
   condom_quantities       jsonb                 NOT NULL DEFAULT '{"49":0,"52":0,"54":0,"56":0}',
   lubricant_quantity      integer               NOT NULL DEFAULT 0,
   selected_date           date                           DEFAULT CURRENT_DATE,
@@ -900,7 +909,7 @@ CREATE TABLE public.condom_requests (
   CONSTRAINT condom_requests_pkey                 PRIMARY KEY (id),
   CONSTRAINT condom_requests_reference_number_key UNIQUE (reference_number),
   CONSTRAINT condom_requests_user_id_fkey FOREIGN KEY (user_id)
-    REFERENCES auth.users(id),
+    REFERENCES auth.users(id) ON DELETE SET NULL,
   CONSTRAINT condom_requests_handled_by_fkey FOREIGN KEY (handled_by)
     REFERENCES auth.users(id) ON DELETE SET NULL
 );
@@ -1072,7 +1081,7 @@ CREATE TRIGGER apply_inventory_adjustment
 -- ── 16. doctor_appointments ────────────────────────────────
 CREATE TABLE public.doctor_appointments (
   id                      uuid                      NOT NULL DEFAULT gen_random_uuid(),
-  user_id                 uuid                      NOT NULL,
+  user_id                 uuid,
   reference_number        text                      NOT NULL,
   reason                  text                      NOT NULL,
   selected_service_center text                      NOT NULL,
@@ -1087,7 +1096,7 @@ CREATE TABLE public.doctor_appointments (
   CONSTRAINT doctor_appointments_pkey                  PRIMARY KEY (id),
   CONSTRAINT doctor_appointments_reference_number_key  UNIQUE (reference_number),
   CONSTRAINT doctor_appointments_user_id_fkey FOREIGN KEY (user_id)
-    REFERENCES auth.users(id),
+    REFERENCES auth.users(id) ON DELETE SET NULL,
   CONSTRAINT doctor_appointments_handled_by_fkey FOREIGN KEY (handled_by)
     REFERENCES auth.users(id)
 );
