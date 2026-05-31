@@ -361,6 +361,8 @@ class GuideWidgetTable extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
                   child: Text(
                     e.value,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.googleSans(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,

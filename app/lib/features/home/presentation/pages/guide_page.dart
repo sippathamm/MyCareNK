@@ -305,7 +305,7 @@ class _GuidePageState extends State<GuidePage> {
         _p('แถบเมนูด้านล่างมี 5 แท็บ กดเพื่อสลับระหว่างส่วนต่าง ๆ ของแอป'),
         GuideWidgetTable(
           headers: const ['ไอคอน', 'แท็บ', 'ใช้ทำอะไร'],
-          columnFlex: const [1, 2, 4],
+          columnFlex: const [2, 2, 4],
           rows: [
             [
               _iconCell(Icons.home_outlined, color: AppColors.primary),
@@ -339,7 +339,7 @@ class _GuidePageState extends State<GuidePage> {
         _p('ด้านล่างโควตารายเดือนมีปุ่มลัด 3 ปุ่ม'),
         GuideWidgetTable(
           headers: const ['ไอคอน', 'ปุ่ม', 'พาไปที่'],
-          columnFlex: const [1, 2, 3],
+          columnFlex: const [2, 2, 3],
           rows: [
             [
               _iconCircleCell(Icons.location_on_outlined, AppColors.statusReady, AppColors.statusReadyLight),
@@ -442,7 +442,7 @@ class _GuidePageState extends State<GuidePage> {
         _h('4.2 ตัวเลือกเพิ่มเติม'),
         GuideWidgetTable(
           headers: const ['ไอคอน', 'ตัวเลือก', 'วิธีใช้'],
-          columnFlex: const [1, 2, 3],
+          columnFlex: const [2, 2, 3],
           rows: [
             [
               _iconCell(Icons.flashlight_on),
