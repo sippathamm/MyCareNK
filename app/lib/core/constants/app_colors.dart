@@ -26,6 +26,7 @@ abstract final class AppColors {
   // Error / red
   static const Color error = Color(0xFFEF7070);
   static const Color errorDark = Color(0xFFB71C1C);
+  static const Color errorLight = Color(0xFFFFEBEE);
   static const Color errorShadow = Color(0x4DB71C1C); // ~30% opacity
 
   // Success / green
@@ -52,6 +53,9 @@ abstract final class AppColors {
   static const Color avatarCircle = Color(0xFFD1C4E9);
   static const Color avatarIcon = Color(0xFF7C4DFF);
   static const Color avatarIconShadow = Color(0x297C4DFF); // ~16% opacity
+
+  // Info / note box
+  static const Color infoNoteText = Color(0xFF1A4A7A);
 
   // Neutral
   static const Color white = Color(0xFFFFFFFF);
