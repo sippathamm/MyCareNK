@@ -3,6 +3,7 @@ import {
   Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton,
   ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress,
   IconButton, Badge, Snackbar, Alert, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -17,6 +18,11 @@ import AssessmentIcon from '@mui/icons-material/Assessment';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ArticleIcon from '@mui/icons-material/Article';
+import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { QRCodeSVG } from 'qrcode.react';
+
+const APP_DOWNLOAD_URL = 'https://drive.google.com/drive/folders/1c0JHjoL-kre6PtrfFrHkfopqR2ZRLTUP?usp=sharing';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
@@ -48,6 +54,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const bellRef = useRef<HTMLButtonElement>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
 
   const drawerWidth = sidebarOpen ? DRAWER_OPEN_WIDTH : DRAWER_CLOSED_WIDTH;
 
@@ -216,8 +223,38 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
         <Box sx={{ flexGrow: 1 }} />
 
-        {/* Logout */}
-        <Box sx={{ p: sidebarOpen ? 2 : 1, pb: 2 }}>
+        {/* Download App + Logout */}
+        <Box sx={{ p: sidebarOpen ? 2 : 1, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Tooltip title={sidebarOpen ? '' : 'ดาวน์โหลดแอป'} placement="right">
+            {sidebarOpen ? (
+              <Button
+                fullWidth
+                variant="outlined"
+                color="inherit"
+                startIcon={<SystemUpdateAltIcon />}
+                onClick={() => setDownloadDialogOpen(true)}
+                sx={{
+                  borderColor: 'rgba(255,255,255,0.2)',
+                  color: '#CBD5E1',
+                  '&:hover': { borderColor: 'rgba(255,255,255,0.5)', backgroundColor: 'rgba(255,255,255,0.05)' },
+                }}
+              >
+                ดาวน์โหลดแอป
+              </Button>
+            ) : (
+              <IconButton
+                onClick={() => setDownloadDialogOpen(true)}
+                sx={{
+                  color: '#CBD5E1',
+                  width: '100%',
+                  borderRadius: 2,
+                  '&:hover': { backgroundColor: 'rgba(255,255,255,0.05)', color: 'white' },
+                }}
+              >
+                <SystemUpdateAltIcon />
+              </IconButton>
+            )}
+          </Tooltip>
           <Tooltip title={sidebarOpen ? '' : 'ออกจากระบบ'} placement="right">
             {sidebarOpen ? (
               <Button
@@ -266,6 +303,34 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <Toolbar />
         {children}
       </Box>
+
+      {/* Download App Dialog */}
+      <Dialog open={downloadDialogOpen} onClose={() => setDownloadDialogOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold' }}>ดาวน์โหลดแอป MyCareNK</DialogTitle>
+        <DialogContent dividers>
+          <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={1}>
+            <QRCodeSVG value={APP_DOWNLOAD_URL} size={200} />
+            <Typography variant="body2" color="text.secondary" textAlign="center">
+              สแกน QR Code เพื่อเปิดลิงค์ดาวน์โหลด
+            </Typography>
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              startIcon={<OpenInNewIcon />}
+              href={APP_DOWNLOAD_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              component="a"
+            >
+              เปิดลิงค์ดาวน์โหลด
+            </Button>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDownloadDialogOpen(false)} color="inherit">ปิด</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Notification Panel (Popover) */}
       <NotificationPanel

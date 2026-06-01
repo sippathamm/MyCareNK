@@ -209,12 +209,15 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               )}
 
               {(request.request_status === 'cancelled_by_user' || request.request_status === 'cancelled_by_staff') && request.cancel_reason && (
+                <>
+                  <Divider sx={{ my: 1 }} />
                 <Box mt={2}>
                   <Typography variant="subtitle2" color="error.main" sx={{ mb: 1 }}>เหตุผลที่ยกเลิก</Typography>
                   <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(211,47,47,0.06)', p: 1.5, borderRadius: 1, color: 'error.main' }}>
                     {request.cancel_reason}
                   </Typography>
                 </Box>
+                </>
               )}
             </Box>
           </DialogContent>
