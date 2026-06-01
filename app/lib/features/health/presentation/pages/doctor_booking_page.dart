@@ -4,9 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/models/service_center_model.dart';
 import '../../../../core/services/service_center_service.dart';
-import '../../../../core/widgets/gradient_button.dart';
-import '../../../../core/widgets/section_card.dart';
 import '../../../auth/presentation/pages/login_page.dart';
+import '../widgets/doctor_booking_widgets.dart';
 import 'appointment_history_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
@@ -111,69 +110,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     return _buildForm();
   }
 
-  // ── Step indicator ──────────────────────────────────────────────────────────
-
-  Widget _buildStepIndicator() {
-    final l10n = AppLocalizations.of(context);
-    final labels = [l10n.bookingSelectService, l10n.stepConfirm, l10n.stepSuccess];
-    const double nodeSize = 34;
-    const double gap = 6;
-    final n = labels.length;
-
-    final iconItems = <Widget>[];
-    for (int idx = 0; idx < n; idx++) {
-      final isDone = idx < _step;
-      final isCurrent = idx == _step;
-      final active = isDone || isCurrent;
-      final isLast = idx == n - 1;
-      final showCheck = isDone || (isCurrent && isLast);
-      iconItems.add(AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: nodeSize, height: nodeSize,
-        decoration: BoxDecoration(color: active ? AppColors.lubricant : const Color(0xFFE8E8E8), shape: BoxShape.circle),
-        child: Center(child: showCheck
-            ? const Icon(Icons.check, color: Colors.white, size: 16)
-            : Text('${idx + 1}', style: GoogleFonts.googleSans(fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textMuted))),
-      ));
-      if (!isLast) {
-        iconItems.addAll([
-          const SizedBox(width: gap),
-          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: idx < _step ? AppColors.lubricant : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(width: gap),
-        ]);
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: Column(children: [
-        Row(children: iconItems),
-        const SizedBox(height: 4),
-        LayoutBuilder(builder: (context, constraints) {
-          final W = constraints.maxWidth;
-          final slotSpacing = (W - nodeSize) / (n - 1);
-          TextStyle labelStyle(int idx) {
-            final active = idx <= _step;
-            return GoogleFonts.googleSans(fontSize: 11, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.lubricant : AppColors.textMuted);
-          }
-          return SizedBox(
-            height: 16,
-            child: Stack(clipBehavior: Clip.none, children: [
-              Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
-              Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
-              for (int i = 1; i < n - 1; i++)
-                Positioned(
-                  left: nodeSize / 2 + i * slotSpacing,
-                  top: 0,
-                  child: FractionalTranslation(translation: const Offset(-0.5, 0), child: Text(labels[i], style: labelStyle(i))),
-                ),
-            ]),
-          );
-        }),
-      ]),
-    );
-  }
-
   // ── Form ────────────────────────────────────────────────────────────────────
 
   Widget _buildForm() {
@@ -187,7 +123,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(),
+            child: BookingStepIndicator(step: _step),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -195,14 +131,14 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingServiceReason,
                     icon: Icons.medical_services_outlined,
                     child: Column(
                       children: _buildReasons(AppLocalizations.of(context)).map(_buildReasonTile).toList(),
                     ),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).selectServiceCenterTitle,
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
@@ -240,17 +176,17 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                     ),
                                   ),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentDate,
                     icon: Icons.event_outlined,
                     child: _buildDatePicker(),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentTime,
                     icon: Icons.schedule_outlined,
                     child: _buildTimePicker(),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAdditionalNotes,
                     icon: Icons.notes_outlined,
                     child: TextField(
@@ -293,7 +229,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             child: AnimatedOpacity(
               opacity: _canProceed ? 1.0 : 0.4,
               duration: const Duration(milliseconds: 200),
-              child: _PrimaryBtn(
+              child: BookingPrimaryButton(
                 label: AppLocalizations.of(context).next,
                 onPressed: _canProceed ? () => setState(() => _step = 1) : null,
               ),
@@ -616,14 +552,14 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(),
+            child: BookingStepIndicator(step: _step),
           ),
           Expanded(
             child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
               child: Column(
                 children: [
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentSummary,
                     icon: Icons.event_note_outlined,
                     child: Column(
@@ -725,13 +661,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
             child: Column(
               children: [
-                _PrimaryBtn(
+                BookingPrimaryButton(
                   label: AppLocalizations.of(context).confirmAppointment,
                   onPressed: _isSubmitting ? null : _submitBooking,
                   isLoading: _isSubmitting,
                 ),
                 const SizedBox(height: 10),
-                _OutlinedBtn(
+                BookingOutlinedButton(
                   label: AppLocalizations.of(context).edit,
                   onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
                 ),
@@ -834,7 +770,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(),
+            child: BookingStepIndicator(step: _step),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -866,7 +802,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
-            _SectionCard(
+            BookingSectionCard(
               title: AppLocalizations.of(context).appointmentDetailsTitle,
               icon: Icons.event_note_outlined,
               child: Column(
@@ -956,13 +892,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               ),
             ),
             const SizedBox(height: 28),
-            _PrimaryBtn(
+            BookingPrimaryButton(
               label: AppLocalizations.of(context).backToService,
               onPressed: () =>
                   Navigator.of(context).popUntil((r) => r.isFirst),
             ),
             const SizedBox(height: 10),
-            _OutlinedBtn(
+            BookingOutlinedButton(
               label: AppLocalizations.of(context).appointmentHistoryTitle,
               onPressed: () => Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
@@ -1008,73 +944,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ─── Shared widgets ───────────────────────────────────────────────────────────
-
-/// The shared [SectionCard] with the lubricant-themed gradient header used
-/// throughout the doctor-booking flow.
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Widget child;
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return SectionCard(
-      title: title,
-      icon: icon,
-      headerColors: const [AppColors.lubricantDark, AppColors.statusPreparing],
-      child: child,
-    );
-  }
-}
-
-class _PrimaryBtn extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  const _PrimaryBtn({required this.label, this.onPressed, this.isLoading = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return GradientButton(
-      onPressed: onPressed,
-      label: label,
-      isLoading: isLoading,
-      gradientColors: GradientButton.lubricantGradient,
-    );
-  }
-}
-
-class _OutlinedBtn extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  const _OutlinedBtn({required this.label, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.lubricant, width: 1.5),
-          foregroundColor: AppColors.lubricant,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        ),
-        child: Text(label,
-            style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.w700)),
-      ),
     );
   }
 }
