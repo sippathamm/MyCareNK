@@ -2457,3 +2457,53 @@ WHERE NOT EXISTS (
   SELECT 1 FROM public.service_center_inventory sci
   WHERE sci.service_center = sc.name
 );
+
+-- ============================================================
+-- SECTION: STORAGE
+-- ============================================================
+
+-- Public image buckets; 5MB limit; image mime types only.
+-- service-center-assets: cover images for service centers (root path).
+-- article-assets: article cover/ and content/ images.
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES
+  ('service-center-assets', 'service-center-assets', true, 5242880,
+   ARRAY['image/jpeg','image/png','image/webp','image/gif']),
+  ('article-assets', 'article-assets', true, 5242880,
+   ARRAY['image/jpeg','image/png','image/webp','image/gif'])
+ON CONFLICT (id) DO NOTHING;
+
+-- Public read; authenticated (staff) write/update/delete.
+CREATE POLICY "service_center_assets_public_read"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'service-center-assets');
+
+CREATE POLICY "service_center_assets_authenticated_insert"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'service-center-assets');
+
+CREATE POLICY "service_center_assets_authenticated_update"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (bucket_id = 'service-center-assets')
+  WITH CHECK (bucket_id = 'service-center-assets');
+
+CREATE POLICY "service_center_assets_authenticated_delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'service-center-assets');
+
+CREATE POLICY "article_assets_public_read"
+  ON storage.objects FOR SELECT TO public
+  USING (bucket_id = 'article-assets');
+
+CREATE POLICY "article_assets_authenticated_insert"
+  ON storage.objects FOR INSERT TO authenticated
+  WITH CHECK (bucket_id = 'article-assets');
+
+CREATE POLICY "article_assets_authenticated_update"
+  ON storage.objects FOR UPDATE TO authenticated
+  USING (bucket_id = 'article-assets')
+  WITH CHECK (bucket_id = 'article-assets');
+
+CREATE POLICY "article_assets_authenticated_delete"
+  ON storage.objects FOR DELETE TO authenticated
+  USING (bucket_id = 'article-assets');
