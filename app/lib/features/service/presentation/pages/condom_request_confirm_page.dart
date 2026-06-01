@@ -4,6 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../../core/widgets/request_step_indicator.dart';
+import '../widgets/section_card.dart';
 import 'condom_request_success_page.dart';
 import 'request_history_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
@@ -268,61 +269,6 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     );
   }
 
-  // ── Step indicator ──────────────────────────────────────────────────────────
-
-  // ── Section card ────────────────────────────────────────────────────────────
-
-  Widget _buildSectionCard({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-              color: AppColors.cardShadowMedium,
-              blurRadius: 10,
-              offset: Offset(0, 4)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              child: Row(children: [
-                Icon(icon, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(title,
-                    style: GoogleFonts.googleSans(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold)),
-              ]),
-            ),
-            Padding(padding: const EdgeInsets.all(16), child: child),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -465,7 +411,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   // ── Summary cards ───────────────────────────────────────────────────────────
 
   Widget _buildQuantityCard() {
-    return _buildSectionCard(
+    return SectionCard(
       title: AppLocalizations.of(context).condoms,
       icon: Icons.inventory_2_outlined,
       child: Column(
@@ -497,7 +443,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   }
 
   Widget _buildLubricantCard() {
-    return _buildSectionCard(
+    return SectionCard(
       title: AppLocalizations.of(context).extra,
       icon: Icons.add_circle_outline,
       child: _buildInfoRow(AppLocalizations.of(context).lubricant, '${widget.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
@@ -513,7 +459,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         ? '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}'
         : '-';
 
-    return _buildSectionCard(
+    return SectionCard(
       title: l10n.serviceAndDateTime,
       icon: Icons.calendar_today_outlined,
       child: Column(
@@ -527,7 +473,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   }
 
   Widget _buildMessageCard() {
-    return _buildSectionCard(
+    return SectionCard(
       title: AppLocalizations.of(context).messageLabel,
       icon: Icons.comment_outlined,
       child: Align(

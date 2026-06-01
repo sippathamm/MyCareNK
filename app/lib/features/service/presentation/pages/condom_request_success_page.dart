@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../../core/widgets/request_step_indicator.dart';
+import '../widgets/section_card.dart';
 import 'request_history_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
@@ -125,99 +126,53 @@ class CondomRequestSuccessPage extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: AppColors.white,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: const [
-                        BoxShadow(
-                            color: AppColors.cardShadowMedium,
-                            blurRadius: 10,
-                            offset: Offset(0, 4)),
-                      ],
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                            width: double.infinity,
-                            decoration: const BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [AppColors.primaryDark, AppColors.primary],
-                                begin: Alignment.centerLeft,
-                                end: Alignment.centerRight,
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                const Icon(Icons.event_note_outlined,
-                                    color: Colors.white, size: 18),
-                                const SizedBox(width: 8),
-                                Text(l10n.requestDetails,
-                                    style: GoogleFonts.googleSans(
-                                        color: Colors.white,
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.bold)),
-                              ],
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: infoRows
-                                  .map((row) => Padding(
-                                        padding:
-                                            const EdgeInsets.only(bottom: 12),
-                                        child: Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Container(
-                                              width: 36,
-                                              height: 36,
-                                              decoration: BoxDecoration(
-                                                color: AppColors.primaryCardStart,
-                                                borderRadius:
-                                                    BorderRadius.circular(10),
-                                              ),
-                                              child: Icon(row.$1,
-                                                  color: AppColors.primary,
-                                                  size: 18),
-                                            ),
-                                            const SizedBox(width: 12),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(row.$2,
-                                                      style: GoogleFonts.googleSans(
-                                                          fontSize: 12,
-                                                          color: AppColors
-                                                              .textHint)),
-                                                  Text(row.$3,
-                                                      style: GoogleFonts.googleSans(
-                                                          fontSize: 15,
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                          color: AppColors
-                                                              .textPrimary)),
-                                                ],
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ))
-                                  .toList(),
-                            ),
-                          ),
-                        ],
-                      ),
+                  SectionCard(
+                    title: l10n.requestDetails,
+                    icon: Icons.event_note_outlined,
+                    margin: EdgeInsets.zero,
+                    child: Column(
+                      children: infoRows
+                          .map((row) => Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Row(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.start,
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryCardStart,
+                                        borderRadius:
+                                            BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(row.$1,
+                                          color: AppColors.primary,
+                                          size: 18),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(row.$2,
+                                              style: GoogleFonts.googleSans(
+                                                  fontSize: 12,
+                                                  color: AppColors.textHint)),
+                                          Text(row.$3,
+                                              style: GoogleFonts.googleSans(
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w600,
+                                                  color:
+                                                      AppColors.textPrimary)),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ))
+                          .toList(),
                     ),
                   ),
                   const SizedBox(height: 20),
