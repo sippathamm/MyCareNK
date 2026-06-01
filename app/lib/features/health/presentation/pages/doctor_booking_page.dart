@@ -126,7 +126,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -245,19 +245,16 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  AnimatedOpacity(
+                    opacity: _canProceed ? 1.0 : 0.4,
+                    duration: const Duration(milliseconds: 200),
+                    child: BookingPrimaryButton(
+                      label: AppLocalizations.of(context).next,
+                      onPressed: _canProceed ? () => setState(() => _step = 1) : null,
+                    ),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          Container(
-            color: AppColors.white,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: AnimatedOpacity(
-              opacity: _canProceed ? 1.0 : 0.4,
-              duration: const Duration(milliseconds: 200),
-              child: BookingPrimaryButton(
-                label: AppLocalizations.of(context).next,
-                onPressed: _canProceed ? () => setState(() => _step = 1) : null,
               ),
             ),
           ),
@@ -293,7 +290,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 children: [
                   BookingSectionCard(
@@ -389,26 +386,19 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  BookingPrimaryButton(
+                    label: AppLocalizations.of(context).confirmAppointment,
+                    onPressed: _isSubmitting ? null : _submitBooking,
+                    isLoading: _isSubmitting,
+                  ),
+                  const SizedBox(height: 10),
+                  BookingOutlinedButton(
+                    label: AppLocalizations.of(context).edit,
+                    onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
+                  ),
                 ],
               ),
-            ),
-          ),
-          Container(
-            color: AppColors.white,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: Column(
-              children: [
-                BookingPrimaryButton(
-                  label: AppLocalizations.of(context).confirmAppointment,
-                  onPressed: _isSubmitting ? null : _submitBooking,
-                  isLoading: _isSubmitting,
-                ),
-                const SizedBox(height: 10),
-                BookingOutlinedButton(
-                  label: AppLocalizations.of(context).edit,
-                  onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
-                ),
-              ],
             ),
           ),
         ],

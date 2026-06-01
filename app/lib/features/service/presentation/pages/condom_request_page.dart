@@ -204,7 +204,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -323,19 +323,16 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  AnimatedOpacity(
+                    opacity: _canProceed ? 1.0 : 0.4,
+                    duration: const Duration(milliseconds: 200),
+                    child: GradientButton(
+                      onPressed: _canProceed ? _navigateToConfirm : null,
+                      label: AppLocalizations.of(context).next,
+                    ),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: AnimatedOpacity(
-              opacity: _canProceed ? 1.0 : 0.4,
-              duration: const Duration(milliseconds: 200),
-              child: GradientButton(
-                onPressed: _canProceed ? _navigateToConfirm : null,
-                label: AppLocalizations.of(context).next,
               ),
             ),
           ),

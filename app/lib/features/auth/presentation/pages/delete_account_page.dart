@@ -106,60 +106,9 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              GestureDetector(
-                onTap: () => setState(() => _confirmed = !_confirmed),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: Checkbox(
-                        value: _confirmed,
-                        onChanged: (v) =>
-                            setState(() => _confirmed = v ?? false),
-                        activeColor: AppColors.error,
-                        shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4)),
-                        side: const BorderSide(
-                            color: AppColors.error, width: 1.5),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        l10n.deleteAccountConfirmCheck,
-                        style: GoogleFonts.googleSans(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-              GradientButton(
-                onPressed: (canDelete && !_isLoading) ? _deleteAccount : null,
-                label: l10n.deleteAccountTitle,
-                isLoading: _isLoading,
-                gradientColors: GradientButton.errorGradient,
-              ),
-            ],
-          ),
-        ),
-      ),
       body: SafeArea(
-        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
           child: Column(
             children: [
               Container(
@@ -218,6 +167,47 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
                     ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              GestureDetector(
+                onTap: () => setState(() => _confirmed = !_confirmed),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _confirmed,
+                        onChanged: (v) =>
+                            setState(() => _confirmed = v ?? false),
+                        activeColor: AppColors.error,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                        side: const BorderSide(
+                            color: AppColors.error, width: 1.5),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        l10n.deleteAccountConfirmCheck,
+                        style: GoogleFonts.googleSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              GradientButton(
+                onPressed: (canDelete && !_isLoading) ? _deleteAccount : null,
+                label: l10n.deleteAccountTitle,
+                isLoading: _isLoading,
+                gradientColors: GradientButton.errorGradient,
               ),
             ],
           ),

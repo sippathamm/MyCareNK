@@ -195,7 +195,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 children: [
                   _buildMonthlyProgress(),
@@ -230,39 +230,32 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  GradientButton(
+                    onPressed: _isLoading ? null : _submitRequest,
+                    label: AppLocalizations.of(context).confirm,
+                    isLoading: _isLoading,
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                            color: AppColors.primary, width: 1.5),
+                        foregroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: Text(AppLocalizations.of(context).edit,
+                          style: GoogleFonts.googleSans(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ),
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: Column(
-              children: [
-                GradientButton(
-                  onPressed: _isLoading ? null : _submitRequest,
-                  label: AppLocalizations.of(context).confirm,
-                  isLoading: _isLoading,
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
-                          color: AppColors.primary, width: 1.5),
-                      foregroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                    ),
-                    child: Text(AppLocalizations.of(context).edit,
-                        style: GoogleFonts.googleSans(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
             ),
           ),
         ],

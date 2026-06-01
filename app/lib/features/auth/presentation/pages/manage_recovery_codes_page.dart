@@ -99,61 +99,9 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
-          child: _newCodes != null
-              ? Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    GradientButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      label: l10n.statusCompleted,
-                    ),
-                    const SizedBox(height: 12),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Clipboard.setData(ClipboardData(text: _newCodes!.join(', ')));
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                            content: Text(AppLocalizations.of(context).allCopied,
-                                style: GoogleFonts.googleSans()),
-                            backgroundColor: AppColors.success,
-                            behavior: SnackBarBehavior.floating,
-                          ));
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: AppColors.primary),
-                          foregroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                        ),
-                        icon: const Icon(Icons.copy_outlined, size: 18),
-                        label: Text(
-                          l10n.copyAll,
-                          style: GoogleFonts.googleSans(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                )
-              : GradientButton(
-                  onPressed: _isGenerating ? null : _regenerate,
-                  label: l10n.recoveryCodesRegenerateBtn,
-                  isLoading: _isGenerating,
-                ),
-        ),
-      ),
       body: SafeArea(
-        bottom: false,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+          padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
           child: _newCodes != null ? _buildNewCodes(l10n) : _buildInitial(l10n),
         ),
       ),
@@ -188,6 +136,12 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
               ),
             ],
           ),
+        ),
+        const SizedBox(height: 24),
+        GradientButton(
+          onPressed: _isGenerating ? null : _regenerate,
+          label: l10n.recoveryCodesRegenerateBtn,
+          isLoading: _isGenerating,
         ),
       ],
     );
@@ -275,6 +229,42 @@ class _ManageRecoveryCodesPageState extends State<ManageRecoveryCodesPage> {
                   ),
                 ),
               ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        GradientButton(
+          onPressed: () => Navigator.of(context).pop(),
+          label: l10n.statusCompleted,
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          height: 52,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: _newCodes!.join(', ')));
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(AppLocalizations.of(context).allCopied,
+                    style: GoogleFonts.googleSans()),
+                backgroundColor: AppColors.success,
+                behavior: SnackBarBehavior.floating,
+              ));
+            },
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: AppColors.primary),
+              foregroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+            ),
+            icon: const Icon(Icons.copy_outlined, size: 18),
+            label: Text(
+              l10n.copyAll,
+              style: GoogleFonts.googleSans(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ),

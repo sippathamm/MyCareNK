@@ -94,12 +94,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         ),
         centerTitle: true,
       ),
-      bottomNavigationBar: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
-          child: _buildBottomActions(l10n, questions),
-        ),
-      ),
       body: Column(
         children: [
           if (_step >= 0 && !_isDone && cur != null) _buildProgress(cur),
@@ -116,11 +110,18 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 curve: Curves.easeInOut,
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
-                  child: _step == -1
-                      ? const AssessmentIntro()
-                      : _isDone
-                          ? _buildResult(riskCfg!, risk!, l10n, questions)
-                          : _buildQuestion(cur!),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _step == -1
+                          ? const AssessmentIntro()
+                          : _isDone
+                              ? _buildResult(riskCfg!, risk!, l10n, questions)
+                              : _buildQuestion(cur!),
+                      const SizedBox(height: 24),
+                      _buildBottomActions(l10n, questions),
+                    ],
+                  ),
                 ),
               ),
             ),
