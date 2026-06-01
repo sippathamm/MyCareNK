@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/recovery_service.dart';
 import 'registration_success_page.dart';
+import '../../../main/presentation/pages/main_page.dart';
 import '../../../../core/l10n/app_localizations.dart';
 
 class PrivacyPolicyPage extends StatefulWidget {
@@ -102,7 +103,24 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
       try {
         await recoveryService.saveRecoveryCodes(recoveryCodes);
       } catch (_) {
-        // Codes are still shown on the next screen; user can regenerate later.
+        // The account exists and the user is signed in, but the codes were not
+        // persisted. Never show codes we failed to save — that would hand the
+        // user worthless recovery codes. Send them into the app instead; they
+        // can generate fresh codes from Settings.
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            AppLocalizations.of(context).recoveryCodesSaveFailed,
+            style: GoogleFonts.googleSans(),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+          (route) => false,
+        );
+        return;
       }
 
       if (!mounted) return;
