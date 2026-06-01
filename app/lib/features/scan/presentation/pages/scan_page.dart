@@ -10,6 +10,7 @@ import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../widgets/scan_overlay.dart';
+import '../widgets/scan_result_widgets.dart';
 
 enum _ScanResultType {
   loading,
@@ -547,14 +548,14 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildPreviewHeader(request),
+        ScanPreviewHeader(request: request),
         const SizedBox(height: 24),
-        _buildStatusTracker(request),
+        ScanStatusTracker(request: request),
         const SizedBox(height: 32),
-        _buildQuantityCard(request),
-        _buildLubricantCard(request),
-        _buildLocationCard(request),
-        _buildMessageCard(request),
+        ScanQuantityCard(request: request),
+        ScanLubricantCard(request: request),
+        ScanLocationCard(request: request),
+        ScanMessageCard(request: request),
         const SizedBox(height: 32),
         GradientButton(
           height: 52,
@@ -564,324 +565,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           gradientColors: GradientButton.completedGradient,
         ),
       ],
-    );
-  }
-
-  Widget _buildPreviewHeader(CondomRequestModel request) {
-    final l10n = AppLocalizations.of(context);
-    final dt = request.updatedAt.toUtc().add(const Duration(hours: 7));
-    final dateStr =
-        '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              AppLocalizations.of(context).referenceNumber,
-              style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
-            ),
-            Text(
-              request.referenceNumber,
-              style: GoogleFonts.googleSans(
-                color: AppColors.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Container(
-              width: 32,
-              height: 32,
-              decoration: const BoxDecoration(
-                color: AppColors.statusReadyLight,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.local_shipping_outlined,
-                color: AppColors.statusReady,
-                size: 16,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              dateStr,
-              style: GoogleFonts.googleSans(color: Colors.grey[500], fontSize: 12),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusTracker(CondomRequestModel request) {
-    final steps = [
-      (label: AppLocalizations.of(context).statusPending, status: RequestStatus.pending,   color: AppColors.primary),
-      (label: AppLocalizations.of(context).statusPreparing, status: RequestStatus.preparing,  color: AppColors.statusPreparing),
-      (label: AppLocalizations.of(context).statusReady, status: RequestStatus.ready,      color: AppColors.statusReady),
-      (label: AppLocalizations.of(context).statusCompleted, status: RequestStatus.completed,  color: AppColors.statusCompleted),
-    ];
-    final currentIdx = steps.indexWhere((s) => s.status == request.status);
-    const double nodeSize = 28;
-    const double gap = 6;
-    final n = steps.length;
-
-    final iconItems = <Widget>[];
-    for (int idx = 0; idx < n; idx++) {
-      final step = steps[idx];
-      final isDone = idx < currentIdx;
-      final isCurrent = idx == currentIdx;
-      final isLast = idx == n - 1;
-      final showCheck = isDone || (isCurrent && isLast);
-      iconItems.add(AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: nodeSize, height: nodeSize,
-        decoration: BoxDecoration(
-          color: (isDone || isCurrent) ? step.color : const Color(0xFFE8E8E8),
-          shape: BoxShape.circle,
-        ),
-        child: Center(
-          child: showCheck
-              ? const Icon(Icons.check, color: Colors.white, size: 14)
-              : Text('${idx + 1}',
-                  style: GoogleFonts.googleSans(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: (isDone || isCurrent) ? Colors.white : AppColors.textMuted)),
-        ),
-      ));
-      if (!isLast) {
-        iconItems.addAll([
-          const SizedBox(width: gap),
-          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: isDone ? step.color : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(width: gap),
-        ]);
-      }
-    }
-
-    return Column(children: [
-      Row(children: iconItems),
-      const SizedBox(height: 4),
-      LayoutBuilder(builder: (context, constraints) {
-        final W = constraints.maxWidth;
-        final slotSpacing = (W - nodeSize) / (n - 1);
-        TextStyle labelStyle(int idx) {
-          final isDone = idx < currentIdx;
-          final isCurrent = idx == currentIdx;
-          return GoogleFonts.googleSans(
-            fontSize: 11,
-            fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w400,
-            color: isCurrent ? steps[idx].color : isDone ? AppColors.textSecondary : AppColors.textMuted,
-          );
-        }
-        return SizedBox(
-          height: 16,
-          child: Stack(clipBehavior: Clip.none, children: [
-            Positioned(left: 0, top: 0, child: Text(steps[0].label, style: labelStyle(0))),
-            Positioned(right: 0, top: 0, child: Text(steps[n - 1].label, style: labelStyle(n - 1))),
-            for (int i = 1; i < n - 1; i++)
-              Positioned(
-                left: nodeSize / 2 + i * slotSpacing,
-                top: 0,
-                child: FractionalTranslation(
-                  translation: const Offset(-0.5, 0),
-                  child: Text(steps[i].label, style: labelStyle(i)),
-                ),
-              ),
-          ]),
-        );
-      }),
-    ]);
-  }
-
-  Widget _buildQuantityCard(CondomRequestModel request) {
-    final total = request.condomQuantities.values.fold(0, (s, v) => s + v);
-    if (total == 0) return const SizedBox();
-
-    return _card(
-      header: Row(children: [
-        const Icon(Icons.inventory_2_outlined, color: Colors.white, size: 18),
-        const SizedBox(width: 8),
-        Text(AppLocalizations.of(context).condoms,
-            style: GoogleFonts.googleSans(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-      ]),
-      content: Column(
-        children: [
-          ...request.condomQuantities.entries
-              .where((e) => e.value > 0)
-              .map((e) => _infoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(AppLocalizations.of(context).total,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 16, fontWeight: FontWeight.bold)),
-              Text('$total ${AppLocalizations.of(context).pieces}',
-                  style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary)),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLubricantCard(CondomRequestModel request) {
-    if (request.lubricantQuantity == 0) return const SizedBox();
-
-    return _card(
-      header: Row(children: [
-        const Icon(Icons.add_circle_outline, color: Colors.white, size: 18),
-        const SizedBox(width: 8),
-        Text(AppLocalizations.of(context).extra,
-            style: GoogleFonts.googleSans(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-      ]),
-      content: _infoRow(AppLocalizations.of(context).lubricant, '${request.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
-    );
-  }
-
-  Widget _buildLocationCard(CondomRequestModel request) {
-    final l10n = AppLocalizations.of(context);
-    String outputDate = request.selectedDate ?? '-';
-    if (request.selectedDate != null && request.selectedDate!.contains('-')) {
-      try {
-        final d = DateTime.parse(request.selectedDate!);
-        outputDate = '${d.day} ${l10n.monthsFull[d.month - 1]} ${d.year + 543}';
-      } catch (_) {}
-    }
-
-    String outputTime = '-';
-    if (request.selectedTime != null && request.selectedTime!.contains(':')) {
-      final parts = request.selectedTime!.split(':');
-      if (parts.length >= 2) outputTime = '${parts[0]}:${parts[1]} ${l10n.timeWithUnit}';
-    }
-
-    return _card(
-      header: Row(children: [
-        const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 18),
-        const SizedBox(width: 8),
-        Text(l10n.pickupSectionTitle,
-            style: GoogleFonts.googleSans(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-      ]),
-      content: Column(
-        children: [
-          _infoRow(l10n.serviceCenterLabel, request.selectedServiceCenter ?? '-'),
-          _infoRow(l10n.dateLabel, outputDate),
-          _infoRow(l10n.timeLabel, outputTime),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMessageCard(CondomRequestModel request) {
-    if (request.message.isEmpty) return const SizedBox();
-
-    return _card(
-      header: Row(children: [
-        const Icon(Icons.comment_outlined, color: Colors.white, size: 18),
-        const SizedBox(width: 8),
-        Text(AppLocalizations.of(context).messageLabel,
-            style: GoogleFonts.googleSans(
-                color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-      ]),
-      content: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(request.message,
-            style: GoogleFonts.googleSans(
-                fontSize: 15, color: AppColors.textPrimary)),
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label,
-                style: GoogleFonts.googleSans(
-                    fontSize: 14, color: AppColors.textSecondary)),
-            Flexible(
-              child: Text(
-                value,
-                textAlign: TextAlign.right,
-                style: GoogleFonts.googleSans(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        const Divider(height: 1, color: Color(0xFFF0F0F0)),
-      ],
-    ),
-  );
-
-  Widget _card({
-    required Widget header,
-    required Widget content,
-    bool showDivider = false,
-    Widget? footer,
-  }) {
-    return Container(
-      margin: const EdgeInsets.only(top: 16),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.cardShadowMedium,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              child: header,
-            ),
-            Padding(padding: const EdgeInsets.all(16), child: content),
-            if (showDivider) const Divider(height: 1),
-            if (footer != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                child: footer,
-              ),
-          ],
-        ),
-      ),
     );
   }
 
@@ -901,7 +584,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _sheetHeader(
+        ScanSheetHeader(
           icon: Icons.block_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
@@ -964,7 +647,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _sheetHeader(
+        ScanSheetHeader(
           icon: Icons.warning_amber_outlined,
           iconColor: AppColors.primary,
           iconBgColor: AppColors.primaryShadow,
@@ -977,7 +660,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           runSpacing: 4,
           children: [
             Text(AppLocalizations.of(context).notReadyMsg1, style: textStyle),
-            _statusChip(chipLabel, chipColor),
+            ScanStatusChip(label: chipLabel, color: chipColor),
           ],
         ),
         const SizedBox(height: 6),
@@ -987,7 +670,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
           runSpacing: 4,
           children: [
             Text(AppLocalizations.of(context).notReadyMsg2, style: textStyle),
-            _statusChip(AppLocalizations.of(context).statusReady, AppColors.statusReady),
+            ScanStatusChip(label: AppLocalizations.of(context).statusReady, color: AppColors.statusReady),
             Text(AppLocalizations.of(context).notReadyMsg3, style: textStyle),
           ],
         ),
@@ -1012,7 +695,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _sheetHeader(
+        ScanSheetHeader(
           icon: Icons.block_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
@@ -1037,7 +720,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _sheetHeader(
+        ScanSheetHeader(
           icon: Icons.qr_code_outlined,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
@@ -1062,7 +745,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _sheetHeader(
+        ScanSheetHeader(
           icon: Icons.lock_outline,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
@@ -1107,7 +790,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        _sheetHeader(
+        ScanSheetHeader(
           icon: Icons.error_outline,
           iconColor: AppColors.error,
           iconBgColor: AppColors.errorShadow,
@@ -1123,50 +806,6 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
         ),
         const SizedBox(height: 24),
         _rescanButton(),
-      ],
-    );
-  }
-
-  Widget _statusChip(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: GoogleFonts.googleSans(
-          color: AppColors.white,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _sheetHeader({
-    required IconData icon,
-    required Color iconColor,
-    required Color iconBgColor,
-    required String title,
-  }) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(color: iconBgColor, shape: BoxShape.circle),
-          child: Icon(icon, color: iconColor, size: 22),
-        ),
-        const SizedBox(width: 12),
-        Text(
-          title,
-          style: GoogleFonts.googleSans(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-        ),
       ],
     );
   }
