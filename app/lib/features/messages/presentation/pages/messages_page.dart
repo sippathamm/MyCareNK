@@ -3,263 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
-
-// ---------------------------------------------------------------------------
-// Local data models
-// ---------------------------------------------------------------------------
-
-enum _MsgType {
-  submitted, preparing, ready, completed, cancelled,
-  apptPending, apptConfirmed, apptCompleted, apptCancelled,
-}
-
-_MsgType _parseMsgType(String? sourceType, String? eventType) {
-  if (sourceType == 'doctor_appointment') {
-    switch (eventType) {
-      case 'confirmed':          return _MsgType.apptConfirmed;
-      case 'completed':          return _MsgType.apptCompleted;
-      case 'cancelled_by_user':
-      case 'cancelled_by_staff': return _MsgType.apptCancelled;
-      default:                   return _MsgType.apptPending;
-    }
-  }
-  switch (eventType) {
-    case 'preparing':          return _MsgType.preparing;
-    case 'ready':              return _MsgType.ready;
-    case 'completed':          return _MsgType.completed;
-    case 'cancelled_by_staff':
-    case 'cancelled_by_user':  return _MsgType.cancelled;
-    default:                   return _MsgType.submitted;
-  }
-}
-
-class _MsgItem {
-  final String id;
-  final _MsgType type;
-  final String text;
-  final List<InlineSpan>? textSpans;
-  final DateTime createdAt;
-  bool isNew;
-
-  _MsgItem({
-    required this.id,
-    required this.type,
-    required this.text,
-    this.textSpans,
-    required this.createdAt,
-    required this.isNew,
-  });
-}
-
-class _RequestGroup {
-  final String requestId;
-  final String referenceNumber;
-  final String serviceCenter;
-  final List<_MsgItem> messages; // newest first
-
-  _RequestGroup({
-    required this.requestId,
-    required this.referenceNumber,
-    required this.serviceCenter,
-    required this.messages,
-  });
-
-  int get unreadCount => messages.where((m) => m.isNew).length;
-  _MsgItem get latestMessage => messages.first;
-  DateTime get latestDate => latestMessage.createdAt;
-}
-
-// ---------------------------------------------------------------------------
-// Thai date helpers
-// ---------------------------------------------------------------------------
-
-String _formatThaiDate(DateTime utc) {
-  final dt = utc.add(const Duration(hours: 7));
-  final l10n = AppLocalizations.current;
-  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543}';
-}
-
-String _formatTime(DateTime utc) {
-  final dt = utc.add(const Duration(hours: 7));
-  final h = dt.hour.toString().padLeft(2, '0');
-  final m = dt.minute.toString().padLeft(2, '0');
-  return '$h:$m';
-}
-
-// ---------------------------------------------------------------------------
-// Type config — ตรงกับ request_history_page
-// ---------------------------------------------------------------------------
-
-class _TypeConfig {
-  final IconData icon;
-  final Color iconColor;
-  final Color iconBg;
-  final String label;
-
-  const _TypeConfig({
-    required this.icon,
-    required this.iconColor,
-    required this.iconBg,
-    required this.label,
-  });
-}
-
-Map<_MsgType, _TypeConfig> _buildTypeConfigs(AppLocalizations l10n) => {
-  _MsgType.submitted: _TypeConfig(
-    icon: Icons.assignment_outlined,
-    iconColor: AppColors.primary,
-    iconBg: AppColors.statusPendingLight,
-    label: l10n.statusPending,
-  ),
-  _MsgType.preparing: _TypeConfig(
-    icon: Icons.inventory_2_outlined,
-    iconColor: AppColors.statusPreparing,
-    iconBg: AppColors.statusPreparingLight,
-    label: l10n.statusPreparing,
-  ),
-  _MsgType.ready: _TypeConfig(
-    icon: Icons.local_shipping_outlined,
-    iconColor: AppColors.statusReady,
-    iconBg: AppColors.statusReadyLight,
-    label: l10n.statusReady,
-  ),
-  _MsgType.completed: _TypeConfig(
-    icon: Icons.check_circle_outline,
-    iconColor: AppColors.statusCompleted,
-    iconBg: AppColors.statusCompletedLight,
-    label: l10n.statusSuccess,
-  ),
-  _MsgType.cancelled: _TypeConfig(
-    icon: Icons.cancel_outlined,
-    iconColor: Colors.grey,
-    iconBg: const Color(0xFFEEEEEE),
-    label: l10n.statusCancelled,
-  ),
-  _MsgType.apptPending: _TypeConfig(
-    icon: Icons.calendar_today_outlined,
-    iconColor: AppColors.primary,
-    iconBg: AppColors.statusPendingLight,
-    label: l10n.statusPendingAppt,
-  ),
-  _MsgType.apptConfirmed: _TypeConfig(
-    icon: Icons.event_available_outlined,
-    iconColor: AppColors.statusReady,
-    iconBg: AppColors.statusReadyLight,
-    label: l10n.statusConfirmedAppt,
-  ),
-  _MsgType.apptCompleted: _TypeConfig(
-    icon: Icons.check_circle_outline,
-    iconColor: AppColors.statusCompleted,
-    iconBg: AppColors.statusCompletedLight,
-    label: l10n.statusCompleted,
-  ),
-  _MsgType.apptCancelled: _TypeConfig(
-    icon: Icons.cancel_outlined,
-    iconColor: Colors.grey,
-    iconBg: const Color(0xFFEEEEEE),
-    label: l10n.statusCancelled,
-  ),
-};
-
-// ---------------------------------------------------------------------------
-// Build message text from event_type + metadata
-// ---------------------------------------------------------------------------
-
-List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
-  final spans = <InlineSpan>[];
-  String remaining = full;
-  for (final part in boldParts) {
-    final idx = remaining.indexOf(part);
-    if (idx < 0) {
-      spans.add(TextSpan(text: remaining));
-      return spans;
-    }
-    if (idx > 0) spans.add(TextSpan(text: remaining.substring(0, idx)));
-    spans.add(TextSpan(text: part, style: const TextStyle(fontWeight: FontWeight.bold)));
-    remaining = remaining.substring(idx + part.length);
-  }
-  if (remaining.isNotEmpty) spans.add(TextSpan(text: remaining));
-  return spans;
-}
-
-(String, List<InlineSpan>?) _buildAppointmentMessage(
-  String eventType,
-  Map<String, dynamic> metadata,
-  AppLocalizations l10n,
-) {
-  switch (eventType) {
-    case 'confirmed':
-      final dateRaw = metadata['selected_date'] as String? ?? '';
-      final timeRaw = metadata['selected_time'] as String? ?? '';
-      final serviceCenter = metadata['selected_service_center'] as String? ?? '';
-      String datePart = '';
-      if (dateRaw.isNotEmpty) {
-        try {
-          final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
-        } catch (_) {}
-      }
-      final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
-      final dateTimeLabel = '$datePart ${l10n.timeLabel} $timePart ${l10n.timeWithUnit}';
-      final full = l10n.msgApptConfirmed(serviceCenter, dateTimeLabel);
-      return (full, _buildBoldSpans(full, [serviceCenter, dateTimeLabel]));
-    case 'completed':
-      return (l10n.msgApptCompleted, null);
-    case 'cancelled_by_user':
-      return (l10n.msgApptCancelledByUser, null);
-    case 'cancelled_by_staff':
-      final path = l10n.msgApptCancelledByStaffPath;
-      final full = l10n.msgApptCancelledByStaff(path);
-      return (full, _buildBoldSpans(full, [path]));
-    default: // pending
-      return (l10n.msgApptPending, null);
-  }
-}
-
-(String, List<InlineSpan>?) _buildMessage(
-  String sourceType,
-  String eventType,
-  Map<String, dynamic> metadata,
-  AppLocalizations l10n,
-) {
-  if (sourceType == 'doctor_appointment') {
-    return _buildAppointmentMessage(eventType, metadata, l10n);
-  }
-  switch (eventType) {
-    case 'preparing':
-      return (l10n.msgCondomPreparing, null);
-
-    case 'ready':
-      final dateRaw = metadata['selected_date'] as String? ?? '';
-      final timeRaw = metadata['selected_time'] as String? ?? '';
-      final serviceCenter = metadata['selected_service_center'] as String? ?? '';
-      String datePart = '';
-      if (dateRaw.isNotEmpty) {
-        try {
-          final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
-        } catch (_) {}
-      }
-      final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
-      final dateTimeLabel = '$datePart ${l10n.timeLabel} $timePart ${l10n.timeWithUnit}';
-      final full = l10n.msgCondomReady(serviceCenter, dateTimeLabel);
-      return (full, _buildBoldSpans(full, [serviceCenter, dateTimeLabel]));
-
-    case 'completed':
-      return (l10n.msgCondomReceived, null);
-
-    case 'cancelled_by_staff':
-      final path = l10n.msgCondomCancelledByStaffPath;
-      final full = l10n.msgCondomCancelledByStaff(path);
-      return (full, _buildBoldSpans(full, [path]));
-
-    case 'cancelled_by_user':
-      return (l10n.msgCondomCancelledByUser, null);
-
-    default: // pending
-      return (l10n.msgCondomPending, null);
-  }
-}
+import '../../data/models/message_models.dart';
 
 // ---------------------------------------------------------------------------
 // Page
@@ -276,7 +20,7 @@ class MessagesPage extends StatefulWidget {
 }
 
 class _MessagesPageState extends State<MessagesPage> {
-  List<_RequestGroup> _groups = [];
+  List<RequestGroup> _groups = [];
   bool _isLoading = true;
   bool _isLoggedIn = true;
   RealtimeChannel? _subscription;
@@ -361,18 +105,18 @@ class _MessagesPageState extends State<MessagesPage> {
         (rawReads as List).map((r) => r['notification_id'] as String),
       );
 
-      final groupMap = <String, _RequestGroup>{};
+      final groupMap = <String, RequestGroup>{};
       for (final n in rawNotifs as List) {
         final sourceId = n['source_id'] as String? ?? '';
         final sourceType = n['source_type'] as String? ?? '';
         final refNum = n['reference_number'] as String? ?? sourceId;
         final eventType = n['event_type'] as String? ?? '';
         final metadata = (n['metadata'] as Map<String, dynamic>?) ?? {};
-        final (text, textSpans) = _buildMessage(sourceType, eventType, metadata, AppLocalizations.current);
+        final (text, textSpans) = buildMessage(sourceType, eventType, metadata, AppLocalizations.current);
 
-        final item = _MsgItem(
+        final item = MsgItem(
           id: n['id'] as String,
-          type: _parseMsgType(sourceType, eventType),
+          type: parseMsgType(sourceType, eventType),
           text: text,
           textSpans: textSpans,
           createdAt: DateTime.parse(n['created_at'] as String),
@@ -382,7 +126,7 @@ class _MessagesPageState extends State<MessagesPage> {
         if (groupMap.containsKey(sourceId)) {
           groupMap[sourceId]!.messages.add(item);
         } else {
-          groupMap[sourceId] = _RequestGroup(
+          groupMap[sourceId] = RequestGroup(
             requestId: sourceId,
             referenceNumber: refNum,
             serviceCenter: '',
@@ -435,7 +179,7 @@ class _MessagesPageState extends State<MessagesPage> {
     }
   }
 
-  Future<void> _markGroupRead(_RequestGroup group) async {
+  Future<void> _markGroupRead(RequestGroup group) async {
     if (group.messages.every((m) => !m.isNew)) return;
     final session = Supabase.instance.client.auth.currentSession;
     if (session == null) return;
@@ -623,9 +367,9 @@ class _MessagesPageState extends State<MessagesPage> {
 // ---------------------------------------------------------------------------
 
 class _RequestGroupTile extends StatefulWidget {
-  final _RequestGroup group;
+  final RequestGroup group;
   final bool defaultOpen;
-  final Future<void> Function(_RequestGroup) onExpand;
+  final Future<void> Function(RequestGroup) onExpand;
 
   const _RequestGroupTile({
     required this.group,
@@ -682,9 +426,9 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final g = widget.group;
-    final typeConfigs = _buildTypeConfigs(l10n);
+    final typeConfigs = buildTypeConfigs(l10n);
     final latestCfg =
-        typeConfigs[g.latestMessage.type] ?? typeConfigs[_MsgType.submitted]!;
+        typeConfigs[g.latestMessage.type] ?? typeConfigs[MsgType.submitted]!;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -811,7 +555,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
                         Text(
-                          _formatThaiDate(g.latestDate),
+                          formatThaiDate(g.latestDate),
                           style: GoogleFonts.googleSans(
                             fontSize: 11,
                             color: Colors.grey[400],
@@ -845,7 +589,7 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
                           child: Column(
                             children: [
                               Text(
-                                _formatThaiDate(g.latestDate),
+                                formatThaiDate(g.latestDate),
                                 style: GoogleFonts.googleSans(
                                   fontSize: 11,
                                   color: Colors.grey[400],
@@ -877,15 +621,15 @@ class _RequestGroupTileState extends State<_RequestGroupTile>
 // ---------------------------------------------------------------------------
 
 class _MessageBubble extends StatelessWidget {
-  final _MsgItem msg;
+  final MsgItem msg;
   final bool isLast;
 
   const _MessageBubble({required this.msg, required this.isLast});
 
   @override
   Widget build(BuildContext context) {
-    final typeConfigs = _buildTypeConfigs(AppLocalizations.of(context));
-    final cfg = typeConfigs[msg.type] ?? typeConfigs[_MsgType.submitted]!;
+    final typeConfigs = buildTypeConfigs(AppLocalizations.of(context));
+    final cfg = typeConfigs[msg.type] ?? typeConfigs[MsgType.submitted]!;
     final bodyStyle = GoogleFonts.googleSans(
       fontSize: 14,
       color: AppColors.textPrimary,
@@ -972,7 +716,7 @@ class _MessageBubble extends StatelessWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          '${_formatTime(msg.createdAt)} ${AppLocalizations.of(context).timeWithUnit}',
+                          '${formatTime(msg.createdAt)} ${AppLocalizations.of(context).timeWithUnit}',
                           style: GoogleFonts.googleSans(
                             fontSize: 11,
                             color: Colors.grey[400],
