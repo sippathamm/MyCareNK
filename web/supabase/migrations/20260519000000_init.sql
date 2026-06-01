@@ -1671,6 +1671,48 @@ END;
 $function$;
 
 
+-- ── Self-service account deletion ───────────────────────────
+-- End-users (@mycarenk.local) delete their own account.
+-- Blocks deletion while the user still has unfinished condom requests
+-- (pending/preparing/ready) or doctor appointments (pending/confirmed) so
+-- staff are not left handling records whose user_id will be SET NULL.
+CREATE OR REPLACE FUNCTION public.delete_own_account()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'auth'
+AS $$
+DECLARE
+  v_user_id uuid;
+BEGIN
+  v_user_id := (SELECT auth.uid());
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Not authenticated';
+  END IF;
+  IF NOT EXISTS (
+    SELECT 1 FROM auth.users
+    WHERE id = v_user_id AND email LIKE '%@mycarenk.local'
+  ) THEN
+    RAISE EXCEPTION 'Not authorized';
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM public.condom_requests
+    WHERE user_id = v_user_id
+      AND request_status IN ('pending', 'preparing', 'ready')
+  ) OR EXISTS (
+    SELECT 1 FROM public.doctor_appointments
+    WHERE user_id = v_user_id
+      AND appointment_status IN ('pending', 'confirmed')
+  ) THEN
+    RAISE EXCEPTION 'ACTIVE_RECORDS_EXIST';
+  END IF;
+
+  DELETE FROM auth.users WHERE id = v_user_id;
+END;
+$$;
+
+
 -- ── Service centers ─────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.get_service_centers()
 RETURNS SETOF public.service_centers
@@ -2341,6 +2383,7 @@ GRANT EXECUTE ON FUNCTION public.get_days_until_reset()       TO authenticated;
 GRANT EXECUTE ON FUNCTION public.save_recovery_codes(text[])  TO authenticated;
 GRANT EXECUTE ON FUNCTION public.verify_recovery_code(text, text)                         TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.verify_recovery_code_and_reset_password(text, text, text) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.delete_own_account()        TO authenticated;
 
 -- Public article RPCs (accessible to unauthenticated app users)
 GRANT EXECUTE ON FUNCTION public.get_published_articles(integer, integer) TO anon, authenticated;
