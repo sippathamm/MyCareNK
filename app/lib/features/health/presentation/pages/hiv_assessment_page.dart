@@ -20,12 +20,19 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
   final Map<int, String> _answers = {};
   String? _selected;
   int _animDir = 1;
+  final ScrollController _scrollController = ScrollController();
 
   static const int _totalQ = 6;
 
   bool get _isDone => _step >= _totalQ;
 
   bool _visible = true;
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   void _slide(int nextStep, int dir) {
     setState(() {
@@ -38,6 +45,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         _step = nextStep;
         _selected = _answers[nextStep];
         _visible = true;
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          _scrollController.jumpTo(0);
+        }
       });
     });
   }
@@ -109,6 +121,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 duration: const Duration(milliseconds: 200),
                 curve: Curves.easeInOut,
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
