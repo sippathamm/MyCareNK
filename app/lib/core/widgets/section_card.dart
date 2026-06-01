@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import '../../../../../core/constants/app_colors.dart';
+import '../constants/app_colors.dart';
 
-/// White rounded card with a primary gradient header (icon + title) above a
-/// padded [child]. Shared by the condom-request form sections.
+/// White rounded card with a gradient header (icon + title) above a padded
+/// [child]. Shared by the condom-request and appointment-booking sections.
+/// [headerColors] overrides the default primary gradient (e.g. the lubricant
+/// gradient used by the doctor-booking flow).
 class SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final Widget child;
   final EdgeInsetsGeometry margin;
+  final List<Color>? headerColors;
 
   const SectionCard({
     super.key,
@@ -16,6 +19,7 @@ class SectionCard extends StatelessWidget {
     required this.icon,
     required this.child,
     this.margin = const EdgeInsets.only(bottom: 20),
+    this.headerColors,
   });
 
   @override
@@ -42,9 +46,10 @@ class SectionCard extends StatelessWidget {
               padding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               width: double.infinity,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
+                  colors: headerColors ??
+                      const [AppColors.primaryDark, AppColors.primary],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),

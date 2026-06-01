@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/models/service_center_model.dart';
 import '../../../../core/services/service_center_service.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../../../core/widgets/section_card.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import 'appointment_history_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
@@ -1013,6 +1014,8 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
 
 // ─── Shared widgets ───────────────────────────────────────────────────────────
 
+/// The shared [SectionCard] with the lubricant-themed gradient header used
+/// throughout the doctor-booking flow.
 class _SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -1025,57 +1028,11 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.cardShadowMedium,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.lubricantDark, AppColors.statusPreparing],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(icon, color: Colors.white, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: GoogleFonts.googleSans(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: child,
-            ),
-          ],
-        ),
-      ),
+    return SectionCard(
+      title: title,
+      icon: icon,
+      headerColors: const [AppColors.lubricantDark, AppColors.statusPreparing],
+      child: child,
     );
   }
 }

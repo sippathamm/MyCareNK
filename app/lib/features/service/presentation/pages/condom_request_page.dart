@@ -10,7 +10,7 @@ import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../../core/widgets/request_step_indicator.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
-import '../widgets/section_card.dart';
+import '../../../../../core/widgets/section_card.dart';
 import '../widgets/quota_progress_bar.dart';
 import 'condom_request_confirm_page.dart';
 import 'request_history_page.dart';

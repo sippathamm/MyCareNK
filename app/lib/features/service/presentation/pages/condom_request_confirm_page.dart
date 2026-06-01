@@ -4,7 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../../core/widgets/request_step_indicator.dart';
-import '../widgets/section_card.dart';
+import '../../../../../core/widgets/section_card.dart';
 import '../../../../../core/widgets/info_row.dart';
 import 'condom_request_success_page.dart';
 import 'request_history_page.dart';
