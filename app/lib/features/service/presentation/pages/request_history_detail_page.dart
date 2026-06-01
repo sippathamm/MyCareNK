@@ -6,7 +6,7 @@ import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
-import '../widgets/info_row.dart';
+import '../../../../../core/widgets/info_row.dart';
 import '../widgets/request_status_visuals.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 

@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/doctor_appointment_model.dart';
+import '../widgets/appointment_status_visuals.dart';
 import 'appointment_history_detail_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
@@ -313,7 +314,8 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
   }
 
   Widget _buildAppointmentCard(DoctorAppointmentModel data) {
-    final cfg = _statusConfig(data.appointmentStatus);
+    final visuals = AppointmentStatusVisuals.of(data.appointmentStatus);
+    final statusLabel = _statusLabel(data.appointmentStatus);
     final date = data.selectedDate;
     final dateStr =
         '${date.day} ${AppLocalizations.of(context).monthsFull[date.month]} ${date.year + 543}, ${data.selectedTime} ${AppLocalizations.of(context).timeWithUnit}';
@@ -338,9 +340,9 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                 Container(
                   width: 48,
                   height: 48,
-                  decoration:
-                      BoxDecoration(color: cfg.iconBg, shape: BoxShape.circle),
-                  child: Icon(cfg.icon, color: cfg.iconColor, size: 24),
+                  decoration: BoxDecoration(
+                      color: visuals.lightBg, shape: BoxShape.circle),
+                  child: Icon(visuals.icon, color: visuals.color, size: 24),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -362,9 +364,9 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                      color: cfg.badgeColor,
+                      color: visuals.color,
                       borderRadius: BorderRadius.circular(20)),
-                  child: Text(cfg.label,
+                  child: Text(statusLabel,
                       style: GoogleFonts.googleSans(
                           color: AppColors.white,
                           fontSize: 12,
@@ -386,7 +388,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                style: TextButton.styleFrom(overlayColor: cfg.iconColor.withValues(alpha: 0.12)),
+                style: TextButton.styleFrom(overlayColor: visuals.color.withValues(alpha: 0.12)),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (_) => AppointmentHistoryDetailPage(data: data),
@@ -397,11 +399,11 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                   children: [
                     Text(AppLocalizations.of(context).details,
                         style: GoogleFonts.googleSans(
-                            color: cfg.iconColor,
+                            color: visuals.color,
                             fontSize: 14,
                             fontWeight: FontWeight.w500)),
                     Icon(Icons.chevron_right,
-                        size: 16, color: cfg.iconColor),
+                        size: 16, color: visuals.color),
                   ],
                 ),
               ),
@@ -428,44 +430,19 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
 
   // ── Helpers ──────────────────────────────────────────────────────────────────
 
-  ({Color iconBg, Color iconColor, Color badgeColor, String label, IconData icon})
-      _statusConfig(String status) {
+  String _statusLabel(String status) {
     final l10n = AppLocalizations.of(context);
     switch (status) {
       case 'pending':
-        return (
-          iconBg: AppColors.statusPendingLight,
-          iconColor: AppColors.primary,
-          badgeColor: AppColors.primary,
-          label: l10n.statusPendingAppt,
-          icon: Icons.schedule_outlined,
-        );
+        return l10n.statusPendingAppt;
       case 'confirmed':
-        return (
-          iconBg: AppColors.statusReadyLight,
-          iconColor: AppColors.statusReady,
-          badgeColor: AppColors.statusReady,
-          label: l10n.statusConfirmedAppt,
-          icon: Icons.event_available_outlined,
-        );
+        return l10n.statusConfirmedAppt;
       case 'completed':
-        return (
-          iconBg: AppColors.statusCompletedLight,
-          iconColor: AppColors.statusCompleted,
-          badgeColor: AppColors.statusCompleted,
-          label: l10n.statusCompleted,
-          icon: Icons.check_circle_outline,
-        );
-      default: // cancelled_by_user / cancelled_by_staff
-        return (
-          iconBg: Colors.grey.shade200,
-          iconColor: Colors.grey.shade600,
-          badgeColor: Colors.grey.shade600,
-          label: status == 'cancelled_by_staff'
-              ? l10n.statusCancelledByStaff
-              : l10n.statusCancelledByUser,
-          icon: Icons.cancel_outlined,
-        );
+        return l10n.statusCompleted;
+      case 'cancelled_by_staff':
+        return l10n.statusCancelledByStaff;
+      default: // cancelled_by_user
+        return l10n.statusCancelledByUser;
     }
   }
 }
