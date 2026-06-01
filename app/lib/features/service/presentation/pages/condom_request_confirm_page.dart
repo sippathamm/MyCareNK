@@ -5,6 +5,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../../core/widgets/request_step_indicator.dart';
 import '../widgets/section_card.dart';
+import '../widgets/info_row.dart';
 import 'condom_request_success_page.dart';
 import 'request_history_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
@@ -269,37 +270,6 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 14, color: AppColors.textSecondary)),
-              Flexible(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
-        ],
-      ),
-    );
-  }
-
   // ── Monthly progress ────────────────────────────────────────────────────────
 
   Widget _buildMonthlyProgress() {
@@ -420,7 +390,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               .where((e) => e.value > 0)
               .map((e) {
                 final l10n = AppLocalizations.of(context);
-                return _buildInfoRow('${l10n.sizeLabel} ${e.key} ${l10n.sizeMm}', '${e.value} ${l10n.pieces}');
+                return InfoRow('${l10n.sizeLabel} ${e.key} ${l10n.sizeMm}', '${e.value} ${l10n.pieces}');
               }),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -446,7 +416,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
     return SectionCard(
       title: AppLocalizations.of(context).extra,
       icon: Icons.add_circle_outline,
-      child: _buildInfoRow(AppLocalizations.of(context).lubricant, '${widget.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
+      child: InfoRow(AppLocalizations.of(context).lubricant, '${widget.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
@@ -464,9 +434,9 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
       icon: Icons.calendar_today_outlined,
       child: Column(
         children: [
-          _buildInfoRow(l10n.serviceCenterLabel, widget.selectedServiceCenter ?? '-'),
-          _buildInfoRow(l10n.dateLabel, dateStr),
-          _buildInfoRow(l10n.timeLabel, timeStr),
+          InfoRow(l10n.serviceCenterLabel, widget.selectedServiceCenter ?? '-'),
+          InfoRow(l10n.dateLabel, dateStr),
+          InfoRow(l10n.timeLabel, timeStr),
         ],
       ),
     );

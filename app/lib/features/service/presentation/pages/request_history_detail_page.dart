@@ -6,6 +6,7 @@ import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
+import '../widgets/info_row.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 class RequestHistoryDetailPage extends StatefulWidget {
@@ -429,37 +430,6 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 14, color: AppColors.textSecondary)),
-              Flexible(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuantityCard() {
     final totalCondoms = _currentData.condomQuantities.values.fold(0, (sum, val) => sum + val);
     if (totalCondoms == 0) return const SizedBox();
@@ -476,7 +446,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         children: [
           ..._currentData.condomQuantities.entries
               .where((e) => e.value > 0)
-              .map((e) => _buildInfoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
+              .map((e) => InfoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -507,7 +477,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
-      content: _buildInfoRow(AppLocalizations.of(context).lubricant, '${_currentData.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
+      content: InfoRow(AppLocalizations.of(context).lubricant, '${_currentData.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
@@ -540,9 +510,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       ]),
       content: Column(
         children: [
-          _buildInfoRow(AppLocalizations.of(context).serviceCenterLabel, _currentData.selectedServiceCenter ?? '-'),
-          _buildInfoRow(AppLocalizations.of(context).dateLabel, outputDate),
-          _buildInfoRow(AppLocalizations.of(context).timeLabel, outputTime),
+          InfoRow(AppLocalizations.of(context).serviceCenterLabel, _currentData.selectedServiceCenter ?? '-'),
+          InfoRow(AppLocalizations.of(context).dateLabel, outputDate),
+          InfoRow(AppLocalizations.of(context).timeLabel, outputTime),
         ],
       ),
     );
