@@ -9,6 +9,7 @@ import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import '../widgets/scan_overlay.dart';
 
 enum _ScanResultType {
   loading,
@@ -154,8 +155,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               final cy = constraints.maxHeight / 2 - 40;
               final scanWindow = Rect.fromCenter(
                 center: Offset(cx, cy),
-                width: _OverlayPainter._frameSize,
-                height: _OverlayPainter._frameSize,
+                width: kScanFrameSize,
+                height: kScanFrameSize,
               );
               return MobileScanner(
                 controller: _controller,
@@ -164,7 +165,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
               );
             },
           ),
-          _ScannerOverlay(),
+          const ScannerOverlay(),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
@@ -282,101 +283,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     );
   }
 }
-
-class _ScannerOverlay extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      painter: _OverlayPainter(),
-      child: const SizedBox.expand(),
-    );
-  }
-}
-
-class _OverlayPainter extends CustomPainter {
-  static const double _frameSize = 240;
-  static const double _cornerLength = 28;
-  static const double _cornerRadius = 8;
-  static const double _cornerStroke = 4;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final double cx = size.width / 2;
-    final double cy = size.height / 2 - 40;
-
-    final Rect frame = Rect.fromCenter(
-      center: Offset(cx, cy),
-      width: _frameSize,
-      height: _frameSize,
-    );
-
-    final overlayPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
-      ..addRRect(
-        RRect.fromRectAndRadius(frame, const Radius.circular(_cornerRadius)),
-      )
-      ..fillType = PathFillType.evenOdd;
-
-    canvas.drawPath(
-      overlayPath,
-      Paint()..color = Colors.black.withValues(alpha: 0.55),
-    );
-
-    final cornerPaint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = _cornerStroke
-      ..strokeCap = StrokeCap.round;
-
-    _drawCorners(canvas, frame, cornerPaint);
-  }
-
-  void _drawCorners(Canvas canvas, Rect frame, Paint paint) {
-    final l = _cornerLength;
-    final r = _cornerRadius;
-    final left = frame.left;
-    final top = frame.top;
-    final right = frame.right;
-    final bottom = frame.bottom;
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(left + r, top)
-        ..lineTo(left + l, top)
-        ..moveTo(left, top + r)
-        ..lineTo(left, top + l),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(right - l, top)
-        ..lineTo(right - r, top)
-        ..moveTo(right, top + r)
-        ..lineTo(right, top + l),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(left, bottom - l)
-        ..lineTo(left, bottom - r)
-        ..moveTo(left + r, bottom)
-        ..lineTo(left + l, bottom),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(right, bottom - l)
-        ..lineTo(right, bottom - r)
-        ..moveTo(right - l, bottom)
-        ..lineTo(right - r, bottom),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
 class _ScanResultSheet extends StatefulWidget {
   final String payload;
   final VoidCallback onRescan;
