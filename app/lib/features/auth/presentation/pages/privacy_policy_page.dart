@@ -146,6 +146,19 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
         Navigator.of(context).pop();
         return;
       }
+      if (msg.toLowerCase().contains('weak') ||
+          msg.toLowerCase().contains('easy to guess')) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            AppLocalizations.of(context).passwordWeak,
+            style: GoogleFonts.googleSans(),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+        Navigator.of(context).pop();
+        return;
+      }
       if (msg.toLowerCase().contains('already registered') ||
           msg.toLowerCase().contains('already exists')) {
         msg = AppLocalizations.of(context).usernameExists;
