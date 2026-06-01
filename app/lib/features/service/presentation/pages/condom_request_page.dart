@@ -11,7 +11,7 @@ import '../../../../../core/widgets/request_step_indicator.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
 import '../../../../../core/widgets/section_card.dart';
-import '../widgets/quota_progress_bar.dart';
+import '../widgets/condom_request_form_widgets.dart';
 import 'condom_request_confirm_page.dart';
 import 'request_history_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
@@ -208,7 +208,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildMonthlyProgress(),
+                  MonthlyQuotaSummary(
+                    currentCondomUsed: _currentMonthlyUsed,
+                    selectedCondoms: _totalSelected,
+                    currentLubricantUsed: _currentMonthlyLubricantUsed,
+                    selectedLubricant: _lubricantQuantity,
+                    animationVersion: _animationVersion,
+                  ),
                   const SizedBox(height: 20),
                   _buildQuantityCard(),
                   const SizedBox(height: 20),
@@ -248,19 +254,41 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                                 : Column(
                                     children: List.generate(
                                       _centers.length,
-                                      (i) => _buildLocationTile(_centers[i], i),
+                                      (i) => ServiceCenterPickerTile(
+                                        center: _centers[i],
+                                        index: i,
+                                        selected: _selectedServiceCenter ==
+                                            _centers[i].name,
+                                        onTap: () => setState(() {
+                                          if (_selectedServiceCenter !=
+                                              _centers[i].name) {
+                                            _selectedTime = null;
+                                          }
+                                          _selectedServiceCenter =
+                                              _centers[i].name;
+                                        }),
+                                      ),
                                     ),
                                   ),
                   ),
                   SectionCard(
                     title: AppLocalizations.of(context).selectDateTitle,
                     icon: Icons.event_outlined,
-                    child: _buildDatePicker(),
+                    child: PickupDateStrip(
+                      center: _selectedCenter,
+                      dates: _dates,
+                      selectedDate: _selectedDate,
+                      onSelect: (d) => setState(() => _selectedDate = d),
+                    ),
                   ),
                   SectionCard(
                     title: AppLocalizations.of(context).selectTimeTitle,
                     icon: Icons.schedule_outlined,
-                    child: _buildTimePicker(),
+                    child: PickupTimePicker(
+                      center: _selectedCenter,
+                      selectedTime: _selectedTime,
+                      onSelect: (t) => setState(() => _selectedTime = t),
+                    ),
                   ),
                   SectionCard(
                     title: AppLocalizations.of(context).addMessageTitle,
@@ -316,379 +344,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     );
   }
 
-  // ── Location tiles ──────────────────────────────────────────────────────────
-
-  Widget _buildLocationTile(ServiceCenterModel center, int index) {
-    final sel = _selectedServiceCenter == center.name;
-    return GestureDetector(
-      onTap: () => setState(() {
-        if (_selectedServiceCenter != center.name) _selectedTime = null;
-        _selectedServiceCenter = center.name;
-      }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: sel ? AppColors.primaryCardStart : Colors.white,
-          border: Border.all(
-              color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
-              width: 1.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.primary : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: sel ? Colors.white : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    center.name,
-                    style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  if (center.operatingHours != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      center.operatingHours!,
-                      style: GoogleFonts.googleSans(
-                        fontSize: 14,
-                        color: AppColors.textHint,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (sel)
-              const Icon(Icons.check_circle, color: AppColors.primary, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // ── Date picker ─────────────────────────────────────────────────────────────
-
-  Widget _buildDatePicker() {
-    final center = _selectedCenter;
-    if (center == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            AppLocalizations.of(context).selectServiceCenterFirst,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    if (!center.condomServiceEnabled) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            AppLocalizations.of(context).noCondomService,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    return SizedBox(
-      height: 84,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _dates.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final d = _dates[i];
-          final l10n = AppLocalizations.of(context);
-          final dow = d.weekday == 7 ? 0 : d.weekday;
-          final sel = _selectedDate != null &&
-              _selectedDate!.year == d.year &&
-              _selectedDate!.month == d.month &&
-              _selectedDate!.day == d.day;
-          return GestureDetector(
-            onTap: () => setState(() => _selectedDate = d),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 60,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.primary : Colors.white,
-                border: Border.all(
-                    color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
-                    width: 1.5),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    l10n.daysShort[dow],
-                    style: GoogleFonts.googleSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: sel
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textHint,
-                    ),
-                  ),
-                  Text(
-                    '${d.day}',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: sel ? Colors.white : AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    l10n.monthsShort[d.month],
-                    style: GoogleFonts.googleSans(
-                      fontSize: 11,
-                      color: sel
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // ── Time picker ─────────────────────────────────────────────────────────────
-
   ServiceCenterModel? get _selectedCenter =>
       _centers.where((c) => c.name == _selectedServiceCenter).firstOrNull;
-
-  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
-
-  Widget _buildTimePicker() {
-    final center = _selectedCenter;
-    if (center == null || !center.condomServiceEnabled) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            center == null
-                ? AppLocalizations.of(context).selectServiceCenterFirst
-                : AppLocalizations.of(context).noCondomService,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-
-    Widget chip(String t) {
-      final parts = t.split(':');
-      final tod =
-          TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
-      final sel = _selectedTime == tod;
-      return GestureDetector(
-        onTap: () => setState(() => _selectedTime = tod),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 150),
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-          decoration: BoxDecoration(
-            color: sel ? AppColors.primary : Colors.white,
-            border: Border.all(
-                color: sel ? AppColors.primary : const Color(0xFFE8E8E8),
-                width: 1.5),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Builder(builder: (context) => Text(
-            '$t ${AppLocalizations.of(context).timeWithUnit}',
-            style: GoogleFonts.googleSans(
-              fontSize: 15,
-              fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-              color: sel ? Colors.white : AppColors.textPrimary,
-            ),
-          )),
-        ),
-      );
-    }
-
-    Widget label(String text) => Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Text(text,
-              style: GoogleFonts.googleSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.textSecondary)),
-        );
-
-    final times = center.pickupTimes;
-    final morning = times.where((t) => _hourOf(t) < 12).toList();
-    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
-
-    Widget dash() => Text('–',
-        style: GoogleFonts.googleSans(
-            fontSize: 15, color: AppColors.textHint));
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        label(AppLocalizations.of(context).morning),
-        morning.isNotEmpty
-            ? Wrap(spacing: 8, runSpacing: 8, children: morning.map(chip).toList())
-            : dash(),
-        const SizedBox(height: 14),
-        label(AppLocalizations.of(context).afternoon),
-        afternoon.isNotEmpty
-            ? Wrap(spacing: 8, runSpacing: 8, children: afternoon.map(chip).toList())
-            : dash(),
-      ],
-    );
-  }
-
-  // ── Monthly progress ────────────────────────────────────────────────────────
-
-  Widget _buildMonthlyProgress() {
-    final int totalUsed = _currentMonthlyUsed + _totalSelected;
-    final int remaining =
-        (AppConstants.maxCondomQuota - totalUsed).clamp(0, AppConstants.maxCondomQuota);
-    final int totalLubricantUsed =
-        _currentMonthlyLubricantUsed + _lubricantQuantity;
-    final int remainingLubricant =
-        (AppConstants.maxLubricantQuota - totalLubricantUsed)
-            .clamp(0, AppConstants.maxLubricantQuota);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppLocalizations.of(context).freeQuotaThisMonth,
-          style: GoogleFonts.googleSans(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).condoms,
-                    style: GoogleFonts.googleSans(
-                        fontSize: 14, color: AppColors.textSecondary),
-                  ),
-                  TweenAnimationBuilder<int>(
-                    key: ValueKey('condom_num_$_animationVersion'),
-                    tween: IntTween(begin: 0, end: remaining),
-                    duration: const Duration(milliseconds: 900),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, _) => RichText(
-                      text: TextSpan(children: [
-                        TextSpan(
-                          text: '$value ',
-                          style: GoogleFonts.googleSans(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary),
-                        ),
-                        TextSpan(
-                          text: AppLocalizations.of(context).pieces,
-                          style: GoogleFonts.googleSans(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.primary),
-                        ),
-                      ]),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  QuotaProgressBar(
-                    key: ValueKey('condom_bar_$_animationVersion'),
-                    color: AppColors.primary,
-                    current: remaining,
-                    total: AppConstants.maxCondomQuota,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context).lubricant,
-                    style: GoogleFonts.googleSans(
-                        fontSize: 14, color: AppColors.textSecondary),
-                  ),
-                  TweenAnimationBuilder<int>(
-                    key: ValueKey('lubricant_num_$_animationVersion'),
-                    tween: IntTween(begin: 0, end: remainingLubricant),
-                    duration: const Duration(milliseconds: 900),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, _) => RichText(
-                      text: TextSpan(children: [
-                        TextSpan(
-                          text: '$value ',
-                          style: GoogleFonts.googleSans(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.lubricant),
-                        ),
-                        TextSpan(
-                          text: AppLocalizations.of(context).pieces,
-                          style: GoogleFonts.googleSans(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w500,
-                              color: AppColors.lubricant),
-                        ),
-                      ]),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  QuotaProgressBar(
-                    key: ValueKey('lubricant_bar_$_animationVersion'),
-                    color: AppColors.lubricant,
-                    current: remainingLubricant,
-                    total: AppConstants.maxLubricantQuota,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
 
   // ── Quantity card ───────────────────────────────────────────────────────────
 
