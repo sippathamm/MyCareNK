@@ -7,6 +7,7 @@ import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import '../widgets/request_status_visuals.dart';
 
 class RequestHistoryPage extends StatefulWidget {
   const RequestHistoryPage({super.key});
@@ -89,8 +90,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           _isLoading = false;
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching history: $e');
+    } catch (_) {
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -335,69 +335,29 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
   }
 
   Widget _buildRequestCard(CondomRequestModel data) {
-    Color iconBgColor;
-    Color iconColor;
-    Color statusBgColor;
-    Color statusTextColor;
-    String statusText;
-    IconData statusIcon;
-
-    if (data.status.isCancelled) {
-      iconBgColor = Colors.grey[200]!;
-      iconColor = Colors.grey[600]!;
-      statusBgColor = Colors.grey[600]!;
-      statusTextColor = AppColors.white;
-      statusText = data.status == RequestStatus.cancelledByStaff ? AppLocalizations.of(context).statusCancelledByStaff : AppLocalizations.of(context).statusCancelledByUser;
-      statusIcon = Icons.cancel_outlined;
-    } else {
-      switch (data.status) {
-        case RequestStatus.pending:
-          iconBgColor = AppColors.statusPendingLight;
-          iconColor = AppColors.primary;
-          statusBgColor = AppColors.primary;
-          statusTextColor = AppColors.white;
-          statusText = AppLocalizations.of(context).statusPending;
-          statusIcon = Icons.assignment_outlined;
-          break;
-        case RequestStatus.preparing:
-          iconBgColor = AppColors.statusPreparingLight;
-          iconColor = AppColors.statusPreparing;
-          statusBgColor = AppColors.statusPreparing;
-          statusTextColor = AppColors.white;
-          statusText = AppLocalizations.of(context).statusPreparing;
-          statusIcon = Icons.inventory_2_outlined;
-          break;
-        case RequestStatus.ready:
-          iconBgColor = AppColors.statusReadyLight;
-          iconColor = AppColors.statusReady;
-          statusBgColor = AppColors.statusReady;
-          statusTextColor = AppColors.white;
-          statusText = AppLocalizations.of(context).statusReady;
-          statusIcon = Icons.local_shipping_outlined;
-          break;
-        case RequestStatus.completed:
-          iconBgColor = AppColors.statusCompletedLight;
-          iconColor = AppColors.statusCompleted;
-          statusBgColor = AppColors.statusCompleted;
-          statusTextColor = AppColors.white;
-          statusText = AppLocalizations.of(context).statusCompleted;
-          statusIcon = Icons.check_circle_outline;
-          break;
-        default:
-          iconBgColor = Colors.grey[200]!;
-          iconColor = Colors.grey[600]!;
-          statusBgColor = Colors.grey[600]!;
-          statusTextColor = AppColors.white;
-          statusText = '-';
-          statusIcon = Icons.help_outline;
-      }
-    }
+    final l10n = AppLocalizations.of(context);
+    final visuals = RequestStatusVisuals.of(data.status);
+    final Color iconBgColor = visuals.lightBg;
+    final Color iconColor = visuals.color;
+    final Color statusBgColor = visuals.color;
+    const Color statusTextColor = AppColors.white;
+    final IconData statusIcon = visuals.icon;
+    final String statusText = data.status.isCancelled
+        ? (data.status == RequestStatus.cancelledByStaff
+            ? l10n.statusCancelledByStaff
+            : l10n.statusCancelledByUser)
+        : switch (data.status) {
+            RequestStatus.preparing => l10n.statusPreparing,
+            RequestStatus.ready => l10n.statusReady,
+            RequestStatus.completed => l10n.statusCompleted,
+            _ => l10n.statusPending,
+          };
 
     // Format selectedDate and selectedTime
     String outputDate = data.selectedDate ?? '-';
     if (data.selectedDate != null && data.selectedDate!.contains('-')) {
       try {
-        DateTime parsedDate = DateTime.parse(data.selectedDate!);
+        final parsedDate = DateTime.parse(data.selectedDate!);
         outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = data.selectedDate!;
@@ -411,7 +371,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
           outputTime = '${splitted[0]}:${splitted[1]} ${AppLocalizations.of(context).timeWithUnit}';
        }
     }
-    String dateStr = '$outputDate, $outputTime';
+    final dateStr = '$outputDate, $outputTime';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),

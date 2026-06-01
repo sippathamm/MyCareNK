@@ -1,6 +1,5 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/l10n/app_localizations.dart';
 
@@ -116,14 +115,12 @@ class RecoveryService {
         rateLimited: data['rate_limited'] == true,
         locked: data['locked'] == true,
       );
-    } on PostgrestException catch (e) {
-      debugPrint('RecoveryService.$functionName PostgrestException: ${e.message}');
+    } on PostgrestException catch (_) {
       return RecoveryResult(
         success: false,
         error: AppLocalizations.current.generalErrorRetry,
       );
-    } catch (e) {
-      debugPrint('RecoveryService.$functionName error: $e');
+    } catch (_) {
       return RecoveryResult(
         success: false,
         error: AppLocalizations.current.generalErrorRetry,

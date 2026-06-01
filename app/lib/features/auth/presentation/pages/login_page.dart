@@ -55,8 +55,7 @@ class _LoginPageState extends State<LoginPage> {
           behavior: SnackBarBehavior.floating,
         ),
       );
-    } catch (e) {
-      debugPrint('Error during login: $e');
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -6,6 +6,8 @@ import '../../data/models/condom_request_model.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
+import '../../../../../core/widgets/info_row.dart';
+import '../widgets/request_status_visuals.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 class RequestHistoryDetailPage extends StatefulWidget {
@@ -48,8 +50,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
           _currentData = CondomRequestModel.fromJson(response);
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching data: $e');
+    } catch (_) {
+      // Realtime channel will retry; keep showing the snapshot we already have.
     }
   }
 
@@ -127,47 +129,15 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildHeaderId(BuildContext context) {
-    IconData icon;
-    Color iconColor;
-    Color iconBgColor;
-
-    if (_currentData.status.isCancelled) {
-      icon = Icons.cancel_outlined;
-      iconColor = Colors.grey[600]!;
-      iconBgColor = Colors.grey[200]!;
-    } else {
-      switch (_currentData.status) {
-        case RequestStatus.pending:
-          icon = Icons.assignment_outlined;
-          iconColor = AppColors.primary;
-          iconBgColor = AppColors.statusPendingLight;
-          break;
-        case RequestStatus.preparing:
-          icon = Icons.inventory_2_outlined;
-          iconColor = AppColors.lubricant;
-          iconBgColor = AppColors.statusPreparingLight;
-          break;
-        case RequestStatus.ready:
-          icon = Icons.local_shipping_outlined;
-          iconColor = AppColors.statusReady;
-          iconBgColor = AppColors.statusReadyLight;
-          break;
-        case RequestStatus.completed:
-          icon = Icons.check_circle_outline;
-          iconColor = AppColors.statusCompleted;
-          iconBgColor = AppColors.statusCompletedLight;
-          break;
-        default:
-          icon = Icons.assignment_outlined;
-          iconColor = AppColors.primary;
-          iconBgColor = AppColors.statusPendingLight;
-      }
-    }
+    final visuals = RequestStatusVisuals.of(_currentData.status);
+    final IconData icon = visuals.icon;
+    final Color iconColor = visuals.color;
+    final Color iconBgColor = visuals.lightBg;
 
     // Format Date
     final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
     final l10n = AppLocalizations.of(context);
-    String dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month - 1]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
+    final dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month - 1]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -429,39 +399,8 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 14, color: AppColors.textSecondary)),
-              Flexible(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuantityCard() {
-    int totalCondoms = _currentData.condomQuantities.values.fold(0, (sum, val) => sum + val);
+    final totalCondoms = _currentData.condomQuantities.values.fold(0, (sum, val) => sum + val);
     if (totalCondoms == 0) return const SizedBox();
 
     return _buildCard(
@@ -476,7 +415,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
         children: [
           ..._currentData.condomQuantities.entries
               .where((e) => e.value > 0)
-              .map((e) => _buildInfoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
+              .map((e) => InfoRow('${AppLocalizations.of(context).sizeLabel} ${e.key} ${AppLocalizations.of(context).sizeMm}', '${e.value} ${AppLocalizations.of(context).pieces}')),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -507,7 +446,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
-      content: _buildInfoRow(AppLocalizations.of(context).lubricant, '${_currentData.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
+      content: InfoRow(AppLocalizations.of(context).lubricant, '${_currentData.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
@@ -515,7 +454,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     String outputDate = _currentData.selectedDate ?? '-';
     if (_currentData.selectedDate != null && _currentData.selectedDate!.contains('-')) {
       try {
-        DateTime parsedDate = DateTime.parse(_currentData.selectedDate!);
+        final parsedDate = DateTime.parse(_currentData.selectedDate!);
         outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = _currentData.selectedDate!;
@@ -540,9 +479,9 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
       ]),
       content: Column(
         children: [
-          _buildInfoRow(AppLocalizations.of(context).serviceCenterLabel, _currentData.selectedServiceCenter ?? '-'),
-          _buildInfoRow(AppLocalizations.of(context).dateLabel, outputDate),
-          _buildInfoRow(AppLocalizations.of(context).timeLabel, outputTime),
+          InfoRow(AppLocalizations.of(context).serviceCenterLabel, _currentData.selectedServiceCenter ?? '-'),
+          InfoRow(AppLocalizations.of(context).dateLabel, outputDate),
+          InfoRow(AppLocalizations.of(context).timeLabel, outputTime),
         ],
       ),
     );

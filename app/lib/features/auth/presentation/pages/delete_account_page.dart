@@ -101,28 +101,40 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Row(
-                children: [
-                  Checkbox(
-                    value: _confirmed,
-                    onChanged: (v) => setState(() => _confirmed = v ?? false),
-                    activeColor: AppColors.error,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(4)),
-                  ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => _confirmed = !_confirmed),
+              GestureDetector(
+                onTap: () => setState(() => _confirmed = !_confirmed),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: Checkbox(
+                        value: _confirmed,
+                        onChanged: (v) =>
+                            setState(() => _confirmed = v ?? false),
+                        activeColor: AppColors.error,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(4)),
+                        side: const BorderSide(
+                            color: AppColors.error, width: 1.5),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
                       child: Text(
                         l10n.deleteAccountConfirmCheck,
                         style: GoogleFonts.googleSans(
-                            fontSize: 14, color: AppColors.textPrimary),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               GradientButton(
                 onPressed: (canDelete && !_isLoading) ? _deleteAccount : null,
                 label: l10n.deleteAccountTitle,

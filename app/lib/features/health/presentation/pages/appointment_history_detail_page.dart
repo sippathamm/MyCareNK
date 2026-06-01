@@ -5,6 +5,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/models/doctor_appointment_model.dart';
+import '../widgets/appointment_status_visuals.dart';
+import '../../../../core/widgets/info_row.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 class AppointmentHistoryDetailPage extends StatefulWidget {
@@ -73,8 +75,8 @@ class _AppointmentHistoryDetailPageState
           _data = DoctorAppointmentModel.fromMap(response);
         });
       }
-    } catch (e) {
-      debugPrint('Error fetching appointment: $e');
+    } catch (_) {
+      // Detail view keeps the data passed in via constructor if refetch fails.
     }
   }
 
@@ -199,7 +201,7 @@ class _AppointmentHistoryDetailPageState
   // ── Widgets ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final cfg = _statusConfig(_data.appointmentStatus);
+    final visuals = AppointmentStatusVisuals.of(_data.appointmentStatus);
     final updated = _data.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
         '${updated.day} ${AppLocalizations.of(context).monthsFull[updated.month]} ${updated.year + 543} '
@@ -253,8 +255,8 @@ class _AppointmentHistoryDetailPageState
               width: 32,
               height: 32,
               decoration:
-                  BoxDecoration(color: cfg.iconBg, shape: BoxShape.circle),
-              child: Icon(cfg.icon, color: cfg.iconColor, size: 16),
+                  BoxDecoration(color: visuals.lightBg, shape: BoxShape.circle),
+              child: Icon(visuals.icon, color: visuals.color, size: 16),
             ),
             const SizedBox(height: 4),
             Text(dateStr,
@@ -438,34 +440,6 @@ class _AppointmentHistoryDetailPageState
     );
   }
 
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 14, color: AppColors.textSecondary)),
-              Flexible(
-                child: Text(value,
-                    textAlign: TextAlign.right,
-                    style: GoogleFonts.googleSans(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textPrimary)),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
-        ],
-      ),
-    );
-  }
-
   Widget _buildReasonCard() {
     return _buildCard(
       header: Row(children: [
@@ -478,7 +452,7 @@ class _AppointmentHistoryDetailPageState
       ]),
       content: Column(
         children: [
-          _buildInfoRow(AppLocalizations.of(context).reasonLabel, DoctorAppointmentModel.reasonLabel(_data.reason)),
+          InfoRow(AppLocalizations.of(context).reasonLabel, DoctorAppointmentModel.reasonLabel(_data.reason)),
         ],
       ),
     );
@@ -499,9 +473,9 @@ class _AppointmentHistoryDetailPageState
       ]),
       content: Column(
         children: [
-          _buildInfoRow(AppLocalizations.of(context).serviceCenterLabel, _data.selectedServiceCenter),
-          _buildInfoRow(AppLocalizations.of(context).dateLabel, dateStr),
-          _buildInfoRow(AppLocalizations.of(context).timeLabel, '${_data.selectedTime} ${AppLocalizations.of(context).timeWithUnit}'),
+          InfoRow(AppLocalizations.of(context).serviceCenterLabel, _data.selectedServiceCenter),
+          InfoRow(AppLocalizations.of(context).dateLabel, dateStr),
+          InfoRow(AppLocalizations.of(context).timeLabel, '${_data.selectedTime} ${AppLocalizations.of(context).timeWithUnit}'),
         ],
       ),
     );
@@ -582,38 +556,6 @@ class _AppointmentHistoryDetailPageState
         ],
       ],
     );
-  }
-
-  // ── Helpers ──────────────────────────────────────────────────────────────
-
-  ({Color iconBg, Color iconColor, IconData icon}) _statusConfig(
-      String status) {
-    switch (status) {
-      case 'pending':
-        return (
-          iconBg: AppColors.statusPendingLight,
-          iconColor: AppColors.primary,
-          icon: Icons.schedule_outlined,
-        );
-      case 'confirmed':
-        return (
-          iconBg: AppColors.statusReadyLight,
-          iconColor: AppColors.statusReady,
-          icon: Icons.event_available_outlined,
-        );
-      case 'completed':
-        return (
-          iconBg: AppColors.statusCompletedLight,
-          iconColor: AppColors.statusCompleted,
-          icon: Icons.check_circle_outline,
-        );
-      default:
-        return (
-          iconBg: Colors.grey.shade200,
-          iconColor: Colors.grey.shade600,
-          icon: Icons.cancel_outlined,
-        );
-    }
   }
 
 }
