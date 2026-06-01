@@ -46,8 +46,6 @@ abstract final class AppColors {
   static const Color textSecondary = Color(0xFF666666);
   static const Color textMuted = Color(0xFF777777);
   static const Color textHint = Color(0xFF999999);
-  static const Color textBlack87 = Color(0xDD000000);
-
   // Avatar / profile
   static const Color avatarBackground = Color(0xFFEFE5FD);
   static const Color avatarCircle = Color(0xFFD1C4E9);
@@ -61,5 +59,4 @@ abstract final class AppColors {
   static const Color white = Color(0xFFFFFFFF);
   static const Color cardShadow = Color(0x0D000000); // ~5% black
   static const Color cardShadowMedium = Color(0x14000000); // ~8% black
-  static const Color overlayDark = Color(0x80000000); // ~50% black
 }
