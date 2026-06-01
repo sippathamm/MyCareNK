@@ -1,7 +1,8 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, CircularProgress } from '@mui/material';
 import PrintIcon from '@mui/icons-material/Print';
-import { QRCodeSVG } from 'qrcode.react';
+import DownloadIcon from '@mui/icons-material/Download';
+import { QRCodeSVG, QRCodeCanvas } from 'qrcode.react';
 import { useSignPayload } from '../../hooks/useSignPayload';
 
 interface QRCodeDialogProps {
@@ -24,6 +25,17 @@ export default function QRCodeDialog({
   initialPayload,
 }: QRCodeDialogProps) {
   const { payload, loading, error, sign, reset } = useSignPayload();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  const handleSaveImage = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.download = `${referenceNumber}.png`;
+    a.href = url;
+    a.click();
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +69,7 @@ export default function QRCodeDialog({
 
   return (
     <Dialog open={open} onClose={!isProcessing ? handleClose : undefined} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>QR Code สำหรับรับพัสดุ</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>QR Code สำหรับรับถุงยางอนามัย</DialogTitle>
 
       <DialogContent dividers>
         <Box display="flex" flexDirection="column" alignItems="center" py={2} gap={2}>
@@ -90,6 +102,9 @@ export default function QRCodeDialog({
               <Typography variant="body2" color="error" textAlign="center" fontWeight="medium">
                 กรุณานำ QR Code นี้ติดไว้ที่กล่อง/ซองพัสดุ
               </Typography>
+              <Box sx={{ display: 'none' }}>
+                <QRCodeCanvas ref={canvasRef} value={displayPayload} size={220} />
+              </Box>
             </>
           )}
         </Box>
@@ -98,9 +113,14 @@ export default function QRCodeDialog({
       <DialogActions sx={{ p: 2 }}>
         <Button onClick={handleClose} color="inherit" disabled={isProcessing}>ปิด</Button>
         {displayPayload && !isProcessing && (
-          <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => window.print()}>
-            พิมพ์ QR Code
-          </Button>
+          <>
+            <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => window.print()}>
+              พิมพ์ QR Code
+            </Button>
+            <Button variant="contained" startIcon={<DownloadIcon />} onClick={handleSaveImage}>
+              บันทึกภาพ
+            </Button>
+          </>
         )}
       </DialogActions>
     </Dialog>
