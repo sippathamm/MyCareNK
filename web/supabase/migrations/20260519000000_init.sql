@@ -317,6 +317,11 @@ AS $$
 DECLARE
   v_metadata jsonb := '{}';
 BEGIN
+  -- Account deleted: user_id was SET NULL, no recipient to notify. Skip.
+  IF NEW.user_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
   IF TG_OP = 'INSERT' THEN
     INSERT INTO user_notifications (user_id, source_type, source_id, reference_number, event_type, metadata)
     VALUES (NEW.user_id, 'condom_request', NEW.id, NEW.reference_number, NEW.request_status::text, '{}');
@@ -398,6 +403,11 @@ AS $$
 DECLARE
   v_metadata jsonb := '{}'::jsonb;
 BEGIN
+  -- Account deleted: user_id was SET NULL, no recipient to notify. Skip.
+  IF NEW.user_id IS NULL THEN
+    RETURN NEW;
+  END IF;
+
   IF TG_OP = 'INSERT' THEN
     INSERT INTO user_notifications (user_id, source_type, source_id, reference_number, event_type, metadata)
     VALUES (NEW.user_id, 'doctor_appointment', NEW.id, NEW.reference_number, NEW.appointment_status::text, '{}'::jsonb);
