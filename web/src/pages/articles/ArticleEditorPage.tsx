@@ -689,7 +689,7 @@ export default function ArticleEditorPage() {
             <input
               ref={imageInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/avif,image/bmp,image/tiff,image/svg+xml"
+              accept="image/jpeg,image/png,image/webp,image/gif"
               style={{ display: 'none' }}
               onChange={e => {
                 const file = e.target.files?.[0];
@@ -890,10 +890,13 @@ export default function ArticleEditorPage() {
               {uploadingCover && (
                 <LinearProgress sx={{ mt: 1, borderRadius: 1 }} />
               )}
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                รองรับไฟล์ JPG, PNG, WEBP, GIF ขนาดไม่เกิน 5 MB
+              </Typography>
               <input
                 ref={coverInputRef}
                 type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/avif,image/bmp,image/tiff"
+                accept="image/jpeg,image/png,image/webp,image/gif"
                 style={{ display: 'none' }}
                 onChange={e => {
                   const file = e.target.files?.[0];

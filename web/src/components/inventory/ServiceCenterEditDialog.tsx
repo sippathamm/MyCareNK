@@ -567,6 +567,9 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
               style={{ display: 'none' }}
               onChange={handleImageFileChange}
             />
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: -1.5, mb: 2.5 }}>
+              รองรับไฟล์ JPG, PNG, WEBP, GIF ขนาดไม่เกิน 5 MB
+            </Typography>
 
             {/* Name */}
             <TextField
