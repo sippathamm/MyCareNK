@@ -57,6 +57,17 @@ class _DeleteAccountPageState extends State<DeleteAccountPage> {
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
       ));
+    } on PostgrestException catch (e) {
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final message = e.message.contains('ACTIVE_RECORDS_EXIST')
+          ? l10n.deleteAccountBlockedActive
+          : l10n.deleteAccountError;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message, style: GoogleFonts.googleSans()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ));
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
