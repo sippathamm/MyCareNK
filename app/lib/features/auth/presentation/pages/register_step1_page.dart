@@ -84,6 +84,7 @@ class _RegisterStep1PageState extends State<RegisterStep1Page> {
                         if (v.isEmpty) return AppLocalizations.current.usernameRequired;
                         if (v.length < 4 || v.length > 20) return AppLocalizations.current.usernameRange;
                         if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(v)) return AppLocalizations.current.usernameInvalidChars;
+                        if (v.replaceAll(RegExp(r'[^a-zA-Z]'), '').length < 4) return AppLocalizations.current.usernameLetterRequired;
                         return null;
                       },
                       builder: (field) => _buildFieldContainer(
