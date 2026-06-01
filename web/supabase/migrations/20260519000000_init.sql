@@ -706,6 +706,10 @@ CREATE POLICY "Staff can update their own profile"
   USING ((SELECT auth.uid()) = staff_user_id)
   WITH CHECK ((SELECT auth.uid()) = staff_user_id);
 
+CREATE POLICY "Staff can view all staff profiles"
+  ON public.staff_profiles FOR SELECT
+  USING (is_staff());
+
 CREATE TRIGGER protect_role_update
   BEFORE UPDATE ON public.staff_profiles
   FOR EACH ROW EXECUTE FUNCTION protect_staff_role_column();
