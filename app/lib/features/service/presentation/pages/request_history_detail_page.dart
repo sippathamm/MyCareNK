@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../widgets/info_row.dart';
+import '../widgets/request_status_visuals.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 class RequestHistoryDetailPage extends StatefulWidget {
@@ -128,42 +129,10 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
   }
 
   Widget _buildHeaderId(BuildContext context) {
-    IconData icon;
-    Color iconColor;
-    Color iconBgColor;
-
-    if (_currentData.status.isCancelled) {
-      icon = Icons.cancel_outlined;
-      iconColor = Colors.grey[600]!;
-      iconBgColor = Colors.grey[200]!;
-    } else {
-      switch (_currentData.status) {
-        case RequestStatus.pending:
-          icon = Icons.assignment_outlined;
-          iconColor = AppColors.primary;
-          iconBgColor = AppColors.statusPendingLight;
-          break;
-        case RequestStatus.preparing:
-          icon = Icons.inventory_2_outlined;
-          iconColor = AppColors.lubricant;
-          iconBgColor = AppColors.statusPreparingLight;
-          break;
-        case RequestStatus.ready:
-          icon = Icons.local_shipping_outlined;
-          iconColor = AppColors.statusReady;
-          iconBgColor = AppColors.statusReadyLight;
-          break;
-        case RequestStatus.completed:
-          icon = Icons.check_circle_outline;
-          iconColor = AppColors.statusCompleted;
-          iconBgColor = AppColors.statusCompletedLight;
-          break;
-        default:
-          icon = Icons.assignment_outlined;
-          iconColor = AppColors.primary;
-          iconBgColor = AppColors.statusPendingLight;
-      }
-    }
+    final visuals = RequestStatusVisuals.of(_currentData.status);
+    final IconData icon = visuals.icon;
+    final Color iconColor = visuals.color;
+    final Color iconBgColor = visuals.lightBg;
 
     // Format Date
     final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
