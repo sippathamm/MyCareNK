@@ -5,6 +5,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../data/recovery_service.dart';
 import 'registration_success_page.dart';
+import '../../../main/presentation/pages/main_page.dart';
 import '../../../../core/l10n/app_localizations.dart';
 
 class PrivacyPolicyPage extends StatefulWidget {
@@ -13,14 +14,22 @@ class PrivacyPolicyPage extends StatefulWidget {
   final String? gender;
   final DateTime? dateOfBirth;
   final String nationality;
+  final String healthCoverage;
+  final String? phoneNumber;
+  final String? nickname;
+  final bool readOnly;
 
   const PrivacyPolicyPage({
     super.key,
-    required this.username,
-    required this.password,
-    required this.gender,
-    required this.dateOfBirth,
-    required this.nationality,
+    this.username = '',
+    this.password = '',
+    this.gender,
+    this.dateOfBirth,
+    this.nationality = '',
+    this.healthCoverage = '',
+    this.phoneNumber,
+    this.nickname,
+    this.readOnly = false,
   });
 
   @override
@@ -81,6 +90,9 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
           'nationality': widget.nationality,
           'date_of_birth':
               widget.dateOfBirth!.toIso8601String().split('T')[0],
+          'health_coverage': widget.healthCoverage.isEmpty ? null : widget.healthCoverage,
+          'phone_number': widget.phoneNumber,
+          'nickname': widget.nickname,
         });
       }
 
@@ -90,8 +102,25 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
       final recoveryCodes = RecoveryService.generateRecoveryCodes();
       try {
         await recoveryService.saveRecoveryCodes(recoveryCodes);
-      } catch (e) {
-        debugPrint('เกิดข้อผิดพลาดในการบันทึกรหัสกู้คืน: $e');
+      } catch (_) {
+        // The account exists and the user is signed in, but the codes were not
+        // persisted. Never show codes we failed to save — that would hand the
+        // user worthless recovery codes. Send them into the app instead; they
+        // can generate fresh codes from Settings.
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            AppLocalizations.of(context).recoveryCodesSaveFailed,
+            style: GoogleFonts.googleSans(),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+        Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+          (route) => false,
+        );
+        return;
       }
 
       if (!mounted) return;
@@ -109,6 +138,19 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
           content: Text(
             AppLocalizations.of(context).passwordLeaked,
+            style: GoogleFonts.googleSans(),
+          ),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+        Navigator.of(context).pop();
+        return;
+      }
+      if (msg.toLowerCase().contains('weak') ||
+          msg.toLowerCase().contains('easy to guess')) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(
+            AppLocalizations.of(context).passwordWeak,
             style: GoogleFonts.googleSans(),
           ),
           backgroundColor: AppColors.error,
@@ -170,7 +212,7 @@ class _PrivacyPolicyPageState extends State<PrivacyPolicyPage> {
               child: _buildContent(),
             ),
           ),
-          _buildBottomBar(),
+          if (!widget.readOnly) _buildBottomBar(),
         ],
       ),
     );

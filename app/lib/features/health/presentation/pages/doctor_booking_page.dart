@@ -4,8 +4,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/models/service_center_model.dart';
 import '../../../../core/services/service_center_service.dart';
-import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
+import '../widgets/doctor_booking_widgets.dart';
 import 'appointment_history_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
@@ -98,7 +98,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   ServiceCenterModel? get _selectedLocation =>
       _centers.where((c) => c.name == _location).firstOrNull;
 
-  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
   DateTime? get _selectedDate => _dates
       .where((d) => d.toIso8601String().substring(0, 10) == _dateKey)
       .firstOrNull;
@@ -108,69 +107,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
     if (_step == 2) return _buildSuccess();
     if (_step == 1) return _buildConfirm();
     return _buildForm();
-  }
-
-  // ── Step indicator ──────────────────────────────────────────────────────────
-
-  Widget _buildStepIndicator() {
-    final l10n = AppLocalizations.of(context);
-    final labels = [l10n.bookingSelectService, l10n.stepConfirm, l10n.stepSuccess];
-    const double nodeSize = 34;
-    const double gap = 6;
-    final n = labels.length;
-
-    final iconItems = <Widget>[];
-    for (int idx = 0; idx < n; idx++) {
-      final isDone = idx < _step;
-      final isCurrent = idx == _step;
-      final active = isDone || isCurrent;
-      final isLast = idx == n - 1;
-      final showCheck = isDone || (isCurrent && isLast);
-      iconItems.add(AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: nodeSize, height: nodeSize,
-        decoration: BoxDecoration(color: active ? AppColors.lubricant : const Color(0xFFE8E8E8), shape: BoxShape.circle),
-        child: Center(child: showCheck
-            ? const Icon(Icons.check, color: Colors.white, size: 16)
-            : Text('${idx + 1}', style: GoogleFonts.googleSans(fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textMuted))),
-      ));
-      if (!isLast) {
-        iconItems.addAll([
-          const SizedBox(width: gap),
-          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: idx < _step ? AppColors.lubricant : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(width: gap),
-        ]);
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: Column(children: [
-        Row(children: iconItems),
-        const SizedBox(height: 4),
-        LayoutBuilder(builder: (context, constraints) {
-          final W = constraints.maxWidth;
-          final slotSpacing = (W - nodeSize) / (n - 1);
-          TextStyle labelStyle(int idx) {
-            final active = idx <= _step;
-            return GoogleFonts.googleSans(fontSize: 11, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.lubricant : AppColors.textMuted);
-          }
-          return SizedBox(
-            height: 16,
-            child: Stack(clipBehavior: Clip.none, children: [
-              Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
-              Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
-              for (int i = 1; i < n - 1; i++)
-                Positioned(
-                  left: nodeSize / 2 + i * slotSpacing,
-                  top: 0,
-                  child: FractionalTranslation(translation: const Offset(-0.5, 0), child: Text(labels[i], style: labelStyle(i))),
-                ),
-            ]),
-          );
-        }),
-      ]),
-    );
   }
 
   // ── Form ────────────────────────────────────────────────────────────────────
@@ -186,22 +122,29 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(),
+            child: BookingStepIndicator(step: _step),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingServiceReason,
                     icon: Icons.medical_services_outlined,
                     child: Column(
-                      children: _buildReasons(AppLocalizations.of(context)).map(_buildReasonTile).toList(),
+                      children: _buildReasons(AppLocalizations.of(context))
+                          .map((r) => ReasonTile(
+                                icon: r.icon,
+                                label: r.label,
+                                selected: _reason == r.key,
+                                onTap: () => setState(() => _reason = r.key),
+                              ))
+                          .toList(),
                     ),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).selectServiceCenterTitle,
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
@@ -235,21 +178,41 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                 : Column(
                                     children: List.generate(
                                       _centers.length,
-                                      (i) => _buildLocationTile(_centers[i], i),
+                                      (i) => AppointmentLocationTile(
+                                        center: _centers[i],
+                                        index: i,
+                                        selected: _location == _centers[i].name,
+                                        onTap: () => setState(() {
+                                          if (_location != _centers[i].name) {
+                                            _timeSlot = null;
+                                          }
+                                          _location = _centers[i].name;
+                                        }),
+                                      ),
                                     ),
                                   ),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentDate,
                     icon: Icons.event_outlined,
-                    child: _buildDatePicker(),
+                    child: AppointmentDateStrip(
+                      location: _selectedLocation,
+                      dates: _dates,
+                      dateKey: _dateKey,
+                      onSelect: (key) => setState(() => _dateKey = key),
+                    ),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentTime,
                     icon: Icons.schedule_outlined,
-                    child: _buildTimePicker(),
+                    child: AppointmentTimePicker(
+                      location: _selectedLocation,
+                      locationName: _location,
+                      selectedTime: _timeSlot,
+                      onSelect: (t) => setState(() => _timeSlot = t),
+                    ),
                   ),
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAdditionalNotes,
                     icon: Icons.notes_outlined,
                     child: TextField(
@@ -282,313 +245,21 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  AnimatedOpacity(
+                    opacity: _canProceed ? 1.0 : 0.4,
+                    duration: const Duration(milliseconds: 200),
+                    child: BookingPrimaryButton(
+                      label: AppLocalizations.of(context).next,
+                      onPressed: _canProceed ? () => setState(() => _step = 1) : null,
+                    ),
+                  ),
                 ],
-              ),
-            ),
-          ),
-          Container(
-            color: AppColors.white,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: AnimatedOpacity(
-              opacity: _canProceed ? 1.0 : 0.4,
-              duration: const Duration(milliseconds: 200),
-              child: _PrimaryBtn(
-                label: AppLocalizations.of(context).next,
-                onPressed: _canProceed ? () => setState(() => _step = 1) : null,
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildReasonTile(_Reason r) {
-    final sel = _reason == r.key;
-    return GestureDetector(
-      onTap: () => setState(() => _reason = r.key),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: sel ? AppColors.statusPreparingLight : Colors.white,
-          border: Border.all(
-            color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.lubricant : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(r.icon,
-                  color: sel ? Colors.white : AppColors.textMuted, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                r.label,
-                style: GoogleFonts.googleSans(
-                  fontSize: 16,
-                  fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            if (sel)
-              const Icon(Icons.check_circle, color: AppColors.lubricant, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationTile(ServiceCenterModel loc, int index) {
-    final sel = _location == loc.name;
-    return GestureDetector(
-      onTap: () => setState(() {
-        if (_location != loc.name) _timeSlot = null;
-        _location = loc.name;
-      }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: sel ? AppColors.statusPreparingLight : Colors.white,
-          border: Border.all(
-            color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.lubricant : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: sel ? Colors.white : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    loc.name,
-                    style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  if (loc.operatingHours != null)
-                    Text(loc.operatingHours!,
-                        style: GoogleFonts.googleSans(
-                            fontSize: 14, color: AppColors.textHint)),
-                ],
-              ),
-            ),
-            if (sel)
-              const Icon(Icons.check_circle, color: AppColors.lubricant, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDatePicker() {
-    final loc = _selectedLocation;
-    if (loc == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            AppLocalizations.of(context).selectServiceCenterFirst,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    if (!loc.appointmentServiceEnabled) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            AppLocalizations.of(context).noAppointmentService,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    return SizedBox(
-      height: 84,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _dates.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final d = _dates[i];
-          final l10n = AppLocalizations.of(context);
-          final dow = d.weekday == 7 ? 0 : d.weekday;
-          final key = d.toIso8601String().substring(0, 10);
-          final sel = _dateKey == key;
-          return GestureDetector(
-            onTap: () => setState(() => _dateKey = key),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 60,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.lubricant : Colors.white,
-                border: Border.all(
-                  color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    l10n.daysShort[dow],
-                    style: GoogleFonts.googleSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: sel
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textHint,
-                    ),
-                  ),
-                  Text(
-                    '${d.day}',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: sel ? Colors.white : AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    l10n.monthsShort[d.month],
-                    style: GoogleFonts.googleSans(
-                      fontSize: 11,
-                      color: sel
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTimePicker() {
-    final loc = _selectedLocation;
-    final times = loc?.appointmentTimes ?? [];
-    if (loc == null || !loc.appointmentServiceEnabled || times.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            _location == null
-                ? AppLocalizations.of(context).selectServiceCenterFirst
-                : AppLocalizations.of(context).noAppointmentService,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    final morning = times.where((t) => _hourOf(t) < 12).toList();
-    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSlotGroup(AppLocalizations.of(context).morning, morning),
-        const SizedBox(height: 14),
-        _buildSlotGroup(AppLocalizations.of(context).afternoon, afternoon),
-      ],
-    );
-  }
-
-  Widget _buildSlotGroup(String label, List<String> slots) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.googleSans(
-            fontSize: 14,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (slots.isEmpty)
-          Text('–',
-              style: GoogleFonts.googleSans(
-                  fontSize: 15, color: AppColors.textHint))
-        else
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: slots.map((t) {
-            final sel = _timeSlot == t;
-            return GestureDetector(
-              onTap: () => setState(() => _timeSlot = t),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: sel ? AppColors.lubricant : Colors.white,
-                  border: Border.all(
-                    color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$t ${AppLocalizations.of(context).timeWithUnit}',
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                    color: sel ? Colors.white : AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
     );
   }
 
@@ -615,14 +286,14 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(),
+            child: BookingStepIndicator(step: _step),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 children: [
-                  _SectionCard(
+                  BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentSummary,
                     icon: Icons.event_note_outlined,
                     child: Column(
@@ -715,26 +386,19 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  BookingPrimaryButton(
+                    label: AppLocalizations.of(context).confirmAppointment,
+                    onPressed: _isSubmitting ? null : _submitBooking,
+                    isLoading: _isSubmitting,
+                  ),
+                  const SizedBox(height: 10),
+                  BookingOutlinedButton(
+                    label: AppLocalizations.of(context).edit,
+                    onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
+                  ),
                 ],
               ),
-            ),
-          ),
-          Container(
-            color: AppColors.white,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: Column(
-              children: [
-                _PrimaryBtn(
-                  label: AppLocalizations.of(context).confirmAppointment,
-                  onPressed: _isSubmitting ? null : _submitBooking,
-                  isLoading: _isSubmitting,
-                ),
-                const SizedBox(height: 10),
-                _OutlinedBtn(
-                  label: AppLocalizations.of(context).edit,
-                  onPressed: _isSubmitting ? null : () => setState(() => _step = 0),
-                ),
-              ],
             ),
           ),
         ],
@@ -750,46 +414,30 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
       if (!mounted) return;
       showDialog<void>(
         context: context,
-        barrierColor: Colors.black.withValues(alpha: 0.6),
         builder: (ctx) => AlertDialog(
           backgroundColor: AppColors.white,
-          elevation: 24,
-          shadowColor: Colors.black38,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           title: Text(AppLocalizations.of(context).pleaseLogin,
               style: GoogleFonts.googleSans(
-                  fontSize: 18, fontWeight: FontWeight.bold)),
+                  fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
           content: Text(AppLocalizations.of(context).loginToBookDoctor,
-              style: GoogleFonts.googleSans(fontSize: 15, height: 1.6)),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+              style: GoogleFonts.googleSans(color: AppColors.textSecondary)),
           actions: [
-            GradientButton(
-              height: 46,
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(AppLocalizations.of(context).cancel,
+                  style: GoogleFonts.googleSans(color: AppColors.textSecondary)),
+            ),
+            TextButton(
               onPressed: () async {
                 Navigator.of(ctx).pop();
                 final loggedIn = await Navigator.of(context, rootNavigator: true)
                     .push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
                 if (loggedIn == true && mounted) _submitBooking();
               },
-              label: AppLocalizations.of(context).loginBtn,
-              fontSize: 15,
-            ),
-            const SizedBox(height: 8),
-            SizedBox(
-              width: double.infinity,
-              height: 46,
-              child: FilledButton(
-                onPressed: () => Navigator.of(ctx).pop(),
-                style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFFEEEEEE),
-                  foregroundColor: AppColors.textPrimary,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24)),
-                ),
-                child: Text(AppLocalizations.of(context).cancel,
-                    style: GoogleFonts.googleSans(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
-              ),
+              child: Text(AppLocalizations.of(context).loginBtn,
+                  style: GoogleFonts.googleSans(
+                      color: AppColors.primary, fontWeight: FontWeight.bold)),
             ),
           ],
         ),
@@ -849,7 +497,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(),
+            child: BookingStepIndicator(step: _step),
           ),
           Expanded(
             child: SingleChildScrollView(
@@ -881,7 +529,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               style: GoogleFonts.googleSans(fontSize: 15, color: AppColors.textSecondary),
             ),
             const SizedBox(height: 24),
-            _SectionCard(
+            BookingSectionCard(
               title: AppLocalizations.of(context).appointmentDetailsTitle,
               icon: Icons.event_note_outlined,
               child: Column(
@@ -971,13 +619,13 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               ),
             ),
             const SizedBox(height: 28),
-            _PrimaryBtn(
+            BookingPrimaryButton(
               label: AppLocalizations.of(context).backToService,
               onPressed: () =>
                   Navigator.of(context).popUntil((r) => r.isFirst),
             ),
             const SizedBox(height: 10),
-            _OutlinedBtn(
+            BookingOutlinedButton(
               label: AppLocalizations.of(context).appointmentHistoryTitle,
               onPressed: () => Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
@@ -1023,117 +671,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
         ),
       ],
-    );
-  }
-}
-
-// ─── Shared widgets ───────────────────────────────────────────────────────────
-
-class _SectionCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final Widget child;
-  const _SectionCard({
-    required this.title,
-    required this.icon,
-    required this.child,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.cardShadowMedium,
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.lubricantDark, AppColors.statusPreparing],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(icon, color: Colors.white, size: 18),
-                  const SizedBox(width: 8),
-                  Text(
-                    title,
-                    style: GoogleFonts.googleSans(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: child,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PrimaryBtn extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  final bool isLoading;
-  const _PrimaryBtn({required this.label, this.onPressed, this.isLoading = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return GradientButton(
-      onPressed: onPressed,
-      label: label,
-      isLoading: isLoading,
-      gradientColors: GradientButton.lubricantGradient,
-    );
-  }
-}
-
-class _OutlinedBtn extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  const _OutlinedBtn({required this.label, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.lubricant, width: 1.5),
-          foregroundColor: AppColors.lubricant,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        ),
-        child: Text(label,
-            style: GoogleFonts.googleSans(fontSize: 16, fontWeight: FontWeight.w700)),
-      ),
     );
   }
 }

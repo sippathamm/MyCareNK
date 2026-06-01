@@ -10,8 +10,14 @@ import '../widgets/campaign_banner.dart';
 class HomePage extends StatefulWidget {
   final ValueNotifier<int>? visibilityNotifier;
   final VoidCallback? onNavigateToHistory;
+  final VoidCallback? onGoToSettings;
 
-  const HomePage({super.key, this.visibilityNotifier, this.onNavigateToHistory});
+  const HomePage({
+    super.key,
+    this.visibilityNotifier,
+    this.onNavigateToHistory,
+    this.onGoToSettings,
+  });
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -72,9 +78,9 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-                child: HeaderSection(),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: HeaderSection(onGoToSettings: widget.onGoToSettings),
               ),
               const SizedBox(height: 8),
               MonthlyFreeCard(refreshKey: _cardRefreshKey),

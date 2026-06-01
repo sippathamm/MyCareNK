@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../features/service/presentation/pages/request_history_page.dart';
+import '../pages/guide_page.dart';
 import '../pages/service_centers_page.dart';
 
 enum _ShortcutType { serviceCenters, guide, requestHistory }
@@ -93,10 +94,9 @@ class ShortcutMenu extends StatelessWidget {
                       ),
                     );
                   case _ShortcutType.guide:
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(AppLocalizations.of(context).shortcutPressed(label)),
-                        behavior: SnackBarBehavior.floating,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const GuidePage(),
                       ),
                     );
                 }

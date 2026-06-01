@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../home/presentation/pages/home_navigator.dart';
@@ -6,6 +9,7 @@ import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
 import '../../../service/presentation/pages/request_history_page.dart';
+import 'settings_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -25,8 +29,29 @@ class _MainScreenState extends State<MainScreen> {
   // Unread count จาก MessagesPage — ใช้แสดง badge บน nav bar
   final ValueNotifier<int> _messagesUnreadNotifier = ValueNotifier(0);
 
+  StreamSubscription<AuthState>? _authSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (!mounted) return;
+      if (state.event == AuthChangeEvent.signedOut) {
+        _messagesUnreadNotifier.value = 0;
+        setState(() {
+          _currentIndex = 0;
+          _messagesRefreshKey++;
+        });
+      } else if (state.event == AuthChangeEvent.signedIn) {
+        setState(() => _messagesRefreshKey++);
+      }
+    });
+  }
+
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _homeVisibilityNotifier.dispose();
     _messagesUnreadNotifier.dispose();
     super.dispose();
@@ -64,11 +89,11 @@ class _MainScreenState extends State<MainScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory),
+          HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory, onGoToSettings: () => _onItemTapped(4)),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
           MessagesPage(unreadNotifier: _messagesUnreadNotifier, refreshKey: _messagesRefreshKey),
-          const Center(child: Text('Settings Screen Placeholder')),
+          const SettingsPage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(

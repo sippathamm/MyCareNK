@@ -208,8 +208,7 @@ class _ForgotPasswordRecoveryCodePageState
                 }),
               ),
 
-              const SizedBox(height: 48),
-
+              const SizedBox(height: 24),
               GradientButton(
                 onPressed: _isLoading ? null : _onNext,
                 label: AppLocalizations.of(context).next,

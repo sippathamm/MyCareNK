@@ -250,8 +250,7 @@ class _ForgotPasswordResetPageState extends State<ForgotPasswordResetPage> {
                   ),
                 ),
 
-                const SizedBox(height: 48),
-
+                const SizedBox(height: 24),
                 GradientButton(
                   onPressed: _isLoading ? null : _onConfirm,
                   label: AppLocalizations.of(context).confirm,

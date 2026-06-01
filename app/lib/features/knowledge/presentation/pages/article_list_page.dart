@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import 'article_detail_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
@@ -41,24 +40,28 @@ class _ArticleListPageState extends State<ArticleListPage> {
   void _showLoginRequired() {
     showDialog<void>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.white,
-        elevation: 24,
-        shadowColor: Colors.black38,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
           AppLocalizations.of(context).pleaseLogin,
-          style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
+          style: GoogleFonts.googleSans(
+              fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         content: Text(
           AppLocalizations.of(context).loginToViewArticles,
-          style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
+          style: GoogleFonts.googleSans(color: AppColors.textSecondary),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          GradientButton(
-            height: 46,
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pop();
+            },
+            child: Text(AppLocalizations.of(context).cancel,
+                style: GoogleFonts.googleSans(color: AppColors.textSecondary)),
+          ),
+          TextButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
               final loggedIn = await Navigator.of(context, rootNavigator: true)
@@ -71,28 +74,9 @@ class _ArticleListPageState extends State<ArticleListPage> {
                 Navigator.of(context).pop();
               }
             },
-            label: AppLocalizations.of(context).loginBtn,
-            fontSize: 15,
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: FilledButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEEEEEE),
-                foregroundColor: AppColors.textPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text(
-                AppLocalizations.of(context).cancel,
-                style: GoogleFonts.googleSans(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-            ),
+            child: Text(AppLocalizations.of(context).loginBtn,
+                style: GoogleFonts.googleSans(
+                    color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -302,11 +286,11 @@ class _ArticleCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AppColors.cardShadow,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -414,8 +398,8 @@ class _SkeletonArticleCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: const Offset(0, 2)),
+        boxShadow: const [
+          BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: Column(

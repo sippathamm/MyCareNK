@@ -58,8 +58,8 @@ class _MonthlyFreeCardState extends State<MonthlyFreeCard> {
     try {
       final response = await Supabase.instance.client.rpc('get_days_until_reset');
       if (mounted) setState(() => _daysUntilReset = response as int?);
-    } catch (e) {
-      debugPrint('Error fetching days until reset: $e');
+    } catch (_) {
+      // Silent: card just won't show the countdown if the RPC fails.
     }
   }
 

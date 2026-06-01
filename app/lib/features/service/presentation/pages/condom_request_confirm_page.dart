@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
+import '../../../../../core/widgets/request_step_indicator.dart';
+import '../../../../../core/widgets/section_card.dart';
+import '../../../../../core/widgets/info_row.dart';
 import 'condom_request_success_page.dart';
 import 'request_history_page.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
@@ -136,8 +139,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
           ),
         );
       }
-    } catch (error) {
-      debugPrint('Error saving condom request: $error');
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -189,11 +191,11 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               color: Colors.white,
               border: Border(bottom: BorderSide(color: Color(0xFFF0F0F0))),
             ),
-            child: _buildStepIndicator(1),
+            child: buildRequestStepIndicator(context, 1),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
               child: Column(
                 children: [
                   _buildMonthlyProgress(),
@@ -228,188 +230,34 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  GradientButton(
+                    onPressed: _isLoading ? null : _submitRequest,
+                    label: AppLocalizations.of(context).confirm,
+                    isLoading: _isLoading,
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 52,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(
+                            color: AppColors.primary, width: 1.5),
+                        foregroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24)),
+                      ),
+                      child: Text(AppLocalizations.of(context).edit,
+                          style: GoogleFonts.googleSans(
+                              fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
-          Container(
-            color: Colors.white,
-            padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
-            child: Column(
-              children: [
-                GradientButton(
-                  onPressed: _isLoading ? null : _submitRequest,
-                  label: AppLocalizations.of(context).confirm,
-                  isLoading: _isLoading,
-                ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(
-                          color: AppColors.primary, width: 1.5),
-                      foregroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24)),
-                    ),
-                    child: Text(AppLocalizations.of(context).edit,
-                        style: GoogleFonts.googleSans(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // ── Step indicator ──────────────────────────────────────────────────────────
-
-  Widget _buildStepIndicator(int step) {
-    final l10n = AppLocalizations.of(context);
-    final labels = [l10n.stepForm, l10n.stepConfirm, l10n.stepSuccess];
-    const double nodeSize = 34;
-    const double gap = 6;
-    final n = labels.length;
-
-    final iconItems = <Widget>[];
-    for (int idx = 0; idx < n; idx++) {
-      final isDone = idx < step;
-      final isCurrent = idx == step;
-      final active = isDone || isCurrent;
-      final isLast = idx == n - 1;
-      final showCheck = isDone || (isCurrent && isLast);
-      iconItems.add(AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
-        width: nodeSize, height: nodeSize,
-        decoration: BoxDecoration(color: active ? AppColors.primary : const Color(0xFFE8E8E8), shape: BoxShape.circle),
-        child: Center(child: showCheck
-            ? const Icon(Icons.check, color: Colors.white, size: 16)
-            : Text('${idx + 1}', style: GoogleFonts.googleSans(fontSize: 14, fontWeight: FontWeight.w700, color: active ? Colors.white : AppColors.textMuted))),
-      ));
-      if (!isLast) {
-        iconItems.addAll([
-          const SizedBox(width: gap),
-          Expanded(child: Container(height: 3, decoration: BoxDecoration(color: idx < step ? AppColors.primary : const Color(0xFFE8E8E8), borderRadius: BorderRadius.circular(2)))),
-          const SizedBox(width: gap),
-        ]);
-      }
-    }
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 16),
-      child: Column(children: [
-        Row(children: iconItems),
-        const SizedBox(height: 4),
-        LayoutBuilder(builder: (context, constraints) {
-          final W = constraints.maxWidth;
-          final slotSpacing = (W - nodeSize) / (n - 1);
-          TextStyle labelStyle(int idx) {
-            final active = idx <= step;
-            return GoogleFonts.googleSans(fontSize: 11, fontWeight: active ? FontWeight.w700 : FontWeight.w400, color: active ? AppColors.primary : AppColors.textMuted);
-          }
-          return SizedBox(
-            height: 16,
-            child: Stack(clipBehavior: Clip.none, children: [
-              Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
-              Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
-              for (int i = 1; i < n - 1; i++)
-                Positioned(
-                  left: nodeSize / 2 + i * slotSpacing,
-                  top: 0,
-                  child: FractionalTranslation(translation: const Offset(-0.5, 0), child: Text(labels[i], style: labelStyle(i))),
-                ),
-            ]),
-          );
-        }),
-      ]),
-    );
-  }
-
-  // ── Section card ────────────────────────────────────────────────────────────
-
-  Widget _buildSectionCard({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-              color: AppColors.cardShadowMedium,
-              blurRadius: 10,
-              offset: Offset(0, 4)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              child: Row(children: [
-                Icon(icon, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(title,
-                    style: GoogleFonts.googleSans(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold)),
-              ]),
-            ),
-            Padding(padding: const EdgeInsets.all(16), child: child),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(label,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 14, color: AppColors.textSecondary)),
-              Flexible(
-                child: Text(
-                  value,
-                  textAlign: TextAlign.right,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(height: 1, color: Color(0xFFF0F0F0)),
         ],
       ),
     );
@@ -526,7 +374,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   // ── Summary cards ───────────────────────────────────────────────────────────
 
   Widget _buildQuantityCard() {
-    return _buildSectionCard(
+    return SectionCard(
       title: AppLocalizations.of(context).condoms,
       icon: Icons.inventory_2_outlined,
       child: Column(
@@ -535,7 +383,7 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
               .where((e) => e.value > 0)
               .map((e) {
                 final l10n = AppLocalizations.of(context);
-                return _buildInfoRow('${l10n.sizeLabel} ${e.key} ${l10n.sizeMm}', '${e.value} ${l10n.pieces}');
+                return InfoRow('${l10n.sizeLabel} ${e.key} ${l10n.sizeMm}', '${e.value} ${l10n.pieces}');
               }),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -558,10 +406,10 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
   }
 
   Widget _buildLubricantCard() {
-    return _buildSectionCard(
+    return SectionCard(
       title: AppLocalizations.of(context).extra,
       icon: Icons.add_circle_outline,
-      child: _buildInfoRow(AppLocalizations.of(context).lubricant, '${widget.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
+      child: InfoRow(AppLocalizations.of(context).lubricant, '${widget.lubricantQuantity} ${AppLocalizations.of(context).pieces}'),
     );
   }
 
@@ -574,21 +422,21 @@ class _CondomRequestConfirmPageState extends State<CondomRequestConfirmPage> {
         ? '${widget.selectedTime!.hour.toString().padLeft(2, '0')}:${widget.selectedTime!.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}'
         : '-';
 
-    return _buildSectionCard(
+    return SectionCard(
       title: l10n.serviceAndDateTime,
       icon: Icons.calendar_today_outlined,
       child: Column(
         children: [
-          _buildInfoRow(l10n.serviceCenterLabel, widget.selectedServiceCenter ?? '-'),
-          _buildInfoRow(l10n.dateLabel, dateStr),
-          _buildInfoRow(l10n.timeLabel, timeStr),
+          InfoRow(l10n.serviceCenterLabel, widget.selectedServiceCenter ?? '-'),
+          InfoRow(l10n.dateLabel, dateStr),
+          InfoRow(l10n.timeLabel, timeStr),
         ],
       ),
     );
   }
 
   Widget _buildMessageCard() {
-    return _buildSectionCard(
+    return SectionCard(
       title: AppLocalizations.of(context).messageLabel,
       icon: Icons.comment_outlined,
       child: Align(
