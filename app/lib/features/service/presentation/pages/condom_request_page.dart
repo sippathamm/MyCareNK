@@ -10,6 +10,8 @@ import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../../core/widgets/request_step_indicator.dart';
 import '../widgets/stepper_row_condom.dart';
 import '../widgets/stepper_lubricant.dart';
+import '../widgets/section_card.dart';
+import '../widgets/quota_progress_bar.dart';
 import 'condom_request_confirm_page.dart';
 import 'request_history_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
@@ -212,7 +214,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   const SizedBox(height: 20),
                   _buildLubricantCard(),
                   const SizedBox(height: 20),
-                  _buildSectionCard(
+                  SectionCard(
                     title: AppLocalizations.of(context).selectServiceCenterTitle,
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
@@ -250,17 +252,17 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                                     ),
                                   ),
                   ),
-                  _buildSectionCard(
+                  SectionCard(
                     title: AppLocalizations.of(context).selectDateTitle,
                     icon: Icons.event_outlined,
                     child: _buildDatePicker(),
                   ),
-                  _buildSectionCard(
+                  SectionCard(
                     title: AppLocalizations.of(context).selectTimeTitle,
                     icon: Icons.schedule_outlined,
                     child: _buildTimePicker(),
                   ),
-                  _buildSectionCard(
+                  SectionCard(
                     title: AppLocalizations.of(context).addMessageTitle,
                     icon: Icons.comment_outlined,
                     child: TextField(
@@ -310,61 +312,6 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  // ── Step indicator ──────────────────────────────────────────────────────────
-
-  // ── Section card ────────────────────────────────────────────────────────────
-
-  Widget _buildSectionCard({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-              color: AppColors.cardShadowMedium,
-              blurRadius: 10,
-              offset: Offset(0, 4)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              child: Row(children: [
-                Icon(icon, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                Text(title,
-                    style: GoogleFonts.googleSans(
-                        color: Colors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold)),
-              ]),
-            ),
-            Padding(padding: const EdgeInsets.all(16), child: child),
-          ],
-        ),
       ),
     );
   }
@@ -684,8 +631,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _buildProgressBar(
-                    key: 'condom_bar_$_animationVersion',
+                  QuotaProgressBar(
+                    key: ValueKey('condom_bar_$_animationVersion'),
                     color: AppColors.primary,
                     current: remaining,
                     total: AppConstants.maxCondomQuota,
@@ -728,8 +675,8 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                     ),
                   ),
                   const SizedBox(height: 8),
-                  _buildProgressBar(
-                    key: 'lubricant_bar_$_animationVersion',
+                  QuotaProgressBar(
+                    key: ValueKey('lubricant_bar_$_animationVersion'),
                     color: AppColors.lubricant,
                     current: remainingLubricant,
                     total: AppConstants.maxLubricantQuota,
@@ -740,43 +687,6 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
           ],
         ),
       ],
-    );
-  }
-
-  Widget _buildProgressBar({
-    required String key,
-    required Color color,
-    required int current,
-    required int total,
-  }) {
-    final double pct = total > 0 ? (current / total).clamp(0.0, 1.0) : 0;
-    return TweenAnimationBuilder<double>(
-      key: ValueKey(key),
-      tween: Tween<double>(begin: 0, end: pct),
-      duration: const Duration(milliseconds: 1000),
-      curve: Curves.easeOutCubic,
-      builder: (context, value, _) => Stack(
-        children: [
-          Container(
-            height: 6,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              color: Colors.grey[200],
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
-          LayoutBuilder(
-            builder: (context, constraints) => Container(
-              height: 6,
-              width: constraints.maxWidth * value,
-              decoration: BoxDecoration(
-                color: color,
-                borderRadius: BorderRadius.circular(4),
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
@@ -884,70 +794,21 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
   // ── Lubricant card ──────────────────────────────────────────────────────────
 
   Widget _buildLubricantCard() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-              color: AppColors.cardShadowMedium,
-              blurRadius: 10,
-              offset: Offset(0, 4)),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
-        child: Column(
-          children: [
-            Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryDark, AppColors.primary],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-              ),
-              child: Builder(builder: (context) {
-                return Row(
-                  children: [
-                    const Icon(Icons.add_circle_outline,
-                        color: AppColors.white, size: 18),
-                    const SizedBox(width: 8),
-                    Text(
-                      AppLocalizations.of(context).extra,
-                      style: GoogleFonts.googleSans(
-                          color: AppColors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                );
-              }),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Builder(builder: (context) {
-                final int totalLubricantUsed =
-                    _currentMonthlyLubricantUsed + _lubricantQuantity;
-                final int remainingLubricant =
-                    (AppConstants.maxLubricantQuota - totalLubricantUsed)
-                        .clamp(0, AppConstants.maxLubricantQuota);
-                final int maxLubricantAllowed =
-                    _lubricantQuantity + remainingLubricant;
-                return StepperLubricant(
-                  label: AppLocalizations.of(context).lubricant,
-                  count: _lubricantQuantity,
-                  max: maxLubricantAllowed,
-                  onChanged: (val) =>
-                      setState(() => _lubricantQuantity = val),
-                );
-              }),
-            ),
-          ],
-        ),
+    final int totalLubricantUsed =
+        _currentMonthlyLubricantUsed + _lubricantQuantity;
+    final int remainingLubricant =
+        (AppConstants.maxLubricantQuota - totalLubricantUsed)
+            .clamp(0, AppConstants.maxLubricantQuota);
+    final int maxLubricantAllowed = _lubricantQuantity + remainingLubricant;
+    return SectionCard(
+      title: AppLocalizations.of(context).extra,
+      icon: Icons.add_circle_outline,
+      margin: EdgeInsets.zero,
+      child: StepperLubricant(
+        label: AppLocalizations.of(context).lubricant,
+        count: _lubricantQuantity,
+        max: maxLubricantAllowed,
+        onChanged: (val) => setState(() => _lubricantQuantity = val),
       ),
     );
   }
