@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../../../core/widgets/gradient_button.dart';
 import '../../data/models/hiv_assessment_data.dart';
+import '../widgets/hiv_assessment_widgets.dart';
 import 'doctor_booking_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
@@ -117,7 +117,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
                   child: _step == -1
-                      ? _buildIntro()
+                      ? const AssessmentIntro()
                       : _isDone
                           ? _buildResult(riskCfg!, risk!, l10n, questions)
                           : _buildQuestion(cur!),
@@ -138,7 +138,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (cfg.hasCta) ...[
-            _PrimaryBtn(
+            AssessmentPrimaryButton(
               label: l10n.bookDoctorTitle,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
@@ -149,17 +149,17 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             ),
             const SizedBox(height: 10),
           ],
-          _OutlinedBtn(label: l10n.reassess, onPressed: _reset),
+          AssessmentOutlinedButton(label: l10n.reassess, onPressed: _reset),
         ],
       );
     }
     if (_step == -1) {
-      return _PrimaryBtn(label: l10n.startAssessment, onPressed: _handleNext);
+      return AssessmentPrimaryButton(label: l10n.startAssessment, onPressed: _handleNext);
     }
     return AnimatedOpacity(
       opacity: _selected != null ? 1.0 : 0.45,
       duration: const Duration(milliseconds: 150),
-      child: _PrimaryBtn(
+      child: AssessmentPrimaryButton(
         label: _step == _totalQ - 1
             ? l10n.viewAssessmentResult
             : l10n.next,
@@ -238,145 +238,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     );
   }
 
-  Widget _buildIntro() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        const SizedBox(height: 28),
-        Container(
-          width: 88,
-          height: 88,
-          decoration: const BoxDecoration(
-            color: AppColors.avatarBackground,
-            shape: BoxShape.circle,
-          ),
-          child:
-              const Icon(Icons.biotech, color: AppColors.avatarIcon, size: 44),
-        ),
-        const SizedBox(height: 20),
-        Text(
-          AppLocalizations.of(context).hivAssessmentFullTitle,
-          style: GoogleFonts.googleSans(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: AppColors.textPrimary,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 10),
-        RichText(
-          textAlign: TextAlign.center,
-          text: TextSpan(
-            style: GoogleFonts.googleSans(
-              fontSize: 15,
-              color: AppColors.textSecondary,
-              height: 1.7,
-            ),
-            children: [
-              TextSpan(text: AppLocalizations.of(context).assessmentIntroPart1),
-              TextSpan(
-                text: AppLocalizations.of(context).assessmentIntroHighlight,
-                style: GoogleFonts.googleSans(
-                  color: AppColors.avatarIcon,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              TextSpan(text: AppLocalizations.of(context).assessmentIntroPart2),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.avatarBackground,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                AppLocalizations.of(context).assessmentContains,
-                style: GoogleFonts.googleSans(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.avatarIcon,
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildSectionEntry(AppLocalizations.of(context).questionCountLabel(4), AppLocalizations.of(context).assessmentSectionLabel(1), AppLocalizations.of(context).sectionBehavior),
-              _buildSectionEntry(AppLocalizations.of(context).questionCountLabel(2), AppLocalizations.of(context).assessmentSectionLabel(2), AppLocalizations.of(context).sectionHealthBehavior),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: const Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Text(
-            AppLocalizations.of(context).assessmentDisclaimer,
-            style: GoogleFonts.googleSans(
-              fontSize: 13,
-              color: AppColors.textHint,
-              height: 1.6,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildSectionEntry(String count, String name, String desc) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-            decoration: BoxDecoration(
-              color: AppColors.avatarIcon,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              count,
-              style: GoogleFonts.googleSans(
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: GoogleFonts.googleSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              Text(
-                desc,
-                style: GoogleFonts.googleSans(
-                    fontSize: 13, color: AppColors.textHint),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildQuestion(AssessmentQuestion q) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -431,99 +292,12 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           ),
         ),
         const SizedBox(height: 20),
-        ...q.options.map((opt) => _buildOption(opt)),
+        ...q.options.map((opt) => AssessmentOptionTile(
+              option: opt,
+              selected: _selected == opt.key,
+              onTap: () => setState(() => _selected = opt.key),
+            )),
       ],
-    );
-  }
-
-  Widget _buildOption(AssessmentOption opt) {
-    final isSelected = _selected == opt.key;
-    return GestureDetector(
-      onTap: () => setState(() => _selected = opt.key),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(bottom: 10),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.avatarBackground : Colors.white,
-          border: Border.all(
-            color: isSelected
-                ? AppColors.avatarIcon
-                : const Color(0xFFE0E0E0),
-            width: 2,
-          ),
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: isSelected
-                  ? AppColors.avatarIconShadow
-                  : const Color(0x0A000000),
-              blurRadius: isSelected ? 10 : 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 28,
-              height: 28,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? AppColors.avatarIcon
-                    : const Color(0xFFF0F0F0),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Center(
-                child: Text(
-                  opt.key,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color:
-                        isSelected ? Colors.white : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    opt.label,
-                    style: GoogleFonts.googleSans(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                      height: 1.35,
-                    ),
-                  ),
-                  if (opt.sub.isNotEmpty) ...[
-                    const SizedBox(height: 3),
-                    Text(
-                      opt.sub,
-                      style: GoogleFonts.googleSans(
-                        fontSize: 13,
-                        color: AppColors.textHint,
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: 8),
-              const Icon(Icons.check_circle,
-                  color: AppColors.avatarIcon, size: 20),
-            ],
-          ],
-        ),
-      ),
     );
   }
 
@@ -636,7 +410,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         const SizedBox(height: 20),
         _buildKnowledgeBox(),
         const SizedBox(height: 20),
-        _AnswerSummary(answers: Map.from(_answers), questions: questions),
+        AnswerSummary(answers: Map.from(_answers), questions: questions),
       ],
     );
   }
@@ -707,180 +481,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           const SizedBox(height: 8),
           const Divider(height: 1, color: Color(0xFFEEEEEE)),
         ],
-      ),
-    );
-  }
-}
-
-// ─── Answer Summary ───────────────────────────────────────────────────────────
-
-class _AnswerSummary extends StatefulWidget {
-  final Map<int, String> answers;
-  final List<AssessmentQuestion> questions;
-  const _AnswerSummary({required this.answers, required this.questions});
-
-  @override
-  State<_AnswerSummary> createState() => _AnswerSummaryState();
-}
-
-class _AnswerSummaryState extends State<_AnswerSummary> {
-  bool _expanded = false;
-
-  Color _answerColor(String key) {
-    if (key == 'ก') return AppColors.success;
-    if (key == 'ข') return const Color(0xFFFF8F00);
-    return AppColors.error;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        GestureDetector(
-          onTap: () => setState(() => _expanded = !_expanded),
-          behavior: HitTestBehavior.opaque,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  AppLocalizations.of(context).viewYourAnswers,
-                  style: GoogleFonts.googleSans(
-                      fontSize: 14, color: AppColors.textHint),
-                ),
-                AnimatedRotation(
-                  turns: _expanded ? 0.5 : 0.0,
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  child: const Icon(
-                    Icons.keyboard_arrow_down,
-                    size: 16,
-                    color: AppColors.textHint,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        AnimatedSize(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          child: _expanded
-              ? Column(
-                  children: widget.answers.entries.map((e) {
-            final q = widget.questions[e.key];
-            final opt = q.options.firstWhere(
-              (o) => o.key == e.value,
-              orElse: () => q.options.first,
-            );
-            final col = _answerColor(e.value);
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF8F8F8),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 22,
-                    height: 22,
-                    margin: const EdgeInsets.only(top: 1),
-                    decoration: BoxDecoration(
-                      color: col,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Center(
-                      child: Text(
-                        e.value,
-                        style: GoogleFonts.googleSans(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          q.text,
-                          style: GoogleFonts.googleSans(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        Text(
-                          opt.label,
-                          style: GoogleFonts.googleSans(
-                            fontSize: 12,
-                            color: AppColors.textHint,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-                  }).toList(),
-                )
-              : const SizedBox.shrink(),
-        ),
-      ],
-    );
-  }
-}
-
-// ─── Shared button widgets ────────────────────────────────────────────────────
-
-class _PrimaryBtn extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  const _PrimaryBtn({required this.label, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return GradientButton(
-      onPressed: onPressed,
-      label: label,
-      gradientColors: GradientButton.healthGradient,
-    );
-  }
-}
-
-class _OutlinedBtn extends StatelessWidget {
-  final String label;
-  final VoidCallback? onPressed;
-  const _OutlinedBtn({required this.label, this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 52,
-      child: OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          side: const BorderSide(color: AppColors.avatarIcon, width: 2),
-          foregroundColor: AppColors.avatarIcon,
-          shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24)),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.googleSans(
-              fontSize: 16, fontWeight: FontWeight.w700),
-        ),
       ),
     );
   }
