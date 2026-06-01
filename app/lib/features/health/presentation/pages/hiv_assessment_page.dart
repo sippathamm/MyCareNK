@@ -2,170 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
+import '../../data/models/hiv_assessment_data.dart';
 import 'doctor_booking_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
-
-// ─── Data ────────────────────────────────────────────────────────────────────
-
-enum _RiskLevel { low, medium, high }
-
-class _Option {
-  final String key;
-  final String label;
-  final String sub;
-  const _Option(this.key, this.label, [this.sub = '']);
-}
-
-class _Question {
-  final int section;
-  final String sectionLabel;
-  final String text;
-  final IconData icon;
-  final List<_Option> options;
-  const _Question({
-    required this.section,
-    required this.sectionLabel,
-    required this.text,
-    required this.icon,
-    required this.options,
-  });
-}
-
-List<_Question> _buildQuestions(AppLocalizations l10n) => [
-  _Question(
-    section: 1,
-    sectionLabel: l10n.sectionBehavior,
-    text: l10n.q1Text,
-    icon: Icons.health_and_safety,
-    options: [
-      _Option('ก', l10n.q1OptALabel, l10n.q1OptASub),
-      _Option('ข', l10n.q1OptBLabel, l10n.q1OptBSub),
-      _Option('ค', l10n.q1OptCLabel, l10n.q1OptCSub),
-    ],
-  ),
-  _Question(
-    section: 1,
-    sectionLabel: l10n.sectionBehavior,
-    text: l10n.q2Text,
-    icon: Icons.warning_amber,
-    options: [
-      _Option('ก', l10n.q2OptALabel, l10n.q2OptASub),
-      _Option('ข', l10n.q2OptBLabel, l10n.q2OptBSub),
-      _Option('ค', l10n.q2OptCLabel, l10n.q2OptCSub),
-    ],
-  ),
-  _Question(
-    section: 1,
-    sectionLabel: l10n.sectionBehavior,
-    text: l10n.q3Text,
-    icon: Icons.face,
-    options: [
-      _Option('ก', l10n.q3OptALabel, l10n.q3OptASub),
-      _Option('ข', l10n.q3OptBLabel, l10n.q3OptBSub),
-      _Option('ค', l10n.q3OptCLabel, l10n.q3OptCSub),
-    ],
-  ),
-  _Question(
-    section: 1,
-    sectionLabel: l10n.sectionBehavior,
-    text: l10n.q4Text,
-    icon: Icons.people,
-    options: [
-      _Option('ก', l10n.q4OptALabel, l10n.q4OptASub),
-      _Option('ข', l10n.q4OptBLabel, l10n.q4OptBSub),
-      _Option('ค', l10n.q4OptCLabel, l10n.q4OptCSub),
-    ],
-  ),
-  _Question(
-    section: 2,
-    sectionLabel: l10n.sectionHealthBehavior,
-    text: l10n.q5Text,
-    icon: Icons.medication,
-    options: [
-      _Option('ก', l10n.q5OptALabel, l10n.q5OptASub),
-      _Option('ข', l10n.q5OptBLabel, l10n.q5OptBSub),
-      _Option('ค', l10n.q5OptCLabel, l10n.q5OptCSub),
-    ],
-  ),
-  _Question(
-    section: 2,
-    sectionLabel: l10n.sectionHealthBehavior,
-    text: l10n.q6Text,
-    icon: Icons.biotech,
-    options: [
-      _Option('ก', l10n.q6OptALabel, l10n.q6OptASub),
-      _Option('ข', l10n.q6OptBLabel, l10n.q6OptBSub),
-      _Option('ค', l10n.q6OptCLabel, l10n.q6OptCSub),
-    ],
-  ),
-];
-
-_RiskLevel _calcRisk(Map<int, String> answers) {
-  final vals = answers.values.toList();
-  if (vals.contains('ค')) return _RiskLevel.high;
-  if (vals.where((v) => v == 'ข').length >= 2) return _RiskLevel.medium;
-  return _RiskLevel.low;
-}
-
-// ─── Risk config ─────────────────────────────────────────────────────────────
-
-class _RiskConfig {
-  final String label;
-  final Color color;
-  final Color bg;
-  final IconData icon;
-  final String headline;
-  final String advice;
-  final List<String> pills;
-  final bool hasCta;
-  final String? bookingReason;
-  const _RiskConfig({
-    required this.label,
-    required this.color,
-    required this.bg,
-    required this.icon,
-    required this.headline,
-    required this.advice,
-    required this.pills,
-    required this.hasCta,
-    this.bookingReason,
-  });
-}
-
-const _kRiskConfigs = <_RiskLevel, _RiskConfig>{
-  _RiskLevel.low: _RiskConfig(
-    label: '',
-    color: AppColors.success,
-    bg: Color(0xFFE8F5E9),
-    icon: Icons.check_circle,
-    headline: '',
-    advice: '',
-    pills: [],
-    hasCta: false,
-  ),
-  _RiskLevel.medium: _RiskConfig(
-    label: '',
-    color: Color(0xFFFF8F00),
-    bg: Color(0xFFFFF8E1),
-    icon: Icons.warning,
-    headline: '',
-    advice: '',
-    pills: [],
-    hasCta: true,
-    bookingReason: 'prep',
-  ),
-  _RiskLevel.high: _RiskConfig(
-    label: '',
-    color: AppColors.error,
-    bg: Color(0xFFFFEBEE),
-    icon: Icons.emergency,
-    headline: '',
-    advice: '',
-    pills: [],
-    hasCta: true,
-    bookingReason: 'pep',
-  ),
-};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -229,9 +68,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final questions = _buildQuestions(l10n);
-    final risk = _isDone ? _calcRisk(_answers) : null;
-    final riskCfg = risk != null ? _kRiskConfigs[risk]! : null;
+    final questions = buildAssessmentQuestions(l10n);
+    final risk = _isDone ? calcRisk(_answers) : null;
+    final riskCfg = risk != null ? kRiskConfigs[risk]! : null;
     final cur = _step >= 0 && _step < _totalQ ? questions[_step] : null;
 
     return Scaffold(
@@ -291,10 +130,10 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     );
   }
 
-  Widget _buildBottomActions(AppLocalizations l10n, List<_Question> questions) {
+  Widget _buildBottomActions(AppLocalizations l10n, List<AssessmentQuestion> questions) {
     if (_isDone) {
-      final risk = _calcRisk(_answers);
-      final cfg = _kRiskConfigs[risk]!;
+      final risk = calcRisk(_answers);
+      final cfg = kRiskConfigs[risk]!;
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -329,7 +168,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     );
   }
 
-  Widget _buildProgress(_Question cur) {
+  Widget _buildProgress(AssessmentQuestion cur) {
     return Container(
       color: AppColors.white,
       padding: const EdgeInsets.fromLTRB(20, 10, 20, 10),
@@ -538,7 +377,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     );
   }
 
-  Widget _buildQuestion(_Question q) {
+  Widget _buildQuestion(AssessmentQuestion q) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -597,7 +436,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     );
   }
 
-  Widget _buildOption(_Option opt) {
+  Widget _buildOption(AssessmentOption opt) {
     final isSelected = _selected == opt.key;
     return GestureDetector(
       onTap: () => setState(() => _selected = opt.key),
@@ -688,25 +527,25 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     );
   }
 
-  Widget _buildResult(_RiskConfig cfg, _RiskLevel risk, AppLocalizations l10n, List<_Question> questions) {
-    final localizedLabel = risk == _RiskLevel.low
+  Widget _buildResult(RiskConfig cfg, RiskLevel risk, AppLocalizations l10n, List<AssessmentQuestion> questions) {
+    final localizedLabel = risk == RiskLevel.low
         ? l10n.riskLow
-        : risk == _RiskLevel.medium
+        : risk == RiskLevel.medium
             ? l10n.riskMedium
             : l10n.riskHigh;
-    final localizedHeadline = risk == _RiskLevel.low
+    final localizedHeadline = risk == RiskLevel.low
         ? l10n.riskLowHeadline
-        : risk == _RiskLevel.medium
+        : risk == RiskLevel.medium
             ? l10n.riskMediumHeadline
             : l10n.riskHighHeadline;
-    final localizedAdvice = risk == _RiskLevel.low
+    final localizedAdvice = risk == RiskLevel.low
         ? l10n.riskLowAdvice
-        : risk == _RiskLevel.medium
+        : risk == RiskLevel.medium
             ? l10n.riskMediumAdvice
             : l10n.riskHighAdvice;
-    final localizedPills = risk == _RiskLevel.low
+    final localizedPills = risk == RiskLevel.low
         ? l10n.riskLowPills
-        : risk == _RiskLevel.medium
+        : risk == RiskLevel.medium
             ? l10n.riskMediumPills
             : l10n.riskHighPills;
     return Column(
@@ -877,7 +716,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
 
 class _AnswerSummary extends StatefulWidget {
   final Map<int, String> answers;
-  final List<_Question> questions;
+  final List<AssessmentQuestion> questions;
   const _AnswerSummary({required this.answers, required this.questions});
 
   @override
