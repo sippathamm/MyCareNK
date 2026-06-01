@@ -314,7 +314,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
               สแกน QR Code เพื่อเปิดลิงค์ดาวน์โหลด
             </Typography>
             <Button
-              fullWidth
               variant="contained"
               color="primary"
               startIcon={<OpenInNewIcon />}

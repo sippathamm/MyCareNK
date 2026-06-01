@@ -69,7 +69,7 @@ export default function QRCodeDialog({
 
   return (
     <Dialog open={open} onClose={!isProcessing ? handleClose : undefined} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>QR Code สำหรับรับพัสดุ</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>QR Code สำหรับรับถุงยางอนามัย</DialogTitle>
 
       <DialogContent dividers>
         <Box display="flex" flexDirection="column" alignItems="center" py={2} gap={2}>
@@ -114,11 +114,11 @@ export default function QRCodeDialog({
         <Button onClick={handleClose} color="inherit" disabled={isProcessing}>ปิด</Button>
         {displayPayload && !isProcessing && (
           <>
-            <Button variant="outlined" startIcon={<DownloadIcon />} onClick={handleSaveImage}>
-              บันทึกภาพ
-            </Button>
             <Button variant="outlined" startIcon={<PrintIcon />} onClick={() => window.print()}>
               พิมพ์ QR Code
+            </Button>
+            <Button variant="contained" startIcon={<DownloadIcon />} onClick={handleSaveImage}>
+              บันทึกภาพ
             </Button>
           </>
         )}
