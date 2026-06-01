@@ -98,7 +98,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
   ServiceCenterModel? get _selectedLocation =>
       _centers.where((c) => c.name == _location).firstOrNull;
 
-  static int _hourOf(String t) => int.tryParse(t.split(':').first) ?? 0;
   DateTime? get _selectedDate => _dates
       .where((d) => d.toIso8601String().substring(0, 10) == _dateKey)
       .firstOrNull;
@@ -135,7 +134,14 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     title: AppLocalizations.of(context).bookingServiceReason,
                     icon: Icons.medical_services_outlined,
                     child: Column(
-                      children: _buildReasons(AppLocalizations.of(context)).map(_buildReasonTile).toList(),
+                      children: _buildReasons(AppLocalizations.of(context))
+                          .map((r) => ReasonTile(
+                                icon: r.icon,
+                                label: r.label,
+                                selected: _reason == r.key,
+                                onTap: () => setState(() => _reason = r.key),
+                              ))
+                          .toList(),
                     ),
                   ),
                   BookingSectionCard(
@@ -172,19 +178,39 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                 : Column(
                                     children: List.generate(
                                       _centers.length,
-                                      (i) => _buildLocationTile(_centers[i], i),
+                                      (i) => AppointmentLocationTile(
+                                        center: _centers[i],
+                                        index: i,
+                                        selected: _location == _centers[i].name,
+                                        onTap: () => setState(() {
+                                          if (_location != _centers[i].name) {
+                                            _timeSlot = null;
+                                          }
+                                          _location = _centers[i].name;
+                                        }),
+                                      ),
                                     ),
                                   ),
                   ),
                   BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentDate,
                     icon: Icons.event_outlined,
-                    child: _buildDatePicker(),
+                    child: AppointmentDateStrip(
+                      location: _selectedLocation,
+                      dates: _dates,
+                      dateKey: _dateKey,
+                      onSelect: (key) => setState(() => _dateKey = key),
+                    ),
                   ),
                   BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentTime,
                     icon: Icons.schedule_outlined,
-                    child: _buildTimePicker(),
+                    child: AppointmentTimePicker(
+                      location: _selectedLocation,
+                      locationName: _location,
+                      selectedTime: _timeSlot,
+                      onSelect: (t) => setState(() => _timeSlot = t),
+                    ),
                   ),
                   BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAdditionalNotes,
@@ -237,295 +263,6 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildReasonTile(_Reason r) {
-    final sel = _reason == r.key;
-    return GestureDetector(
-      onTap: () => setState(() => _reason = r.key),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: sel ? AppColors.statusPreparingLight : Colors.white,
-          border: Border.all(
-            color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.lubricant : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Icon(r.icon,
-                  color: sel ? Colors.white : AppColors.textMuted, size: 18),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                r.label,
-                style: GoogleFonts.googleSans(
-                  fontSize: 16,
-                  fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            if (sel)
-              const Icon(Icons.check_circle, color: AppColors.lubricant, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildLocationTile(ServiceCenterModel loc, int index) {
-    final sel = _location == loc.name;
-    return GestureDetector(
-      onTap: () => setState(() {
-        if (_location != loc.name) _timeSlot = null;
-        _location = loc.name;
-      }),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: sel ? AppColors.statusPreparingLight : Colors.white,
-          border: Border.all(
-            color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-            width: 1.5,
-          ),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.lubricant : const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Center(
-                child: Text(
-                  '${index + 1}',
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: sel ? Colors.white : AppColors.textMuted,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    loc.name,
-                    style: GoogleFonts.googleSans(
-                      fontSize: 16,
-                      fontWeight: sel ? FontWeight.w700 : FontWeight.w500,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  if (loc.operatingHours != null)
-                    Text(loc.operatingHours!,
-                        style: GoogleFonts.googleSans(
-                            fontSize: 14, color: AppColors.textHint)),
-                ],
-              ),
-            ),
-            if (sel)
-              const Icon(Icons.check_circle, color: AppColors.lubricant, size: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDatePicker() {
-    final loc = _selectedLocation;
-    if (loc == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            AppLocalizations.of(context).selectServiceCenterFirst,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    if (!loc.appointmentServiceEnabled) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            AppLocalizations.of(context).noAppointmentService,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    return SizedBox(
-      height: 84,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _dates.length,
-        separatorBuilder: (context, index) => const SizedBox(width: 8),
-        itemBuilder: (_, i) {
-          final d = _dates[i];
-          final l10n = AppLocalizations.of(context);
-          final dow = d.weekday == 7 ? 0 : d.weekday;
-          final key = d.toIso8601String().substring(0, 10);
-          final sel = _dateKey == key;
-          return GestureDetector(
-            onTap: () => setState(() => _dateKey = key),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: 60,
-              decoration: BoxDecoration(
-                color: sel ? AppColors.lubricant : Colors.white,
-                border: Border.all(
-                  color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-                  width: 1.5,
-                ),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    l10n.daysShort[dow],
-                    style: GoogleFonts.googleSans(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      color: sel
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textHint,
-                    ),
-                  ),
-                  Text(
-                    '${d.day}',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: sel ? Colors.white : AppColors.textPrimary,
-                      height: 1.2,
-                    ),
-                  ),
-                  Text(
-                    l10n.monthsShort[d.month],
-                    style: GoogleFonts.googleSans(
-                      fontSize: 11,
-                      color: sel
-                          ? Colors.white.withValues(alpha: 0.85)
-                          : AppColors.textHint,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildTimePicker() {
-    final loc = _selectedLocation;
-    final times = loc?.appointmentTimes ?? [];
-    if (loc == null || !loc.appointmentServiceEnabled || times.isEmpty) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          child: Text(
-            _location == null
-                ? AppLocalizations.of(context).selectServiceCenterFirst
-                : AppLocalizations.of(context).noAppointmentService,
-            style: GoogleFonts.googleSans(
-                fontSize: 14, color: AppColors.textHint),
-          ),
-        ),
-      );
-    }
-    final morning = times.where((t) => _hourOf(t) < 12).toList();
-    final afternoon = times.where((t) => _hourOf(t) >= 12).toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSlotGroup(AppLocalizations.of(context).morning, morning),
-        const SizedBox(height: 14),
-        _buildSlotGroup(AppLocalizations.of(context).afternoon, afternoon),
-      ],
-    );
-  }
-
-  Widget _buildSlotGroup(String label, List<String> slots) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: GoogleFonts.googleSans(
-            fontSize: 14,
-            color: AppColors.textSecondary,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (slots.isEmpty)
-          Text('–',
-              style: GoogleFonts.googleSans(
-                  fontSize: 15, color: AppColors.textHint))
-        else
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: slots.map((t) {
-            final sel = _timeSlot == t;
-            return GestureDetector(
-              onTap: () => setState(() => _timeSlot = t),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: sel ? AppColors.lubricant : Colors.white,
-                  border: Border.all(
-                    color: sel ? AppColors.lubricant : const Color(0xFFE8E8E8),
-                    width: 1.5,
-                  ),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '$t ${AppLocalizations.of(context).timeWithUnit}',
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    fontWeight: sel ? FontWeight.w700 : FontWeight.w400,
-                    color: sel ? Colors.white : AppColors.textPrimary,
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-      ],
     );
   }
 
