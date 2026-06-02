@@ -9,7 +9,6 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
-import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import HistoryIcon from '@mui/icons-material/History';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -166,7 +165,6 @@ export default function ArticleEditorPage() {
   // ─── UI state ──────────────────────────────────────────────────────────────
 
   const [saving, setSaving] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ title?: string; body?: string; category?: string }>({});
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
   const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
@@ -183,8 +181,6 @@ export default function ArticleEditorPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [hideDialogOpen, setHideDialogOpen] = useState(false);
-  const [exitDialogOpen, setExitDialogOpen] = useState(false);
-  const [exitSaving, setExitSaving] = useState(false);
   const [recoveryDialogOpen, setRecoveryDialogOpen] = useState(false);
   const [recoveryTime, setRecoveryTime] = useState<string | null>(null);
   const [recoveryDismissing, setRecoveryDismissing] = useState(false);
@@ -224,7 +220,6 @@ export default function ArticleEditorPage() {
     content: '',
     onUpdate: () => {
       if (isInitialLoad.current) return;
-      setIsDirty(true);
       setFieldErrors(prev => ({ ...prev, body: undefined }));
       // Reset retry counter on real edit so retries re-enable
       autoSaveRetryCount.current = 0;
@@ -253,7 +248,6 @@ export default function ArticleEditorPage() {
       autoSaveRetryCount.current = 0;
       setAutoSaveStatus('saved');
       setAutoSavedAt(new Date());
-      setIsDirty(false);
     } else if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
       autoSaveRetryCount.current++;
       setAutoSaveStatus('failed');
@@ -302,7 +296,13 @@ export default function ArticleEditorPage() {
     const formTitle = isDraft ? article.title : (article.draft_title ?? article.title);
     const formBody  = isDraft ? article.body  : (article.draft_body  ?? article.body);
     const formCat   = isDraft ? article.category : (article.draft_category ?? article.category);
-    const formThumb = isDraft ? article.thumbnail_url : (article.draft_thumbnail_url ?? article.thumbnail_url);
+    // When a draft exists, use draft_thumbnail_url directly (even if null = "removed").
+    // ?? would incorrectly fall back to the original when draft explicitly cleared the thumbnail.
+    const formThumb = isDraft
+      ? article.thumbnail_url
+      : hasDraftContent
+        ? article.draft_thumbnail_url
+        : article.thumbnail_url;
 
     setTitle(formTitle);
     setCategory(formCat);
@@ -422,7 +422,6 @@ export default function ArticleEditorPage() {
         showSnackbar(`สร้างบทความไม่สำเร็จ: ${result.error}`, 'error');
         return false;
       }
-      setIsDirty(false);
       navigate(`/articles/${result.id}/edit`, { replace: true });
       showSnackbar('สร้างบทความเรียบร้อยแล้ว', 'success');
       return true;
@@ -435,7 +434,6 @@ export default function ArticleEditorPage() {
       return false;
     }
 
-    setIsDirty(false);
     setAutoSaveStatus('idle');
     if (status !== 'draft') setHasDraft(true);
     showSnackbar('บันทึกร่างเรียบร้อยแล้ว', 'success');
@@ -451,7 +449,6 @@ export default function ArticleEditorPage() {
     if (err) {
       showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
     } else {
-      setIsDirty(false);
       setAutoSaveStatus('idle');
       setArticleStatus('published');
       showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
@@ -468,7 +465,6 @@ export default function ArticleEditorPage() {
     if (err) {
       showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
     } else {
-      setIsDirty(false);
       setAutoSaveStatus('idle');
       setHasDraft(false);
       showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
@@ -501,7 +497,6 @@ export default function ArticleEditorPage() {
     if (err) {
       showSnackbar(`เผยแพร่อีกครั้งไม่สำเร็จ: ${err}`, 'error');
     } else {
-      setIsDirty(false);
       setAutoSaveStatus('idle');
       setArticleStatus('published');
       setHasDraft(false);
@@ -510,25 +505,11 @@ export default function ArticleEditorPage() {
     setSaving(false);
   }
 
-  // ─── Navigation with dirty check ──────────────────────────────────────────
+  // ─── Navigation ───────────────────────────────────────────────────────────
 
   function handleBackClick() {
-    if (isDirty || autoSaveStatus !== 'idle') {
-      setExitDialogOpen(true);
-    } else {
-      navigate('/articles');
-    }
-  }
-
-  async function handleExitSaveDraft() {
-    setExitSaving(true);
-    await performSaveDraft();
-    setExitSaving(false);
-    navigate('/articles');
-  }
-
-  function handleExitDiscard() {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    if (retryTimer.current) clearTimeout(retryTimer.current);
     navigate('/articles');
   }
 
@@ -558,7 +539,6 @@ export default function ArticleEditorPage() {
       const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
       setThumbnailUrl(publicUrl);
       if (!isInitialLoad.current) {
-        setIsDirty(true);
         autoSaveRetryCount.current = 0;
         scheduleAutoSave();
       }
@@ -575,7 +555,6 @@ export default function ArticleEditorPage() {
     if (path) await supabase.storage.from('article-assets').remove([path]);
     setThumbnailUrl(null);
     if (!isInitialLoad.current) {
-      setIsDirty(true);
       autoSaveRetryCount.current = 0;
       scheduleAutoSave();
     }
@@ -772,7 +751,6 @@ export default function ArticleEditorPage() {
               onChange={e => {
                 setTitle(e.target.value);
                 if (!isInitialLoad.current) {
-                  setIsDirty(true);
                   setFieldErrors(prev => ({ ...prev, title: undefined }));
                   autoSaveRetryCount.current = 0;
                   if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
@@ -981,7 +959,6 @@ export default function ArticleEditorPage() {
                 onChange={e => {
                   setCategory(e.target.value);
                   if (!isInitialLoad.current) {
-                    setIsDirty(true);
                     setFieldErrors(prev => ({ ...prev, category: undefined }));
                     autoSaveRetryCount.current = 0;
                     if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
@@ -1131,27 +1108,6 @@ export default function ArticleEditorPage() {
         onConfirm={handleDelete}
         onCancel={() => setDeleteDialogOpen(false)}
       />
-
-      {/* Exit dialog */}
-      <Dialog open={exitDialogOpen} onClose={() => !exitSaving && setExitDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
-          <ExitToAppIcon color="warning" />
-          <Typography component="div" variant="h6" fontWeight="bold">ออกจากบทความ</Typography>
-        </DialogTitle>
-        <Divider />
-        <DialogContent sx={{ pt: 2.5 }}>
-          <DialogContentText>มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการบันทึกก่อนออกหรือไม่?</DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-          <Button onClick={handleExitDiscard} disabled={exitSaving} color="error">ละทิ้ง</Button>
-          <Box sx={{ flex: 1 }} />
-          <Button onClick={() => setExitDialogOpen(false)} disabled={exitSaving} color="inherit">อยู่ต่อ</Button>
-          <Button variant="contained" onClick={handleExitSaveDraft} disabled={exitSaving}
-            endIcon={exitSaving ? <CircularProgress size={16} color="inherit" /> : null}>
-            {exitSaving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       {/* Auto-save recovery dialog */}
       <Dialog open={recoveryDialogOpen} onClose={() => {}} maxWidth="xs" fullWidth>
