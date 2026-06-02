@@ -20,9 +20,11 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ArticleIcon from '@mui/icons-material/Article';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import DownloadIcon from '@mui/icons-material/Download';
 import { QRCodeSVG } from 'qrcode.react';
 
-const APP_DOWNLOAD_URL = 'https://drive.google.com/drive/folders/1c0JHjoL-kre6PtrfFrHkfopqR2ZRLTUP?usp=sharing';
+const APP_DOWNLOAD_URL = 'https://github.com/sippathamm/MyCareNK/releases/download/v0.22.1-beta-build1/app-release.apk';
+const APP_RELEASES_URL = 'https://github.com/sippathamm/MyCareNK/releases';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
@@ -311,19 +313,31 @@ export default function MainLayout({ children }: MainLayoutProps) {
           <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={1}>
             <QRCodeSVG value={APP_DOWNLOAD_URL} size={200} />
             <Typography variant="body2" color="text.secondary" textAlign="center">
-              สแกน QR Code เพื่อเปิดลิงค์ดาวน์โหลด
+              สแกน QR Code เพื่อดาวน์โหลด
             </Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<OpenInNewIcon />}
-              href={APP_DOWNLOAD_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              component="a"
-            >
-              เปิดลิงค์ดาวน์โหลด
-            </Button>
+            <Box display="flex" flexDirection="row" gap={1} justifyContent="center">
+              <Button
+                variant="outlined"
+                color="primary"
+                startIcon={<OpenInNewIcon />}
+                href={APP_RELEASES_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                component="a"
+              >
+                เปิดหน้าดาวน์โหลด
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<DownloadIcon />}
+                href={APP_DOWNLOAD_URL}
+                download
+                component="a"
+              >
+                ดาวน์โหลด
+              </Button>
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
