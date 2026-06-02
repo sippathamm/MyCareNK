@@ -7,8 +7,11 @@ import {
   Snackbar, Alert, LinearProgress, CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
@@ -564,6 +567,18 @@ export default function ArticleEditorPage() {
     }
   }
 
+  async function handleRemoveCover() {
+    if (!thumbnailUrl) return;
+    const path = extractStoragePath(thumbnailUrl);
+    if (path) await supabase.storage.from('article-assets').remove([path]);
+    setThumbnailUrl(null);
+    if (!isInitialLoad.current) {
+      setIsDirty(true);
+      autoSaveRetryCount.current = 0;
+      scheduleAutoSave();
+    }
+  }
+
   // ─── Video insert ──────────────────────────────────────────────────────────
 
   function handleVideoConfirm() {
@@ -979,13 +994,28 @@ export default function ArticleEditorPage() {
                 รูปหน้าปก
               </Typography>
               <Box sx={{
-                width: '100%', aspectRatio: '16/9', borderRadius: 1, overflow: 'hidden', mb: 1.5,
+                position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 1, overflow: 'hidden', mb: 1.5,
                 background: 'linear-gradient(135deg, #FEF1D2 0%, #FBCFB8 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {thumbnailUrl
                   ? <Box component="img" src={thumbnailUrl} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   : <ArticleIcon sx={{ fontSize: 40, color: '#FF9F6B' }} />}
+                {thumbnailUrl && (
+                  <Tooltip title="ลบรูปหน้าปก">
+                    <IconButton
+                      size="small"
+                      onClick={handleRemoveCover}
+                      sx={{
+                        position: 'absolute', top: 4, right: 4,
+                        bgcolor: 'rgba(0,0,0,0.45)', color: 'white',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.65)' },
+                      }}
+                    >
+                      <CloseIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </Box>
               <Button variant="outlined" fullWidth disabled={uploadingCover} onClick={() => coverInputRef.current?.click()}>
                 {uploadingCover ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปหน้าปก'}
@@ -1070,37 +1100,35 @@ export default function ArticleEditorPage() {
       </Dialog>
 
       {/* Hide confirmation dialog */}
-      <Dialog open={hideDialogOpen} onClose={() => !saving && setHideDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ยืนยันการซ่อนบทความ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            บทความจะถูกซ่อนและผู้ใช้ทั่วไปจะไม่สามารถเข้าถึงได้ คุณสามารถเผยแพร่บทความอีกครั้งได้ในภายหลัง
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setHideDialogOpen(false)} disabled={saving}>ยกเลิก</Button>
-          <Button variant="contained" color="error" onClick={handleHide} disabled={saving}>
-            {saving ? 'กำลังซ่อน...' : 'ซ่อนบทความ'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={hideDialogOpen}
+        icon={<VisibilityOffOutlinedIcon color="error" />}
+        title="ยืนยันการซ่อนบทความ"
+        body="บทความจะถูกซ่อนและผู้ใช้ทั่วไปจะไม่สามารถเข้าถึงได้ คุณสามารถเผยแพร่บทความอีกครั้งได้ในภายหลัง"
+        confirmLabel="ซ่อนบทความ"
+        confirmColor="error"
+        loading={saving}
+        onConfirm={handleHide}
+        onCancel={() => setHideDialogOpen(false)}
+      />
 
       {/* Delete dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => !deleting && setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ยืนยันการลบบทความ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            คุณต้องการลบบทความ <strong>"{title || 'ไม่มีหัวเรื่อง'}"</strong> ใช่หรือไม่?
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        icon={<DeleteOutlineIcon color="error" />}
+        title="ยืนยันการลบบทความ"
+        body={
+          <Typography variant="body2" color="text.secondary">
+            คุณต้องการลบบทความ <strong>"{title || 'ไม่มีหัวเรื่อง'}"</strong> ใช่หรือไม่?{' '}
             การกระทำนี้ไม่สามารถย้อนกลับได้
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>ยกเลิก</Button>
-          <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-            {deleting ? 'กำลังลบ...' : 'ลบบทความ'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </Typography>
+        }
+        confirmLabel="ลบบทความ"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
 
       {/* Exit dialog */}
       <Dialog open={exitDialogOpen} onClose={() => !exitSaving && setExitDialogOpen(false)} maxWidth="xs" fullWidth>
