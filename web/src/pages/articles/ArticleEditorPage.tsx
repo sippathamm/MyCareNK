@@ -460,6 +460,9 @@ export default function ArticleEditorPage() {
     autoSaveTimer.current = null;
 
     const payload = getPayload();
+    const isDraftContext = !isEditMode || articleStatusRef.current === 'draft';
+    if (isDraftContext && !payload.title.trim()) payload.title = 'ไม่มีหัวเรื่อง';
+
     if (!isEditMode) {
       const allEmpty = !payload.title.trim() && (!editorRef.current || editorRef.current.isEmpty) && !payload.category.trim();
       if (!allEmpty) await createArticle(payload, userId);
@@ -593,7 +596,13 @@ export default function ArticleEditorPage() {
   function renderActionButtons() {
     const base = { fullWidth: true, disabled: saving };
 
-    if (!isEditMode || articleStatus === null) return null;
+    if (!isEditMode) {
+      return (
+        <Button variant="contained" fullWidth disabled>เผยแพร่</Button>
+      );
+    }
+
+    if (articleStatus === null) return null;
 
     if (articleStatus === 'draft') {
       return (
@@ -864,9 +873,9 @@ export default function ArticleEditorPage() {
             {/* Actions card */}
             <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
               {/* Status + unpublished badge */}
-              {isEditMode && articleStatus && (
+              {(!isEditMode || !!articleStatus) && (
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5} flexWrap="wrap">
-                  {statusChip()}
+                  {isEditMode ? statusChip() : <Chip label="ร่าง" color="warning" size="small" />}
                   {hasDraft && articleStatus === 'published' && (
                     <Chip label="มีการแก้ไขที่ยังไม่ได้เผยแพร่" size="small" color="warning" variant="outlined" />
                   )}
@@ -875,7 +884,7 @@ export default function ArticleEditorPage() {
 
               {renderAutoSaveIndicator()}
 
-              <Box sx={{ mt: isEditMode ? 1.5 : 0 }}>
+              <Box sx={{ mt: 1.5 }}>
                 {renderActionButtons()}
               </Box>
             </Paper>
