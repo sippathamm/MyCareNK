@@ -76,7 +76,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.is_staff()
 RETURNS boolean
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
@@ -90,7 +90,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.is_admin()
 RETURNS boolean
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
@@ -104,7 +104,7 @@ $$;
 CREATE OR REPLACE FUNCTION public.is_superadmin()
 RETURNS boolean
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
