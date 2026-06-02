@@ -26,7 +26,6 @@ export interface Article {
   published_at: string | null;
   hidden_by: string | null;
   hidden_at: string | null;
-  autosave_saved_at: string | null;
 }
 
 // Full article row for the editor.
@@ -49,7 +48,6 @@ export interface ArticleDetail {
   published_at: string | null;
   hidden_by: string | null;
   hidden_at: string | null;
-  autosave_saved_at: string | null;
 }
 
 export interface ContentPayload {
@@ -68,7 +66,7 @@ export async function fetchArticleDetail(id: string): Promise<ArticleDetail | nu
       'id', 'title', 'body', 'category', 'thumbnail_url', 'status',
       'draft_title', 'draft_body', 'draft_category', 'draft_thumbnail_url',
       'created_by', 'created_at', 'updated_by', 'updated_at',
-      'published_by', 'published_at', 'hidden_by', 'hidden_at', 'autosave_saved_at',
+      'published_by', 'published_at', 'hidden_by', 'hidden_at',
     ].join(', '))
     .eq('id', id)
     .single();
@@ -98,26 +96,6 @@ export async function createArticle(
   return { id: (data as { id: string }).id };
 }
 
-// ─── Scenario 2 & 3 — Save draft ─────────────────────────────────────────────
-// Draft article   → writes to main columns (title/body/category/thumbnail_url)
-// Published/hidden → writes to draft_* columns
-
-export async function saveDraft(
-  id: string,
-  payload: ContentPayload,
-  articleStatus: ArticleStatus,
-  userId: string,
-): Promise<string | null> {
-  const now = new Date().toISOString();
-  const base = { updated_by: userId, updated_at: now, autosave_saved_at: null };
-  const update =
-    articleStatus === 'draft'
-      ? { title: payload.title, body: payload.body, category: payload.category, thumbnail_url: payload.thumbnail_url, ...base }
-      : { draft_title: payload.title, draft_body: payload.body, draft_category: payload.category, draft_thumbnail_url: payload.thumbnail_url, ...base };
-  const { error } = await supabase.from('articles').update(update).eq('id', id);
-  return error ? error.message : null;
-}
-
 // ─── Scenario 4A — Publish from draft ────────────────────────────────────────
 
 export async function publishArticle(
@@ -136,7 +114,6 @@ export async function publishArticle(
     published_at: now,
     updated_by: userId,
     updated_at: now,
-    autosave_saved_at: null,
   }).eq('id', id);
   return error ? error.message : null;
 }
@@ -163,7 +140,6 @@ export async function republishArticle(
     published_at: now,
     updated_by: userId,
     updated_at: now,
-    autosave_saved_at: null,
   }).eq('id', id);
   return error ? error.message : null;
 }
@@ -206,24 +182,24 @@ export async function restoreArticle(
     hidden_at: null,
     updated_by: userId,
     updated_at: now,
-    autosave_saved_at: null,
   }).eq('id', id);
   return error ? error.message : null;
 }
 
-// ─── Scenario 6 — Auto-save ───────────────────────────────────────────────────
-// Does NOT touch updated_by / updated_at — only autosave_saved_at.
+// ─── Auto-save (= save draft) ─────────────────────────────────────────────────
 
 export async function autoSaveArticle(
   id: string,
   payload: ContentPayload,
   articleStatus: ArticleStatus,
+  userId: string,
 ): Promise<string | null> {
   const now = new Date().toISOString();
+  const base = { updated_by: userId, updated_at: now };
   const update =
     articleStatus === 'draft'
-      ? { title: payload.title, body: payload.body, category: payload.category, thumbnail_url: payload.thumbnail_url, autosave_saved_at: now }
-      : { draft_title: payload.title, draft_body: payload.body, draft_category: payload.category, draft_thumbnail_url: payload.thumbnail_url, autosave_saved_at: now };
+      ? { title: payload.title, body: payload.body, category: payload.category, thumbnail_url: payload.thumbnail_url, ...base }
+      : { draft_title: payload.title, draft_body: payload.body, draft_category: payload.category, draft_thumbnail_url: payload.thumbnail_url, ...base };
   const { error } = await supabase.from('articles').update(update).eq('id', id);
   return error ? error.message : null;
 }
@@ -243,7 +219,7 @@ export function useArticles() {
     const [articlesRes, staffRes] = await Promise.all([
       supabase
         .from('articles')
-        .select('id, title, thumbnail_url, category, status, draft_title, draft_body, draft_category, created_by, created_at, updated_by, updated_at, published_by, published_at, hidden_by, hidden_at, autosave_saved_at')
+        .select('id, title, thumbnail_url, category, status, draft_title, draft_body, draft_category, created_by, created_at, updated_by, updated_at, published_by, published_at, hidden_by, hidden_at')
         .order('updated_at', { ascending: false }),
       supabase
         .from('staff_profiles')

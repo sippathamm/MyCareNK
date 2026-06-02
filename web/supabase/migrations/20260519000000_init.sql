@@ -1175,8 +1175,7 @@ CREATE POLICY "staff can read appointment status logs"
 
 -- ── 18. articles ───────────────────────────────────────────
 -- status is stored directly by the application (no trigger).
--- updated_at is set explicitly on manual saves only — no auto-trigger,
--- so that auto-save (Scenario 6) never touches updated_at/updated_by.
+-- auto-save writes updated_by/updated_at (same as manual save).
 CREATE TABLE public.articles (
   id                   uuid                  NOT NULL DEFAULT gen_random_uuid(),
   title                text                  NOT NULL,
@@ -1196,7 +1195,6 @@ CREATE TABLE public.articles (
   published_at         timestamptz,
   hidden_by            uuid,
   hidden_at            timestamptz,
-  autosave_saved_at    timestamptz,
   CONSTRAINT articles_pkey              PRIMARY KEY (id),
   CONSTRAINT articles_created_by_fkey   FOREIGN KEY (created_by)   REFERENCES auth.users(id),
   CONSTRAINT articles_updated_by_fkey   FOREIGN KEY (updated_by)   REFERENCES auth.users(id),

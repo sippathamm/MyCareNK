@@ -266,7 +266,7 @@ export default function ArticleEditorPage() {
 
     // ── Existing article ────────────────────────────────────────────────────
     if (!articleStatusRef.current) return;
-    const err = await autoSaveArticle(articleId, payload, articleStatusRef.current);
+    const err = await autoSaveArticle(articleId, payload, articleStatusRef.current, userIdRef.current);
     if (!err) {
       autoSaveRetryCount.current = 0;
       setAutoSaveStatus('saved');
@@ -467,7 +467,7 @@ export default function ArticleEditorPage() {
       const allEmpty = !payload.title.trim() && (!editorRef.current || editorRef.current.isEmpty) && !payload.category.trim();
       if (!allEmpty) await createArticle(payload, userId);
     } else if (articleStatusRef.current) {
-      await autoSaveArticle(articleId!, payload, articleStatusRef.current);
+      await autoSaveArticle(articleId!, payload, articleStatusRef.current, userId);
     }
 
     navigate('/articles');
