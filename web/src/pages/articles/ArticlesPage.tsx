@@ -184,9 +184,7 @@ export default function ArticlesPage() {
       renderCell: (params: GridRenderCellParams<Article>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography variant="body2">
-            {params.row.status === 'published' && params.row.published_at
-              ? formatDateTime(params.row.published_at)
-              : '—'}
+            {params.row.published_at ? formatDateTime(params.row.published_at) : '—'}
           </Typography>
         </Box>
       ),

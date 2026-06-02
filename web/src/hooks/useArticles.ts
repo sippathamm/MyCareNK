@@ -178,8 +178,6 @@ export async function restoreArticle(
     status: 'published',
     published_by: userId,
     published_at: now,
-    hidden_by: null,
-    hidden_at: null,
     updated_by: userId,
     updated_at: now,
   }).eq('id', id);
