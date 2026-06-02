@@ -465,17 +465,20 @@ export default function ArticleEditorPage() {
   // ─── Navigation — silent save if timer pending ────────────────────────────
 
   async function handleBackClick() {
+    const hasPending = autoSaveTimer.current !== null;
     cancelPendingAutoSave();
 
-    const payload = getPayload();
-    const isDraftContext = !isEditMode || articleStatusRef.current === 'draft';
-    if (isDraftContext && !payload.title.trim()) payload.title = 'ไม่มีหัวเรื่อง';
+    if (hasPending) {
+      const payload = getPayload();
+      const isDraftContext = !isEditMode || articleStatusRef.current === 'draft';
+      if (isDraftContext && !payload.title.trim()) payload.title = 'ไม่มีหัวเรื่อง';
 
-    if (!isEditMode) {
-      const allEmpty = !payload.title.trim() && (!editorRef.current || editorRef.current.isEmpty) && !payload.category.trim();
-      if (!allEmpty) await createArticle(payload, userId);
-    } else if (articleStatusRef.current) {
-      await autoSaveArticle(articleId!, payload, articleStatusRef.current, userId);
+      if (!isEditMode) {
+        const allEmpty = !payload.title.trim() && (!editorRef.current || editorRef.current.isEmpty) && !payload.category.trim();
+        if (!allEmpty) await createArticle(payload, userId);
+      } else if (articleStatusRef.current) {
+        await autoSaveArticle(articleId!, payload, articleStatusRef.current, userId);
+      }
     }
 
     navigate('/articles');
