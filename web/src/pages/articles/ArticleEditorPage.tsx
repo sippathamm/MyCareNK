@@ -1006,26 +1006,31 @@ export default function ArticleEditorPage() {
 
             {/* Article metadata */}
             {isEditMode && articleMeta && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {[
-                  { label: 'สร้างโดย', by: articleMeta.created_by, at: articleMeta.created_at },
-                  { label: 'แก้ไขล่าสุด', by: articleMeta.updated_by, at: articleMeta.updated_at },
-                  { label: 'เผยแพร่ล่าสุด', by: articleMeta.published_by, at: articleMeta.published_at },
-                  { label: 'ซ่อนล่าสุด', by: articleMeta.hidden_by, at: articleMeta.hidden_at },
-                ].filter(row => row.at).map(row => (
-                  <Box key={row.label}>
-                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
-                      {row.label}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
-                      {row.by ? (staffNameMap[row.by] || '—') : '—'}
-                    </Typography>
-                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
-                      {formatDateTime(row.at ?? undefined)}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
+              <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  ข้อมูลบทความ
+                </Typography>
+                <Stack spacing={1.5}>
+                  {[
+                    { label: 'สร้างโดย', by: articleMeta.created_by, at: articleMeta.created_at },
+                    { label: 'แก้ไขล่าสุด', by: articleMeta.updated_by, at: articleMeta.updated_at },
+                    { label: 'เผยแพร่ล่าสุด', by: articleMeta.published_by, at: articleMeta.published_at },
+                    { label: 'ซ่อนล่าสุด', by: articleMeta.hidden_by, at: articleMeta.hidden_at },
+                  ].filter(row => row.at).map(row => (
+                    <Box key={row.label}>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.6 }}>
+                        {row.label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4, fontWeight: 500 }}>
+                        {row.by ? (staffNameMap[row.by] || '—') : '—'}
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
+                        {formatDateTime(row.at ?? undefined)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </Paper>
             )}
           </Stack>
         </Box>
