@@ -52,7 +52,6 @@ CREATE TYPE public.appointment_status AS ENUM (
 
 CREATE TYPE public.article_status AS ENUM (
   'draft',
-  'scheduled',
   'published',
   'hidden'
 );
@@ -445,41 +444,6 @@ BEGIN
 END;
 $$;
 
--- ── articles ────────────────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.set_article_status()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path TO 'public'
-AS $$
-BEGIN
-  IF NEW.publish_at IS NULL THEN
-    NEW.status := 'draft';
-  ELSIF NOT NEW.is_visible THEN
-    NEW.status := 'hidden';
-  ELSIF NEW.publish_at > NOW() THEN
-    NEW.status := 'scheduled';
-  ELSE
-    NEW.status := 'published';
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.snapshot_published_content()
-RETURNS trigger
-LANGUAGE plpgsql
-SET search_path TO 'public'
-AS $$
-BEGIN
-  IF OLD.has_draft = TRUE AND NEW.has_draft = FALSE THEN
-    NEW.published_content_html := NEW.content_html;
-    NEW.published_content_json := NEW.content_json;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-
 -- ── auth.users cascade ─────────────────────────────────────
 -- Fires BEFORE DELETE on auth.users.
 -- Nullifies audit/history references so records are preserved.
@@ -499,7 +463,10 @@ BEGIN
   UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.inventory_logs          SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.staff_audit_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.articles                SET created_by   = NULL WHERE created_by   = OLD.id;
+  UPDATE public.articles SET created_by   = NULL WHERE created_by   = OLD.id;
+  UPDATE public.articles SET updated_by   = NULL WHERE updated_by   = OLD.id;
+  UPDATE public.articles SET published_by = NULL WHERE published_by = OLD.id;
+  UPDATE public.articles SET hidden_by    = NULL WHERE hidden_by    = OLD.id;
 
   -- Delete staff data (no-op for end-users)
   DELETE FROM public.staff_notification_reads WHERE staff_user_id = OLD.id;
@@ -1207,38 +1174,54 @@ CREATE POLICY "staff can read appointment status logs"
 
 
 -- ── 18. articles ───────────────────────────────────────────
+-- status is stored directly by the application (no trigger).
+-- updated_at is set explicitly on manual saves only — no auto-trigger,
+-- so that auto-save (Scenario 6) never touches updated_at/updated_by.
 CREATE TABLE public.articles (
-  id                     uuid                  NOT NULL DEFAULT gen_random_uuid(),
-  title                  text                  NOT NULL,
-  cover_image_url        text,
-  content_json           jsonb                 NOT NULL DEFAULT '{}',
-  content_html           text                  NOT NULL DEFAULT '',
-  publish_at             timestamptz,
-  created_by             uuid,
-  created_at             timestamptz                    DEFAULT now(),
-  updated_at             timestamptz                    DEFAULT now(),
-  has_draft              boolean               NOT NULL DEFAULT false,
-  is_visible             boolean               NOT NULL DEFAULT true,
-  status                 public.article_status NOT NULL DEFAULT 'draft',
-  published_content_html text,
-  published_content_json jsonb,
-  CONSTRAINT articles_pkey         PRIMARY KEY (id),
-  CONSTRAINT articles_created_by_fkey FOREIGN KEY (created_by)
-    REFERENCES auth.users(id)
+  id                   uuid                  NOT NULL DEFAULT gen_random_uuid(),
+  title                text                  NOT NULL,
+  body                 text                  NOT NULL DEFAULT '',
+  category             text                  NOT NULL DEFAULT '',
+  thumbnail_url        text,
+  status               public.article_status NOT NULL DEFAULT 'draft',
+  draft_title          text,
+  draft_body           text,
+  draft_category       text,
+  draft_thumbnail_url  text,
+  created_by           uuid,
+  created_at           timestamptz                    DEFAULT now(),
+  updated_by           uuid,
+  updated_at           timestamptz,
+  published_by         uuid,
+  published_at         timestamptz,
+  hidden_by            uuid,
+  hidden_at            timestamptz,
+  autosave_saved_at    timestamptz,
+  CONSTRAINT articles_pkey              PRIMARY KEY (id),
+  CONSTRAINT articles_created_by_fkey   FOREIGN KEY (created_by)   REFERENCES auth.users(id),
+  CONSTRAINT articles_updated_by_fkey   FOREIGN KEY (updated_by)   REFERENCES auth.users(id),
+  CONSTRAINT articles_published_by_fkey FOREIGN KEY (published_by) REFERENCES auth.users(id),
+  CONSTRAINT articles_hidden_by_fkey    FOREIGN KEY (hidden_by)    REFERENCES auth.users(id)
 );
 
 ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
 
+-- Anon: published articles only (app users not logged in)
 CREATE POLICY "anon_read_published_articles"
   ON public.articles FOR SELECT
-  TO anon USING (
-    publish_at IS NOT NULL AND publish_at <= now() AND is_visible = true
-  );
+  TO anon USING (status = 'published');
 
-CREATE POLICY "auth_read_all_articles"
+-- Admin / Superadmin: full read (all statuses)
+CREATE POLICY "admin_read_all_articles"
   ON public.articles FOR SELECT
-  TO authenticated USING (true);
+  TO authenticated USING (is_admin() OR is_superadmin());
 
+-- Staff (non-admin/superadmin): published only
+CREATE POLICY "staff_read_published_articles"
+  ON public.articles FOR SELECT
+  TO authenticated USING (is_staff() AND status = 'published');
+
+-- Admin / Superadmin: write access
 CREATE POLICY "admin_insert_articles"
   ON public.articles FOR INSERT
   TO authenticated WITH CHECK (is_admin() OR is_superadmin());
@@ -1250,18 +1233,6 @@ CREATE POLICY "admin_update_articles"
 CREATE POLICY "admin_delete_articles"
   ON public.articles FOR DELETE
   TO authenticated USING (is_admin() OR is_superadmin());
-
-CREATE TRIGGER update_articles_updated_at
-  BEFORE UPDATE ON public.articles
-  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER set_article_status_trigger
-  BEFORE INSERT OR UPDATE OF publish_at, is_visible ON public.articles
-  FOR EACH ROW EXECUTE FUNCTION set_article_status();
-
-CREATE TRIGGER snapshot_published_content_trigger
-  BEFORE UPDATE OF has_draft ON public.articles
-  FOR EACH ROW EXECUTE FUNCTION snapshot_published_content();
 
 
 -- ── Cascade delete trigger on auth.users ───────────────────
@@ -1743,11 +1714,12 @@ CREATE OR REPLACE FUNCTION public.get_published_articles(
   p_limit  integer DEFAULT 10,
   p_offset integer DEFAULT 0
 ) RETURNS TABLE(
-  id             uuid,
-  title          text,
-  excerpt        text,
-  cover_image_url text,
-  publish_at     timestamptz,
+  id              uuid,
+  title           text,
+  excerpt         text,
+  thumbnail_url   text,
+  category        text,
+  published_at    timestamptz,
   created_by_name text
 )
 LANGUAGE sql
@@ -1757,14 +1729,15 @@ AS $$
   SELECT
     a.id,
     a.title,
-    LEFT(regexp_replace(COALESCE(a.published_content_html, a.content_html), '<[^>]+>', '', 'g'), 120) AS excerpt,
-    a.cover_image_url,
-    a.publish_at,
+    LEFT(regexp_replace(a.body, '<[^>]+>', '', 'g'), 120) AS excerpt,
+    a.thumbnail_url,
+    a.category,
+    a.published_at,
     COALESCE(sp.first_name || ' ' || sp.last_name, '') AS created_by_name
   FROM articles a
   LEFT JOIN staff_profiles sp ON sp.staff_user_id = a.created_by
-  WHERE a.status = 'published' AND a.publish_at <= now() AND a.is_visible = true
-  ORDER BY a.publish_at DESC
+  WHERE a.status = 'published'
+  ORDER BY a.published_at DESC
   LIMIT p_limit OFFSET p_offset;
 $$;
 
@@ -1772,9 +1745,10 @@ CREATE OR REPLACE FUNCTION public.get_article_detail(p_article_id uuid)
 RETURNS TABLE(
   id              uuid,
   title           text,
-  cover_image_url text,
-  content_json    jsonb,
-  publish_at      timestamptz,
+  body            text,
+  thumbnail_url   text,
+  category        text,
+  published_at    timestamptz,
   created_by_name text
 )
 LANGUAGE sql
@@ -1784,16 +1758,15 @@ AS $$
   SELECT
     a.id,
     a.title,
-    a.cover_image_url,
-    COALESCE(a.published_content_json, a.content_json) AS content_json,
-    a.publish_at,
+    a.body,
+    a.thumbnail_url,
+    a.category,
+    a.published_at,
     COALESCE(sp.first_name || ' ' || sp.last_name, '') AS created_by_name
   FROM articles a
   LEFT JOIN staff_profiles sp ON sp.staff_user_id = a.created_by
   WHERE a.id = p_article_id
-    AND a.status = 'published'
-    AND a.publish_at <= now()
-    AND a.is_visible = true;
+    AND a.status = 'published';
 $$;
 
 
