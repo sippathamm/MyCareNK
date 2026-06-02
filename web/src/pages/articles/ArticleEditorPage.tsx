@@ -44,7 +44,6 @@ import { useAuth } from '../../hooks/useAuth';
 import {
   type ArticleStatus, type ArticleDetail, type ContentPayload,
   fetchArticleDetail, createArticle,
-  saveDraft as saveDraftHelper,
   publishArticle as publishArticleHelper,
   republishArticle as republishArticleHelper,
   hideArticle as hideArticleHelper,
@@ -188,6 +187,10 @@ export default function ArticleEditorPage() {
   // ─── Refs ──────────────────────────────────────────────────────────────────
 
   const isInitialLoad = useRef(true);
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
   const titleRef = useRef(title);
   const categoryRef = useRef(category);
@@ -231,8 +234,9 @@ export default function ArticleEditorPage() {
   // ─── Auto-save ─────────────────────────────────────────────────────────────
 
   const doAutoSave = useCallback(async () => {
+    autoSaveTimer.current = null; // clear ref so handleBackClick knows timer has fired
     const currentEditor = editorRef.current;
-    if (!articleId || !currentEditor || !articleStatusRef.current) return;
+    if (!currentEditor) return;
 
     setAutoSaveStatus('saving');
     const payload: ContentPayload = {
@@ -242,12 +246,36 @@ export default function ArticleEditorPage() {
       thumbnail_url: thumbnailUrlRef.current,
     };
 
-    const err = await autoSaveArticle(articleId, payload, articleStatusRef.current);
+    // ── New article: create in DB ───────────────────────────────────────────
+    if (!articleId) {
+      const allEmpty = !payload.title.trim() && currentEditor.isEmpty && !payload.category.trim();
+      if (allEmpty) { setAutoSaveStatus('idle'); return; }
+      const result = await createArticle(payload, userIdRef.current);
+      if ('error' in result) {
+        if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
+          autoSaveRetryCount.current++;
+          setAutoSaveStatus('failed');
+          retryTimer.current = setTimeout(doAutoSave, RETRY_DELAY);
+        } else {
+          setAutoSaveStatus('offline');
+        }
+      } else {
+        autoSaveRetryCount.current = 0;
+        setAutoSaveStatus('saved');
+        setAutoSavedAt(new Date());
+        navigateRef.current(`/articles/${result.id}/edit`, { replace: true });
+      }
+      return;
+    }
 
+    // ── Existing article ────────────────────────────────────────────────────
+    if (!articleStatusRef.current) return;
+    const err = await autoSaveArticle(articleId, payload, articleStatusRef.current);
     if (!err) {
       autoSaveRetryCount.current = 0;
       setAutoSaveStatus('saved');
       setAutoSavedAt(new Date());
+      if (articleStatusRef.current !== 'draft') setHasDraft(true);
     } else if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
       autoSaveRetryCount.current++;
       setAutoSaveStatus('failed');
@@ -258,23 +286,22 @@ export default function ArticleEditorPage() {
   }, [articleId]);
 
   const scheduleAutoSave = useCallback(() => {
-    if (!articleId) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     if (retryTimer.current) clearTimeout(retryTimer.current);
     autoSaveTimer.current = setTimeout(doAutoSave, DEBOUNCE_DELAY);
-  }, [articleId, doAutoSave]);
+  }, [doAutoSave]);
 
   useEffect(() => { editorRef.current = editor; }, [editor]);
   scheduleAutoSaveRef.current = scheduleAutoSave;
 
   // Trigger auto-save when title or category changes (editor changes handled in onUpdate)
   useEffect(() => {
-    if (isInitialLoad.current || !isEditMode) return;
+    if (isInitialLoad.current) return;
     autoSaveRetryCount.current = 0;
     if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
     scheduleAutoSave();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, category, scheduleAutoSave, isEditMode]);
+  }, [title, category, scheduleAutoSave]);
 
   useEffect(() => {
     return () => {
@@ -402,44 +429,6 @@ export default function ArticleEditorPage() {
     };
   }
 
-  // ─── Scenario 1 / 2 — Save draft ──────────────────────────────────────────
-
-  async function performSaveDraft(): Promise<boolean> {
-    if (!editor) return false;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-
-    const payload = getPayload();
-
-    if (!isEditMode) {
-      // Scenario 1: create new article
-      const allEmpty = !payload.title.trim() && editor.isEmpty && !payload.category.trim();
-      if (allEmpty) {
-        showSnackbar('กรุณาระบุข้อมูลอย่างน้อยหนึ่งรายการก่อนบันทึก', 'error');
-        return false;
-      }
-      const result = await createArticle(payload, userId);
-      if ('error' in result) {
-        showSnackbar(`สร้างบทความไม่สำเร็จ: ${result.error}`, 'error');
-        return false;
-      }
-      navigate(`/articles/${result.id}/edit`, { replace: true });
-      showSnackbar('สร้างบทความเรียบร้อยแล้ว', 'success');
-      return true;
-    }
-
-    const status = articleStatusRef.current!;
-    const err = await saveDraftHelper(articleId!, payload, status, userId);
-    if (err) {
-      showSnackbar(`บันทึกร่างไม่สำเร็จ: ${err}`, 'error');
-      return false;
-    }
-
-    setAutoSaveStatus('idle');
-    if (status !== 'draft') setHasDraft(true);
-    showSnackbar('บันทึกร่างเรียบร้อยแล้ว', 'success');
-    return true;
-  }
-
   // ─── Scenario 4A — Publish from draft ─────────────────────────────────────
 
   async function handlePublish() {
@@ -505,11 +494,21 @@ export default function ArticleEditorPage() {
     setSaving(false);
   }
 
-  // ─── Navigation ───────────────────────────────────────────────────────────
+  // ─── Navigation — silent save if timer pending ────────────────────────────
 
-  function handleBackClick() {
+  async function handleBackClick() {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     if (retryTimer.current) clearTimeout(retryTimer.current);
+    autoSaveTimer.current = null;
+
+    const payload = getPayload();
+    if (!isEditMode) {
+      const allEmpty = !payload.title.trim() && (!editorRef.current || editorRef.current.isEmpty) && !payload.category.trim();
+      if (!allEmpty) await createArticle(payload, userId);
+    } else if (articleStatusRef.current) {
+      await autoSaveArticle(articleId!, payload, articleStatusRef.current);
+    }
+
     navigate('/articles');
   }
 
@@ -636,40 +635,24 @@ export default function ArticleEditorPage() {
   function renderActionButtons() {
     const base = { fullWidth: true, disabled: saving };
 
-    if (!isEditMode || articleStatus === null) {
-      // New article or loading — only Save Draft available
-      return (
-        <Button variant="outlined" {...base} onClick={() => performSaveDraft()}>
-          {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-        </Button>
-      );
-    }
+    if (!isEditMode || articleStatus === null) return null;
 
     if (articleStatus === 'draft') {
       return (
-        <Stack spacing={1.5}>
-          <Button variant="contained" {...base} onClick={handlePublish}>
-            {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
-          </Button>
-          <Button variant="outlined" {...base} onClick={() => { setSaving(true); performSaveDraft().finally(() => setSaving(false)); }}>
-            {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-          </Button>
-        </Stack>
+        <Button variant="contained" {...base} onClick={handlePublish}>
+          {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
+        </Button>
       );
     }
 
     if (articleStatus === 'published') {
       return (
         <Stack spacing={1.5}>
-          {hasDraft ? (
+          {hasDraft && (
             <Button variant="contained" {...base} onClick={handleRepublish}>
               {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
             </Button>
-          ) : null}
-          <Button variant={hasDraft ? 'outlined' : 'contained'} {...base}
-            onClick={() => { setSaving(true); performSaveDraft().finally(() => setSaving(false)); }}>
-            {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-          </Button>
+          )}
           <Button variant="outlined" color="error" {...base} onClick={() => setHideDialogOpen(true)}>
             ซ่อนบทความ
           </Button>
@@ -679,22 +662,16 @@ export default function ArticleEditorPage() {
 
     // hidden
     return (
-      <Stack spacing={1.5}>
-        <Button variant="contained" {...base} onClick={handleRestore}>
-          {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
-        </Button>
-        <Button variant="outlined" {...base}
-          onClick={() => { setSaving(true); performSaveDraft().finally(() => setSaving(false)); }}>
-          {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-        </Button>
-      </Stack>
+      <Button variant="contained" {...base} onClick={handleRestore}>
+        {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
+      </Button>
     );
   }
 
   // ─── Auto-save indicator ───────────────────────────────────────────────────
 
   function renderAutoSaveIndicator() {
-    if (!isEditMode || autoSaveStatus === 'idle') return null;
+    if (autoSaveStatus === 'idle') return null;
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5, flexWrap: 'wrap' }}>
         {autoSaveStatus === 'saving' && (
@@ -754,6 +731,7 @@ export default function ArticleEditorPage() {
                   setFieldErrors(prev => ({ ...prev, title: undefined }));
                   autoSaveRetryCount.current = 0;
                   if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
+                  scheduleAutoSaveRef.current();
                 }
               }}
               slotProps={{
@@ -962,6 +940,7 @@ export default function ArticleEditorPage() {
                     setFieldErrors(prev => ({ ...prev, category: undefined }));
                     autoSaveRetryCount.current = 0;
                     if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
+                    scheduleAutoSaveRef.current();
                   }
                 }}
               />
