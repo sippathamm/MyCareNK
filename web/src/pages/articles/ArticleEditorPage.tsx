@@ -513,7 +513,7 @@ export default function ArticleEditorPage() {
   // ─── Navigation with dirty check ──────────────────────────────────────────
 
   function handleBackClick() {
-    if (isDirty) {
+    if (isDirty || autoSaveStatus !== 'idle') {
       setExitDialogOpen(true);
     } else {
       navigate('/articles');
