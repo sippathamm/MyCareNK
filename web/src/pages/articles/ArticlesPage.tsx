@@ -19,7 +19,6 @@ import { createThGridLocale } from '../../constants/datagrid';
 const STATUS_FILTERS = [
   { value: 'all', label: 'ทั้งหมด' },
   { value: 'published', label: 'เผยแพร่แล้ว' },
-  { value: 'scheduled', label: 'รอเผยแพร่' },
   { value: 'draft', label: 'ร่าง' },
   { value: 'hidden', label: 'ซ่อน' },
 ] as const;
@@ -30,10 +29,6 @@ const STATUS_CHIP_PROPS: Record<ArticleStatus, { label: string; sx: object }> = 
   published: {
     label: 'เผยแพร่แล้ว',
     sx: { bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 'bold' },
-  },
-  scheduled: {
-    label: 'รอเผยแพร่',
-    sx: { bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 'bold' },
   },
   draft: {
     label: 'ร่าง',
@@ -103,7 +98,6 @@ export default function ArticlesPage() {
   const counts = useMemo(() => ({
     all: articles.length,
     published: articles.filter(a => a.status === 'published').length,
-    scheduled: articles.filter(a => a.status === 'scheduled').length,
     draft: articles.filter(a => a.status === 'draft').length,
     hidden: articles.filter(a => a.status === 'hidden').length,
   }), [articles]);
