@@ -389,8 +389,15 @@ export default function ArticleEditorPage() {
 
   // ─── Scenario 4A — Publish from draft ─────────────────────────────────────
 
+  function cancelPendingAutoSave() {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+    autoSaveTimer.current = null;
+  }
+
   async function handlePublish() {
     if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
     const err = await publishArticleHelper(articleId, getPayload(), userId);
     if (err) {
@@ -407,6 +414,7 @@ export default function ArticleEditorPage() {
 
   async function handleRepublish() {
     if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
     const err = await republishArticleHelper(articleId, getPayload(), userId);
     if (err) {
@@ -423,6 +431,7 @@ export default function ArticleEditorPage() {
 
   async function handleHide() {
     if (!articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
     const err = await hideArticleHelper(articleId, userId);
     if (err) {
@@ -439,6 +448,7 @@ export default function ArticleEditorPage() {
 
   async function handleRestore() {
     if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
     const err = await restoreArticleHelper(articleId, getPayload(), userId);
     if (err) {
@@ -455,9 +465,7 @@ export default function ArticleEditorPage() {
   // ─── Navigation — silent save if timer pending ────────────────────────────
 
   async function handleBackClick() {
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    if (retryTimer.current) clearTimeout(retryTimer.current);
-    autoSaveTimer.current = null;
+    cancelPendingAutoSave();
 
     const payload = getPayload();
     const isDraftContext = !isEditMode || articleStatusRef.current === 'draft';
