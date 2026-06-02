@@ -40,6 +40,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { formatDateTime } from '../../utils/requestUtils';
 import {
   type ArticleStatus, type ArticleDetail, type ContentPayload,
   fetchArticleDetail, createArticle,
@@ -169,6 +170,13 @@ export default function ArticleEditorPage() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
+  const [staffNameMap, setStaffNameMap] = useState<Record<string, string>>({});
+  const [articleMeta, setArticleMeta] = useState<{
+    created_by: string | null; created_at: string | null;
+    updated_by: string | null; updated_at: string | null;
+    published_by: string | null; published_at: string | null;
+    hidden_by: string | null; hidden_at: string | null;
+  } | null>(null);
 
   // ─── Dialog state ──────────────────────────────────────────────────────────
 
@@ -333,6 +341,29 @@ export default function ArticleEditorPage() {
     setArticleStatus(article.status as ArticleStatus);
     setHasDraft(hasDraftContent);
     editorRef.current?.commands.setContent(formBody, { emitUpdate: false });
+
+    setArticleMeta({
+      created_by: article.created_by, created_at: article.created_at,
+      updated_by: article.updated_by, updated_at: article.updated_at,
+      published_by: article.published_by, published_at: article.published_at,
+      hidden_by: article.hidden_by, hidden_at: article.hidden_at,
+    });
+
+    const ids = [...new Set([
+      article.created_by, article.updated_by,
+      article.published_by, article.hidden_by,
+    ].filter(Boolean) as string[])];
+    if (ids.length > 0) {
+      supabase.from('staff_profiles')
+        .select('staff_user_id, first_name, last_name')
+        .in('staff_user_id', ids)
+        .then(({ data }) => {
+          if (!data) return;
+          const map: Record<string, string> = {};
+          for (const s of data) map[s.staff_user_id] = `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim();
+          setStaffNameMap(map);
+        });
+    }
   }, []);
 
   const loadArticle = useCallback(async () => {
@@ -971,6 +1002,30 @@ export default function ArticleEditorPage() {
                 onClick={() => setDeleteDialogOpen(true)}>
                 ลบบทความ
               </Button>
+            )}
+
+            {/* Article metadata */}
+            {isEditMode && articleMeta && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {[
+                  { label: 'สร้างโดย', by: articleMeta.created_by, at: articleMeta.created_at },
+                  { label: 'แก้ไขล่าสุด', by: articleMeta.updated_by, at: articleMeta.updated_at },
+                  { label: 'เผยแพร่ล่าสุด', by: articleMeta.published_by, at: articleMeta.published_at },
+                  { label: 'ซ่อนล่าสุด', by: articleMeta.hidden_by, at: articleMeta.hidden_at },
+                ].filter(row => row.at).map(row => (
+                  <Box key={row.label}>
+                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
+                      {row.label}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4 }}>
+                      {row.by ? (staffNameMap[row.by] || '—') : '—'}
+                    </Typography>
+                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
+                      {formatDateTime(row.at ?? undefined)}
+                    </Typography>
+                  </Box>
+                ))}
+              </Box>
             )}
           </Stack>
         </Box>
