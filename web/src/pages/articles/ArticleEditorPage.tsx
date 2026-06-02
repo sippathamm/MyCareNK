@@ -9,6 +9,8 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import HistoryIcon from '@mui/icons-material/History';
 import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
@@ -1132,15 +1134,20 @@ export default function ArticleEditorPage() {
 
       {/* Exit dialog */}
       <Dialog open={exitDialogOpen} onClose={() => !exitSaving && setExitDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ออกจากบทความ</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+          <ExitToAppIcon color="warning" />
+          <Typography component="div" variant="h6" fontWeight="bold">ออกจากบทความ</Typography>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2.5 }}>
           <DialogContentText>มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการบันทึกก่อนออกหรือไม่?</DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
           <Button onClick={handleExitDiscard} disabled={exitSaving} color="error">ละทิ้ง</Button>
           <Box sx={{ flex: 1 }} />
-          <Button onClick={() => setExitDialogOpen(false)} disabled={exitSaving}>อยู่ต่อ</Button>
-          <Button variant="outlined" onClick={handleExitSaveDraft} disabled={exitSaving}>
+          <Button onClick={() => setExitDialogOpen(false)} disabled={exitSaving} color="inherit">อยู่ต่อ</Button>
+          <Button variant="contained" onClick={handleExitSaveDraft} disabled={exitSaving}
+            endIcon={exitSaving ? <CircularProgress size={16} color="inherit" /> : null}>
             {exitSaving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
           </Button>
         </DialogActions>
@@ -1148,14 +1155,19 @@ export default function ArticleEditorPage() {
 
       {/* Auto-save recovery dialog */}
       <Dialog open={recoveryDialogOpen} onClose={() => {}} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">พบการบันทึกอัตโนมัติ</DialogTitle>
-        <DialogContent>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+          <HistoryIcon color="primary" />
+          <Typography component="div" variant="h6" fontWeight="bold">พบการบันทึกอัตโนมัติ</Typography>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2.5 }}>
           <DialogContentText>
             มีข้อมูลที่บันทึกอัตโนมัติเมื่อ {recoveryTime} ต้องการนำข้อมูลนั้นกลับมาหรือไม่?
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleRecoveryDismiss} disabled={recoveryDismissing} color="error">
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={handleRecoveryDismiss} disabled={recoveryDismissing} color="error"
+            endIcon={recoveryDismissing ? <CircularProgress size={16} color="inherit" /> : null}>
             {recoveryDismissing ? 'กำลังยกเลิก...' : 'ทิ้งการเปลี่ยนแปลง'}
           </Button>
           <Button variant="contained" onClick={handleRecoveryConfirm} disabled={recoveryDismissing}>
