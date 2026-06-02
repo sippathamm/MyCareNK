@@ -9,18 +9,24 @@ export const ARTICLE_STATUS = {
 
 export type ArticleStatus = typeof ARTICLE_STATUS[keyof typeof ARTICLE_STATUS];
 
-// Used by ArticlesPage (#200) — column names kept stable, do not rename.
 export interface Article {
   id: string;
   title: string;
-  cover_image_url: string | null;
-  publish_at: string | null;
-  has_draft: boolean;
-  is_visible: boolean;
+  thumbnail_url: string | null;
+  category: string;
   status: ArticleStatus;
+  draft_title: string | null;
+  draft_body: string | null;
+  draft_category: string | null;
   created_by: string | null;
   created_at: string | null;
+  updated_by: string | null;
   updated_at: string | null;
+  published_by: string | null;
+  published_at: string | null;
+  hidden_by: string | null;
+  hidden_at: string | null;
+  autosave_saved_at: string | null;
 }
 
 // Full article row for the editor.
@@ -222,7 +228,7 @@ export async function autoSaveArticle(
   return error ? error.message : null;
 }
 
-// ─── useArticles hook (ArticlesPage / #200 — column names kept stable) ────────
+// ─── useArticles hook ─────────────────────────────────────────────────────────
 
 export function useArticles() {
   const [articles, setArticles] = useState<Article[]>([]);
@@ -237,7 +243,7 @@ export function useArticles() {
     const [articlesRes, staffRes] = await Promise.all([
       supabase
         .from('articles')
-        .select('id, title, cover_image_url, publish_at, has_draft, is_visible, status, created_by, created_at, updated_at')
+        .select('id, title, thumbnail_url, category, status, draft_title, draft_body, draft_category, created_by, created_at, updated_by, updated_at, published_by, published_at, hidden_by, hidden_at, autosave_saved_at')
         .order('updated_at', { ascending: false }),
       supabase
         .from('staff_profiles')
