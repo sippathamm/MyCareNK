@@ -148,7 +148,7 @@ jobs:
           body: |
             Build จาก branch `${{ github.ref_name }}` — commit `${{ github.sha }}`
 
-            **ดาวน์โหลด:** แตะที่ `app-release.apk` ใต้ Assets ด้านล่าง
+            **ดาวน์โหลด:** `app-release.apk` ใต้ Assets ด้านล่าง
             **ติดตั้ง:** ต้องเปิด "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก" ในการตั้งค่า Android ก่อน
           files: app/build/app/outputs/flutter-apk/app-release.apk
           prerelease: ${{ github.ref == 'refs/heads/preview' }}
