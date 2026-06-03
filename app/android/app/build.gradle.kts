@@ -14,7 +14,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.mycarenk.my_care_nk"
+    namespace = "com.sippathamm.mycarenk.mycarenk"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -28,7 +28,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.mycarenk.my_care_nk"
+        applicationId = "com.sippathamm.mycarenk.mycarenk"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

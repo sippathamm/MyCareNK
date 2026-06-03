@@ -1,4 +1,4 @@
-package com.example.mycarenk.my_care_nk
+package com.sippathamm.mycarenk.mycarenk
 
 import io.flutter.embedding.android.FlutterActivity
 

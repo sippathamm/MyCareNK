@@ -24,7 +24,7 @@ class UpdateDialog extends StatefulWidget {
   State<UpdateDialog> createState() => _UpdateDialogState();
 }
 
-enum _DownloadState { idle, downloading, error }
+enum _DownloadState { idle, downloading, downloaded, error }
 
 class _UpdateDialogState extends State<UpdateDialog> {
   _DownloadState _state = _DownloadState.idle;
@@ -61,7 +61,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
         },
       );
       _localPath = path;
-      if (mounted) await _openInstaller();
+      if (mounted) setState(() => _state = _DownloadState.downloaded);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -75,7 +75,6 @@ class _UpdateDialogState extends State<UpdateDialog> {
   Future<void> _openInstaller() async {
     if (_localPath == null) return;
     await _service.openApk(_localPath!);
-    if (mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -83,7 +82,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     final force = widget.versionInfo.forceUpdate;
 
     return PopScope(
-      canPop: !force && _state != _DownloadState.downloading,
+      canPop: !force && _state != _DownloadState.downloading || _state == _DownloadState.downloaded,
       child: AlertDialog(
         backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -118,11 +117,14 @@ class _UpdateDialogState extends State<UpdateDialog> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (_currentVersion.isNotEmpty) ...[
-                  Text(
-                    'v$_currentVersion',
-                    style: GoogleFonts.googleSans(
-                      fontSize: 15,
-                      color: AppColors.textSecondary,
+                  Flexible(
+                    child: Text(
+                      'v$_currentVersion',
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.googleSans(
+                        fontSize: 15,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ),
                   const Padding(
@@ -134,12 +136,15 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     ),
                   ),
                 ],
-                Text(
-                  'v${widget.versionInfo.version}',
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
+                Flexible(
+                  child: Text(
+                    'v${widget.versionInfo.version}',
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.googleSans(
+                      fontSize: 15,
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -186,6 +191,31 @@ class _UpdateDialogState extends State<UpdateDialog> {
               ),
               const SizedBox(height: 4),
             ],
+            if (_state == _DownloadState.downloaded) ...[
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFE8F5E9),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline, color: AppColors.success, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'ดาวน์โหลดเสร็จสิ้น พร้อมติดตั้ง',
+                        style: GoogleFonts.googleSans(
+                          fontSize: 13,
+                          color: AppColors.success,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 4),
+            ],
             if (_state == _DownloadState.error) ...[
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -222,18 +252,30 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 style: GoogleFonts.googleSans(color: AppColors.textSecondary),
               ),
             ),
-          TextButton(
-            onPressed: _state == _DownloadState.downloading ? null : _startDownload,
-            child: Text(
-              _state == _DownloadState.error ? 'ลองใหม่' : 'อัปเดต',
-              style: GoogleFonts.googleSans(
-                color: _state == _DownloadState.downloading
-                    ? AppColors.textMuted
-                    : AppColors.primary,
-                fontWeight: FontWeight.bold,
+          if (_state == _DownloadState.downloaded)
+            TextButton(
+              onPressed: _openInstaller,
+              child: Text(
+                'ติดตั้ง',
+                style: GoogleFonts.googleSans(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: _state == _DownloadState.downloading ? null : _startDownload,
+              child: Text(
+                _state == _DownloadState.error ? 'ลองใหม่' : 'อัปเดต',
+                style: GoogleFonts.googleSans(
+                  color: _state == _DownloadState.downloading
+                      ? AppColors.textMuted
+                      : AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
