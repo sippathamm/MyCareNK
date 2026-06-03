@@ -26,6 +26,8 @@ jobs:
   build-debug:
     name: Debug APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     if: >-
       github.event_name == 'pull_request' ||
       github.event_name == 'push' ||
@@ -69,16 +71,59 @@ jobs:
           path: app/build/app/outputs/flutter-apk/app-debug.apk
           retention-days: 14
 
+      - name: Get version (preview)
+        id: version
+        if: github.event_name == 'push' && github.ref == 'refs/heads/preview'
+        working-directory: app
+        run: |
+          RAW=$(grep "^version:" pubspec.yaml | sed 's/version: //')
+          SEMVER=$(echo "$RAW" | sed 's/+.*//')
+          BUILD=$(echo "$RAW" | sed 's/.*+//')
+          TAG=$(echo "$RAW" | sed 's/+/-build/')
+          echo "semver=$SEMVER" >> $GITHUB_OUTPUT
+          echo "build=$BUILD" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "raw=$RAW" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Prerelease (preview)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/preview'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.tag }}
+          name: MyCareNK v${{ steps.version.outputs.raw }} (preview)
+          body: |
+            Preview build จาก branch `preview` — commit `${{ github.sha }}`
+
+            **ดาวน์โหลด:** `app-debug.apk` ใต้ Assets ด้านล่าง
+            **ติดตั้ง:** ต้องเปิด "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก" ในการตั้งค่า Android ก่อน
+          files: app/build/app/outputs/flutter-apk/app-debug.apk
+          prerelease: true
+
+      - name: Update app_versions in Supabase (preview)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/preview'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          APK_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/v${{ steps.version.outputs.tag }}/app-debug.apk"
+          curl -sf -X POST "$SUPABASE_URL/rest/v1/app_versions" \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"version\": \"${{ steps.version.outputs.semver }}\",
+              \"build_number\": ${{ steps.version.outputs.build }},
+              \"download_url\": \"$APK_URL\",
+              \"branch\": \"preview\"
+            }"
+
   build-release:
     name: Release APK
     runs-on: ubuntu-latest
     permissions:
       contents: write
     if: >-
-      (github.event_name == 'push' &&
-        (github.ref == 'refs/heads/integration' || github.ref == 'refs/heads/main')) ||
-      (github.event_name == 'pull_request' &&
-        (github.base_ref == 'integration' || github.base_ref == 'main')) ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
       (github.event_name == 'workflow_dispatch' &&
         (github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both'))
     steps:
@@ -130,8 +175,12 @@ jobs:
         run: |
           RAW=$(grep "^version:" pubspec.yaml | sed 's/version: //')
           TAG=$(echo "$RAW" | sed 's/+/-build/')
+          BUILD=$(echo "$RAW" | sed 's/.*+//')
+          CLEAN_VERSION=$(echo "$RAW" | sed 's/+.*//' | sed 's/-.*//')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "raw=$RAW" >> $GITHUB_OUTPUT
+          echo "build=$BUILD" >> $GITHUB_OUTPUT
+          echo "clean_version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
 
       - name: Upload release APK
         uses: actions/upload-artifact@v4
@@ -148,12 +197,12 @@ jobs:
           tag_name: v${{ steps.version.outputs.tag }}
           name: MyCareNK v${{ steps.version.outputs.raw }}
           body: |
-            Build จาก branch `${{ github.ref_name }}` — commit `${{ github.sha }}`
+            Release build จาก branch `main` — commit `${{ github.sha }}`
 
             **ดาวน์โหลด:** `app-release.apk` ใต้ Assets ด้านล่าง
             **ติดตั้ง:** ต้องเปิด "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก" ในการตั้งค่า Android ก่อน
           files: app/build/app/outputs/flutter-apk/app-release.apk
-          prerelease: ${{ github.ref == 'refs/heads/integration' }}
+          prerelease: false
 
       - name: Update app_versions in Supabase
         if: github.event_name == 'push'
@@ -161,15 +210,14 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
-          CLEAN_VERSION=$(echo '${{ steps.version.outputs.raw }}' | sed 's/+.*//' | sed 's/-beta.*//')
           APK_URL="${{ github.server_url }}/${{ github.repository }}/releases/download/v${{ steps.version.outputs.tag }}/app-release.apk"
           curl -sf -X POST "$SUPABASE_URL/rest/v1/app_versions" \
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
             -d "{
-              \"version\": \"$CLEAN_VERSION\",
-              \"build_number\": ${{ github.run_number }},
+              \"version\": \"${{ steps.version.outputs.clean_version }}\",
+              \"build_number\": ${{ steps.version.outputs.build }},
               \"download_url\": \"$APK_URL\",
-              \"branch\": \"${{ github.ref_name }}\"
+              \"branch\": \"main\"
             }"

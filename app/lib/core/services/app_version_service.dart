@@ -63,9 +63,9 @@ class AppVersionService {
   }
 
   // Detects which branch to query based on the local version string.
-  // '-beta' suffix → integration; no suffix → main.
+  // pre-release suffix (e.g. -beta) → 'preview'; no suffix → 'main'.
   static String _detectBranch(String localVersion) {
-    return localVersion.contains('-') ? 'integration' : 'main';
+    return localVersion.contains('-') ? 'preview' : 'main';
   }
 
   Future<AppVersionInfo?> getLatestVersion() async {
@@ -90,7 +90,16 @@ class AppVersionService {
       final info = await PackageInfo.fromPlatform();
       final remote = await getLatestVersion();
       if (remote == null) return false;
-      return _compareVersions(remote.version, info.version) > 0;
+
+      final semverCmp = _compareVersions(remote.version, info.version);
+      if (semverCmp != 0) return semverCmp > 0;
+
+      // Semver equal on preview builds → fall back to build number.
+      if (info.version.contains('-')) {
+        final localBuild = int.tryParse(info.buildNumber) ?? 0;
+        return remote.buildNumber > localBuild;
+      }
+      return false;
     } catch (_) {
       return false;
     }
