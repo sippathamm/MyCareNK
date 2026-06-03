@@ -51,7 +51,6 @@ export type Database = {
       }
       articles: {
         Row: {
-          autosave_saved_at: string | null
           body: string
           category: string
           created_at: string | null
@@ -72,7 +71,6 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
-          autosave_saved_at?: string | null
           body?: string
           category?: string
           created_at?: string | null
@@ -93,7 +91,6 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
-          autosave_saved_at?: string | null
           body?: string
           category?: string
           created_at?: string | null

@@ -3,12 +3,15 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box, Typography, Paper, Button, IconButton, Tooltip,
   Stack, TextField, Divider, Chip,
-  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+  Dialog, DialogTitle, DialogContent, DialogActions,
   Snackbar, Alert, LinearProgress, CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
@@ -37,10 +40,10 @@ import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { formatDateTime } from '../../utils/requestUtils';
 import {
   type ArticleStatus, type ArticleDetail, type ContentPayload,
   fetchArticleDetail, createArticle,
-  saveDraft as saveDraftHelper,
   publishArticle as publishArticleHelper,
   republishArticle as republishArticleHelper,
   hideArticle as hideArticleHelper,
@@ -161,13 +164,19 @@ export default function ArticleEditorPage() {
   // ─── UI state ──────────────────────────────────────────────────────────────
 
   const [saving, setSaving] = useState(false);
-  const [isDirty, setIsDirty] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<{ title?: string; body?: string; category?: string }>({});
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
   const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
+  const [staffNameMap, setStaffNameMap] = useState<Record<string, string>>({});
+  const [articleMeta, setArticleMeta] = useState<{
+    created_by: string | null; created_at: string | null;
+    updated_by: string | null; updated_at: string | null;
+    published_by: string | null; published_at: string | null;
+    hidden_by: string | null; hidden_at: string | null;
+  } | null>(null);
 
   // ─── Dialog state ──────────────────────────────────────────────────────────
 
@@ -178,15 +187,14 @@ export default function ArticleEditorPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [hideDialogOpen, setHideDialogOpen] = useState(false);
-  const [exitDialogOpen, setExitDialogOpen] = useState(false);
-  const [exitSaving, setExitSaving] = useState(false);
-  const [recoveryDialogOpen, setRecoveryDialogOpen] = useState(false);
-  const [recoveryTime, setRecoveryTime] = useState<string | null>(null);
-  const [recoveryDismissing, setRecoveryDismissing] = useState(false);
 
   // ─── Refs ──────────────────────────────────────────────────────────────────
 
   const isInitialLoad = useRef(true);
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   const editorRef = useRef<ReturnType<typeof useEditor>>(null);
   const titleRef = useRef(title);
   const categoryRef = useRef(category);
@@ -219,7 +227,6 @@ export default function ArticleEditorPage() {
     content: '',
     onUpdate: () => {
       if (isInitialLoad.current) return;
-      setIsDirty(true);
       setFieldErrors(prev => ({ ...prev, body: undefined }));
       // Reset retry counter on real edit so retries re-enable
       autoSaveRetryCount.current = 0;
@@ -231,8 +238,9 @@ export default function ArticleEditorPage() {
   // ─── Auto-save ─────────────────────────────────────────────────────────────
 
   const doAutoSave = useCallback(async () => {
+    autoSaveTimer.current = null; // clear ref so handleBackClick knows timer has fired
     const currentEditor = editorRef.current;
-    if (!articleId || !currentEditor || !articleStatusRef.current) return;
+    if (!currentEditor) return;
 
     setAutoSaveStatus('saving');
     const payload: ContentPayload = {
@@ -242,13 +250,38 @@ export default function ArticleEditorPage() {
       thumbnail_url: thumbnailUrlRef.current,
     };
 
-    const err = await autoSaveArticle(articleId, payload, articleStatusRef.current);
+    // ── New article: create in DB ───────────────────────────────────────────
+    if (!articleId) {
+      const allEmpty = !payload.title.trim() && currentEditor.isEmpty && !payload.category.trim();
+      if (allEmpty) { setAutoSaveStatus('idle'); return; }
+      const result = await createArticle(payload, userIdRef.current);
+      if ('error' in result) {
+        if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
+          autoSaveRetryCount.current++;
+          setAutoSaveStatus('failed');
+          retryTimer.current = setTimeout(doAutoSave, RETRY_DELAY);
+        } else {
+          setAutoSaveStatus('offline');
+        }
+      } else {
+        autoSaveRetryCount.current = 0;
+        setAutoSaveStatus('saved');
+        setAutoSavedAt(new Date());
+        navigateRef.current(`/articles/${result.id}/edit`, { replace: true });
+      }
+      return;
+    }
 
+    // ── Existing article ────────────────────────────────────────────────────
+    if (!articleStatusRef.current) return;
+    const saveTime = new Date().toISOString();
+    const err = await autoSaveArticle(articleId, payload, articleStatusRef.current, userIdRef.current);
     if (!err) {
       autoSaveRetryCount.current = 0;
       setAutoSaveStatus('saved');
       setAutoSavedAt(new Date());
-      setIsDirty(false);
+      if (articleStatusRef.current !== 'draft') setHasDraft(true);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userIdRef.current, updated_at: saveTime } : prev);
     } else if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
       autoSaveRetryCount.current++;
       setAutoSaveStatus('failed');
@@ -259,23 +292,22 @@ export default function ArticleEditorPage() {
   }, [articleId]);
 
   const scheduleAutoSave = useCallback(() => {
-    if (!articleId) return;
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     if (retryTimer.current) clearTimeout(retryTimer.current);
     autoSaveTimer.current = setTimeout(doAutoSave, DEBOUNCE_DELAY);
-  }, [articleId, doAutoSave]);
+  }, [doAutoSave]);
 
   useEffect(() => { editorRef.current = editor; }, [editor]);
   scheduleAutoSaveRef.current = scheduleAutoSave;
 
   // Trigger auto-save when title or category changes (editor changes handled in onUpdate)
   useEffect(() => {
-    if (isInitialLoad.current || !isEditMode) return;
+    if (isInitialLoad.current) return;
     autoSaveRetryCount.current = 0;
     if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
     scheduleAutoSave();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, category, scheduleAutoSave, isEditMode]);
+  }, [title, category, scheduleAutoSave]);
 
   useEffect(() => {
     return () => {
@@ -297,7 +329,13 @@ export default function ArticleEditorPage() {
     const formTitle = isDraft ? article.title : (article.draft_title ?? article.title);
     const formBody  = isDraft ? article.body  : (article.draft_body  ?? article.body);
     const formCat   = isDraft ? article.category : (article.draft_category ?? article.category);
-    const formThumb = isDraft ? article.thumbnail_url : (article.draft_thumbnail_url ?? article.thumbnail_url);
+    // When a draft exists, use draft_thumbnail_url directly (even if null = "removed").
+    // ?? would incorrectly fall back to the original when draft explicitly cleared the thumbnail.
+    const formThumb = isDraft
+      ? article.thumbnail_url
+      : hasDraftContent
+        ? article.draft_thumbnail_url
+        : article.thumbnail_url;
 
     setTitle(formTitle);
     setCategory(formCat);
@@ -305,6 +343,29 @@ export default function ArticleEditorPage() {
     setArticleStatus(article.status as ArticleStatus);
     setHasDraft(hasDraftContent);
     editorRef.current?.commands.setContent(formBody, { emitUpdate: false });
+
+    setArticleMeta({
+      created_by: article.created_by, created_at: article.created_at,
+      updated_by: article.updated_by, updated_at: article.updated_at,
+      published_by: article.published_by, published_at: article.published_at,
+      hidden_by: article.hidden_by, hidden_at: article.hidden_at,
+    });
+
+    const ids = [...new Set([
+      article.created_by, article.updated_by,
+      article.published_by, article.hidden_by,
+    ].filter(Boolean) as string[])];
+    if (ids.length > 0) {
+      supabase.from('staff_profiles')
+        .select('staff_user_id, first_name, last_name')
+        .in('staff_user_id', ids)
+        .then(({ data }) => {
+          if (!data) return;
+          const map: Record<string, string> = {};
+          for (const s of data) map[s.staff_user_id] = `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim();
+          setStaffNameMap(map);
+        });
+    }
   }, []);
 
   const loadArticle = useCallback(async () => {
@@ -323,50 +384,12 @@ export default function ArticleEditorPage() {
     if (!editor) return;
 
     (async () => {
-      const article = await loadArticle();
-      if (!article) return;
-
-      const needsRecovery =
-        !!article.autosave_saved_at &&
-        !!article.updated_at &&
-        new Date(article.autosave_saved_at) > new Date(article.updated_at);
-
-      if (needsRecovery) {
-        setRecoveryTime(formatTime(new Date(article.autosave_saved_at!)));
-        setRecoveryDialogOpen(true);
-        // isInitialLoad stays true until dialog is dismissed / confirmed
-      } else {
-        setTimeout(() => { isInitialLoad.current = false; }, 300);
-      }
+      await loadArticle();
+      setTimeout(() => { isInitialLoad.current = false; }, 300);
     })();
   // editor changes on mount only — no need to re-run on editor updates
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, editor]);
-
-  // ─── Recovery handlers ─────────────────────────────────────────────────────
-
-  function handleRecoveryConfirm() {
-    setRecoveryDialogOpen(false);
-    setTimeout(() => { isInitialLoad.current = false; }, 100);
-  }
-
-  async function handleRecoveryDismiss() {
-    if (!articleId) return;
-    setRecoveryDismissing(true);
-    // For published/hidden: clear draft_* + autosave_saved_at; for draft: only autosave_saved_at
-    const clearPayload =
-      articleStatusRef.current === 'draft'
-        ? { autosave_saved_at: null }
-        : { draft_title: null, draft_body: null, draft_category: null, draft_thumbnail_url: null, autosave_saved_at: null };
-    await supabase.from('articles').update(clearPayload).eq('id', articleId);
-    // Re-fetch and reload live content
-    isInitialLoad.current = true;
-    await loadArticle();
-    setRecoveryDialogOpen(false);
-    setHasDraft(false);
-    setRecoveryDismissing(false);
-    setTimeout(() => { isInitialLoad.current = false; }, 300);
-  }
 
   // ─── Validation ────────────────────────────────────────────────────────────
 
@@ -397,58 +420,26 @@ export default function ArticleEditorPage() {
     };
   }
 
-  // ─── Scenario 1 / 2 — Save draft ──────────────────────────────────────────
-
-  async function performSaveDraft(): Promise<boolean> {
-    if (!editor) return false;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-
-    const payload = getPayload();
-
-    if (!isEditMode) {
-      // Scenario 1: create new article
-      const allEmpty = !payload.title.trim() && editor.isEmpty && !payload.category.trim();
-      if (allEmpty) {
-        showSnackbar('กรุณาระบุข้อมูลอย่างน้อยหนึ่งรายการก่อนบันทึก', 'error');
-        return false;
-      }
-      const result = await createArticle(payload, userId);
-      if ('error' in result) {
-        showSnackbar(`สร้างบทความไม่สำเร็จ: ${result.error}`, 'error');
-        return false;
-      }
-      setIsDirty(false);
-      navigate(`/articles/${result.id}/edit`, { replace: true });
-      showSnackbar('สร้างบทความเรียบร้อยแล้ว', 'success');
-      return true;
-    }
-
-    const status = articleStatusRef.current!;
-    const err = await saveDraftHelper(articleId!, payload, status, userId);
-    if (err) {
-      showSnackbar(`บันทึกร่างไม่สำเร็จ: ${err}`, 'error');
-      return false;
-    }
-
-    setIsDirty(false);
-    setAutoSaveStatus('idle');
-    if (status !== 'draft') setHasDraft(true);
-    showSnackbar('บันทึกร่างเรียบร้อยแล้ว', 'success');
-    return true;
-  }
-
   // ─── Scenario 4A — Publish from draft ─────────────────────────────────────
+
+  function cancelPendingAutoSave() {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+    autoSaveTimer.current = null;
+  }
 
   async function handlePublish() {
     if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
+    const publishTime = new Date().toISOString();
     const err = await publishArticleHelper(articleId, getPayload(), userId);
     if (err) {
       showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
     } else {
-      setIsDirty(false);
       setAutoSaveStatus('idle');
       setArticleStatus('published');
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: publishTime, published_by: userId, published_at: publishTime } : prev);
       showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
     }
     setSaving(false);
@@ -458,14 +449,16 @@ export default function ArticleEditorPage() {
 
   async function handleRepublish() {
     if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
+    const republishTime = new Date().toISOString();
     const err = await republishArticleHelper(articleId, getPayload(), userId);
     if (err) {
       showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
     } else {
-      setIsDirty(false);
       setAutoSaveStatus('idle');
       setHasDraft(false);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: republishTime, published_by: userId, published_at: republishTime } : prev);
       showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
     }
     setSaving(false);
@@ -475,12 +468,15 @@ export default function ArticleEditorPage() {
 
   async function handleHide() {
     if (!articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
+    const hideTime = new Date().toISOString();
     const err = await hideArticleHelper(articleId, userId);
     if (err) {
       showSnackbar(`ซ่อนบทความไม่สำเร็จ: ${err}`, 'error');
     } else {
       setArticleStatus('hidden');
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: hideTime, hidden_by: userId, hidden_at: hideTime } : prev);
       showSnackbar('ซ่อนบทความเรียบร้อยแล้ว', 'success');
     }
     setHideDialogOpen(false);
@@ -491,39 +487,41 @@ export default function ArticleEditorPage() {
 
   async function handleRestore() {
     if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
     setSaving(true);
+    const restoreTime = new Date().toISOString();
     const err = await restoreArticleHelper(articleId, getPayload(), userId);
     if (err) {
       showSnackbar(`เผยแพร่อีกครั้งไม่สำเร็จ: ${err}`, 'error');
     } else {
-      setIsDirty(false);
       setAutoSaveStatus('idle');
       setArticleStatus('published');
       setHasDraft(false);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: restoreTime, published_by: userId, published_at: restoreTime } : prev);
       showSnackbar('เผยแพร่บทความอีกครั้งเรียบร้อยแล้ว', 'success');
     }
     setSaving(false);
   }
 
-  // ─── Navigation with dirty check ──────────────────────────────────────────
+  // ─── Navigation — silent save if timer pending ────────────────────────────
 
-  function handleBackClick() {
-    if (isDirty) {
-      setExitDialogOpen(true);
-    } else {
-      navigate('/articles');
+  async function handleBackClick() {
+    const hasPending = autoSaveTimer.current !== null;
+    cancelPendingAutoSave();
+
+    if (hasPending) {
+      const payload = getPayload();
+      const isDraftContext = !isEditMode || articleStatusRef.current === 'draft';
+      if (isDraftContext && !payload.title.trim()) payload.title = 'ไม่มีหัวเรื่อง';
+
+      if (!isEditMode) {
+        const allEmpty = !payload.title.trim() && (!editorRef.current || editorRef.current.isEmpty) && !payload.category.trim();
+        if (!allEmpty) await createArticle(payload, userId);
+      } else if (articleStatusRef.current) {
+        await autoSaveArticle(articleId!, payload, articleStatusRef.current, userId);
+      }
     }
-  }
 
-  async function handleExitSaveDraft() {
-    setExitSaving(true);
-    await performSaveDraft();
-    setExitSaving(false);
-    navigate('/articles');
-  }
-
-  function handleExitDiscard() {
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     navigate('/articles');
   }
 
@@ -553,7 +551,6 @@ export default function ArticleEditorPage() {
       const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
       setThumbnailUrl(publicUrl);
       if (!isInitialLoad.current) {
-        setIsDirty(true);
         autoSaveRetryCount.current = 0;
         scheduleAutoSave();
       }
@@ -561,6 +558,17 @@ export default function ArticleEditorPage() {
       showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${e instanceof Error ? e.message : 'ข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`, 'error');
     } finally {
       setUploadingCover(false);
+    }
+  }
+
+  async function handleRemoveCover() {
+    if (!thumbnailUrl) return;
+    const path = extractStoragePath(thumbnailUrl);
+    if (path) await supabase.storage.from('article-assets').remove([path]);
+    setThumbnailUrl(null);
+    if (!isInitialLoad.current) {
+      autoSaveRetryCount.current = 0;
+      scheduleAutoSave();
     }
   }
 
@@ -640,40 +648,30 @@ export default function ArticleEditorPage() {
   function renderActionButtons() {
     const base = { fullWidth: true, disabled: saving };
 
-    if (!isEditMode || articleStatus === null) {
-      // New article or loading — only Save Draft available
+    if (!isEditMode) {
       return (
-        <Button variant="outlined" {...base} onClick={() => performSaveDraft()}>
-          {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-        </Button>
+        <Button variant="contained" fullWidth disabled>เผยแพร่</Button>
       );
     }
 
+    if (articleStatus === null) return null;
+
     if (articleStatus === 'draft') {
       return (
-        <Stack spacing={1.5}>
-          <Button variant="contained" {...base} onClick={handlePublish}>
-            {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
-          </Button>
-          <Button variant="outlined" {...base} onClick={() => { setSaving(true); performSaveDraft().finally(() => setSaving(false)); }}>
-            {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-          </Button>
-        </Stack>
+        <Button variant="contained" {...base} onClick={handlePublish}>
+          {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
+        </Button>
       );
     }
 
     if (articleStatus === 'published') {
       return (
         <Stack spacing={1.5}>
-          {hasDraft ? (
+          {hasDraft && (
             <Button variant="contained" {...base} onClick={handleRepublish}>
               {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
             </Button>
-          ) : null}
-          <Button variant={hasDraft ? 'outlined' : 'contained'} {...base}
-            onClick={() => { setSaving(true); performSaveDraft().finally(() => setSaving(false)); }}>
-            {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-          </Button>
+          )}
           <Button variant="outlined" color="error" {...base} onClick={() => setHideDialogOpen(true)}>
             ซ่อนบทความ
           </Button>
@@ -683,22 +681,16 @@ export default function ArticleEditorPage() {
 
     // hidden
     return (
-      <Stack spacing={1.5}>
-        <Button variant="contained" {...base} onClick={handleRestore}>
-          {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
-        </Button>
-        <Button variant="outlined" {...base}
-          onClick={() => { setSaving(true); performSaveDraft().finally(() => setSaving(false)); }}>
-          {saving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-        </Button>
-      </Stack>
+      <Button variant="contained" {...base} onClick={handleRestore}>
+        {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
+      </Button>
     );
   }
 
   // ─── Auto-save indicator ───────────────────────────────────────────────────
 
   function renderAutoSaveIndicator() {
-    if (!isEditMode || autoSaveStatus === 'idle') return null;
+    if (autoSaveStatus === 'idle') return null;
     return (
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5, flexWrap: 'wrap' }}>
         {autoSaveStatus === 'saving' && (
@@ -755,10 +747,10 @@ export default function ArticleEditorPage() {
               onChange={e => {
                 setTitle(e.target.value);
                 if (!isInitialLoad.current) {
-                  setIsDirty(true);
                   setFieldErrors(prev => ({ ...prev, title: undefined }));
                   autoSaveRetryCount.current = 0;
                   if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
+                  scheduleAutoSaveRef.current();
                 }
               }}
               slotProps={{
@@ -932,10 +924,13 @@ export default function ArticleEditorPage() {
 
             {/* Actions card */}
             <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                การเผยแพร่
+              </Typography>
               {/* Status + unpublished badge */}
-              {isEditMode && articleStatus && (
+              {(!isEditMode || !!articleStatus) && (
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5} flexWrap="wrap">
-                  {statusChip()}
+                  {isEditMode ? statusChip() : <Chip label="ร่าง" color="warning" size="small" />}
                   {hasDraft && articleStatus === 'published' && (
                     <Chip label="มีการแก้ไขที่ยังไม่ได้เผยแพร่" size="small" color="warning" variant="outlined" />
                   )}
@@ -944,7 +939,7 @@ export default function ArticleEditorPage() {
 
               {renderAutoSaveIndicator()}
 
-              <Box sx={{ mt: isEditMode ? 1.5 : 0 }}>
+              <Box sx={{ mt: 1.5 }}>
                 {renderActionButtons()}
               </Box>
             </Paper>
@@ -964,10 +959,10 @@ export default function ArticleEditorPage() {
                 onChange={e => {
                   setCategory(e.target.value);
                   if (!isInitialLoad.current) {
-                    setIsDirty(true);
                     setFieldErrors(prev => ({ ...prev, category: undefined }));
                     autoSaveRetryCount.current = 0;
                     if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
+                    scheduleAutoSaveRef.current();
                   }
                 }}
               />
@@ -979,13 +974,28 @@ export default function ArticleEditorPage() {
                 รูปหน้าปก
               </Typography>
               <Box sx={{
-                width: '100%', aspectRatio: '16/9', borderRadius: 1, overflow: 'hidden', mb: 1.5,
+                position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 1, overflow: 'hidden', mb: 1.5,
                 background: 'linear-gradient(135deg, #FEF1D2 0%, #FBCFB8 100%)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 {thumbnailUrl
                   ? <Box component="img" src={thumbnailUrl} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   : <ArticleIcon sx={{ fontSize: 40, color: '#FF9F6B' }} />}
+                {thumbnailUrl && (
+                  <Tooltip title="ลบรูปหน้าปก">
+                    <IconButton
+                      size="small"
+                      onClick={handleRemoveCover}
+                      sx={{
+                        position: 'absolute', top: 4, right: 4,
+                        bgcolor: 'rgba(0,0,0,0.45)', color: 'white',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.65)' },
+                      }}
+                    >
+                      <CloseIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
               </Box>
               <Button variant="outlined" fullWidth disabled={uploadingCover} onClick={() => coverInputRef.current?.click()}>
                 {uploadingCover ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปหน้าปก'}
@@ -1005,6 +1015,35 @@ export default function ArticleEditorPage() {
                 onClick={() => setDeleteDialogOpen(true)}>
                 ลบบทความ
               </Button>
+            )}
+
+            {/* Article metadata */}
+            {isEditMode && articleMeta && (
+              <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  ข้อมูลบทความ
+                </Typography>
+                <Stack spacing={1.5}>
+                  {[
+                    { label: 'สร้างโดย', by: articleMeta.created_by, at: articleMeta.created_at },
+                    { label: 'แก้ไขล่าสุด', by: articleMeta.updated_by, at: articleMeta.updated_at },
+                    { label: 'เผยแพร่ล่าสุด', by: articleMeta.published_by, at: articleMeta.published_at },
+                    { label: 'ซ่อนล่าสุด', by: articleMeta.hidden_by, at: articleMeta.hidden_at },
+                  ].filter(row => row.at).map(row => (
+                    <Box key={row.label}>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.6 }}>
+                        {row.label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4, fontWeight: 500 }}>
+                        {row.by ? (staffNameMap[row.by] || '—') : '—'}
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
+                        {formatDateTime(row.at ?? undefined)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </Paper>
             )}
           </Stack>
         </Box>
@@ -1070,71 +1109,35 @@ export default function ArticleEditorPage() {
       </Dialog>
 
       {/* Hide confirmation dialog */}
-      <Dialog open={hideDialogOpen} onClose={() => !saving && setHideDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ยืนยันการซ่อนบทความ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            บทความจะถูกซ่อนและผู้ใช้ทั่วไปจะไม่สามารถเข้าถึงได้ คุณสามารถเผยแพร่บทความอีกครั้งได้ในภายหลัง
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setHideDialogOpen(false)} disabled={saving}>ยกเลิก</Button>
-          <Button variant="contained" color="error" onClick={handleHide} disabled={saving}>
-            {saving ? 'กำลังซ่อน...' : 'ซ่อนบทความ'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={hideDialogOpen}
+        icon={<VisibilityOffOutlinedIcon color="error" />}
+        title="ยืนยันการซ่อนบทความ"
+        body="บทความจะถูกซ่อนและผู้ใช้ทั่วไปจะไม่สามารถเข้าถึงได้ คุณสามารถเผยแพร่บทความอีกครั้งได้ในภายหลัง"
+        confirmLabel="ซ่อนบทความ"
+        confirmColor="error"
+        loading={saving}
+        onConfirm={handleHide}
+        onCancel={() => setHideDialogOpen(false)}
+      />
 
       {/* Delete dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => !deleting && setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ยืนยันการลบบทความ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            คุณต้องการลบบทความ <strong>"{title || 'ไม่มีหัวเรื่อง'}"</strong> ใช่หรือไม่?
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        icon={<DeleteOutlineIcon color="error" />}
+        title="ยืนยันการลบบทความ"
+        body={
+          <Typography variant="body2" color="text.secondary">
+            คุณต้องการลบบทความ <strong>"{title || 'ไม่มีหัวเรื่อง'}"</strong> ใช่หรือไม่?{' '}
             การกระทำนี้ไม่สามารถย้อนกลับได้
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>ยกเลิก</Button>
-          <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-            {deleting ? 'กำลังลบ...' : 'ลบบทความ'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Exit dialog */}
-      <Dialog open={exitDialogOpen} onClose={() => !exitSaving && setExitDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ออกจากบทความ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการบันทึกก่อนออกหรือไม่?</DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleExitDiscard} disabled={exitSaving} color="error">ละทิ้ง</Button>
-          <Box sx={{ flex: 1 }} />
-          <Button onClick={() => setExitDialogOpen(false)} disabled={exitSaving}>อยู่ต่อ</Button>
-          <Button variant="outlined" onClick={handleExitSaveDraft} disabled={exitSaving}>
-            {exitSaving ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Auto-save recovery dialog */}
-      <Dialog open={recoveryDialogOpen} onClose={() => {}} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">พบการบันทึกอัตโนมัติ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            มีข้อมูลที่บันทึกอัตโนมัติเมื่อ {recoveryTime} ต้องการนำข้อมูลนั้นกลับมาหรือไม่?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleRecoveryDismiss} disabled={recoveryDismissing} color="error">
-            {recoveryDismissing ? 'กำลังยกเลิก...' : 'ทิ้งการเปลี่ยนแปลง'}
-          </Button>
-          <Button variant="contained" onClick={handleRecoveryConfirm} disabled={recoveryDismissing}>
-            นำกลับมา
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </Typography>
+        }
+        confirmLabel="ลบบทความ"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
 
       {/* Snackbar */}
       <Snackbar open={snackbar.open} autoHideDuration={4000}
