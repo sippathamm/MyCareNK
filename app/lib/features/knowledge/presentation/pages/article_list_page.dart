@@ -5,6 +5,17 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import 'article_detail_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import '../widgets/category_chip.dart';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+String _formatDateTime(String isoDate) {
+  final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
+  final l10n = AppLocalizations.current;
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
+}
 
 class ArticleListPage extends StatefulWidget {
   const ArticleListPage({super.key});
@@ -145,14 +156,6 @@ class _ArticleListPageState extends State<ArticleListPage> {
       if (!mounted) return;
       setState(() => _loadingMore = false);
     }
-  }
-
-  static String _formatDateTime(String isoDate) {
-    final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
-    final l10n = AppLocalizations.current;
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
   }
 
   @override
@@ -327,23 +330,8 @@ class _ArticleCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (category != null && category!.isNotEmpty) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            category!,
-                            style: GoogleFonts.googleSans(
-                              fontSize: 11,
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ),
+                      if (category?.isNotEmpty ?? false) ...[
+                        CategoryChip(label: category!),
                         const SizedBox(height: 6),
                       ],
                       Text(
@@ -369,7 +357,7 @@ class _ArticleCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 8),
-                      if (createdByName != null && createdByName!.isNotEmpty)
+                      if (createdByName?.isNotEmpty ?? false)
                         Row(
                           children: [
                             const Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
@@ -390,7 +378,7 @@ class _ArticleCard extends StatelessWidget {
                             const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
                             const SizedBox(width: 4),
                             Text(
-                              _ArticleListPageState._formatDateTime(publishedAt!),
+                              _formatDateTime(publishedAt!),
                               style: GoogleFonts.googleSans(
                                 fontSize: 12,
                                 color: AppColors.textMuted,

@@ -10,9 +10,21 @@ class HtmlBodyRenderer extends StatelessWidget {
 
   const HtmlBodyRenderer({super.key, required this.body});
 
+  static final _youTubeRegExp =
+      RegExp(r'youtube(?:-nocookie)?\.com/embed/([a-zA-Z0-9_-]+)');
+
+  static String _toHex(Color c) {
+    final r = (c.r * 255).round().clamp(0, 255);
+    final g = (c.g * 255).round().clamp(0, 255);
+    final b = (c.b * 255).round().clamp(0, 255);
+    return '#${r.toRadixString(16).padLeft(2, '0')}'
+        '${g.toRadixString(16).padLeft(2, '0')}'
+        '${b.toRadixString(16).padLeft(2, '0')}'.toUpperCase();
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (body.trim().isEmpty) return const SizedBox.shrink();
+    if (body.isEmpty) return const SizedBox.shrink();
     return HtmlWidget(
       body,
       textStyle: GoogleFonts.googleSans(
@@ -22,27 +34,26 @@ class HtmlBodyRenderer extends StatelessWidget {
       ),
       customStylesBuilder: (element) {
         if (element.localName == 'a') {
-          return {'color': '#FF9F6B', 'text-decoration': 'underline'};
+          return {'color': _toHex(AppColors.primary), 'text-decoration': 'underline'};
         }
         if (element.localName == 'blockquote') {
-          return {'border-left': '4px solid #FF9F6B', 'padding-left': '12px', 'color': '#666666'};
+          return {
+            'border-left': '4px solid ${_toHex(AppColors.primary)}',
+            'padding-left': '12px',
+            'color': _toHex(AppColors.textSecondary),
+          };
         }
         return null;
       },
       customWidgetBuilder: (element) {
         if (element.localName == 'iframe') {
           final src = element.attributes['src'] ?? '';
-          final videoId = _youTubeId(src);
+          final videoId = _youTubeRegExp.firstMatch(src)?.group(1);
           if (videoId != null) return _YouTubeThumbnail(videoId: videoId);
         }
         return null;
       },
     );
-  }
-
-  static String? _youTubeId(String src) {
-    final m = RegExp(r'youtube(?:-nocookie)?\.com/embed/([a-zA-Z0-9_-]+)').firstMatch(src);
-    return m?.group(1);
   }
 }
 

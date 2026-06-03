@@ -5,6 +5,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../knowledge/presentation/pages/article_detail_page.dart';
 import '../../../knowledge/presentation/pages/article_list_page.dart';
+import '../../../knowledge/presentation/widgets/category_chip.dart';
 
 class _ArticleItem {
   final String id;
@@ -191,24 +192,8 @@ class _ArticleCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        if (article.category != null &&
-                            article.category!.isNotEmpty) ...[
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 7, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: AppColors.primary.withValues(alpha: 0.12),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              article.category!,
-                              style: GoogleFonts.googleSans(
-                                fontSize: 10,
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
+                        if (article.category?.isNotEmpty ?? false) ...[
+                          CategoryChip(label: article.category!, fontSize: 10),
                           const SizedBox(height: 4),
                         ],
                         Text(

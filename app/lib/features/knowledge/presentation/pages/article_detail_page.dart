@@ -4,7 +4,18 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import '../widgets/category_chip.dart';
 import '../widgets/html_body_renderer.dart';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+String _formatDateTime(String isoDate) {
+  final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
+  final l10n = AppLocalizations.current;
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
+}
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -149,14 +160,6 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
     }
   }
 
-  static String _formatDateTime(String isoDate) {
-    final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
-    final l10n = AppLocalizations.current;
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
-  }
-
   // ─── Build ──────────────────────────────────────────────────────────────────
 
   @override
@@ -296,28 +299,12 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  if (article.category != null && article.category!.isNotEmpty)
+                  if (article.category?.isNotEmpty ?? false)
                     Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          article.category!,
-                          style: GoogleFonts.googleSans(
-                            fontSize: 12,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ),
+                      child: CategoryChip(label: article.category!, fontSize: 12),
                     ),
-                  if (article.createdByName != null &&
-                      article.createdByName!.isNotEmpty)
+                  if (article.createdByName?.isNotEmpty ?? false)
                     Row(
                       children: [
                         const Icon(Icons.person_outline,
@@ -333,8 +320,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                       ],
                     ),
                   if (article.publishedAt != null) ...[
-                    if (article.createdByName != null &&
-                        article.createdByName!.isNotEmpty)
+                    if (article.createdByName?.isNotEmpty ?? false)
                       const SizedBox(height: 4),
                     Row(
                       children: [
