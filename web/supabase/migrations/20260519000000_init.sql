@@ -1233,6 +1233,25 @@ CREATE POLICY "admin_delete_articles"
   TO authenticated USING (is_admin() OR is_superadmin());
 
 
+-- ── App versions ──────────────────────────────────────────────
+CREATE TABLE public.app_versions (
+  id            serial      PRIMARY KEY,
+  version       text        NOT NULL,
+  build_number  int         NOT NULL,
+  download_url  text        NOT NULL,
+  release_notes text,
+  force_update  boolean     NOT NULL DEFAULT false,
+  branch        text        NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.app_versions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public_read_app_versions"
+  ON public.app_versions FOR SELECT
+  USING (true);
+
+
 -- ── Cascade delete trigger on auth.users ───────────────────
 CREATE TRIGGER on_auth_user_deleted
   BEFORE DELETE ON auth.users
@@ -1765,6 +1784,42 @@ AS $$
   LEFT JOIN staff_profiles sp ON sp.staff_user_id = a.created_by
   WHERE a.id = p_article_id
     AND a.status = 'published';
+$$;
+
+
+-- ── App version RPC ─────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.get_latest_app_version(
+  p_branch text DEFAULT 'main'
+) RETURNS TABLE(
+  id            int,
+  version       text,
+  build_number  int,
+  download_url  text,
+  release_notes text,
+  force_update  boolean,
+  branch        text,
+  created_at    timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT
+    av.id,
+    av.version,
+    av.build_number,
+    av.download_url,
+    av.release_notes,
+    av.force_update,
+    av.branch,
+    av.created_at
+  FROM app_versions av
+  WHERE av.branch = p_branch
+  ORDER BY av.created_at DESC
+  LIMIT 1;
+END;
 $$;
 
 
@@ -2370,9 +2425,10 @@ GRANT EXECUTE ON FUNCTION public.verify_recovery_code(text, text)               
 GRANT EXECUTE ON FUNCTION public.verify_recovery_code_and_reset_password(text, text, text) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_own_account()        TO authenticated;
 
--- Public article RPCs (accessible to unauthenticated app users)
+-- Public article + version RPCs (accessible to unauthenticated app users)
 GRANT EXECUTE ON FUNCTION public.get_published_articles(integer, integer) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_article_detail(uuid)                 TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_latest_app_version(text)             TO anon, authenticated;
 
 -- Analytics — staff/admin only (require authenticated session)
 GRANT EXECUTE ON FUNCTION public.get_average_lead_time(timestamptz, timestamptz, text)          TO authenticated;
