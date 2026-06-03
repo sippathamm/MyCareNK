@@ -4,22 +4,35 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
-import '../widgets/tiptap_renderer.dart';
+import '../widgets/category_chip.dart';
+import '../widgets/html_body_renderer.dart';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+String _formatDateTime(String isoDate) {
+  final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
+  final l10n = AppLocalizations.current;
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
+}
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 class _Article {
   final String title;
-  final String? coverImageUrl;
-  final Map<String, dynamic>? contentJson;
-  final String? publishAt;
+  final String? thumbnailUrl;
+  final String? body;
+  final String? category;
+  final String? publishedAt;
   final String? createdByName;
 
   const _Article({
     required this.title,
-    this.coverImageUrl,
-    this.contentJson,
-    this.publishAt,
+    this.thumbnailUrl,
+    this.body,
+    this.category,
+    this.publishedAt,
     this.createdByName,
   });
 }
@@ -130,9 +143,10 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
       setState(() {
         _article = _Article(
           title: data['title'] as String,
-          coverImageUrl: data['cover_image_url'] as String?,
-          contentJson: data['content_json'] as Map<String, dynamic>?,
-          publishAt: data['publish_at'] as String?,
+          thumbnailUrl: data['thumbnail_url'] as String?,
+          body: data['body'] as String?,
+          category: data['category'] as String?,
+          publishedAt: data['published_at'] as String?,
           createdByName: data['created_by_name'] as String?,
         );
         _loading = false;
@@ -144,14 +158,6 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
         _loading = false;
       });
     }
-  }
-
-  static String _formatDateTime(String isoDate) {
-    final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
-    final l10n = AppLocalizations.current;
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
   }
 
   // ─── Build ──────────────────────────────────────────────────────────────────
@@ -248,9 +254,9 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  article.coverImageUrl != null
+                  article.thumbnailUrl != null
                       ? Image.network(
-                          article.coverImageUrl!,
+                          article.thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => const _GradientCover(),
                         )
@@ -293,8 +299,12 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
-                  if (article.createdByName != null &&
-                      article.createdByName!.isNotEmpty)
+                  if (article.category?.isNotEmpty ?? false)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: CategoryChip(label: article.category!, fontSize: 12),
+                    ),
+                  if (article.createdByName?.isNotEmpty ?? false)
                     Row(
                       children: [
                         const Icon(Icons.person_outline,
@@ -309,9 +319,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                         ),
                       ],
                     ),
-                  if (article.publishAt != null) ...[
-                    if (article.createdByName != null &&
-                        article.createdByName!.isNotEmpty)
+                  if (article.publishedAt != null) ...[
+                    if (article.createdByName?.isNotEmpty ?? false)
                       const SizedBox(height: 4),
                     Row(
                       children: [
@@ -319,7 +328,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                             size: 14, color: AppColors.textMuted),
                         const SizedBox(width: 4),
                         Text(
-                          _formatDateTime(article.publishAt!),
+                          _formatDateTime(article.publishedAt!),
                           style: GoogleFonts.googleSans(
                             fontSize: 12,
                             color: AppColors.textMuted,
@@ -329,8 +338,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  if (article.contentJson != null)
-                    TipTapRenderer(doc: article.contentJson!),
+                  if (article.body != null && article.body!.isNotEmpty)
+                    HtmlBodyRenderer(body: article.body!),
                   const SizedBox(height: 48),
                 ],
               ),

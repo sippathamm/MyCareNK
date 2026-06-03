@@ -5,6 +5,17 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import 'article_detail_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import '../widgets/category_chip.dart';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+String _formatDateTime(String isoDate) {
+  final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
+  final l10n = AppLocalizations.current;
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
+}
 
 class ArticleListPage extends StatefulWidget {
   const ArticleListPage({super.key});
@@ -147,14 +158,6 @@ class _ArticleListPageState extends State<ArticleListPage> {
     }
   }
 
-  static String _formatDateTime(String isoDate) {
-    final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
-    final l10n = AppLocalizations.current;
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -255,8 +258,9 @@ class _ArticleListPageState extends State<ArticleListPage> {
           id: a['id'] as String,
           title: a['title'] as String,
           excerpt: a['excerpt'] as String?,
-          coverImageUrl: a['cover_image_url'] as String?,
-          publishAt: a['publish_at'] as String?,
+          thumbnailUrl: a['thumbnail_url'] as String?,
+          category: a['category'] as String?,
+          publishedAt: a['published_at'] as String?,
           createdByName: a['created_by_name'] as String?,
         );
       },
@@ -268,16 +272,18 @@ class _ArticleCard extends StatelessWidget {
   final String id;
   final String title;
   final String? excerpt;
-  final String? coverImageUrl;
-  final String? publishAt;
+  final String? thumbnailUrl;
+  final String? category;
+  final String? publishedAt;
   final String? createdByName;
 
   const _ArticleCard({
     required this.id,
     required this.title,
     this.excerpt,
-    this.coverImageUrl,
-    this.publishAt,
+    this.thumbnailUrl,
+    this.category,
+    this.publishedAt,
     this.createdByName,
   });
 
@@ -310,9 +316,9 @@ class _ArticleCard extends StatelessWidget {
                 SizedBox(
                   height: 180,
                   width: double.infinity,
-                  child: coverImageUrl != null
+                  child: thumbnailUrl != null
                       ? Image.network(
-                          coverImageUrl!,
+                          thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) =>
                               const _GradientPlaceholder(),
@@ -324,6 +330,10 @@ class _ArticleCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (category?.isNotEmpty ?? false) ...[
+                        CategoryChip(label: category!),
+                        const SizedBox(height: 6),
+                      ],
                       Text(
                         title,
                         style: GoogleFonts.googleSans(
@@ -347,7 +357,7 @@ class _ArticleCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 8),
-                      if (createdByName != null && createdByName!.isNotEmpty)
+                      if (createdByName?.isNotEmpty ?? false)
                         Row(
                           children: [
                             const Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
@@ -361,14 +371,14 @@ class _ArticleCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                      if (publishAt != null) ...[
+                      if (publishedAt != null) ...[
                         const SizedBox(height: 2),
                         Row(
                           children: [
                             const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
                             const SizedBox(width: 4),
                             Text(
-                              _ArticleListPageState._formatDateTime(publishAt!),
+                              _formatDateTime(publishedAt!),
                               style: GoogleFonts.googleSans(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
