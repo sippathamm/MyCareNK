@@ -63,9 +63,11 @@ class AppVersionService {
   }
 
   // Detects which branch to query based on the local version string.
-  // pre-release suffix (e.g. -beta) → 'preview'; no suffix → 'main'.
+  // -preview → 'preview'; -dev → 'dev' (no rows → no update); no suffix → 'main'.
   static String _detectBranch(String localVersion) {
-    return localVersion.contains('-') ? 'preview' : 'main';
+    if (localVersion.contains('-preview')) return 'preview';
+    if (localVersion.contains('-dev')) return 'dev';
+    return 'main';
   }
 
   Future<AppVersionInfo?> getLatestVersion() async {
