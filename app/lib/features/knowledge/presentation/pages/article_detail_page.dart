@@ -4,22 +4,24 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
-import '../widgets/tiptap_renderer.dart';
+import '../widgets/html_body_renderer.dart';
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
 class _Article {
   final String title;
-  final String? coverImageUrl;
-  final Map<String, dynamic>? contentJson;
-  final String? publishAt;
+  final String? thumbnailUrl;
+  final String? body;
+  final String? category;
+  final String? publishedAt;
   final String? createdByName;
 
   const _Article({
     required this.title,
-    this.coverImageUrl,
-    this.contentJson,
-    this.publishAt,
+    this.thumbnailUrl,
+    this.body,
+    this.category,
+    this.publishedAt,
     this.createdByName,
   });
 }
@@ -130,9 +132,10 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
       setState(() {
         _article = _Article(
           title: data['title'] as String,
-          coverImageUrl: data['cover_image_url'] as String?,
-          contentJson: data['content_json'] as Map<String, dynamic>?,
-          publishAt: data['publish_at'] as String?,
+          thumbnailUrl: data['thumbnail_url'] as String?,
+          body: data['body'] as String?,
+          category: data['category'] as String?,
+          publishedAt: data['published_at'] as String?,
           createdByName: data['created_by_name'] as String?,
         );
         _loading = false;
@@ -248,9 +251,9 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  article.coverImageUrl != null
+                  article.thumbnailUrl != null
                       ? Image.network(
-                          article.coverImageUrl!,
+                          article.thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) => const _GradientCover(),
                         )
@@ -293,6 +296,26 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 16),
+                  if (article.category != null && article.category!.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Text(
+                          article.category!,
+                          style: GoogleFonts.googleSans(
+                            fontSize: 12,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
                   if (article.createdByName != null &&
                       article.createdByName!.isNotEmpty)
                     Row(
@@ -309,7 +332,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                         ),
                       ],
                     ),
-                  if (article.publishAt != null) ...[
+                  if (article.publishedAt != null) ...[
                     if (article.createdByName != null &&
                         article.createdByName!.isNotEmpty)
                       const SizedBox(height: 4),
@@ -319,7 +342,7 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                             size: 14, color: AppColors.textMuted),
                         const SizedBox(width: 4),
                         Text(
-                          _formatDateTime(article.publishAt!),
+                          _formatDateTime(article.publishedAt!),
                           style: GoogleFonts.googleSans(
                             fontSize: 12,
                             color: AppColors.textMuted,
@@ -329,8 +352,8 @@ class _ArticleDetailPageState extends State<ArticleDetailPage> {
                     ),
                   ],
                   const SizedBox(height: 16),
-                  if (article.contentJson != null)
-                    TipTapRenderer(doc: article.contentJson!),
+                  if (article.body != null && article.body!.isNotEmpty)
+                    HtmlBodyRenderer(body: article.body!),
                   const SizedBox(height: 48),
                 ],
               ),

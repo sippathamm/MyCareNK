@@ -10,20 +10,23 @@ class _ArticleItem {
   final String id;
   final String title;
   final String? excerpt;
-  final String? coverImageUrl;
+  final String? thumbnailUrl;
+  final String? category;
 
   const _ArticleItem({
     required this.id,
     required this.title,
     this.excerpt,
-    this.coverImageUrl,
+    this.thumbnailUrl,
+    this.category,
   });
 
   factory _ArticleItem.fromMap(Map<String, dynamic> map) => _ArticleItem(
         id: map['id'] as String,
         title: map['title'] as String,
         excerpt: map['excerpt'] as String?,
-        coverImageUrl: map['cover_image_url'] as String?,
+        thumbnailUrl: map['thumbnail_url'] as String?,
+        category: map['category'] as String?,
       );
 }
 
@@ -120,7 +123,7 @@ class _KnowledgeSectionState extends State<KnowledgeSection> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 192,
+          height: 220,
           child: _loading
               ? _ShimmerList()
               : ListView.separated(
@@ -172,9 +175,9 @@ class _ArticleCard extends StatelessWidget {
                 SizedBox(
                   height: 120,
                   width: double.infinity,
-                  child: article.coverImageUrl != null
+                  child: article.thumbnailUrl != null
                       ? Image.network(
-                          article.coverImageUrl!,
+                          article.thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               const _GradientPlaceholder(),
@@ -188,6 +191,26 @@ class _ArticleCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (article.category != null &&
+                            article.category!.isNotEmpty) ...[
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 7, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              article.category!,
+                              style: GoogleFonts.googleSans(
+                                fontSize: 10,
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                         Text(
                           article.title,
                           style: GoogleFonts.googleSans(

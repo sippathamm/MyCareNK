@@ -255,8 +255,9 @@ class _ArticleListPageState extends State<ArticleListPage> {
           id: a['id'] as String,
           title: a['title'] as String,
           excerpt: a['excerpt'] as String?,
-          coverImageUrl: a['cover_image_url'] as String?,
-          publishAt: a['publish_at'] as String?,
+          thumbnailUrl: a['thumbnail_url'] as String?,
+          category: a['category'] as String?,
+          publishedAt: a['published_at'] as String?,
           createdByName: a['created_by_name'] as String?,
         );
       },
@@ -268,16 +269,18 @@ class _ArticleCard extends StatelessWidget {
   final String id;
   final String title;
   final String? excerpt;
-  final String? coverImageUrl;
-  final String? publishAt;
+  final String? thumbnailUrl;
+  final String? category;
+  final String? publishedAt;
   final String? createdByName;
 
   const _ArticleCard({
     required this.id,
     required this.title,
     this.excerpt,
-    this.coverImageUrl,
-    this.publishAt,
+    this.thumbnailUrl,
+    this.category,
+    this.publishedAt,
     this.createdByName,
   });
 
@@ -310,9 +313,9 @@ class _ArticleCard extends StatelessWidget {
                 SizedBox(
                   height: 180,
                   width: double.infinity,
-                  child: coverImageUrl != null
+                  child: thumbnailUrl != null
                       ? Image.network(
-                          coverImageUrl!,
+                          thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) =>
                               const _GradientPlaceholder(),
@@ -324,6 +327,25 @@ class _ArticleCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (category != null && category!.isNotEmpty) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            category!,
+                            style: GoogleFonts.googleSans(
+                              fontSize: 11,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                      ],
                       Text(
                         title,
                         style: GoogleFonts.googleSans(
@@ -361,14 +383,14 @@ class _ArticleCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                      if (publishAt != null) ...[
+                      if (publishedAt != null) ...[
                         const SizedBox(height: 2),
                         Row(
                           children: [
                             const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
                             const SizedBox(width: 4),
                             Text(
-                              _ArticleListPageState._formatDateTime(publishAt!),
+                              _ArticleListPageState._formatDateTime(publishedAt!),
                               style: GoogleFonts.googleSans(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
