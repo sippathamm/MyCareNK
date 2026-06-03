@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/app_version_service.dart';
 
@@ -30,8 +31,20 @@ class _UpdateDialogState extends State<UpdateDialog> {
   double _progress = 0;
   String? _errorMessage;
   String? _localPath;
+  String _currentVersion = '';
 
   final _service = AppVersionService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadCurrentVersion();
+  }
+
+  Future<void> _loadCurrentVersion() async {
+    final info = await PackageInfo.fromPlatform();
+    if (mounted) setState(() => _currentVersion = info.version);
+  }
 
   Future<void> _startDownload() async {
     setState(() {
@@ -73,9 +86,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
       canPop: !force && _state != _DownloadState.downloading,
       child: AlertDialog(
         backgroundColor: AppColors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
-        actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -100,14 +113,36 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              'v${widget.versionInfo.version}',
-              style: GoogleFonts.googleSans(
-                fontSize: 15,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w600,
-              ),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (_currentVersion.isNotEmpty) ...[
+                  Text(
+                    'v$_currentVersion',
+                    style: GoogleFonts.googleSans(
+                      fontSize: 15,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 8),
+                    child: Icon(
+                      Icons.arrow_forward,
+                      size: 16,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                ],
+                Text(
+                  'v${widget.versionInfo.version}',
+                  style: GoogleFonts.googleSans(
+                    fontSize: 15,
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
             if (widget.versionInfo.releaseNotes != null &&
                 widget.versionInfo.releaseNotes!.isNotEmpty) ...[
@@ -123,7 +158,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 child: Text(
                   widget.versionInfo.releaseNotes!,
                   style: GoogleFonts.googleSans(
-                    fontSize: 13,
+                    fontSize: 15,
                     color: AppColors.textSecondary,
                     height: 1.5,
                   ),
@@ -187,23 +222,16 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 style: GoogleFonts.googleSans(color: AppColors.textSecondary),
               ),
             ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: AppColors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              elevation: 0,
-            ),
-            onPressed: _state == _DownloadState.downloading
-                ? null
-                : _state == _DownloadState.error
-                    ? _startDownload
-                    : _startDownload,
+          TextButton(
+            onPressed: _state == _DownloadState.downloading ? null : _startDownload,
             child: Text(
               _state == _DownloadState.error ? 'ลองใหม่' : 'อัปเดต',
-              style: GoogleFonts.googleSans(fontWeight: FontWeight.w600),
+              style: GoogleFonts.googleSans(
+                color: _state == _DownloadState.downloading
+                    ? AppColors.textMuted
+                    : AppColors.primary,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
