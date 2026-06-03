@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:open_file/open_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/app_version_service.dart';
 
@@ -42,6 +45,21 @@ class _UpdateDialogState extends State<UpdateDialog> {
   void initState() {
     super.initState();
     _loadCurrentVersion();
+    _checkExistingDownload();
+  }
+
+  Future<void> _checkExistingDownload() async {
+    final dir = await getExternalStorageDirectory();
+    if (dir == null) return;
+    final path = '${dir.path}/Downloads/MyCareNK_update.apk';
+    if (await File(path).exists()) {
+      if (mounted) {
+        setState(() {
+          _localPath = path;
+          _state = _DownloadState.downloaded;
+        });
+      }
+    }
   }
 
   @override
