@@ -274,12 +274,14 @@ export default function ArticleEditorPage() {
 
     // ── Existing article ────────────────────────────────────────────────────
     if (!articleStatusRef.current) return;
+    const saveTime = new Date().toISOString();
     const err = await autoSaveArticle(articleId, payload, articleStatusRef.current, userIdRef.current);
     if (!err) {
       autoSaveRetryCount.current = 0;
       setAutoSaveStatus('saved');
       setAutoSavedAt(new Date());
       if (articleStatusRef.current !== 'draft') setHasDraft(true);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userIdRef.current, updated_at: saveTime } : prev);
     } else if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
       autoSaveRetryCount.current++;
       setAutoSaveStatus('failed');
@@ -430,12 +432,14 @@ export default function ArticleEditorPage() {
     if (!validateForPublish() || !articleId) return;
     cancelPendingAutoSave();
     setSaving(true);
+    const publishTime = new Date().toISOString();
     const err = await publishArticleHelper(articleId, getPayload(), userId);
     if (err) {
       showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
     } else {
       setAutoSaveStatus('idle');
       setArticleStatus('published');
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: publishTime, published_by: userId, published_at: publishTime } : prev);
       showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
     }
     setSaving(false);
@@ -447,12 +451,14 @@ export default function ArticleEditorPage() {
     if (!validateForPublish() || !articleId) return;
     cancelPendingAutoSave();
     setSaving(true);
+    const republishTime = new Date().toISOString();
     const err = await republishArticleHelper(articleId, getPayload(), userId);
     if (err) {
       showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
     } else {
       setAutoSaveStatus('idle');
       setHasDraft(false);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: republishTime, published_by: userId, published_at: republishTime } : prev);
       showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
     }
     setSaving(false);
@@ -464,11 +470,13 @@ export default function ArticleEditorPage() {
     if (!articleId) return;
     cancelPendingAutoSave();
     setSaving(true);
+    const hideTime = new Date().toISOString();
     const err = await hideArticleHelper(articleId, userId);
     if (err) {
       showSnackbar(`ซ่อนบทความไม่สำเร็จ: ${err}`, 'error');
     } else {
       setArticleStatus('hidden');
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: hideTime, hidden_by: userId, hidden_at: hideTime } : prev);
       showSnackbar('ซ่อนบทความเรียบร้อยแล้ว', 'success');
     }
     setHideDialogOpen(false);
@@ -481,6 +489,7 @@ export default function ArticleEditorPage() {
     if (!validateForPublish() || !articleId) return;
     cancelPendingAutoSave();
     setSaving(true);
+    const restoreTime = new Date().toISOString();
     const err = await restoreArticleHelper(articleId, getPayload(), userId);
     if (err) {
       showSnackbar(`เผยแพร่อีกครั้งไม่สำเร็จ: ${err}`, 'error');
@@ -488,6 +497,7 @@ export default function ArticleEditorPage() {
       setAutoSaveStatus('idle');
       setArticleStatus('published');
       setHasDraft(false);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: restoreTime, published_by: userId, published_at: restoreTime } : prev);
       showSnackbar('เผยแพร่บทความอีกครั้งเรียบร้อยแล้ว', 'success');
     }
     setSaving(false);
