@@ -158,7 +158,9 @@ interface Props {
 export default function ServiceCenterManagementDialog({ open, onClose }: Props) {
   const { centers, loading, error, refetch } = useServiceCenters(open);
   const { role } = useRoleAccess();
+  const isAdmin = role === 'admin';
   const isSuperadmin = role === 'superadmin';
+  const canAdd = isAdmin || isSuperadmin;
   const [editTarget, setEditTarget] = useState<ServiceCenterRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
@@ -214,7 +216,7 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
                 แก้ไขรูปภาพ ข้อมูลทั่วไป ช่องทางติดต่อ และตำแหน่งของแต่ละสถานบริการ
               </Typography>
             </Box>
-            {isSuperadmin && (
+            {canAdd && (
               <Button
                 variant="contained"
                 startIcon={<AddIcon />}
