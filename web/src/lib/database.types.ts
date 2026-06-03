@@ -424,6 +424,8 @@ export type Database = {
           old_value: Json | null
           performed_by: string | null
           target_id: string
+          target_name: string | null
+          target_staff_user_id: string | null
           target_table: string
         }
         Insert: {
@@ -434,6 +436,8 @@ export type Database = {
           old_value?: Json | null
           performed_by?: string | null
           target_id: string
+          target_name?: string | null
+          target_staff_user_id?: string | null
           target_table: string
         }
         Update: {
@@ -444,6 +448,8 @@ export type Database = {
           old_value?: Json | null
           performed_by?: string | null
           target_id?: string
+          target_name?: string | null
+          target_staff_user_id?: string | null
           target_table?: string
         }
         Relationships: []
@@ -767,30 +773,6 @@ export type Database = {
           title: string
         }[]
       }
-      get_audit_log: {
-        Args: {
-          p_action?: string
-          p_date_from?: string
-          p_date_to?: string
-          p_limit?: number
-          p_offset?: number
-          p_performed_by?: string
-          p_target_id?: string
-          p_target_table?: string
-        }
-        Returns: {
-          action: Database["public"]["Enums"]["audit_action"]
-          created_at: string
-          full_name: string
-          id: string
-          new_value: Json
-          old_value: Json
-          performed_by: string
-          target_full_name: string
-          target_id: string
-          target_table: string
-        }[]
-      }
       get_average_lead_time: {
         Args: {
           p_date_from: string
@@ -959,7 +941,8 @@ export type Database = {
           performed_by: string
           target_full_name: string
           target_id: string
-          target_staff_user_id: string
+          target_name: string | null
+          target_staff_user_id: string | null
         }[]
       }
       get_staff_workload: {
@@ -1000,17 +983,6 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
-      log_audit_event: {
-        Args: {
-          p_action: string
-          p_new_value?: Json
-          p_old_value?: Json
-          p_performed_by: string
-          p_target_id: string
-          p_target_table: string
-        }
-        Returns: undefined
-      }
       save_recovery_codes: {
         Args: { secret_codes: string[] }
         Returns: undefined
@@ -1049,13 +1021,15 @@ export type Database = {
         }
         Returns: Json
       }
-      write_audit_log: {
+      write_staff_log: {
         Args: {
           p_action: Database["public"]["Enums"]["audit_action"]
           p_new_value?: Json
           p_old_value?: Json
           p_performed_by?: string
           p_target_id: string
+          p_target_name?: string
+          p_target_staff_user_id?: string
           p_target_table: string
         }
         Returns: undefined

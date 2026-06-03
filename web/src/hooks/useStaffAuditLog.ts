@@ -9,6 +9,7 @@ export interface StaffAuditLogRow {
   action: AuditAction;
   target_id: string;
   target_staff_user_id: string | null;
+  target_name: string | null;
   target_full_name: string | null;
   old_value: Record<string, unknown> | null;
   new_value: Record<string, unknown> | null;

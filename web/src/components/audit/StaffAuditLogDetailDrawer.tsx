@@ -106,9 +106,8 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
   const otherKeys   = allKeys.filter(k => !PROFILE_FIELD_SET.has(k) && !ROLE_FIELD_SET.has(k));
   const hasGroups   = profileKeys.length > 0 || roleKeys.length > 0;
 
-  const hasOldAndNew   = row && (row.old_value !== null || row.new_value !== null);
-  const isInsertOnly   = row !== null && row.old_value === null && row.new_value !== null;
-  const hideDataSection = row !== null && (row.action === 'staff_created' || row.action === 'staff_deleted');
+  const hasOldAndNew = row && (row.old_value !== null || row.new_value !== null);
+  const isInsertOnly = row !== null && row.old_value === null && row.new_value !== null;
 
   const orderedKeys = [...profileKeys, ...roleKeys, ...otherKeys];
 
@@ -141,8 +140,14 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
               )}
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
+              <Typography variant="subtitle2" color="text.secondary">ชื่อ-นามสกุล</Typography>
+              <Typography variant="body1">{row.target_name ?? row.target_full_name ?? '—'}</Typography>
+            </Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">UUID เจ้าหน้าที่</Typography>
-              <Typography variant="body1">{row.target_staff_user_id ?? '—'}</Typography>
+              <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'right', maxWidth: '65%' }}>
+                {row.target_staff_user_id ?? '—'}
+              </Typography>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">โดย</Typography>
@@ -157,31 +162,29 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
           <Divider sx={{ mb: 2 }} />
 
           {/* Data Section */}
-          {!hideDataSection && (
-            hasOldAndNew && allKeys.length > 0 ? (
-              isInsertOnly ? (
-                <>
-                  <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>ข้อมูล</Typography>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    {orderedKeys.map(k => (
-                      <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={row.new_value?.[k]} />
-                    ))}
-                  </Box>
-                </>
-              ) : (
-                <>
-                  <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>การเปลี่ยนแปลง</Typography>
-                  <Box display="flex" flexDirection="column" gap={2}>
-                    {(hasGroups ? orderedKeys : allKeys).map(k => {
-                      const oldVal = row.old_value?.[k] ?? null;
-                      const newVal = row.new_value?.[k] ?? null;
-                      return <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)} oldVal={oldVal} newVal={newVal} />;
-                    })}
-                  </Box>
-                </>
-              )
-            ) : null
-          )}
+          {hasOldAndNew && allKeys.length > 0 ? (
+            isInsertOnly ? (
+              <>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>ข้อมูล</Typography>
+                <Box display="flex" flexDirection="column" gap={2}>
+                  {orderedKeys.map(k => (
+                    <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={row.new_value?.[k]} />
+                  ))}
+                </Box>
+              </>
+            ) : (
+              <>
+                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>การเปลี่ยนแปลง</Typography>
+                <Box display="flex" flexDirection="column" gap={2}>
+                  {(hasGroups ? orderedKeys : allKeys).map(k => {
+                    const oldVal = row.old_value?.[k] ?? null;
+                    const newVal = row.new_value?.[k] ?? null;
+                    return <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)} oldVal={oldVal} newVal={newVal} />;
+                  })}
+                </Box>
+              </>
+            )
+          ) : null}
         </Box>
       )}
     </Drawer>
