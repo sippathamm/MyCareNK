@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
+import '../../../../../core/services/app_version_service.dart';
 import '../../../home/presentation/pages/home_navigator.dart';
 import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
 import '../../../service/presentation/pages/request_history_page.dart';
+import '../../widgets/update_dialog.dart';
 import 'settings_page.dart';
 
 class MainScreen extends StatefulWidget {
@@ -30,6 +32,7 @@ class _MainScreenState extends State<MainScreen> {
   final ValueNotifier<int> _messagesUnreadNotifier = ValueNotifier(0);
 
   StreamSubscription<AuthState>? _authSubscription;
+  bool _versionCheckDone = false;
 
   @override
   void initState() {
@@ -47,6 +50,19 @@ class _MainScreenState extends State<MainScreen> {
         setState(() => _messagesRefreshKey++);
       }
     });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
+  }
+
+  Future<void> _checkForUpdate() async {
+    if (_versionCheckDone || !mounted) return;
+    _versionCheckDone = true;
+    final service = AppVersionService();
+    final remote = await service.getLatestVersion();
+    if (remote == null || !mounted) return;
+    final hasUpdate = await service.isUpdateAvailable();
+    if (hasUpdate && mounted) {
+      await UpdateDialog.show(context, remote);
+    }
   }
 
   @override

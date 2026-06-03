@@ -1,4 +1,4 @@
-import { useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, useEffect, type ReactNode } from 'react';
 import {
   Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton,
   ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress,
@@ -23,9 +23,9 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import DownloadIcon from '@mui/icons-material/Download';
 import { QRCodeSVG } from 'qrcode.react';
 
-const APP_DOWNLOAD_URL = 'https://github.com/sippathamm/MyCareNK/releases/download/v0.22.1-beta-build1/app-release.apk';
 const APP_RELEASES_URL = 'https://github.com/sippathamm/MyCareNK/releases';
 import { useAuth } from '../../hooks/useAuth';
+import { supabase } from '../../lib/supabase';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
 import NotificationPanel from '../notifications/NotificationPanel';
@@ -57,11 +57,36 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
+  const [appDownloadUrl, setAppDownloadUrl] = useState<string | null>(null);
+  const [downloadUrlLoading, setDownloadUrlLoading] = useState(false);
 
   const drawerWidth = sidebarOpen ? DRAWER_OPEN_WIDTH : DRAWER_CLOSED_WIDTH;
 
   const handleBellClick = () => { setAnchorEl(bellRef.current); };
   const handlePanelClose = () => { setAnchorEl(null); };
+
+  useEffect(() => {
+    if (!downloadDialogOpen) return;
+    setDownloadUrlLoading(true);
+    (async () => {
+      for (const branch of ['main', 'preview']) {
+        const { data } = await supabase
+          .from('app_versions' as never)
+          .select('download_url')
+          .eq('branch', branch)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        const url = (data as null | { download_url: string }[])?.[0]?.download_url;
+        if (url) {
+          setAppDownloadUrl(url);
+          setDownloadUrlLoading(false);
+          return;
+        }
+      }
+      setAppDownloadUrl(null);
+      setDownloadUrlLoading(false);
+    })();
+  }, [downloadDialogOpen]);
 
   const handleLogout = async () => {
     await logout();
@@ -311,7 +336,17 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <DialogTitle sx={{ fontWeight: 'bold' }}>ดาวน์โหลดแอป MyCareNK</DialogTitle>
         <DialogContent dividers>
           <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={1}>
-            <QRCodeSVG value={APP_DOWNLOAD_URL} size={200} />
+            {downloadUrlLoading ? (
+              <Box display="flex" alignItems="center" justifyContent="center" height={200}>
+                <CircularProgress />
+              </Box>
+            ) : appDownloadUrl ? (
+              <QRCodeSVG value={appDownloadUrl} size={200} />
+            ) : (
+              <Box display="flex" alignItems="center" justifyContent="center" height={200}>
+                <Typography variant="body2" color="text.secondary">ไม่พบข้อมูล</Typography>
+              </Box>
+            )}
             <Typography variant="body2" color="text.secondary" textAlign="center">
               สแกน QR Code เพื่อดาวน์โหลด
             </Typography>
@@ -331,9 +366,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 variant="contained"
                 color="primary"
                 startIcon={<DownloadIcon />}
-                href={APP_DOWNLOAD_URL}
+                href={appDownloadUrl ?? '#'}
                 download
                 component="a"
+                disabled={!appDownloadUrl}
               >
                 ดาวน์โหลด
               </Button>

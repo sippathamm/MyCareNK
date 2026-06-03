@@ -19,7 +19,6 @@ import { createThGridLocale } from '../../constants/datagrid';
 const STATUS_FILTERS = [
   { value: 'all', label: 'ทั้งหมด' },
   { value: 'published', label: 'เผยแพร่แล้ว' },
-  { value: 'scheduled', label: 'รอเผยแพร่' },
   { value: 'draft', label: 'ร่าง' },
   { value: 'hidden', label: 'ซ่อน' },
 ] as const;
@@ -30,10 +29,6 @@ const STATUS_CHIP_PROPS: Record<ArticleStatus, { label: string; sx: object }> = 
   published: {
     label: 'เผยแพร่แล้ว',
     sx: { bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 'bold' },
-  },
-  scheduled: {
-    label: 'รอเผยแพร่',
-    sx: { bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 'bold' },
   },
   draft: {
     label: 'ร่าง',
@@ -103,7 +98,6 @@ export default function ArticlesPage() {
   const counts = useMemo(() => ({
     all: articles.length,
     published: articles.filter(a => a.status === 'published').length,
-    scheduled: articles.filter(a => a.status === 'scheduled').length,
     draft: articles.filter(a => a.status === 'draft').length,
     hidden: articles.filter(a => a.status === 'hidden').length,
   }), [articles]);
@@ -112,13 +106,13 @@ export default function ArticlesPage() {
 
   const columns: GridColDef[] = [
     {
-      field: 'cover_image_url',
+      field: 'thumbnail_url',
       headerName: 'รูปหน้าปก',
       width: 110,
       sortable: false,
       renderCell: (params: GridRenderCellParams<Article>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <CoverThumbnail url={params.row.cover_image_url} />
+          <CoverThumbnail url={params.row.thumbnail_url} />
         </Box>
       ),
     },
@@ -128,7 +122,11 @@ export default function ArticlesPage() {
       flex: 1,
       minWidth: 220,
       renderCell: (params: GridRenderCellParams<Article>) => {
-        const hasDraft = params.row.has_draft && params.row.status === 'published';
+        const hasDraft = (
+          params.row.draft_title !== null ||
+          params.row.draft_body !== null ||
+          params.row.draft_category !== null
+        ) && params.row.status === 'published';
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
             <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
@@ -168,16 +166,25 @@ export default function ArticlesPage() {
       ),
     },
     {
-      field: 'publish_at',
+      field: 'category',
+      headerName: 'หมวดหมู่',
+      flex: 0.6,
+      minWidth: 120,
+      renderCell: (params: GridRenderCellParams<Article>) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography variant="body2">{params.row.category || '—'}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: 'published_at',
       headerName: 'วันที่เผยแพร่',
       flex: 0.8,
       minWidth: 160,
       renderCell: (params: GridRenderCellParams<Article>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography variant="body2">
-            {params.row.status === 'published' && params.row.publish_at
-              ? formatDateTime(params.row.publish_at)
-              : '—'}
+            {params.row.published_at ? formatDateTime(params.row.published_at) : '—'}
           </Typography>
         </Box>
       ),

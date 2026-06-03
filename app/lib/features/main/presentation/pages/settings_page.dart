@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/l10n/locale_provider.dart';
+import '../../../../core/services/app_version_service.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/pages/privacy_policy_page.dart';
@@ -12,6 +13,7 @@ import '../../../auth/presentation/pages/profile_edit_page.dart';
 import '../../../auth/presentation/pages/change_password_page.dart';
 import '../../../auth/presentation/pages/manage_recovery_codes_page.dart';
 import '../../../auth/presentation/pages/delete_account_page.dart';
+import '../../widgets/update_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -22,6 +24,7 @@ class SettingsPage extends StatefulWidget {
 
 class _SettingsPageState extends State<SettingsPage> {
   String _version = '';
+  bool _isCheckingUpdate = false;
 
   @override
   void initState() {
@@ -32,6 +35,44 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _loadVersion() async {
     final info = await PackageInfo.fromPlatform();
     if (mounted) setState(() => _version = info.version);
+  }
+
+  Future<void> _checkForUpdate() async {
+    if (_isCheckingUpdate) return;
+    setState(() => _isCheckingUpdate = true);
+    try {
+      final service = AppVersionService();
+      final remote = await service.getLatestVersion();
+      if (!mounted) return;
+      if (remote == null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('ไม่สามารถตรวจสอบอัปเดตได้', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.error,
+          behavior: SnackBarBehavior.floating,
+        ));
+        return;
+      }
+      final hasUpdate = await service.isUpdateAvailable();
+      if (!mounted) return;
+      if (hasUpdate) {
+        await UpdateDialog.show(context, remote);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text('แอปเป็นเวอร์ชันล่าสุดแล้ว', style: GoogleFonts.googleSans()),
+          backgroundColor: AppColors.success,
+          behavior: SnackBarBehavior.floating,
+        ));
+      }
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text('ไม่สามารถตรวจสอบอัปเดตได้', style: GoogleFonts.googleSans()),
+        backgroundColor: AppColors.error,
+        behavior: SnackBarBehavior.floating,
+      ));
+    } finally {
+      if (mounted) setState(() => _isCheckingUpdate = false);
+    }
   }
 
   @override
@@ -111,6 +152,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
+                _buildCheckUpdateTile(),
                 _buildVersionTile(l10n),
                 if (isLoggedIn) ...[
                   _buildDivider(),
@@ -188,6 +230,32 @@ class _SettingsPageState extends State<SettingsPage> {
             )
           : null,
       onTap: onTap,
+    );
+  }
+
+  Widget _buildCheckUpdateTile() {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+      leading: const Icon(Icons.system_update_outlined, color: AppColors.primary, size: 22),
+      title: Text(
+        'ตรวจสอบอัปเดต',
+        style: GoogleFonts.googleSans(
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      trailing: _isCheckingUpdate
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.primary,
+              ),
+            )
+          : const Icon(Icons.chevron_right, color: AppColors.textSecondary, size: 20),
+      onTap: _isCheckingUpdate ? null : _checkForUpdate,
     );
   }
 

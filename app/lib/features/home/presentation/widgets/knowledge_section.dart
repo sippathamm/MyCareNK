@@ -5,25 +5,29 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../knowledge/presentation/pages/article_detail_page.dart';
 import '../../../knowledge/presentation/pages/article_list_page.dart';
+import '../../../knowledge/presentation/widgets/category_chip.dart';
 
 class _ArticleItem {
   final String id;
   final String title;
   final String? excerpt;
-  final String? coverImageUrl;
+  final String? thumbnailUrl;
+  final String? category;
 
   const _ArticleItem({
     required this.id,
     required this.title,
     this.excerpt,
-    this.coverImageUrl,
+    this.thumbnailUrl,
+    this.category,
   });
 
   factory _ArticleItem.fromMap(Map<String, dynamic> map) => _ArticleItem(
         id: map['id'] as String,
         title: map['title'] as String,
         excerpt: map['excerpt'] as String?,
-        coverImageUrl: map['cover_image_url'] as String?,
+        thumbnailUrl: map['thumbnail_url'] as String?,
+        category: map['category'] as String?,
       );
 }
 
@@ -120,7 +124,7 @@ class _KnowledgeSectionState extends State<KnowledgeSection> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 192,
+          height: 220,
           child: _loading
               ? _ShimmerList()
               : ListView.separated(
@@ -172,9 +176,9 @@ class _ArticleCard extends StatelessWidget {
                 SizedBox(
                   height: 120,
                   width: double.infinity,
-                  child: article.coverImageUrl != null
+                  child: article.thumbnailUrl != null
                       ? Image.network(
-                          article.coverImageUrl!,
+                          article.thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (context, error, stackTrace) =>
                               const _GradientPlaceholder(),
@@ -188,6 +192,10 @@ class _ArticleCard extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        if (article.category?.isNotEmpty ?? false) ...[
+                          CategoryChip(label: article.category!, fontSize: 10),
+                          const SizedBox(height: 4),
+                        ],
                         Text(
                           article.title,
                           style: GoogleFonts.googleSans(
