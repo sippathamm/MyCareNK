@@ -108,11 +108,12 @@ class AppVersionService {
   }
 
   // Downloads the APK to the app's external downloads dir with progress.
-  // Returns the local file path on success.
+  // Returns the local file path on success. Pass cancelToken to support cancellation.
   Future<String> downloadApk(
     String url,
-    void Function(double progress) onProgress,
-  ) async {
+    void Function(double progress) onProgress, {
+    CancelToken? cancelToken,
+  }) async {
     final dir = await getExternalStorageDirectory();
     final downloadDir = Directory('${dir!.path}/Downloads');
     if (!await downloadDir.exists()) {
@@ -124,6 +125,7 @@ class AppVersionService {
     await dio.download(
       url,
       savePath,
+      cancelToken: cancelToken,
       onReceiveProgress: (received, total) {
         if (total > 0) onProgress(received / total);
       },

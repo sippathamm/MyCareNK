@@ -1,5 +1,7 @@
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:open_file/open_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/app_version_service.dart';
@@ -32,6 +34,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
   String? _errorMessage;
   String? _localPath;
   String _currentVersion = '';
+  CancelToken? _cancelToken;
 
   final _service = AppVersionService();
 
@@ -41,12 +44,25 @@ class _UpdateDialogState extends State<UpdateDialog> {
     _loadCurrentVersion();
   }
 
+  @override
+  void dispose() {
+    _cancelToken?.cancel();
+    super.dispose();
+  }
+
   Future<void> _loadCurrentVersion() async {
     final info = await PackageInfo.fromPlatform();
     if (mounted) setState(() => _currentVersion = info.version);
   }
 
   Future<void> _startDownload() async {
+    // Skip re-download if already finished
+    if (_state == _DownloadState.downloaded && _localPath != null) {
+      await _openInstaller();
+      return;
+    }
+
+    _cancelToken = CancelToken();
     setState(() {
       _state = _DownloadState.downloading;
       _progress = 0;
@@ -59,10 +75,21 @@ class _UpdateDialogState extends State<UpdateDialog> {
         (p) {
           if (mounted) setState(() => _progress = p);
         },
+        cancelToken: _cancelToken,
       );
       _localPath = path;
       if (mounted) setState(() => _state = _DownloadState.downloaded);
-    } catch (e) {
+    } on DioException catch (e) {
+      if (!mounted) return;
+      if (e.type == DioExceptionType.cancel) {
+        setState(() => _state = _DownloadState.idle);
+      } else {
+        setState(() {
+          _state = _DownloadState.error;
+          _errorMessage = 'ดาวน์โหลดล้มเหลว กรุณาลองใหม่';
+        });
+      }
+    } catch (_) {
       if (mounted) {
         setState(() {
           _state = _DownloadState.error;
@@ -72,20 +99,33 @@ class _UpdateDialogState extends State<UpdateDialog> {
     }
   }
 
+  void _cancelDownload() {
+    _cancelToken?.cancel();
+  }
+
   Future<void> _openInstaller() async {
     if (_localPath == null) return;
-    await _service.openApk(_localPath!);
+    final result = await _service.openApk(_localPath!);
+    if (mounted && result.type != ResultType.done) {
+      setState(() {
+        _state = _DownloadState.error;
+        _errorMessage = 'ไม่สามารถเปิดไฟล์ติดตั้งได้ กรุณาเปิดการตั้งค่า "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก"';
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final force = widget.versionInfo.forceUpdate;
+    final canDismiss = !force &&
+        _state != _DownloadState.downloading;
 
     return PopScope(
-      canPop: !force && _state != _DownloadState.downloading || _state == _DownloadState.downloaded,
+      canPop: canDismiss,
       child: AlertDialog(
         backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
         contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
         actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         content: Column(
@@ -94,12 +134,12 @@ class _UpdateDialogState extends State<UpdateDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
-                color: AppColors.primaryBackground,
+                color: Color(0xFFE8F5E9),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.system_update_rounded,
-                color: AppColors.primary,
+                color: AppColors.success,
                 size: 40,
               ),
             ),
@@ -244,7 +284,15 @@ class _UpdateDialogState extends State<UpdateDialog> {
           ],
         ),
         actions: [
-          if (!force && _state != _DownloadState.downloading)
+          if (_state == _DownloadState.downloading)
+            TextButton(
+              onPressed: _cancelDownload,
+              child: Text(
+                'ยกเลิก',
+                style: GoogleFonts.googleSans(color: AppColors.textSecondary),
+              ),
+            )
+          else if (!force)
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
