@@ -914,6 +914,9 @@ export default function ArticleEditorPage() {
 
             {/* Actions card */}
             <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                การเผยแพร่
+              </Typography>
               {/* Status + unpublished badge */}
               {(!isEditMode || !!articleStatus) && (
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5} flexWrap="wrap">
