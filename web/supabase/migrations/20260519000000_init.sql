@@ -1310,7 +1310,7 @@ SECURITY INVOKER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NOT is_superadmin() THEN RAISE EXCEPTION 'Unauthorized'; END IF;
+  IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   INSERT INTO service_centers (name, display_order)
     VALUES (p_name, (SELECT COALESCE(MAX(display_order), 0) + 1 FROM service_centers))
     ON CONFLICT (name) DO NOTHING;
@@ -1346,7 +1346,7 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NOT is_superadmin() THEN RAISE EXCEPTION 'Unauthorized'; END IF;
+  IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   INSERT INTO service_center_inventory (service_center, condom_qty, lubricant_qty)
     VALUES (p_name, 0, 0) ON CONFLICT DO NOTHING;
 END;
