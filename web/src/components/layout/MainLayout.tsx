@@ -2,7 +2,7 @@ import { useRef, useState, useEffect, type ReactNode } from 'react';
 import {
   Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton,
   ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress,
-  IconButton, Badge, Snackbar, Alert, Tooltip,
+  IconButton, Badge, Snackbar, Alert, Tooltip, Tab, Tabs,
   Dialog, DialogTitle, DialogContent, DialogActions,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -57,7 +57,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
-  const [appDownloadUrl, setAppDownloadUrl] = useState<string | null>(null);
+  const [downloadTab, setDownloadTab] = useState<'release' | 'preview'>('release');
+  const [releaseUrl, setReleaseUrl] = useState<string | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [downloadUrlLoading, setDownloadUrlLoading] = useState(false);
 
   const drawerWidth = sidebarOpen ? DRAWER_OPEN_WIDTH : DRAWER_CLOSED_WIDTH;
@@ -68,22 +70,21 @@ export default function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     if (!downloadDialogOpen) return;
     setDownloadUrlLoading(true);
+    setReleaseUrl(null);
+    setPreviewUrl(null);
     (async () => {
-      for (const branch of ['main', 'preview']) {
+      const fetchUrl = async (branch: string) => {
         const { data } = await supabase
           .from('app_versions' as never)
           .select('download_url')
           .eq('branch', branch)
           .order('created_at', { ascending: false })
           .limit(1);
-        const url = (data as null | { download_url: string }[])?.[0]?.download_url;
-        if (url) {
-          setAppDownloadUrl(url);
-          setDownloadUrlLoading(false);
-          return;
-        }
-      }
-      setAppDownloadUrl(null);
+        return (data as null | { download_url: string }[])?.[0]?.download_url ?? null;
+      };
+      const [main, preview] = await Promise.all([fetchUrl('main'), fetchUrl('preview')]);
+      setReleaseUrl(main);
+      setPreviewUrl(preview);
       setDownloadUrlLoading(false);
     })();
   }, [downloadDialogOpen]);
@@ -334,47 +335,61 @@ export default function MainLayout({ children }: MainLayoutProps) {
       {/* Download App Dialog */}
       <Dialog open={downloadDialogOpen} onClose={() => setDownloadDialogOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold' }}>ดาวน์โหลดแอป MyCareNK</DialogTitle>
-        <DialogContent dividers>
-          <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={1}>
-            {downloadUrlLoading ? (
-              <Box display="flex" alignItems="center" justifyContent="center" height={200}>
-                <CircularProgress />
+        <Tabs
+          value={downloadTab}
+          onChange={(_, v) => setDownloadTab(v)}
+          variant="fullWidth"
+          sx={{ borderBottom: 1, borderColor: 'divider', minHeight: 40 }}
+        >
+          <Tab label="RELEASE" value="release" sx={{ fontWeight: 'bold', fontSize: 12 }} />
+          <Tab label="PREVIEW" value="preview" sx={{ fontWeight: 'bold', fontSize: 12 }} />
+        </Tabs>
+        <DialogContent>
+          {(() => {
+            const url = downloadTab === 'release' ? releaseUrl : previewUrl;
+            return (
+              <Box display="flex" flexDirection="column" alignItems="center" gap={2} py={1}>
+                {downloadUrlLoading ? (
+                  <Box display="flex" alignItems="center" justifyContent="center" height={200}>
+                    <CircularProgress />
+                  </Box>
+                ) : url ? (
+                  <QRCodeSVG value={url} size={200} />
+                ) : (
+                  <Box display="flex" alignItems="center" justifyContent="center" height={200}>
+                    <Typography variant="body2" color="text.secondary">ไม่พบข้อมูล</Typography>
+                  </Box>
+                )}
+                <Typography variant="body2" color="text.secondary" textAlign="center">
+                  สแกน QR Code เพื่อดาวน์โหลด
+                </Typography>
+                <Box display="flex" flexDirection="row" gap={1} justifyContent="center">
+                  <Button
+                    variant="outlined"
+                    color="primary"
+                    startIcon={<OpenInNewIcon />}
+                    href={APP_RELEASES_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    component="a"
+                  >
+                    เปิดหน้าดาวน์โหลด
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    startIcon={<DownloadIcon />}
+                    href={url ?? '#'}
+                    download
+                    component="a"
+                    disabled={!url}
+                  >
+                    ดาวน์โหลด
+                  </Button>
+                </Box>
               </Box>
-            ) : appDownloadUrl ? (
-              <QRCodeSVG value={appDownloadUrl} size={200} />
-            ) : (
-              <Box display="flex" alignItems="center" justifyContent="center" height={200}>
-                <Typography variant="body2" color="text.secondary">ไม่พบข้อมูล</Typography>
-              </Box>
-            )}
-            <Typography variant="body2" color="text.secondary" textAlign="center">
-              สแกน QR Code เพื่อดาวน์โหลด
-            </Typography>
-            <Box display="flex" flexDirection="row" gap={1} justifyContent="center">
-              <Button
-                variant="outlined"
-                color="primary"
-                startIcon={<OpenInNewIcon />}
-                href={APP_RELEASES_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                component="a"
-              >
-                เปิดหน้าดาวน์โหลด
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<DownloadIcon />}
-                href={appDownloadUrl ?? '#'}
-                download
-                component="a"
-                disabled={!appDownloadUrl}
-              >
-                ดาวน์โหลด
-              </Button>
-            </Box>
-          </Box>
+            );
+          })()}
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
           <Button onClick={() => setDownloadDialogOpen(false)} color="inherit">ปิด</Button>
