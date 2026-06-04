@@ -17,34 +17,6 @@ function formatDateTime(iso: string): string {
   return `${datePart} เวลา ${timePart} น.`;
 }
 
-// ─── Diff Row (before / after) ────────────────────────────────────────────────
-
-interface DiffRowProps { rawKey: string; fieldKey: string; oldVal: unknown; newVal: unknown }
-
-function DiffRow({ rawKey, fieldKey, oldVal, newVal }: DiffRowProps) {
-  return (
-    <Box display="flex" justifyContent="space-between" alignItems="center">
-      <Typography variant="subtitle2" color="text.secondary">{fieldKey}</Typography>
-      <Box display="flex" alignItems="center" gap={1}>
-        <Typography variant="body1" sx={{ color: '#C62828' }}>{formatFieldValue(rawKey, oldVal)}</Typography>
-        <Typography variant="body2" color="text.disabled">→</Typography>
-        <Typography variant="body1" sx={{ color: '#2E7D32' }}>{formatFieldValue(rawKey, newVal)}</Typography>
-      </Box>
-    </Box>
-  );
-}
-
-// ─── Value Row (insert-only display) ─────────────────────────────────────────
-
-function ValueRow({ rawKey, fieldKey, value }: { rawKey: string; fieldKey: string; value: unknown }) {
-  return (
-    <Box display="flex" justifyContent="space-between" alignItems="center">
-      <Typography variant="subtitle2" color="text.secondary">{fieldKey}</Typography>
-      <Typography variant="body1">{formatFieldValue(rawKey, value)}</Typography>
-    </Box>
-  );
-}
-
 // ─── Field display name map ───────────────────────────────────────────────────
 
 const FIELD_LABEL: Record<string, string> = {
@@ -75,6 +47,43 @@ const PROFILE_FIELD_SET   = new Set(['first_name', 'last_name', 'email', 'servic
 const PROFILE_FIELD_ORDER = ['first_name', 'last_name', 'email', 'service_center'];
 const ROLE_FIELD_SET      = new Set(['role']);
 
+// ─── Data rows ────────────────────────────────────────────────────────────────
+
+function MetaRow({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Typography variant="subtitle2" color="text.secondary">{label}</Typography>
+      {children}
+    </Box>
+  );
+}
+
+// Single-column value row (staff_created = normal, staff_deleted = red)
+function ValueRow({ rawKey, fieldKey, value, color }: { rawKey: string; fieldKey: string; value: unknown; color?: string }) {
+  return (
+    <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Typography variant="body2" color="text.secondary">{fieldKey}</Typography>
+      <Typography variant="body2" fontWeight="medium" sx={{ color: color ?? 'text.primary' }}>
+        {formatFieldValue(rawKey, value)}
+      </Typography>
+    </Box>
+  );
+}
+
+// Diff row (before → after)
+function DiffRow({ rawKey, fieldKey, oldVal, newVal }: { rawKey: string; fieldKey: string; oldVal: unknown; newVal: unknown }) {
+  return (
+    <Box display="flex" justifyContent="space-between" alignItems="center">
+      <Typography variant="body2" color="text.secondary">{fieldKey}</Typography>
+      <Box display="flex" alignItems="center" gap={1}>
+        <Typography variant="body2" fontWeight="medium" sx={{ color: '#C62828' }}>{formatFieldValue(rawKey, oldVal)}</Typography>
+        <Typography variant="body2" color="text.disabled">→</Typography>
+        <Typography variant="body2" fontWeight="medium" sx={{ color: '#2E7D32' }}>{formatFieldValue(rawKey, newVal)}</Typography>
+      </Box>
+    </Box>
+  );
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 interface Props {
@@ -90,98 +99,107 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
     ? (AUDIT_ACTION_LABEL[row.action as AuditAction] ?? row.action)
     : '';
 
-  const allKeys: string[] = [];
-  if (row) {
+  // Determine data source and display mode
+  const isCreated = row?.action === 'staff_created';
+  const isDeleted = row?.action === 'staff_deleted';
+  // Both created and deleted use single-column display (not diff)
+  const isSingleColumn = isCreated || isDeleted;
+
+  // Pick the relevant JSON blob
+  const dataSource = isDeleted
+    ? (row?.old_value ?? null)
+    : (row?.new_value ?? (row?.old_value ?? null));
+
+  // Build ordered keys for single-column display
+  const singleKeys: string[] = (() => {
+    if (!row || !isSingleColumn || !dataSource) return [];
+    const keys = Object.keys(dataSource);
+    const profile = PROFILE_FIELD_ORDER.filter(k => keys.includes(k));
+    const role    = keys.filter(k => ROLE_FIELD_SET.has(k));
+    const other   = keys.filter(k => !PROFILE_FIELD_SET.has(k) && !ROLE_FIELD_SET.has(k));
+    return [...profile, ...role, ...other];
+  })();
+
+  // Build ordered keys for diff display
+  const diffAllKeys: string[] = (() => {
+    if (!row || isSingleColumn) return [];
     const keySet = new Set([
       ...Object.keys(row.old_value ?? {}),
       ...Object.keys(row.new_value ?? {}),
     ]);
-    allKeys.push(...Array.from(keySet).sort());
-  }
+    return Array.from(keySet).sort();
+  })();
 
-  const profileKeys = PROFILE_FIELD_ORDER.filter(k => allKeys.includes(k));
-  const roleKeys    = allKeys.filter(k => ROLE_FIELD_SET.has(k));
-  const otherKeys   = allKeys.filter(k => !PROFILE_FIELD_SET.has(k) && !ROLE_FIELD_SET.has(k));
-  const hasGroups   = profileKeys.length > 0 || roleKeys.length > 0;
+  const diffProfileKeys = PROFILE_FIELD_ORDER.filter(k => diffAllKeys.includes(k));
+  const diffRoleKeys    = diffAllKeys.filter(k => ROLE_FIELD_SET.has(k));
+  const diffOtherKeys   = diffAllKeys.filter(k => !PROFILE_FIELD_SET.has(k) && !ROLE_FIELD_SET.has(k));
+  const hasDiffGroups   = diffProfileKeys.length > 0 || diffRoleKeys.length > 0;
+  const orderedDiffKeys = [...diffProfileKeys, ...diffRoleKeys, ...diffOtherKeys];
 
-  const hasOldAndNew = row && (row.old_value !== null || row.new_value !== null);
-  const isInsertOnly = row !== null && row.old_value === null && row.new_value !== null;
-
-  const orderedKeys = [...profileKeys, ...roleKeys, ...otherKeys];
+  const hasData = isSingleColumn ? singleKeys.length > 0 : diffAllKeys.length > 0;
+  const dataTitle = isSingleColumn ? 'ข้อมูล' : 'การเปลี่ยนแปลง';
+  const valueColor = isDeleted ? '#C62828' : undefined;
 
   return (
     <Dialog open={row !== null} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
-        <Typography component="div" variant="h6" fontWeight="bold">รายละเอียด</Typography>
+        <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>รายละเอียด</Typography>
+        {actionCfg && (
+          <Chip
+            label={actionLabel}
+            size="small"
+            sx={{ mt: 0.5, bgcolor: actionCfg.bg, color: actionCfg.color, fontWeight: 600, fontSize: '0.72rem' }}
+          />
+        )}
       </DialogTitle>
-      <Divider />
 
-      <DialogContent sx={{ pt: 2.5 }}>
+      <DialogContent dividers>
         {row && (
           <Box display="flex" flexDirection="column" gap={2}>
             {/* Meta */}
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">ประเภท</Typography>
-              {actionCfg && (
-                <Chip
-                  label={actionLabel}
-                  size="small"
-                  sx={{ bgcolor: actionCfg.bg, color: actionCfg.color, fontWeight: 600, fontSize: '0.72rem' }}
-                />
-              )}
-            </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">ชื่อ-นามสกุล</Typography>
+            <MetaRow label="ชื่อ-นามสกุล">
               <Typography variant="body1">{row.target_name ?? row.target_full_name ?? '—'}</Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-              <Typography variant="subtitle2" color="text.secondary" sx={{ flexShrink: 0 }}>UUID เจ้าหน้าที่</Typography>
-              <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'right', maxWidth: '65%' }}>
+            </MetaRow>
+            <MetaRow label="UUID เจ้าหน้าที่">
+              <Typography variant="body1" sx={{ wordBreak: 'break-all', textAlign: 'right', maxWidth: '65%' }}>
                 {row.target_staff_user_id ?? '—'}
               </Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">โดย</Typography>
+            </MetaRow>
+            <MetaRow label="โดย">
               <Typography variant="body1">{row.full_name}</Typography>
-            </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">เมื่อวันที่</Typography>
+            </MetaRow>
+            <MetaRow label="เมื่อวันที่">
               <Typography variant="body1">{formatDateTime(row.created_at)}</Typography>
-            </Box>
+            </MetaRow>
 
-            {/* Data Section */}
-            {hasOldAndNew && allKeys.length > 0 && (
+            {/* Data section */}
+            {hasData && (
               <>
-                <Divider />
-                {isInsertOnly ? (
-                  <>
-                    <Typography variant="subtitle2" fontWeight="bold">ข้อมูล</Typography>
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      {orderedKeys.map(k => (
-                        <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={row.new_value?.[k]} />
-                      ))}
-                    </Box>
-                  </>
-                ) : (
-                  <>
-                    <Typography variant="subtitle2" fontWeight="bold">การเปลี่ยนแปลง</Typography>
-                    <Box display="flex" flexDirection="column" gap={2}>
-                      {(hasGroups ? orderedKeys : allKeys).map(k => {
-                        const oldVal = row.old_value?.[k] ?? null;
-                        const newVal = row.new_value?.[k] ?? null;
-                        return <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)} oldVal={oldVal} newVal={newVal} />;
-                      })}
-                    </Box>
-                  </>
-                )}
+                <Divider sx={{ my: 1 }} />
+                <Typography variant="subtitle1" fontWeight="bold">{dataTitle}</Typography>
+                <Box bgcolor="background.default" p={2} borderRadius={2}>
+                  <Box display="flex" flexDirection="column" gap={1.5}>
+                    {isSingleColumn
+                      ? singleKeys.map(k => (
+                          <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={dataSource?.[k]} color={valueColor} />
+                        ))
+                      : (hasDiffGroups ? orderedDiffKeys : diffAllKeys).map(k => (
+                          <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)}
+                            oldVal={row.old_value?.[k] ?? null}
+                            newVal={row.new_value?.[k] ?? null}
+                          />
+                        ))
+                    }
+                  </Box>
+                </Box>
               </>
             )}
           </Box>
         )}
       </DialogContent>
 
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose} variant="outlined">ปิด</Button>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={onClose} color="inherit">ปิด</Button>
       </DialogActions>
     </Dialog>
   );

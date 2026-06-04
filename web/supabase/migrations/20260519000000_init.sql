@@ -128,6 +128,11 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
+  -- Allow service_role (auth.uid() IS NULL) — Edge Functions use the service key
+  -- and legitimately update roles on behalf of authenticated admins.
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
   IF NOT is_superadmin() THEN
     IF OLD.role IS DISTINCT FROM NEW.role THEN
       RAISE EXCEPTION 'Only superadmin can update role';
