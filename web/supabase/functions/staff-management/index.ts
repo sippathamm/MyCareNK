@@ -259,7 +259,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (hasActualEmailChange) {
       const { error: emailErr } = await serviceClient.auth.admin.updateUserById(user_id, { email, email_confirm: true });
       if (emailErr) {
-        return jsonResponse(400, 'error', emailErr.message ?? 'ไม่สามารถอัปเดตอีเมลได้');
+        const raw = emailErr.message ?? '';
+        const thMsg = raw.toLowerCase().includes('unable to validate email') || raw.toLowerCase().includes('invalid format')
+          ? 'รูปแบบอีเมลไม่ถูกต้อง'
+          : raw.includes('already been registered') || raw.includes('already registered')
+            ? 'อีเมลนี้ถูกใช้งานแล้ว'
+            : raw || 'ไม่สามารถอัปเดตอีเมลได้';
+        return jsonResponse(400, 'error', thMsg);
       }
     }
 
