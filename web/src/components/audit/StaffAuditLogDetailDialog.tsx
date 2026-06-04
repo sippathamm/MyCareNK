@@ -138,7 +138,7 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
 
   const hasData = isSingleColumn ? singleKeys.length > 0 : diffAllKeys.length > 0;
   const dataTitle = isSingleColumn ? 'ข้อมูล' : 'การเปลี่ยนแปลง';
-  const valueColor = isDeleted ? '#C62828' : undefined;
+  const valueColor = isDeleted ? '#C62828' : isCreated ? '#2E7D32' : undefined;
 
   return (
     <Dialog open={row !== null} onClose={onClose} maxWidth="sm" fullWidth>
@@ -179,7 +179,7 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
               <>
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="subtitle1" fontWeight="bold">{dataTitle}</Typography>
-                <Box display="flex" flexDirection="column" gap={1.5}>
+                <Box display="flex" flexDirection="column" gap={2}>
                   {isSingleColumn
                     ? singleKeys.map(k => (
                         <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={dataSource?.[k]} color={valueColor} />
