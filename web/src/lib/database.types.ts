@@ -415,7 +415,7 @@ export type Database = {
         }
         Relationships: []
       }
-      staff_audit_logs: {
+      staff_change_logs: {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
           created_at: string
@@ -921,7 +921,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
-      get_staff_audit_log: {
+      get_staff_change_log: {
         Args: {
           p_action?: string
           p_date_from?: string
@@ -1021,7 +1021,7 @@ export type Database = {
         }
         Returns: Json
       }
-      write_staff_log: {
+      write_staff_change_log: {
         Args: {
           p_action: Database["public"]["Enums"]["audit_action"]
           p_new_value?: Json

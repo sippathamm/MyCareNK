@@ -132,7 +132,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
     }
 
-    await serviceClient.rpc('write_staff_log', {
+    await serviceClient.rpc('write_staff_change_log', {
       p_performed_by:         user.id,
       p_action:               'staff_created',
       p_target_table:         'staff_profiles',
@@ -172,7 +172,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     if (profileSnapshot) {
-      await serviceClient.rpc('write_staff_log', {
+      await serviceClient.rpc('write_staff_change_log', {
         p_performed_by:         user.id,
         p_action:               'staff_deleted',
         p_target_table:         'staff_profiles',
@@ -284,7 +284,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
         oldProfileValues[key] = (profileBefore.data as Record<string, unknown>)[key];
         newProfileValues[key] = changedProfileUpdates[key];
       }
-      auditTasks.push(serviceClient.rpc('write_staff_log', {
+      auditTasks.push(serviceClient.rpc('write_staff_change_log', {
         p_performed_by:         user.id,
         p_action:               'staff_profile_updated',
         p_target_table:         'staff_profiles',
@@ -297,7 +297,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     if (hasActualEmailChange && profileBefore.data) {
-      auditTasks.push(serviceClient.rpc('write_staff_log', {
+      auditTasks.push(serviceClient.rpc('write_staff_change_log', {
         p_performed_by:         user.id,
         p_action:               'email_updated',
         p_target_table:         'staff_profiles',
@@ -310,7 +310,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     if (hasActualRoleChange && profileBefore.data) {
-      auditTasks.push(serviceClient.rpc('write_staff_log', {
+      auditTasks.push(serviceClient.rpc('write_staff_change_log', {
         p_performed_by:         user.id,
         p_action:               'role_updated',
         p_target_table:         'staff_profiles',

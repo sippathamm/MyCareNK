@@ -49,7 +49,7 @@ export function useStaffAuditLog(
         dateTo = d.toISOString();
       }
 
-      const { data, error: rpcError } = await supabase.rpc('get_staff_audit_log', {
+      const { data, error: rpcError } = await supabase.rpc('get_staff_change_log', {
         p_performed_by: filters.performedBy ?? undefined,
         p_action:       filters.action      ?? undefined,
         p_target_id:    filters.targetId    ?? undefined,

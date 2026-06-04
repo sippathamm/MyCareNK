@@ -467,7 +467,7 @@ BEGIN
   UPDATE public.request_status_logs     SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.inventory_logs          SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.staff_audit_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.staff_change_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.articles SET created_by   = NULL WHERE created_by   = OLD.id;
   UPDATE public.articles SET updated_by   = NULL WHERE updated_by   = OLD.id;
   UPDATE public.articles SET published_by = NULL WHERE published_by = OLD.id;
@@ -687,8 +687,8 @@ CREATE TRIGGER protect_role_update
   FOR EACH ROW EXECUTE FUNCTION protect_staff_role_column();
 
 
--- ── 7. staff_audit_logs ────────────────────────────────────
-CREATE TABLE public.staff_audit_logs (
+-- ── 7. staff_change_logs ────────────────────────────────────
+CREATE TABLE public.staff_change_logs (
   id                   uuid                NOT NULL DEFAULT gen_random_uuid(),
   performed_by         uuid,
   action               public.audit_action NOT NULL,
@@ -699,27 +699,27 @@ CREATE TABLE public.staff_audit_logs (
   created_at           timestamptz         NOT NULL DEFAULT now(),
   target_staff_user_id uuid,
   target_name          text,
-  CONSTRAINT staff_audit_logs_pkey              PRIMARY KEY (id),
-  CONSTRAINT staff_audit_logs_performed_by_fkey FOREIGN KEY (performed_by)
+  CONSTRAINT staff_change_logs_pkey              PRIMARY KEY (id),
+  CONSTRAINT staff_change_logs_performed_by_fkey FOREIGN KEY (performed_by)
     REFERENCES auth.users(id)
 );
 
-ALTER TABLE public.staff_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff_change_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "superadmin_select_audit_logs"
-  ON public.staff_audit_logs FOR SELECT
+CREATE POLICY "superadmin_select_change_logs"
+  ON public.staff_change_logs FOR SELECT
   TO authenticated USING (is_superadmin());
 
-CREATE POLICY "deny_client_insert_audit_logs"
-  ON public.staff_audit_logs FOR INSERT
+CREATE POLICY "deny_client_insert_change_logs"
+  ON public.staff_change_logs FOR INSERT
   TO authenticated WITH CHECK (false);
 
-CREATE POLICY "deny_update_audit_logs"
-  ON public.staff_audit_logs FOR UPDATE
+CREATE POLICY "deny_update_change_logs"
+  ON public.staff_change_logs FOR UPDATE
   TO authenticated USING (false);
 
-CREATE POLICY "deny_delete_audit_logs"
-  ON public.staff_audit_logs FOR DELETE
+CREATE POLICY "deny_delete_change_logs"
+  ON public.staff_change_logs FOR DELETE
   TO authenticated USING (false);
 
 
@@ -1270,7 +1270,7 @@ CREATE TRIGGER on_auth_user_deleted
 -- ============================================================
 
 -- ── Audit (service_role only — no explicit GRANT) ───────────
-CREATE OR REPLACE FUNCTION public.write_staff_log(
+CREATE OR REPLACE FUNCTION public.write_staff_change_log(
   p_action                public.audit_action,
   p_target_table          text,
   p_target_id             uuid,
@@ -1285,7 +1285,7 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  INSERT INTO public.staff_audit_logs (
+  INSERT INTO public.staff_change_logs (
     performed_by, action, target_table, target_id,
     old_value, new_value,
     target_staff_user_id, target_name
@@ -2277,7 +2277,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_staff_audit_log(
+CREATE OR REPLACE FUNCTION public.get_staff_change_log(
   p_performed_by uuid        DEFAULT NULL,
   p_action       text        DEFAULT NULL,
   p_target_id    text        DEFAULT NULL,
@@ -2317,7 +2317,7 @@ BEGIN
       NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
     ) AS target_full_name,
     al.old_value, al.new_value, al.created_at
-  FROM public.staff_audit_logs al
+  FROM public.staff_change_logs al
   LEFT JOIN staff_profiles sp  ON sp.staff_user_id = al.performed_by
   LEFT JOIN staff_profiles tsp ON tsp.id = al.target_id
   WHERE (p_performed_by IS NULL OR al.performed_by = p_performed_by)
@@ -2408,9 +2408,9 @@ GRANT EXECUTE ON FUNCTION public.create_doctor_appointment(uuid, text, text, dat
 GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer)     TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_appointment_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_inventory_log(text, text, timestamptz, timestamptz, integer, integer)                      TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_staff_audit_log(uuid, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
 
--- write_staff_log: intentionally NOT granted to anon/authenticated
+-- write_staff_change_log: intentionally NOT granted to anon/authenticated
 -- (service_role access only — used by Edge Functions)
 
 
