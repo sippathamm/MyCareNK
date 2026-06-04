@@ -1,7 +1,7 @@
 import {
-  Drawer, Box, Typography, Divider, IconButton, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions,
+  Button, Box, Typography, Divider, Chip,
 } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import type { StaffAuditLogRow } from '../../hooks/useStaffAuditLog';
 import {
   AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR, AUDIT_ACTION_LABEL,
@@ -82,7 +82,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
+export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
   const actionCfg = row
     ? (AUDIT_ACTION_COLOR[row.action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR)
     : null;
@@ -90,7 +90,6 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
     ? (AUDIT_ACTION_LABEL[row.action as AuditAction] ?? row.action)
     : '';
 
-  // Compute unified key set
   const allKeys: string[] = [];
   if (row) {
     const keySet = new Set([
@@ -100,7 +99,6 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
     allKeys.push(...Array.from(keySet).sort());
   }
 
-  // Group keys — only include keys actually present in the data
   const profileKeys = PROFILE_FIELD_ORDER.filter(k => allKeys.includes(k));
   const roleKeys    = allKeys.filter(k => ROLE_FIELD_SET.has(k));
   const otherKeys   = allKeys.filter(k => !PROFILE_FIELD_SET.has(k) && !ROLE_FIELD_SET.has(k));
@@ -112,23 +110,16 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
   const orderedKeys = [...profileKeys, ...roleKeys, ...otherKeys];
 
   return (
-    <Drawer
-      anchor="right"
-      open={row !== null}
-      onClose={onClose}
-      PaperProps={{ sx: { width: { xs: '100vw', sm: 480 }, p: 3 } }}
-    >
-      {row && (
-        <Box>
-          {/* Header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Typography variant="h6" fontWeight="bold">รายละเอียด</Typography>
-            <IconButton onClick={onClose} size="small"><CloseIcon /></IconButton>
-          </Box>
-          <Divider sx={{ mb: 2 }} />
+    <Dialog open={row !== null} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ pb: 1 }}>
+        <Typography component="div" variant="h6" fontWeight="bold">รายละเอียด</Typography>
+      </DialogTitle>
+      <Divider />
 
-          {/* Meta */}
-          <Box display="flex" flexDirection="column" gap={2} sx={{ mb: 3 }}>
+      <DialogContent sx={{ pt: 2.5 }}>
+        {row && (
+          <Box display="flex" flexDirection="column" gap={2}>
+            {/* Meta */}
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">ประเภท</Typography>
               {actionCfg && (
@@ -143,8 +134,8 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
               <Typography variant="subtitle2" color="text.secondary">ชื่อ-นามสกุล</Typography>
               <Typography variant="body1">{row.target_name ?? row.target_full_name ?? '—'}</Typography>
             </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
-              <Typography variant="subtitle2" color="text.secondary">UUID เจ้าหน้าที่</Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
+              <Typography variant="subtitle2" color="text.secondary" sx={{ flexShrink: 0 }}>UUID เจ้าหน้าที่</Typography>
               <Typography variant="body2" sx={{ fontFamily: 'monospace', wordBreak: 'break-all', textAlign: 'right', maxWidth: '65%' }}>
                 {row.target_staff_user_id ?? '—'}
               </Typography>
@@ -157,36 +148,41 @@ export default function StaffAuditLogDetailDrawer({ row, onClose }: Props) {
               <Typography variant="subtitle2" color="text.secondary">เมื่อวันที่</Typography>
               <Typography variant="body1">{formatDateTime(row.created_at)}</Typography>
             </Box>
+
+            {/* Data Section */}
+            {hasOldAndNew && allKeys.length > 0 && (
+              <>
+                <Divider />
+                {isInsertOnly ? (
+                  <>
+                    <Typography variant="subtitle2" fontWeight="bold">ข้อมูล</Typography>
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      {orderedKeys.map(k => (
+                        <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={row.new_value?.[k]} />
+                      ))}
+                    </Box>
+                  </>
+                ) : (
+                  <>
+                    <Typography variant="subtitle2" fontWeight="bold">การเปลี่ยนแปลง</Typography>
+                    <Box display="flex" flexDirection="column" gap={2}>
+                      {(hasGroups ? orderedKeys : allKeys).map(k => {
+                        const oldVal = row.old_value?.[k] ?? null;
+                        const newVal = row.new_value?.[k] ?? null;
+                        return <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)} oldVal={oldVal} newVal={newVal} />;
+                      })}
+                    </Box>
+                  </>
+                )}
+              </>
+            )}
           </Box>
+        )}
+      </DialogContent>
 
-          <Divider sx={{ mb: 2 }} />
-
-          {/* Data Section */}
-          {hasOldAndNew && allKeys.length > 0 ? (
-            isInsertOnly ? (
-              <>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>ข้อมูล</Typography>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  {orderedKeys.map(k => (
-                    <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={row.new_value?.[k]} />
-                  ))}
-                </Box>
-              </>
-            ) : (
-              <>
-                <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 2 }}>การเปลี่ยนแปลง</Typography>
-                <Box display="flex" flexDirection="column" gap={2}>
-                  {(hasGroups ? orderedKeys : allKeys).map(k => {
-                    const oldVal = row.old_value?.[k] ?? null;
-                    const newVal = row.new_value?.[k] ?? null;
-                    return <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)} oldVal={oldVal} newVal={newVal} />;
-                  })}
-                </Box>
-              </>
-            )
-          ) : null}
-        </Box>
-      )}
-    </Drawer>
+      <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <Button onClick={onClose} variant="outlined">ปิด</Button>
+      </DialogActions>
+    </Dialog>
   );
 }

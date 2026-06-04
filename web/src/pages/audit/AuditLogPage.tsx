@@ -12,7 +12,7 @@ import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } fr
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
 import { useAppointmentStatusLog, type AppointmentStatusLogRow, type AppointmentStatusLogFilters } from '../../hooks/useAppointmentStatusLog';
-import StaffAuditLogDetailDrawer from '../../components/audit/StaffAuditLogDetailDrawer';
+import StaffAuditLogDetailDialog from '../../components/audit/StaffAuditLogDetailDialog';
 import InventoryLogDetailDrawer from '../../components/audit/InventoryLogDetailDrawer';
 import {
   AUDIT_ACTION, AUDIT_ACTION_LABEL, AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR,
@@ -215,7 +215,7 @@ function AuditLogTab() {
           </Box>
       </Paper>
 
-      <StaffAuditLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
+      <StaffAuditLogDetailDialog row={detailRow} onClose={() => setDetailRow(null)} />
     </>
   );
 }
