@@ -9,6 +9,7 @@ export interface StaffAuditLogRow {
   action: AuditAction;
   target_id: string;
   target_staff_user_id: string | null;
+  target_name: string | null;
   target_full_name: string | null;
   old_value: Record<string, unknown> | null;
   new_value: Record<string, unknown> | null;
@@ -48,7 +49,7 @@ export function useStaffAuditLog(
         dateTo = d.toISOString();
       }
 
-      const { data, error: rpcError } = await supabase.rpc('get_staff_audit_log', {
+      const { data, error: rpcError } = await supabase.rpc('get_staff_change_log', {
         p_performed_by: filters.performedBy ?? undefined,
         p_action:       filters.action      ?? undefined,
         p_target_id:    filters.targetId    ?? undefined,

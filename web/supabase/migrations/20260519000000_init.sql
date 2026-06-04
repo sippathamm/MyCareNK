@@ -128,6 +128,11 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
+  -- Allow service_role (auth.uid() IS NULL) — Edge Functions use the service key
+  -- and legitimately update roles on behalf of authenticated admins.
+  IF auth.uid() IS NULL THEN
+    RETURN NEW;
+  END IF;
   IF NOT is_superadmin() THEN
     IF OLD.role IS DISTINCT FROM NEW.role THEN
       RAISE EXCEPTION 'Only superadmin can update role';
@@ -462,7 +467,7 @@ BEGIN
   UPDATE public.request_status_logs     SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.inventory_logs          SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.staff_audit_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.staff_change_logs       SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.articles SET created_by   = NULL WHERE created_by   = OLD.id;
   UPDATE public.articles SET updated_by   = NULL WHERE updated_by   = OLD.id;
   UPDATE public.articles SET published_by = NULL WHERE published_by = OLD.id;
@@ -682,37 +687,39 @@ CREATE TRIGGER protect_role_update
   FOR EACH ROW EXECUTE FUNCTION protect_staff_role_column();
 
 
--- ── 7. staff_audit_logs ────────────────────────────────────
-CREATE TABLE public.staff_audit_logs (
-  id           uuid                NOT NULL DEFAULT gen_random_uuid(),
-  performed_by uuid,
-  action       public.audit_action NOT NULL,
-  target_table text                NOT NULL,
-  target_id    uuid                NOT NULL,
-  old_value    jsonb,
-  new_value    jsonb,
-  created_at   timestamptz         NOT NULL DEFAULT now(),
-  CONSTRAINT staff_audit_logs_pkey              PRIMARY KEY (id),
-  CONSTRAINT staff_audit_logs_performed_by_fkey FOREIGN KEY (performed_by)
+-- ── 7. staff_change_logs ────────────────────────────────────
+CREATE TABLE public.staff_change_logs (
+  id                   uuid                NOT NULL DEFAULT gen_random_uuid(),
+  performed_by         uuid,
+  action               public.audit_action NOT NULL,
+  target_table         text                NOT NULL,
+  target_id            uuid                NOT NULL,
+  old_value            jsonb,
+  new_value            jsonb,
+  created_at           timestamptz         NOT NULL DEFAULT now(),
+  target_staff_user_id uuid,
+  target_name          text,
+  CONSTRAINT staff_change_logs_pkey              PRIMARY KEY (id),
+  CONSTRAINT staff_change_logs_performed_by_fkey FOREIGN KEY (performed_by)
     REFERENCES auth.users(id)
 );
 
-ALTER TABLE public.staff_audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.staff_change_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "superadmin_select_audit_logs"
-  ON public.staff_audit_logs FOR SELECT
+CREATE POLICY "superadmin_select_change_logs"
+  ON public.staff_change_logs FOR SELECT
   TO authenticated USING (is_superadmin());
 
-CREATE POLICY "deny_client_insert_audit_logs"
-  ON public.staff_audit_logs FOR INSERT
+CREATE POLICY "deny_client_insert_change_logs"
+  ON public.staff_change_logs FOR INSERT
   TO authenticated WITH CHECK (false);
 
-CREATE POLICY "deny_update_audit_logs"
-  ON public.staff_audit_logs FOR UPDATE
+CREATE POLICY "deny_update_change_logs"
+  ON public.staff_change_logs FOR UPDATE
   TO authenticated USING (false);
 
-CREATE POLICY "deny_delete_audit_logs"
-  ON public.staff_audit_logs FOR DELETE
+CREATE POLICY "deny_delete_change_logs"
+  ON public.staff_change_logs FOR DELETE
   TO authenticated USING (false);
 
 
@@ -1263,40 +1270,31 @@ CREATE TRIGGER on_auth_user_deleted
 -- ============================================================
 
 -- ── Audit (service_role only — no explicit GRANT) ───────────
-CREATE OR REPLACE FUNCTION public.write_audit_log(
-  p_action       public.audit_action,
-  p_target_table text,
-  p_target_id    uuid,
-  p_old_value    jsonb DEFAULT NULL,
-  p_new_value    jsonb DEFAULT NULL,
-  p_performed_by uuid  DEFAULT NULL
+CREATE OR REPLACE FUNCTION public.write_staff_change_log(
+  p_action                public.audit_action,
+  p_target_table          text,
+  p_target_id             uuid,
+  p_old_value             jsonb DEFAULT NULL,
+  p_new_value             jsonb DEFAULT NULL,
+  p_performed_by          uuid  DEFAULT NULL,
+  p_target_staff_user_id  uuid  DEFAULT NULL,
+  p_target_name           text  DEFAULT NULL
 ) RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  INSERT INTO public.staff_audit_logs (performed_by, action, target_table, target_id, old_value, new_value)
-  VALUES (COALESCE(p_performed_by, auth.uid()), p_action, p_target_table, p_target_id, p_old_value, p_new_value);
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.log_audit_event(
-  p_performed_by uuid,
-  p_action       text,
-  p_target_table text,
-  p_target_id    uuid,
-  p_old_value    jsonb DEFAULT NULL,
-  p_new_value    jsonb DEFAULT NULL
-) RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-BEGIN
-  PERFORM public.write_audit_log(
-    p_action::public.audit_action, p_target_table, p_target_id,
-    p_old_value, p_new_value, p_performed_by
+  INSERT INTO public.staff_change_logs (
+    performed_by, action, target_table, target_id,
+    old_value, new_value,
+    target_staff_user_id, target_name
+  )
+  VALUES (
+    COALESCE(p_performed_by, auth.uid()),
+    p_action, p_target_table, p_target_id,
+    p_old_value, p_new_value,
+    p_target_staff_user_id, p_target_name
   );
 END;
 $$;
@@ -2279,7 +2277,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_staff_audit_log(
+CREATE OR REPLACE FUNCTION public.get_staff_change_log(
   p_performed_by uuid        DEFAULT NULL,
   p_action       text        DEFAULT NULL,
   p_target_id    text        DEFAULT NULL,
@@ -2294,6 +2292,7 @@ CREATE OR REPLACE FUNCTION public.get_staff_audit_log(
   action               public.audit_action,
   target_id            uuid,
   target_staff_user_id uuid,
+  target_name          text,
   target_full_name     text,
   old_value            jsonb,
   new_value            jsonb,
@@ -2309,78 +2308,31 @@ BEGIN
   SELECT al.id, al.performed_by,
     COALESCE(sp.first_name || ' ' || sp.last_name, 'ระบบ'),
     al.action, al.target_id,
-    tsp.staff_user_id,
+    COALESCE(al.target_staff_user_id, tsp.staff_user_id),
+    al.target_name,
     COALESCE(
-      tsp.first_name || ' ' || tsp.last_name,
-      NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
-      NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
-    ),
-    al.old_value, al.new_value, al.created_at
-  FROM public.staff_audit_logs al
-  LEFT JOIN staff_profiles sp  ON sp.staff_user_id = al.performed_by
-  LEFT JOIN staff_profiles tsp ON tsp.id = al.target_id
-  WHERE (p_performed_by IS NULL OR al.performed_by                       = p_performed_by)
-    AND (p_action       IS NULL OR al.action::text                       = p_action)
-    AND (p_target_id    IS NULL OR tsp.staff_user_id::text ILIKE '%' || p_target_id || '%')
-    AND (p_date_from    IS NULL OR al.created_at                        >= p_date_from)
-    AND (p_date_to      IS NULL OR al.created_at                        <= p_date_to)
-  ORDER BY al.created_at DESC
-  LIMIT p_limit OFFSET p_offset;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.get_audit_log(
-  p_performed_by uuid        DEFAULT NULL,
-  p_action       text        DEFAULT NULL,
-  p_target_table text        DEFAULT NULL,
-  p_target_id    text        DEFAULT NULL,
-  p_date_from    timestamptz DEFAULT NULL,
-  p_date_to      timestamptz DEFAULT NULL,
-  p_limit        integer     DEFAULT 50,
-  p_offset       integer     DEFAULT 0
-) RETURNS TABLE(
-  id               uuid,
-  performed_by     uuid,
-  full_name        text,
-  action           public.audit_action,
-  target_table     text,
-  target_id        text,
-  target_full_name text,
-  old_value        jsonb,
-  new_value        jsonb,
-  created_at       timestamptz
-)
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path TO 'public'
-AS $$
-BEGIN
-  IF NOT is_superadmin() THEN RAISE EXCEPTION 'Permission denied'; END IF;
-  RETURN QUERY
-  SELECT al.id, al.performed_by,
-    CASE
-      WHEN sp.staff_user_id IS NOT NULL THEN sp.first_name || ' ' || sp.last_name
-      WHEN up.user_id       IS NOT NULL THEN 'ผู้ใช้'
-      ELSE 'ระบบ'
-    END AS full_name,
-    al.action, al.target_table,
-    al.target_id::text,
-    COALESCE(
+      al.target_name,
       tsp.first_name || ' ' || tsp.last_name,
       NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
       NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
     ) AS target_full_name,
     al.old_value, al.new_value, al.created_at
-  FROM staff_audit_logs al
+  FROM public.staff_change_logs al
   LEFT JOIN staff_profiles sp  ON sp.staff_user_id = al.performed_by
-  LEFT JOIN user_profiles  up  ON up.user_id        = al.performed_by
-  LEFT JOIN staff_profiles tsp ON tsp.staff_user_id = al.target_id
-  WHERE (p_performed_by IS NULL OR al.performed_by             = p_performed_by)
-    AND (p_action       IS NULL OR al.action::text             = p_action)
-    AND (p_target_table IS NULL OR al.target_table             = p_target_table)
-    AND (p_target_id    IS NULL OR al.target_id::text ILIKE '%' || p_target_id || '%')
-    AND (p_date_from    IS NULL OR al.created_at              >= p_date_from)
-    AND (p_date_to      IS NULL OR al.created_at              <= p_date_to)
+  LEFT JOIN staff_profiles tsp ON tsp.id = al.target_id
+  WHERE (p_performed_by IS NULL OR al.performed_by = p_performed_by)
+    AND (p_action       IS NULL OR al.action::text = p_action)
+    AND (p_target_id    IS NULL OR (
+      COALESCE(al.target_staff_user_id, tsp.staff_user_id)::text ILIKE '%' || p_target_id || '%'
+      OR COALESCE(
+           al.target_name,
+           tsp.first_name || ' ' || tsp.last_name,
+           NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
+           NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
+         ) ILIKE '%' || p_target_id || '%'
+    ))
+    AND (p_date_from IS NULL OR al.created_at >= p_date_from)
+    AND (p_date_to   IS NULL OR al.created_at <= p_date_to)
   ORDER BY al.created_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2456,10 +2408,9 @@ GRANT EXECUTE ON FUNCTION public.create_doctor_appointment(uuid, text, text, dat
 GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer)     TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_appointment_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_inventory_log(text, text, timestamptz, timestamptz, integer, integer)                      TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_staff_audit_log(uuid, text, text, timestamptz, timestamptz, integer, integer)              TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_audit_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer)              TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
 
--- write_audit_log / log_audit_event: intentionally NOT granted to anon/authenticated
+-- write_staff_change_log: intentionally NOT granted to anon/authenticated
 -- (service_role access only — used by Edge Functions)
 
 

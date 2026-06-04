@@ -12,7 +12,7 @@ import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } fr
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
 import { useAppointmentStatusLog, type AppointmentStatusLogRow, type AppointmentStatusLogFilters } from '../../hooks/useAppointmentStatusLog';
-import StaffAuditLogDetailDrawer from '../../components/audit/StaffAuditLogDetailDrawer';
+import StaffAuditLogDetailDialog from '../../components/audit/StaffAuditLogDetailDialog';
 import InventoryLogDetailDrawer from '../../components/audit/InventoryLogDetailDrawer';
 import {
   AUDIT_ACTION, AUDIT_ACTION_LABEL, AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR,
@@ -154,10 +154,12 @@ function AuditLogTab() {
       renderCell: (p) => <ActionChip action={p.value} />,
     },
     {
-      field: 'target_staff_user_id', headerName: 'UUID เจ้าหน้าที่', width: 310,
-      renderCell: (p) => (
-        <Typography variant="body2">{p.value ?? '—'}</Typography>
-      ),
+      field: 'target_name', headerName: 'เจ้าหน้าที่', flex: 1.2, minWidth: 160,
+      renderCell: (p) => {
+        const row = p.row as StaffAuditLogRow;
+        const display = row.target_name ?? row.target_full_name ?? '—';
+        return <Typography variant="body2">{display}</Typography>;
+      },
     },
     {
       field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
@@ -192,7 +194,7 @@ function AuditLogTab() {
           <TextField size="small" value={targetIdFilter}
             onChange={e => { setTargetIdFilter(e.target.value); resetPage(); }}
             sx={{ minWidth: 220 }}
-            placeholder="ค้นหา UUID เจ้าหน้าที่" />
+            placeholder="ค้นหาชื่อ-นามสกุล / UUID" />
         </Stack>
         <Box sx={{ height: 500 }}>
             <DataGrid
@@ -213,7 +215,7 @@ function AuditLogTab() {
           </Box>
       </Paper>
 
-      <StaffAuditLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
+      <StaffAuditLogDetailDialog row={detailRow} onClose={() => setDetailRow(null)} />
     </>
   );
 }

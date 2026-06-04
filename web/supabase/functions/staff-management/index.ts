@@ -132,12 +132,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
     }
 
-    await serviceClient.rpc('log_audit_event', {
-      p_performed_by: user.id,
-      p_action: 'staff_created',
-      p_target_table: 'staff_profiles',
-      p_target_id: profileData!.id,
-      p_new_value: { email, first_name, last_name, service_center, role },
+    await serviceClient.rpc('write_staff_change_log', {
+      p_performed_by:         user.id,
+      p_action:               'staff_created',
+      p_target_table:         'staff_profiles',
+      p_target_id:            profileData!.id,
+      p_new_value:            { email, first_name, last_name, service_center, role },
+      p_target_staff_user_id: authData.user.id,
+      p_target_name:          `${first_name} ${last_name}`,
     });
 
     return jsonResponse(201, 'success', 'สร้างบัญชีสำเร็จ', { user_id: userId });
@@ -170,18 +172,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     if (profileSnapshot) {
-      await serviceClient.rpc('log_audit_event', {
-        p_performed_by: user.id,
-        p_action: 'staff_deleted',
-        p_target_table: 'staff_profiles',
-        p_target_id: profileSnapshot.id,
-        p_old_value: {
+      await serviceClient.rpc('write_staff_change_log', {
+        p_performed_by:         user.id,
+        p_action:               'staff_deleted',
+        p_target_table:         'staff_profiles',
+        p_target_id:            profileSnapshot.id,
+        p_old_value:            {
           email: snapshotEmail,
           first_name: profileSnapshot.first_name,
           last_name: profileSnapshot.last_name,
           service_center: profileSnapshot.service_center,
           role: profileSnapshot.role,
         },
+        p_target_staff_user_id: user_id,
+        p_target_name:          `${profileSnapshot.first_name} ${profileSnapshot.last_name}`,
       });
     }
 
@@ -255,7 +259,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (hasActualEmailChange) {
       const { error: emailErr } = await serviceClient.auth.admin.updateUserById(user_id, { email, email_confirm: true });
       if (emailErr) {
-        return jsonResponse(400, 'error', emailErr.message ?? 'ไม่สามารถอัปเดตอีเมลได้');
+        const raw = emailErr.message ?? '';
+        const thMsg = raw.toLowerCase().includes('unable to validate email') || raw.toLowerCase().includes('invalid format')
+          ? 'รูปแบบอีเมลไม่ถูกต้อง'
+          : raw.includes('already been registered') || raw.includes('already registered')
+            ? 'อีเมลนี้ถูกใช้งานแล้ว'
+            : raw || 'ไม่สามารถอัปเดตอีเมลได้';
+        return jsonResponse(400, 'error', thMsg);
       }
     }
 
@@ -269,6 +279,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
     // Log audit events — one event per concern, only changed fields stored
     const auditTasks: Promise<unknown>[] = [];
 
+    const targetName = profileBefore.data
+      ? `${profileBefore.data.first_name} ${profileBefore.data.last_name}`
+      : null;
+
     if (hasActualProfileChange && profileBefore.data) {
       const oldProfileValues: Record<string, unknown> = {};
       const newProfileValues: Record<string, unknown> = {};
@@ -276,35 +290,41 @@ Deno.serve(async (req: Request): Promise<Response> => {
         oldProfileValues[key] = (profileBefore.data as Record<string, unknown>)[key];
         newProfileValues[key] = changedProfileUpdates[key];
       }
-      auditTasks.push(serviceClient.rpc('log_audit_event', {
-        p_performed_by: user.id,
-        p_action: 'staff_profile_updated',
-        p_target_table: 'staff_profiles',
-        p_target_id: profileBefore.data.id,
-        p_old_value: oldProfileValues,
-        p_new_value: newProfileValues,
+      auditTasks.push(serviceClient.rpc('write_staff_change_log', {
+        p_performed_by:         user.id,
+        p_action:               'staff_profile_updated',
+        p_target_table:         'staff_profiles',
+        p_target_id:            profileBefore.data.id,
+        p_old_value:            oldProfileValues,
+        p_new_value:            newProfileValues,
+        p_target_staff_user_id: user_id,
+        p_target_name:          targetName,
       }));
     }
 
     if (hasActualEmailChange && profileBefore.data) {
-      auditTasks.push(serviceClient.rpc('log_audit_event', {
-        p_performed_by: user.id,
-        p_action: 'email_updated',
-        p_target_table: 'staff_profiles',
-        p_target_id: profileBefore.data.id,
-        p_old_value: { email: oldEmail },
-        p_new_value: { email },
+      auditTasks.push(serviceClient.rpc('write_staff_change_log', {
+        p_performed_by:         user.id,
+        p_action:               'email_updated',
+        p_target_table:         'staff_profiles',
+        p_target_id:            profileBefore.data.id,
+        p_old_value:            { email: oldEmail },
+        p_new_value:            { email },
+        p_target_staff_user_id: user_id,
+        p_target_name:          targetName,
       }));
     }
 
     if (hasActualRoleChange && profileBefore.data) {
-      auditTasks.push(serviceClient.rpc('log_audit_event', {
-        p_performed_by: user.id,
-        p_action: 'role_updated',
-        p_target_table: 'staff_profiles',
-        p_target_id: profileBefore.data.id,
-        p_old_value: { role: oldRole },
-        p_new_value: { role },
+      auditTasks.push(serviceClient.rpc('write_staff_change_log', {
+        p_performed_by:         user.id,
+        p_action:               'role_updated',
+        p_target_table:         'staff_profiles',
+        p_target_id:            profileBefore.data.id,
+        p_old_value:            { role: oldRole },
+        p_new_value:            { role },
+        p_target_staff_user_id: user_id,
+        p_target_name:          targetName,
       }));
     }
 
