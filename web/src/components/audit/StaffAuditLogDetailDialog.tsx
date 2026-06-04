@@ -144,19 +144,21 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
     <Dialog open={row !== null} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>รายละเอียด</Typography>
-        {actionCfg && (
-          <Chip
-            label={actionLabel}
-            size="small"
-            sx={{ mt: 0.5, bgcolor: actionCfg.bg, color: actionCfg.color, fontWeight: 600, fontSize: '0.72rem' }}
-          />
-        )}
       </DialogTitle>
 
       <DialogContent dividers>
         {row && (
           <Box display="flex" flexDirection="column" gap={2}>
             {/* Meta */}
+            <MetaRow label="ประเภท">
+              {actionCfg && (
+                <Chip
+                  label={actionLabel}
+                  size="small"
+                  sx={{ bgcolor: actionCfg.bg, color: actionCfg.color, fontWeight: 600, fontSize: '0.72rem' }}
+                />
+              )}
+            </MetaRow>
             <MetaRow label="ชื่อ-นามสกุล">
               <Typography variant="body1">{row.target_name ?? row.target_full_name ?? '—'}</Typography>
             </MetaRow>
@@ -177,20 +179,18 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
               <>
                 <Divider sx={{ my: 1 }} />
                 <Typography variant="subtitle1" fontWeight="bold">{dataTitle}</Typography>
-                <Box bgcolor="background.default" p={2} borderRadius={2}>
-                  <Box display="flex" flexDirection="column" gap={1.5}>
-                    {isSingleColumn
-                      ? singleKeys.map(k => (
-                          <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={dataSource?.[k]} color={valueColor} />
-                        ))
-                      : (hasDiffGroups ? orderedDiffKeys : diffAllKeys).map(k => (
-                          <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)}
-                            oldVal={row.old_value?.[k] ?? null}
-                            newVal={row.new_value?.[k] ?? null}
-                          />
-                        ))
-                    }
-                  </Box>
+                <Box display="flex" flexDirection="column" gap={1.5}>
+                  {isSingleColumn
+                    ? singleKeys.map(k => (
+                        <ValueRow key={k} rawKey={k} fieldKey={fieldLabel(k)} value={dataSource?.[k]} color={valueColor} />
+                      ))
+                    : (hasDiffGroups ? orderedDiffKeys : diffAllKeys).map(k => (
+                        <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)}
+                          oldVal={row.old_value?.[k] ?? null}
+                          newVal={row.new_value?.[k] ?? null}
+                        />
+                      ))
+                  }
                 </Box>
               </>
             )}
