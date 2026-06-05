@@ -60,7 +60,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (action === 'list') {
     let profileQuery = serviceClient
       .from('staff_profiles')
-      .select('staff_user_id, first_name, last_name, service_center, role, created_at, updated_at')
+      .select('staff_user_id, first_name, last_name, service_center, service_centers, role, created_at, updated_at')
       .order('created_at', { ascending: true });
 
     // Admin only sees staff in their SCs and cannot see superadmin accounts
@@ -90,6 +90,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       first_name: p.first_name,
       last_name: p.last_name,
       service_center: p.service_center,
+      service_centers: (p.service_centers as string[] | null) ?? (p.service_center ? [p.service_center] : []),
       role: p.role,
       created_at: p.created_at,
       updated_at: p.updated_at,
@@ -107,7 +108,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       service_center?: string; role?: string; service_centers?: string[];
     };
 
-    if (!email || !password || !first_name || !last_name || !service_center || !role) {
+    if (!email || !password || !first_name || !last_name || !role) {
       return jsonResponse(400, 'error', 'ข้อมูลไม่ครบถ้วน');
     }
 
@@ -115,10 +116,22 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถสร้างบัญชีผู้ดูแลสูงสุดได้');
     }
 
-    // Admin can only create staff in their own SCs
-    if (isAdmin && !callerSCs.includes(service_center)) {
+    // Derive effective SC list from service_centers array (preferred) or service_center string
+    const requestedSCs: string[] = (service_centers && service_centers.length > 0)
+      ? service_centers
+      : service_center ? [service_center] : [];
+
+    // Staff role must have at least one SC
+    if (role === 'staff' && requestedSCs.length === 0) {
+      return jsonResponse(400, 'error', 'เจ้าหน้าที่ต้องระบุสถานบริการ');
+    }
+
+    // Admin can only assign SCs they manage
+    if (isAdmin && requestedSCs.length > 0 && !requestedSCs.every(sc => callerSCs.includes(sc))) {
       return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์สร้างบัญชีในสถานบริการนี้');
     }
+
+    const primarySC: string | null = requestedSCs[0] ?? null;
 
     const { data: authData, error: authErr } = await serviceClient.auth.admin.createUser({
       email,
@@ -136,14 +149,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const userId = authData.user.id;
 
-    // service_centers: superadmin may pass a custom array; default to [service_center]
-    const effectiveSCs: string[] = (service_centers && service_centers.length > 0)
-      ? service_centers
-      : [service_center];
-
     const { data: profileData, error: profileErr } = await serviceClient
       .from('staff_profiles')
-      .insert({ staff_user_id: userId, first_name, last_name, service_center, role, service_centers: effectiveSCs })
+      .insert({ staff_user_id: userId, first_name, last_name, service_center: primarySC, role, service_centers: requestedSCs })
       .select('id')
       .single();
 
@@ -157,7 +165,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       p_action:               'staff_created',
       p_target_table:         'staff_profiles',
       p_target_id:            profileData!.id,
-      p_new_value:            { email, first_name, last_name, service_center, role },
+      p_new_value:            { email, first_name, last_name, service_center: primarySC, service_centers: requestedSCs, role },
       p_target_staff_user_id: authData.user.id,
       p_target_name:          `${first_name} ${last_name}`,
     });

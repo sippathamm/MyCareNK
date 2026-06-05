@@ -3,6 +3,7 @@ import {
   Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
   TextField, MenuItem, CircularProgress, Alert,
+  Select, Checkbox, ListItemText, OutlinedInput, InputLabel, FormControl,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -74,7 +75,7 @@ interface AddStaffDialogProps {
   onSuccess: () => void;
   onCreate: (payload: {
     email: string; password: string; first_name: string;
-    last_name: string; service_center: string; role: Enums<'role'>;
+    last_name: string; service_centers: string[]; role: Enums<'role'>;
   }) => Promise<string | null>;
 }
 
@@ -83,22 +84,28 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [serviceCenter, setServiceCenter] = useState('');
+  const [serviceCenters, setServiceCenters] = useState<string[]>([]);
   const [role, setRole] = useState<Enums<'role'>>('staff');
   const [password, setPassword] = useState('');
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const scRequired = role === 'staff';
+
   const handleClose = () => {
     setStep(1); setFirstName(''); setLastName(''); setEmail('');
-    setServiceCenter(''); setRole('staff'); setPassword(''); setCopied(false); setError(null);
+    setServiceCenters([]); setRole('staff'); setPassword(''); setCopied(false); setError(null);
     onClose();
   };
 
   const handleNext = () => {
-    if (!firstName || !lastName || !email || !serviceCenter || !role) {
+    if (!firstName || !lastName || !email || !role) {
       setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
+    }
+    if (scRequired && serviceCenters.length === 0) {
+      setError('กรุณาเลือกสถานบริการอย่างน้อย 1 แห่ง');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -119,7 +126,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
   const handleCreate = async () => {
     setSubmitting(true);
     setError(null);
-    const err = await onCreate({ email, password, first_name: firstName, last_name: lastName, service_center: serviceCenter, role });
+    const err = await onCreate({ email, password, first_name: firstName, last_name: lastName, service_centers: serviceCenters, role });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -138,15 +145,30 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
               <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth required />
             </Box>
             <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth required />
-            <TextField
-              select label="สถานบริการ" value={serviceCenter}
-              onChange={e => setServiceCenter(e.target.value)} fullWidth required
-            >
-              {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
-            </TextField>
+            <FormControl fullWidth required={scRequired}>
+              <InputLabel>สถานบริการ{scRequired ? '' : ' (ไม่บังคับ)'}</InputLabel>
+              <Select
+                multiple
+                value={serviceCenters}
+                onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                input={<OutlinedInput label={`สถานบริการ${scRequired ? '' : ' (ไม่บังคับ)'}`} />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {(selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
+                  </Box>
+                )}
+              >
+                {centerNames.map(sc => (
+                  <MenuItem key={sc} value={sc}>
+                    <Checkbox checked={serviceCenters.includes(sc)} size="small" />
+                    <ListItemText primary={sc} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               select label="ระดับสิทธิ์" value={role}
-              onChange={e => setRole(e.target.value as Enums<'role'>)} fullWidth required
+              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth required
             >
               {ROLE_OPTIONS.filter(r => currentRole !== 'admin' || r.value !== 'superadmin').map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
@@ -177,9 +199,11 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
                 <Typography variant="subtitle2" color="text.secondary">อีเมล</Typography>
                 <Typography variant="body1">{email}</Typography>
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Typography variant="subtitle2" color="text.secondary">สถานบริการ</Typography>
-                <Typography variant="body1">{serviceCenter}</Typography>
+                <Typography variant="body1" textAlign="right">
+                  {serviceCenters.length > 0 ? serviceCenters.join(', ') : '—'}
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle2" color="text.secondary">ระดับสิทธิ์</Typography>
@@ -220,7 +244,7 @@ interface EditStaffDialogProps {
   currentUserId: string;
   currentRole: string;
   onClose: () => void;
-  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: Enums<'role'>; email?: string }) => Promise<string | null>;
+  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_centers: string[]; role: Enums<'role'>; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
@@ -228,7 +252,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [serviceCenter, setServiceCenter] = useState('');
+  const [serviceCenters, setServiceCenters] = useState<string[]>([]);
   const [role, setRole] = useState<Enums<'role'>>('staff');
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -236,13 +260,15 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
   const [confirmDowngradeOpen, setConfirmDowngradeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const scRequired = role === 'staff';
+
   useEffect(() => {
     if (staff) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setFirstName(staff.first_name);
       setLastName(staff.last_name);
       setEmail(staff.email);
-      setServiceCenter(staff.service_center);
+      setServiceCenters(staff.service_centers.length > 0 ? staff.service_centers : staff.service_center ? [staff.service_center] : []);
       setRole(staff.role);
       setError(null);
       setConfirmDeleteOpen(false);
@@ -257,7 +283,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
     setSubmitting(true);
     setError(null);
     const emailChanged = email !== staff.email;
-    const err = await onUpdate({ staff_user_id: staff.staff_user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role, ...(emailChanged && { email }) });
+    const err = await onUpdate({ staff_user_id: staff.staff_user_id, first_name: firstName, last_name: lastName, service_centers: serviceCenters, role, ...(emailChanged && { email }) });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -304,15 +330,32 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
               <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
             </Box>
             <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
-            <TextField
-              select label="สถานบริการ" value={serviceCenter}
-              onChange={e => setServiceCenter(e.target.value)} fullWidth disabled={isRestricted}
-            >
-              {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
-            </TextField>
+            <FormControl fullWidth required={scRequired} disabled={isRestricted}>
+              <InputLabel>สถานบริการ{scRequired ? '' : ' (ไม่บังคับ)'}</InputLabel>
+              <Select
+                multiple
+                value={serviceCenters}
+                onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                input={<OutlinedInput label={`สถานบริการ${scRequired ? '' : ' (ไม่บังคับ)'}`} />}
+                renderValue={(selected) => (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {(selected as string[]).length === 0
+                      ? <Typography variant="body2" color="text.disabled">ไม่ระบุ</Typography>
+                      : (selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
+                  </Box>
+                )}
+              >
+                {centerNames.map(sc => (
+                  <MenuItem key={sc} value={sc}>
+                    <Checkbox checked={serviceCenters.includes(sc)} size="small" />
+                    <ListItemText primary={sc} />
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               select label="ระดับสิทธิ์" value={role}
-              onChange={e => setRole(e.target.value as Enums<'role'>)} fullWidth disabled={isRestricted}
+              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth disabled={isRestricted}
             >
               {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
@@ -447,7 +490,20 @@ export default function StaffManagementPage() {
         />
       ),
     },
-    { field: 'service_center', headerName: 'สถานบริการ', flex: 1.5, minWidth: 160 },
+    {
+      field: 'service_center',
+      headerName: 'สถานบริการ',
+      flex: 1.5,
+      minWidth: 160,
+      renderCell: (params) => {
+        const scs: string[] = (params.row as StaffMember).service_centers ?? [];
+        return (
+          <Typography variant="body2" noWrap>
+            {scs.length > 0 ? scs.join(', ') : (params.value as string) || '—'}
+          </Typography>
+        );
+      },
+    },
     {
       field: 'actions',
       headerName: '',

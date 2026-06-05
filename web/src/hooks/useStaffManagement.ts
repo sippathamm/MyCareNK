@@ -7,6 +7,7 @@ export interface StaffMember {
   first_name: string;
   last_name: string;
   service_center: string;
+  service_centers: string[];
   role: Enums<'role'>;
   email: string;
   created_at: string;
@@ -68,7 +69,7 @@ export function useStaffManagement() {
     password: string;
     first_name: string;
     last_name: string;
-    service_center: string;
+    service_centers: string[];
     role: Enums<'role'>;
   }): Promise<string | null> => {
     const { error: err } = await callStaffManagement('create', payload);
@@ -80,7 +81,7 @@ export function useStaffManagement() {
     staff_user_id: string;
     first_name?: string;
     last_name?: string;
-    service_center?: string;
+    service_centers?: string[];
     role?: Enums<'role'>;
     email?: string;
   }): Promise<string | null> => {
