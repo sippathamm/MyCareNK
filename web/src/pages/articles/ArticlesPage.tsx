@@ -80,7 +80,8 @@ export default function ArticlesPage() {
   const { role } = useRoleAccess();
   const canManage = role === 'admin' || role === 'superadmin';
 
-  const [filter, setFilter] = useState<FilterValue>('all');
+  // staff only sees published articles
+  const [filter, setFilter] = useState<FilterValue>(canManage ? 'all' : 'published');
   const [titleSearch, setTitleSearch] = useState('');
 
   // ─── Filter ───────────────────────────────────────────────────────────────
@@ -257,27 +258,29 @@ export default function ArticlesPage() {
             onChange={e => setTitleSearch(e.target.value)}
             sx={{ flexGrow: 1, maxWidth: 360 }}
           />
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {STATUS_FILTERS.map(f => {
-              const active = filter === f.value;
-              return (
-                <Chip
-                  key={f.value}
-                  label={`${f.label} (${counts[f.value]})`}
-                  onClick={() => setFilter(f.value)}
-                  sx={{
-                    fontWeight: active ? 700 : 400,
-                    bgcolor: active ? '#FF9F6B' : 'transparent',
-                    color: active ? 'white' : 'text.secondary',
-                    border: '1px solid',
-                    borderColor: active ? '#FF9F6B' : 'divider',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
-                  }}
-                />
-              );
-            })}
-          </Stack>
+          {canManage && (
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {STATUS_FILTERS.map(f => {
+                const active = filter === f.value;
+                return (
+                  <Chip
+                    key={f.value}
+                    label={`${f.label} (${counts[f.value]})`}
+                    onClick={() => setFilter(f.value)}
+                    sx={{
+                      fontWeight: active ? 700 : 400,
+                      bgcolor: active ? '#FF9F6B' : 'transparent',
+                      color: active ? 'white' : 'text.secondary',
+                      border: '1px solid',
+                      borderColor: active ? '#FF9F6B' : 'divider',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
+                    }}
+                  />
+                );
+              })}
+            </Stack>
+          )}
         </Stack>
 
         {/* DataGrid */}

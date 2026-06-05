@@ -47,7 +47,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
-  const { role, profile, loading } = useRoleAccess();
+  const { role, profile, loading, serviceCenters, isSuperadmin } = useRoleAccess();
   const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast } = useNotification();
   const toastCfg = toastIsAppointment
     ? APPOINTMENT_STATUS_CONFIG[(toastAppointmentEventType ?? 'pending') as AppointmentEventType]
@@ -99,9 +99,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
     { text: 'รายการนัดหมาย', icon: <CalendarMonthIcon />, path: '/appointments', show: true },
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
-    { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'superadmin' },
+    { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'admin' || role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
-    { text: 'บทความ', icon: <ArticleIcon />, path: '/articles', show: role === 'admin' || role === 'superadmin' },
+    { text: 'บทความ', icon: <ArticleIcon />, path: '/articles', show: !!role },
     { text: 'บันทึกการตรวจสอบ', icon: <ManageSearchIcon />, path: '/audit-log', show: !!role },
   ];
 
@@ -161,7 +161,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     {profile.first_name} {profile.last_name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {role ? ROLE_LABELS[role] ?? role : ''}{profile.service_center ? ` | ${profile.service_center}` : ''}
+                    {role ? ROLE_LABELS[role] ?? role : ''}{isSuperadmin ? '' : serviceCenters.length > 0 ? ` | ${serviceCenters.join(', ')}` : profile.service_center ? ` | ${profile.service_center}` : ''}
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: 'primary.main' }}>

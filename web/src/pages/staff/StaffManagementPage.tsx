@@ -69,6 +69,7 @@ function generatePassword(): string {
 interface AddStaffDialogProps {
   open: boolean;
   centerNames: string[];
+  currentRole: string;
   onClose: () => void;
   onSuccess: () => void;
   onCreate: (payload: {
@@ -77,7 +78,7 @@ interface AddStaffDialogProps {
   }) => Promise<string | null>;
 }
 
-function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
+function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -147,7 +148,7 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
               select label="ระดับสิทธิ์" value={role}
               onChange={e => setRole(e.target.value as Enums<'role'>)} fullWidth required
             >
-              {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+              {ROLE_OPTIONS.filter(r => currentRole !== 'admin' || r.value !== 'superadmin').map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
           </Box>
         ) : (
@@ -396,12 +397,15 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StaffManagementPage() {
-  const { role, loading: roleLoading } = useRoleAccess();
+  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { session } = useAuth();
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
   const { centers } = useServiceCenters();
-  const centerNames = centers.map(c => c.name);
+  // Admin can only assign staff to their own SCs; superadmin can use all centers
+  const centerNames = isSuperadmin
+    ? centers.map(c => c.name)
+    : centers.filter(c => serviceCenters.includes(c.name)).map(c => c.name);
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
 
@@ -510,6 +514,7 @@ export default function StaffManagementPage() {
       <AddStaffDialog
         open={addOpen}
         centerNames={centerNames}
+        currentRole={role ?? ''}
         onClose={() => setAddOpen(false)}
         onSuccess={fetchStaff}
         onCreate={createStaff}

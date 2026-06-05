@@ -540,7 +540,7 @@ function InventoryLogTab() {
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 const ALL_TABS: { label: string; roles: StaffRole[]; Component: () => React.JSX.Element }[] = [
-  { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['superadmin'],          Component: AuditLogTab },
+  { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['admin', 'superadmin'], Component: AuditLogTab },
   { label: 'ประวัติสถานะคำขอ',                  roles: ['staff', 'admin', 'superadmin'], Component: RequestStatusLogTab },
   { label: 'ประวัติสถานะนัดหมาย',               roles: ['staff', 'admin', 'superadmin'], Component: AppointmentStatusLogTab },
   { label: 'ประวัติการแก้ไขสต็อก',              roles: ['admin', 'superadmin'], Component: InventoryLogTab },

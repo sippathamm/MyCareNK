@@ -21,9 +21,10 @@ export default function RequestsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { requests, setRequests, loading } = useRequests();
-  const { role, loading: roleLoading } = useRoleAccess();
+  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
-  const { centers } = useServiceCenters(isAdminOrSuperadmin);
+  const { centers: allCenters } = useServiceCenters(isAdminOrSuperadmin);
+  const centers = isSuperadmin ? allCenters : allCenters.filter(c => serviceCenters.includes(c.name));
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [serviceCenterFilter, setServiceCenterFilter] = useState('all');

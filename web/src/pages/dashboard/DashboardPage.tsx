@@ -115,16 +115,20 @@ function getDefaultDateTo(): string {
 }
 
 export default function DashboardPage({ session }: DashboardPageProps) {
-  const { profile, role } = useRoleAccess();
+  const { profile, role, isSuperadmin, serviceCenters } = useRoleAccess();
   const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
   const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard();
+
+  const isAdmin = role === 'admin';
+  const isAdminOrSuperadmin = isAdmin || isSuperadmin;
 
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(getDefaultDateTo);
   const [serviceCenter, setServiceCenter] = useState<string>('all');
 
-  const isSuperadmin = role === 'superadmin';
-  const { centers } = useServiceCenters(isSuperadmin);
+  const { centers: allCenters } = useServiceCenters(isAdminOrSuperadmin);
+  // Admin sees only their SCs; superadmin sees all from DB
+  const centers = isSuperadmin ? allCenters : allCenters.filter(c => serviceCenters.includes(c.name));
   const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
 
   const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedSC);
@@ -275,7 +279,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
         </Grid>
       </Grid>
 
-      {(role === 'admin' || role === 'superadmin') && (
+      {isAdminOrSuperadmin && (
       <>
       {/* ── Analysis Section ─────────────────────────────────────── */}
       <Typography variant="h6" fontWeight="bold" sx={{ mt: 4, mb: 1.5 }}>
@@ -304,7 +308,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
               slotProps={{ inputLabel: { shrink: true } }}
               sx={{ minWidth: 160 }}
             />
-            {isSuperadmin && (
+            {isAdminOrSuperadmin && centers.length > 1 && (
               <TextField
                 label="สถานบริการ"
                 select

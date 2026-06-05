@@ -46,8 +46,10 @@ const thGridLocale = createThGridLocale('ไม่มีข้อมูลใน
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffWorkloadPage() {
-  const { role, loading: roleLoading } = useRoleAccess();
-  const { centers } = useServiceCenters(role === 'superadmin');
+  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
+  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
+  const { centers: allCenters } = useServiceCenters(isAdminOrSuperadmin);
+  const centers = isSuperadmin ? allCenters : allCenters.filter(c => serviceCenters.includes(c.name));
 
   // Main filter
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
@@ -176,7 +178,7 @@ export default function StaffWorkloadPage() {
   };
 
   if (roleLoading) return null;
-  if (role !== 'superadmin') {
+  if (!isAdminOrSuperadmin) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
         <LockOutlinedIcon sx={{ fontSize: 72, opacity: 0.3 }} />

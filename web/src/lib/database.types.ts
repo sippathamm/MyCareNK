@@ -524,6 +524,7 @@ export type Database = {
           last_name: string | null
           role: Database["public"]["Enums"]["role"]
           service_center: string | null
+          service_centers: string[] | null
           staff_user_id: string
           updated_at: string | null
         }
@@ -534,6 +535,7 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
           service_center?: string | null
+          service_centers?: string[] | null
           staff_user_id: string
           updated_at?: string | null
         }
@@ -544,6 +546,7 @@ export type Database = {
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
           service_center?: string | null
+          service_centers?: string[] | null
           staff_user_id?: string
           updated_at?: string | null
         }
@@ -796,6 +799,7 @@ export type Database = {
         }[]
       }
       get_days_until_reset: { Args: never; Returns: number }
+      get_my_service_centers: { Args: never; Returns: string[] | null }
       get_inventory_forecast: {
         Args: never
         Returns: {
