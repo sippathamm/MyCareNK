@@ -5,7 +5,7 @@ import type { Enums, Tables } from '../lib/database.types';
 
 export type StaffRole = Enums<'role'> | null;
 
-export type StaffProfile = Pick<Tables<'staff_profiles'>, 'first_name' | 'last_name' | 'service_center'> & {
+export type StaffProfile = Pick<Tables<'staff_profiles'>, 'first_name' | 'last_name'> & {
   service_centers: string[];
 };
 
@@ -34,7 +34,7 @@ export function useRoleAccess() {
 
         const { data, error } = await supabase
           .from('staff_profiles')
-          .select('first_name, last_name, service_center, service_centers, role')
+          .select('first_name, last_name, service_centers, role')
           .eq('staff_user_id', userId)
           .single();
 
@@ -45,7 +45,6 @@ export function useRoleAccess() {
           setProfile(data ? {
             first_name: data.first_name,
             last_name: data.last_name,
-            service_center: data.service_center,
             service_centers: (data.service_centers as string[] | null) ?? [],
           } : null);
         }

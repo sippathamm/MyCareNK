@@ -6,7 +6,6 @@ export interface StaffMember {
   staff_user_id: string;
   first_name: string;
   last_name: string;
-  service_center: string;
   service_centers: string[];
   role: Enums<'role'>;
   email: string;

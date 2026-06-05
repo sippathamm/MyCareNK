@@ -161,7 +161,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     {profile.first_name} {profile.last_name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {role ? ROLE_LABELS[role] ?? role : ''}{isSuperadmin ? '' : serviceCenters.length > 0 ? ` | ${serviceCenters.join(', ')}` : profile.service_center ? ` | ${profile.service_center}` : ''}
+                    {role ? ROLE_LABELS[role] ?? role : ''}{isSuperadmin ? '' : serviceCenters.length > 0 ? ` | ${serviceCenters.join(', ')}` : ''}
                   </Typography>
                 </Box>
                 <Avatar sx={{ bgcolor: 'primary.main' }}>

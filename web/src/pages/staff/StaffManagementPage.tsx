@@ -276,7 +276,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
       setFirstName(staff.first_name);
       setLastName(staff.last_name);
       setEmail(staff.email);
-      setServiceCenters(staff.service_centers.length > 0 ? staff.service_centers : staff.service_center ? [staff.service_center] : []);
+      setServiceCenters(staff.service_centers);
       setRole(staff.role);
       setError(null);
       setConfirmDeleteOpen(false);

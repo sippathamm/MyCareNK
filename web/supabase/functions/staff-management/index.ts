@@ -60,12 +60,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   if (action === 'list') {
     let profileQuery = serviceClient
       .from('staff_profiles')
-      .select('staff_user_id, first_name, last_name, service_center, service_centers, role, created_at, updated_at')
+      .select('staff_user_id, first_name, last_name, service_centers, role, created_at, updated_at')
       .order('created_at', { ascending: true });
 
     // Admin only sees staff in their SCs and cannot see superadmin accounts
     if (isAdmin) {
-      profileQuery = profileQuery.in('service_center', callerSCs).neq('role', 'superadmin');
+      profileQuery = profileQuery.overlaps('service_centers', callerSCs).neq('role', 'superadmin');
     }
 
     const { data: profiles, error: profileErr } = await profileQuery;
@@ -89,8 +89,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       staff_user_id: p.staff_user_id,
       first_name: p.first_name,
       last_name: p.last_name,
-      service_center: p.service_center,
-      service_centers: (p.service_centers as string[] | null) ?? (p.service_center ? [p.service_center] : []),
+      service_centers: (p.service_centers as string[] | null) ?? [],
       role: p.role,
       created_at: p.created_at,
       updated_at: p.updated_at,
@@ -103,9 +102,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // CREATE
   if (action === 'create') {
-    const { email, password, first_name, last_name, service_center, role, service_centers } = body as {
+    const { email, password, first_name, last_name, role, service_centers } = body as {
       email?: string; password?: string; first_name?: string; last_name?: string;
-      service_center?: string; role?: string; service_centers?: string[];
+      role?: string; service_centers?: string[];
     };
 
     if (!email || !password || !first_name || !last_name || !role) {
@@ -116,10 +115,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถสร้างบัญชีผู้ดูแลสูงสุดได้');
     }
 
-    // Derive effective SC list from service_centers array (preferred) or service_center string
-    const requestedSCs: string[] = (service_centers && service_centers.length > 0)
-      ? service_centers
-      : service_center ? [service_center] : [];
+    const requestedSCs: string[] = service_centers ?? [];
 
     // Staff and admin roles must have at least one SC; staff is limited to exactly one
     if ((role === 'staff' || role === 'admin') && requestedSCs.length === 0) {
@@ -133,8 +129,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     if (isAdmin && requestedSCs.length > 0 && !requestedSCs.every(sc => callerSCs.includes(sc))) {
       return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์สร้างบัญชีในสถานบริการนี้');
     }
-
-    const primarySC: string | null = requestedSCs[0] ?? null;
 
     const { data: authData, error: authErr } = await serviceClient.auth.admin.createUser({
       email,
@@ -154,7 +148,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     const { data: profileData, error: profileErr } = await serviceClient
       .from('staff_profiles')
-      .insert({ staff_user_id: userId, first_name, last_name, service_center: primarySC, role, service_centers: requestedSCs })
+      .insert({ staff_user_id: userId, first_name, last_name, role, service_centers: requestedSCs })
       .select('id')
       .single();
 
@@ -168,7 +162,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       p_action:               'staff_created',
       p_target_table:         'staff_profiles',
       p_target_id:            profileData!.id,
-      p_new_value:            { email, first_name, last_name, service_center: primarySC, service_centers: requestedSCs, role },
+      p_new_value:            { email, first_name, last_name, service_centers: requestedSCs, role },
       p_target_staff_user_id: authData.user.id,
       p_target_name:          `${first_name} ${last_name}`,
     });
@@ -188,7 +182,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     // Snapshot profile + email before delete
     const [{ data: profileSnapshot }, authUserSnapshot] = await Promise.all([
-      serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, role').eq('staff_user_id', user_id).single(),
+      serviceClient.from('staff_profiles').select('id, first_name, last_name, service_centers, role').eq('staff_user_id', user_id).single(),
       serviceClient.auth.admin.getUserById(user_id),
     ]);
     const snapshotEmail = authUserSnapshot.data?.user?.email ?? null;
@@ -198,8 +192,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     // Admin can only delete staff in their own SCs
-    if (isAdmin && profileSnapshot?.service_center && !callerSCs.includes(profileSnapshot.service_center)) {
-      return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์ลบบัญชีในสถานบริการนี้');
+    if (isAdmin) {
+      const targetSCs: string[] = (profileSnapshot?.service_centers as string[] | null) ?? [];
+      if (!targetSCs.some(sc => callerSCs.includes(sc))) {
+        return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์ลบบัญชีในสถานบริการนี้');
+      }
     }
 
     const { error: deleteErr } = await serviceClient.auth.admin.deleteUser(user_id);
@@ -217,7 +214,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
           email: snapshotEmail,
           first_name: profileSnapshot.first_name,
           last_name: profileSnapshot.last_name,
-          service_center: profileSnapshot.service_center,
+          service_centers: profileSnapshot.service_centers,
           role: profileSnapshot.role,
         },
         p_target_staff_user_id: user_id,
@@ -230,16 +227,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   // UPDATE
   if (action === 'update') {
-    const { staff_user_id: user_id, first_name, last_name, service_center, role, email, service_centers } = body as {
+    const { staff_user_id: user_id, first_name, last_name, role, email, service_centers } = body as {
       staff_user_id?: string; first_name?: string; last_name?: string;
-      service_center?: string; role?: string; email?: string; service_centers?: string[];
+      role?: string; email?: string; service_centers?: string[];
     };
 
     if (!user_id || typeof user_id !== 'string') {
       return jsonResponse(400, 'error', 'ข้อมูลไม่ครบถ้วน');
     }
 
-    const hasPotentialProfileUpdate = first_name !== undefined || last_name !== undefined || service_center !== undefined;
+    const hasPotentialProfileUpdate = first_name !== undefined || last_name !== undefined;
     const hasRoleUpdate = role !== undefined;
     const hasEmailUpdate = email !== undefined;
     const hasServiceCentersUpdate = service_centers !== undefined;
@@ -248,7 +245,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const needsProfileFetch = hasPotentialProfileUpdate || hasEmailUpdate || hasRoleUpdate || hasServiceCentersUpdate;
     const [profileBefore, authUserBefore] = await Promise.all([
       needsProfileFetch
-        ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_center, service_centers, role').eq('staff_user_id', user_id).single()
+        ? serviceClient.from('staff_profiles').select('id, first_name, last_name, service_centers, role').eq('staff_user_id', user_id).single()
         : Promise.resolve({ data: null, error: null }),
       hasEmailUpdate
         ? serviceClient.auth.admin.getUserById(user_id)
@@ -264,7 +261,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       if (role !== undefined) {
         return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถเปลี่ยนระดับสิทธิ์ได้');
       }
-      if (service_center !== undefined || service_centers !== undefined) {
+      if (service_centers !== undefined) {
         return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถเปลี่ยนสถานบริการได้');
       }
       // Admin cannot change name/email of other admins or self
@@ -272,8 +269,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
         return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลหรือบัญชีของตัวเองได้');
       }
       // Admin can only modify staff in their own SCs
-      const targetSC = profileBefore.data?.service_center;
-      if (targetSC && !callerSCs.includes(targetSC)) {
+      const targetSCs: string[] = (profileBefore.data?.service_centers as string[] | null) ?? [];
+      if (targetSCs.length > 0 && !targetSCs.some(sc => callerSCs.includes(sc))) {
         return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์แก้ไขข้อมูลบัญชีในสถานบริการนี้');
       }
     }
@@ -282,7 +279,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const changedProfileUpdates: Record<string, unknown> = {};
     if (first_name !== undefined && first_name !== profileBefore.data?.first_name) changedProfileUpdates.first_name = first_name;
     if (last_name !== undefined && last_name !== profileBefore.data?.last_name) changedProfileUpdates.last_name = last_name;
-    if (service_center !== undefined && service_center !== profileBefore.data?.service_center) changedProfileUpdates.service_center = service_center;
 
     const oldEmail = authUserBefore.data?.user?.email ?? null;
     const oldRole = profileBefore.data?.role ?? null;
@@ -312,10 +308,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const profileTableUpdates: Record<string, unknown> = { ...changedProfileUpdates };
     if (hasActualRoleChange) profileTableUpdates.role = role;
     if (hasActualServiceCentersChange) profileTableUpdates.service_centers = service_centers;
-    // When service_center changes, sync service_centers[0] if not explicitly provided
-    if (changedProfileUpdates.service_center !== undefined && !hasActualServiceCentersChange) {
-      profileTableUpdates.service_centers = [service_center];
-    }
 
     const tasks: Promise<{ error: unknown }>[] = [];
 

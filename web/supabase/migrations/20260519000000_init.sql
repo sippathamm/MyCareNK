@@ -669,7 +669,6 @@ CREATE TABLE public.staff_profiles (
   staff_user_id    uuid              NOT NULL,
   first_name       varchar(255),
   last_name        varchar(255),
-  service_center   text,
   service_centers  text[],
   created_at       timestamptz                DEFAULT now(),
   updated_at       timestamptz                DEFAULT now(),
@@ -677,9 +676,7 @@ CREATE TABLE public.staff_profiles (
   CONSTRAINT staff_profiles_pkey               PRIMARY KEY (id),
   CONSTRAINT staff_profiles_staff_user_id_key  UNIQUE (staff_user_id),
   CONSTRAINT staff_profiles_staff_user_id_fkey FOREIGN KEY (staff_user_id)
-    REFERENCES auth.users(id) ON DELETE CASCADE,
-  CONSTRAINT staff_profiles_service_center_fkey FOREIGN KEY (service_center)
-    REFERENCES public.service_centers(name)
+    REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 ALTER TABLE public.staff_profiles ENABLE ROW LEVEL SECURITY;
@@ -1346,7 +1343,7 @@ DECLARE
   v_staff_count int;
 BEGIN
   IF NOT is_superadmin() THEN RAISE EXCEPTION 'Unauthorized'; END IF;
-  SELECT COUNT(*) INTO v_staff_count FROM staff_profiles WHERE service_center = p_name;
+  SELECT COUNT(*) INTO v_staff_count FROM staff_profiles WHERE service_centers @> ARRAY[p_name];
   IF v_staff_count > 0 THEN
     RAISE EXCEPTION 'ไม่สามารถลบสถานบริการที่ยังมีเจ้าหน้าที่อยู่ได้ กรุณาย้ายเจ้าหน้าที่ออกก่อน';
   END IF;

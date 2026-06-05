@@ -523,7 +523,6 @@ export type Database = {
           id: string
           last_name: string | null
           role: Database["public"]["Enums"]["role"]
-          service_center: string | null
           service_centers: string[] | null
           staff_user_id: string
           updated_at: string | null
@@ -534,7 +533,6 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: string | null
           service_centers?: string[] | null
           staff_user_id: string
           updated_at?: string | null
@@ -545,20 +543,11 @@ export type Database = {
           id?: string
           last_name?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: string | null
           service_centers?: string[] | null
           staff_user_id?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "staff_profiles_service_center_fkey"
-            columns: ["service_center"]
-            isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
       user_monthly_quotas: {
         Row: {
