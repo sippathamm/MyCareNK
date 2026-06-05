@@ -91,7 +91,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const scRequired = role === 'staff';
+  const scRequired = role === 'staff' || role === 'admin';
 
   const handleClose = () => {
     setStep(1); setFirstName(''); setLastName(''); setEmail('');
@@ -260,7 +260,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
   const [confirmDowngradeOpen, setConfirmDowngradeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const scRequired = role === 'staff';
+  const scRequired = role === 'staff' || role === 'admin';
 
   useEffect(() => {
     if (staff) {

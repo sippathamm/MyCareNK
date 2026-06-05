@@ -121,9 +121,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
       ? service_centers
       : service_center ? [service_center] : [];
 
-    // Staff role must have at least one SC
-    if (role === 'staff' && requestedSCs.length === 0) {
-      return jsonResponse(400, 'error', 'เจ้าหน้าที่ต้องระบุสถานบริการ');
+    // Staff and admin roles must have at least one SC
+    if ((role === 'staff' || role === 'admin') && requestedSCs.length === 0) {
+      return jsonResponse(400, 'error', 'เจ้าหน้าที่และผู้ดูแลต้องระบุสถานบริการ');
     }
 
     // Admin can only assign SCs they manage
@@ -289,6 +289,13 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
     if (!hasActualProfileChange && !hasActualRoleChange && !hasActualEmailChange && !hasActualServiceCentersChange) {
       return jsonResponse(200, 'success', 'แก้ไขข้อมูลสำเร็จ');
+    }
+
+    // Staff and admin roles must have at least one SC after update
+    const effectiveRole = hasActualRoleChange ? role : profileBefore.data?.role;
+    const effectiveSCs = hasActualServiceCentersChange ? (service_centers ?? []) : ((profileBefore.data?.service_centers as string[] | null) ?? []);
+    if ((effectiveRole === 'staff' || effectiveRole === 'admin') && effectiveSCs.length === 0) {
+      return jsonResponse(400, 'error', 'เจ้าหน้าที่และผู้ดูแลต้องระบุสถานบริการ');
     }
 
     // Build a single staff_profiles update
