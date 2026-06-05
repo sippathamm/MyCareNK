@@ -254,7 +254,7 @@ interface EditStaffDialogProps {
   currentUserId: string;
   currentRole: string;
   onClose: () => void;
-  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_centers: string[]; role: Enums<'role'>; email?: string }) => Promise<string | null>;
+  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_centers?: string[]; role?: Enums<'role'>; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
@@ -286,12 +286,28 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 
   const handleClose = () => { setError(null); setConfirmDeleteOpen(false); setConfirmDowngradeOpen(false); onClose(); };
 
+  const isCallerAdmin = currentRole === 'admin';
+  // Admin cannot touch superadmin accounts at all
+  const isRestricted = isCallerAdmin && staff?.role === 'superadmin';
+  // Admin cannot change role or SC of anyone
+  const isRoleScLocked = isCallerAdmin;
+  // Admin cannot change name/email of other admins or self (can only edit staff)
+  const isNameEmailLocked = isCallerAdmin && staff?.role !== 'staff';
+  // Nothing is editable — disable save
+  const nothingEditable = isRestricted || (isRoleScLocked && isNameEmailLocked);
+
   const doSave = async () => {
     if (!staff) return;
     setSubmitting(true);
     setError(null);
     const emailChanged = email !== staff.email;
-    const err = await onUpdate({ staff_user_id: staff.staff_user_id, first_name: firstName, last_name: lastName, service_centers: serviceCenters, role, ...(emailChanged && { email }) });
+    const err = await onUpdate({
+      staff_user_id: staff.staff_user_id,
+      first_name: firstName,
+      last_name: lastName,
+      ...(emailChanged && { email }),
+      ...(!isRoleScLocked && { service_centers: serviceCenters, role }),
+    });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -299,8 +315,10 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 
   const handleSave = async () => {
     if (!staff) return;
-    const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
-    if (isDowngrade) { setConfirmDowngradeOpen(true); return; }
+    if (!isRoleScLocked) {
+      const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
+      if (isDowngrade) { setConfirmDowngradeOpen(true); return; }
+    }
     await doSave();
   };
 
@@ -319,8 +337,6 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
     handleClose();
   };
 
-  const isRestricted = currentRole === 'admin' && staff?.role === 'superadmin';
-
   return (
     <>
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
@@ -331,23 +347,28 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
               ผู้ดูแลไม่สามารถแก้ไขหรือลบบัญชีผู้ดูแลสูงสุดได้
             </Alert>
           )}
+          {!isRestricted && isNameEmailLocked && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลหรือบัญชีของตัวเองได้
+            </Alert>
+          )}
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted} />
-              <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
+              <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted || isNameEmailLocked} />
+              <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted || isNameEmailLocked} />
             </Box>
-            <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
+            <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted || isNameEmailLocked} />
             {role === 'staff' ? (
               <TextField
-                select label="สถานบริการ" required fullWidth disabled={isRestricted}
+                select label="สถานบริการ" required fullWidth disabled={isRestricted || isRoleScLocked}
                 value={serviceCenters[0] ?? ''}
                 onChange={e => setServiceCenters(e.target.value ? [e.target.value] : [])}
               >
                 {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
               </TextField>
             ) : (
-              <FormControl fullWidth required={role === 'admin'} disabled={isRestricted}>
+              <FormControl fullWidth required={role === 'admin'} disabled={isRestricted || isRoleScLocked}>
                 <InputLabel>สถานบริการ{role === 'superadmin' ? ' (ไม่บังคับ)' : ''}</InputLabel>
                 <Select
                   multiple
@@ -373,7 +394,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
             )}
             <TextField
               select label="ระดับสิทธิ์" value={role}
-              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth disabled={isRestricted}
+              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth disabled={isRestricted || isRoleScLocked}
             >
               {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
@@ -408,7 +429,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
           <Button
             variant="contained"
             onClick={handleSave}
-            disabled={submitting || isRestricted}
+            disabled={submitting || nothingEditable}
             endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
           >
             บันทึก

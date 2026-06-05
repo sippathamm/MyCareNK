@@ -255,22 +255,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
         : Promise.resolve({ data: { user: null }, error: null }),
     ]);
 
-    // Admin cannot modify superadmin accounts or promote to superadmin
     if (isAdmin) {
+      // Admin cannot touch superadmin accounts
       if (profileBefore.data?.role === 'superadmin') {
         return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลสูงสุดได้');
       }
-      if (role === 'superadmin') {
-        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถกำหนดสิทธิ์ผู้ดูแลสูงสุดได้');
+      // Admin cannot change role or SC of anyone
+      if (role !== undefined) {
+        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถเปลี่ยนระดับสิทธิ์ได้');
+      }
+      if (service_center !== undefined || service_centers !== undefined) {
+        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถเปลี่ยนสถานบริการได้');
+      }
+      // Admin cannot change name/email of other admins or self
+      if (profileBefore.data?.role === 'admin' || user_id === user.id) {
+        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลหรือบัญชีของตัวเองได้');
       }
       // Admin can only modify staff in their own SCs
       const targetSC = profileBefore.data?.service_center;
       if (targetSC && !callerSCs.includes(targetSC)) {
         return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์แก้ไขข้อมูลบัญชีในสถานบริการนี้');
-      }
-      // If moving staff to another SC, that SC must also be in admin's SCs
-      if (service_center !== undefined && !callerSCs.includes(service_center)) {
-        return jsonResponse(403, 'error', 'คุณไม่มีสิทธิ์โอนย้ายบัญชีไปยังสถานบริการนี้');
       }
     }
 
