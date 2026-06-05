@@ -145,27 +145,37 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
               <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth required />
             </Box>
             <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth required />
-            <FormControl fullWidth required={scRequired}>
-              <InputLabel>สถานบริการ{scRequired ? '' : ' (ไม่บังคับ)'}</InputLabel>
-              <Select
-                multiple
-                value={serviceCenters}
-                onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
-                input={<OutlinedInput label={`สถานบริการ${scRequired ? '' : ' (ไม่บังคับ)'}`} />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {(selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
-                  </Box>
-                )}
+            {role === 'staff' ? (
+              <TextField
+                select label="สถานบริการ" required fullWidth
+                value={serviceCenters[0] ?? ''}
+                onChange={e => setServiceCenters(e.target.value ? [e.target.value] : [])}
               >
-                {centerNames.map(sc => (
-                  <MenuItem key={sc} value={sc}>
-                    <Checkbox checked={serviceCenters.includes(sc)} size="small" />
-                    <ListItemText primary={sc} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              </TextField>
+            ) : (
+              <FormControl fullWidth required={role === 'admin'}>
+                <InputLabel>สถานบริการ{role === 'superadmin' ? ' (ไม่บังคับ)' : ''}</InputLabel>
+                <Select
+                  multiple
+                  value={serviceCenters}
+                  onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                  input={<OutlinedInput label={`สถานบริการ${role === 'superadmin' ? ' (ไม่บังคับ)' : ''}`} />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
+                    </Box>
+                  )}
+                >
+                  {centerNames.map(sc => (
+                    <MenuItem key={sc} value={sc}>
+                      <Checkbox checked={serviceCenters.includes(sc)} size="small" />
+                      <ListItemText primary={sc} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
             <TextField
               select label="ระดับสิทธิ์" value={role}
               onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth required
@@ -260,8 +270,6 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
   const [confirmDowngradeOpen, setConfirmDowngradeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const scRequired = role === 'staff' || role === 'admin';
-
   useEffect(() => {
     if (staff) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -330,29 +338,39 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
               <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
             </Box>
             <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
-            <FormControl fullWidth required={scRequired} disabled={isRestricted}>
-              <InputLabel>สถานบริการ{scRequired ? '' : ' (ไม่บังคับ)'}</InputLabel>
-              <Select
-                multiple
-                value={serviceCenters}
-                onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
-                input={<OutlinedInput label={`สถานบริการ${scRequired ? '' : ' (ไม่บังคับ)'}`} />}
-                renderValue={(selected) => (
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                    {(selected as string[]).length === 0
-                      ? <Typography variant="body2" color="text.disabled">ไม่ระบุ</Typography>
-                      : (selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
-                  </Box>
-                )}
+            {role === 'staff' ? (
+              <TextField
+                select label="สถานบริการ" required fullWidth disabled={isRestricted}
+                value={serviceCenters[0] ?? ''}
+                onChange={e => setServiceCenters(e.target.value ? [e.target.value] : [])}
               >
-                {centerNames.map(sc => (
-                  <MenuItem key={sc} value={sc}>
-                    <Checkbox checked={serviceCenters.includes(sc)} size="small" />
-                    <ListItemText primary={sc} />
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+                {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              </TextField>
+            ) : (
+              <FormControl fullWidth required={role === 'admin'} disabled={isRestricted}>
+                <InputLabel>สถานบริการ{role === 'superadmin' ? ' (ไม่บังคับ)' : ''}</InputLabel>
+                <Select
+                  multiple
+                  value={serviceCenters}
+                  onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                  input={<OutlinedInput label={`สถานบริการ${role === 'superadmin' ? ' (ไม่บังคับ)' : ''}`} />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).length === 0
+                        ? <Typography variant="body2" color="text.disabled">ไม่ระบุ</Typography>
+                        : (selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
+                    </Box>
+                  )}
+                >
+                  {centerNames.map(sc => (
+                    <MenuItem key={sc} value={sc}>
+                      <Checkbox checked={serviceCenters.includes(sc)} size="small" />
+                      <ListItemText primary={sc} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
             <TextField
               select label="ระดับสิทธิ์" value={role}
               onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth disabled={isRestricted}
