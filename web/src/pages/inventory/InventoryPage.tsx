@@ -175,7 +175,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 
 export default function InventoryPage() {
   const { forecast, trend, loading, error, refetch } = useInventoryForecast();
-  const { role, profile, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
+  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
@@ -200,22 +200,18 @@ export default function InventoryPage() {
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
   const canRestock = isAdminOrSuperadmin;
 
-  // staff/admin: filter to own SCs; superadmin: sees all
+  // staff/admin: filter to own SCs via serviceCenters array; superadmin: sees all
   const visibleForecast = isSuperadmin
     ? forecast
-    : role === 'staff' && profile?.service_center
-      ? forecast.filter((r) => r.service_center === profile.service_center)
-      : role === 'admin'
-        ? forecast.filter((r) => serviceCenters.includes(r.service_center))
-        : forecast;
+    : serviceCenters.length > 0
+      ? forecast.filter((r) => serviceCenters.includes(r.service_center))
+      : forecast;
 
   const visibleTrend = isSuperadmin
     ? trend
-    : role === 'staff' && profile?.service_center
-      ? trend.filter((t) => t.service_center === profile.service_center)
-      : role === 'admin'
-        ? trend.filter((t) => serviceCenters.includes(t.service_center))
-        : trend;
+    : serviceCenters.length > 0
+      ? trend.filter((t) => serviceCenters.includes(t.service_center))
+      : trend;
 
   const zeroStockItems = visibleForecast.filter(
     (r) => r.condom_qty <= 0 || r.lubricant_qty <= 0,

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Chip, Button, IconButton, Tooltip,
   Stack, TextField,
@@ -77,12 +77,14 @@ function CoverThumbnail({ url }: { url: string | null }) {
 export default function ArticlesPage() {
   const navigate = useNavigate();
   const { articles, staffMap, loading } = useArticles();
-  const { role } = useRoleAccess();
-  const canManage = role === 'admin' || role === 'superadmin';
-
-  // staff only sees published articles
-  const [filter, setFilter] = useState<FilterValue>(canManage ? 'all' : 'published');
+  const { role, loading: roleLoading } = useRoleAccess();
+  const [filter, setFilter] = useState<FilterValue>('all');
   const [titleSearch, setTitleSearch] = useState('');
+
+  if (roleLoading) return null;
+  if (role === 'staff') return <Navigate to="/dashboard" replace />;
+
+  const canManage = role === 'admin' || role === 'superadmin';
 
   // ─── Filter ───────────────────────────────────────────────────────────────
 
