@@ -404,6 +404,8 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
+  -- WHERE sc.name IS NOT NULL is always true (PK, NOT NULL) but is required
+  -- because pg_safeupdate rejects UPDATE statements without a WHERE clause.
   UPDATE public.service_centers sc SET
     staff_count = (
       SELECT COUNT(*) FROM public.staff_profiles sp
@@ -415,7 +417,8 @@ BEGIN
     ),
     superadmin_count = (
       SELECT COUNT(*) FROM public.staff_profiles WHERE role = 'superadmin'
-    );
+    )
+  WHERE sc.name IS NOT NULL;
   RETURN NULL;
 END;
 $$;
