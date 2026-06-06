@@ -69,6 +69,9 @@ BEGIN
   IF NEW.request_status = 'preparing' AND OLD.handled_by IS NULL THEN
     NEW.handled_by = auth.uid();
   END IF;
+  IF NEW.request_status = 'cancelled_by_staff' THEN
+    NEW.handled_by = auth.uid();
+  END IF;
   IF NEW.request_status IN ('completed', 'cancelled_by_user', 'cancelled_by_staff') THEN
     NEW.completed_at = now();
   END IF;
@@ -408,6 +411,9 @@ SET search_path TO 'public'
 AS $$
 BEGIN
   IF NEW.appointment_status = 'confirmed' AND OLD.handled_by IS NULL THEN
+    NEW.handled_by = auth.uid();
+  END IF;
+  IF NEW.appointment_status = 'cancelled_by_staff' THEN
     NEW.handled_by = auth.uid();
   END IF;
   RETURN NEW;
