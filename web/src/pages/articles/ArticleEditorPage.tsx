@@ -150,10 +150,6 @@ export default function ArticleEditorPage() {
   const { session } = useAuth();
   const { role, loading: roleLoading } = useRoleAccess();
 
-  // Staff cannot access articles pages at all
-  if (!roleLoading && role === 'staff') {
-    return <Navigate to="/dashboard" replace />;
-  }
   const userId = session?.user?.id ?? '';
 
   // ─── Content state ─────────────────────────────────────────────────────────
@@ -722,6 +718,11 @@ export default function ArticleEditorPage() {
   }
 
   // ─── Render ────────────────────────────────────────────────────────────────
+
+  // Staff cannot access articles pages at all (placed here to satisfy Rules of Hooks)
+  if (!roleLoading && role === 'staff') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>
