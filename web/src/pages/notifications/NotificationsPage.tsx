@@ -57,7 +57,6 @@ function NotificationRow({ item, onItemClick, onDelete }: {
         py: 1.5,
         alignItems: 'flex-start',
         gap: 2,
-        borderLeft: item.is_read ? '3px solid transparent' : '3px solid #F44336',
         '&:hover': { filter: 'brightness(0.97)' },
       }}
     >

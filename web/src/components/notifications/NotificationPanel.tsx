@@ -116,7 +116,6 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                       py: 1.5,
                       alignItems: 'flex-start',
                       gap: 1.5,
-                      borderLeft: item.is_read ? '3px solid transparent' : '3px solid #F44336',
                       '&:hover': { filter: 'brightness(0.96)' },
                     }}
                   >
