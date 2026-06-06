@@ -117,15 +117,14 @@ function getDefaultDateTo(): string {
 export default function DashboardPage({ session }: DashboardPageProps) {
   const { profile, role, isSuperadmin } = useRoleAccess();
   const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
-  const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard();
+  const { selectedServiceCenter } = useServiceCenterFilter();
+  const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard(selectedServiceCenter);
 
   const isAdmin = role === 'admin';
   const isAdminOrSuperadmin = isAdmin || isSuperadmin;
 
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(getDefaultDateTo);
-
-  const { selectedServiceCenter } = useServiceCenterFilter();
 
   const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedServiceCenter);
   const { hourlyData, dailyData, loading: ptLoading } = usePeakTime(dateFrom, dateTo, selectedServiceCenter);
