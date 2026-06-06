@@ -49,6 +49,8 @@ function NotificationRow({ item, onItemClick, onDelete }: {
   onDelete: (e: React.MouseEvent, id: string) => void;
 }) {
   const cfg = getNotifConfig(item);
+  const meta = item.metadata as Record<string, unknown>;
+  const handledByName = typeof meta?.handled_by_name === 'string' ? meta.handled_by_name : null;
   return (
     <ListItemButton
       onClick={() => onItemClick(item)}
@@ -79,6 +81,11 @@ function NotificationRow({ item, onItemClick, onDelete }: {
         <Typography variant="body2" color="text.secondary">
           {item.reference_number}
         </Typography>
+        {handledByName && (
+          <Typography variant="body2" color="text.secondary">
+            ดำเนินการโดย: {handledByName}
+          </Typography>
+        )}
         <Typography variant="caption" color="text.disabled">
           {formatAbsoluteDateTime(item.created_at)} · {formatRelativeTime(item.created_at)}
         </Typography>
