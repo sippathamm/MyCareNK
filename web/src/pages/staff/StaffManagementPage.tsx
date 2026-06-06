@@ -106,7 +106,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
       return;
     }
     if (scRequired && serviceCenters.length === 0) {
-      setError('กรุณาเลือกสถานบริการอย่างน้อย 1 แห่ง');
+      setError('กรุณาเลือกสถานบริการ');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -323,6 +323,10 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
       }
     }
     if (!isRoleScLocked) {
+      if ((role === 'staff' || role === 'admin') && serviceCenters.length === 0) {
+        setError('กรุณาเลือกสถานบริการ');
+        return;
+      }
       const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
       if (isDowngrade) { setConfirmDowngradeOpen(true); return; }
     }
