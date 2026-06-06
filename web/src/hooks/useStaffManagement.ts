@@ -86,6 +86,7 @@ export function useStaffManagement() {
   }): Promise<string | null> => {
     const { error: err } = await callStaffManagement('update', payload);
     if (!err) await fetchStaff();
+    if (err && payload.email && err.includes('Error updating user')) return 'อีเมลนี้ถูกใช้งานแล้ว';
     return err;
   }, [fetchStaff]);
 
