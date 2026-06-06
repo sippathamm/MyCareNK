@@ -10,7 +10,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useAppointments } from '../../hooks/useAppointments';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
 import AppointmentDetailDialog, { REASON_LABELS } from '../../components/appointments/AppointmentDetailDialog';
@@ -41,12 +41,10 @@ export default function AppointmentsPage() {
   const navigate = useNavigate();
   const { appointments, setAppointments, loading } = useAppointments();
   const { role, loading: roleLoading } = useRoleAccess();
-  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
-  const { centers } = useServiceCenters(isAdminOrSuperadmin);
+  const { selectedServiceCenter } = useServiceCenterFilter();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [selectedAppointment, setSelectedAppointment] = useState<AppointmentData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -109,8 +107,7 @@ export default function AppointmentsPage() {
     const matchStatus = statusFilter === 'all'
       || a.appointment_status === statusFilter
       || (statusFilter === 'cancelled' && (a.appointment_status === 'cancelled_by_user' || a.appointment_status === 'cancelled_by_staff'));
-    const matchServiceCenter = !isAdminOrSuperadmin || serviceCenterFilter === 'all'
-      || a.selected_service_center === serviceCenterFilter;
+    const matchServiceCenter = selectedServiceCenter === null || a.selected_service_center === selectedServiceCenter;
     return matchSearch && matchStatus && matchServiceCenter;
   });
 
@@ -190,21 +187,6 @@ export default function AppointmentsPage() {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
-          {isAdminOrSuperadmin && (
-            <TextField
-              select
-              label="สถานบริการ"
-              size="small"
-              value={serviceCenterFilter}
-              onChange={(e) => setServiceCenterFilter(e.target.value)}
-              sx={{ minWidth: 200 }}
-            >
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              {centers.map(c => (
-                <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
-              ))}
-            </TextField>
-          )}
           <TextField
             select
             label="สถานะ"

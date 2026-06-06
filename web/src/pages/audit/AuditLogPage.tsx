@@ -7,7 +7,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess, type StaffRole } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
@@ -128,6 +128,8 @@ function InventoryQtyChip({ value }: { value: unknown }) {
 // ─── Tab 1: Staff Audit Log ───────────────────────────────────────────────────
 
 function AuditLogTab() {
+  const { role } = useRoleAccess();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
@@ -136,15 +138,20 @@ function AuditLogTab() {
   const [pageSize, setPageSize] = useState(25);
   const [detailRow, setDetailRow] = useState<StaffAuditLogRow | null>(null);
 
+  const availableActions = STAFF_AUDIT_ACTIONS.filter(
+    v => role !== 'admin' || v !== AUDIT_ACTION.ROLE_UPDATED
+  );
+
   const resetPage = useCallback(() => setPage(0), []);
 
   const filters = useMemo<StaffAuditLogFilters>(() => ({
-    performedBy: null,
-    action:      (actionFilter as AuditAction) || null,
-    targetId:    targetIdFilter.trim() || null,
-    dateFrom:    dateFrom  || null,
-    dateTo:      dateTo    || null,
-  }), [actionFilter, targetIdFilter, dateFrom, dateTo]);
+    performedBy:   null,
+    action:        (actionFilter as AuditAction) || null,
+    targetId:      targetIdFilter.trim() || null,
+    dateFrom:      dateFrom  || null,
+    dateTo:        dateTo    || null,
+    serviceCenter: selectedServiceCenter,
+  }), [actionFilter, targetIdFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useStaffAuditLog(filters, page, pageSize);
 
@@ -187,7 +194,7 @@ function AuditLogTab() {
             onChange={e => { setActionFilter(e.target.value); resetPage(); }} sx={{ minWidth: 220 }}
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">ทั้งหมด</MenuItem>
-            {STAFF_AUDIT_ACTIONS.map(v => (
+            {availableActions.map(v => (
               <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
             ))}
           </TextField>
@@ -223,6 +230,7 @@ function AuditLogTab() {
 // ─── Tab 2: Request Status Log ────────────────────────────────────────────────
 
 function RequestStatusLogTab() {
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [fromStatus, setFromStatus] = useState('');
@@ -240,7 +248,8 @@ function RequestStatusLogTab() {
     referenceNumber: refNumFilter.trim() || null,
     dateFrom:        dateFrom   || null,
     dateTo:          dateTo     || null,
-  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
+    serviceCenter:   selectedServiceCenter,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useRequestStatusLog(filters, page, pageSize);
 
@@ -338,6 +347,7 @@ const APPOINTMENT_STATUS_OPTIONS = [
 ];
 
 function AppointmentStatusLogTab() {
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [fromStatus, setFromStatus] = useState('');
@@ -355,7 +365,8 @@ function AppointmentStatusLogTab() {
     referenceNumber: refNumFilter.trim() || null,
     dateFrom:        dateFrom   || null,
     dateTo:          dateTo     || null,
-  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
+    serviceCenter:   selectedServiceCenter,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useAppointmentStatusLog(filters, page, pageSize);
 
@@ -433,11 +444,10 @@ function AppointmentStatusLogTab() {
 // ─── Tab 4: Inventory Log ─────────────────────────────────────────────────────
 
 function InventoryLogTab() {
-  const { centers } = useServiceCenters();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
-  const [serviceCenterFilter, setServiceCenterFilter] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [detailRow, setDetailRow] = useState<InventoryLogRow | null>(null);
@@ -446,10 +456,10 @@ function InventoryLogTab() {
 
   const filters = useMemo<InventoryLogFilters>(() => ({
     action:        (actionFilter as AuditAction) || null,
-    serviceCenter: serviceCenterFilter || null,
+    serviceCenter: selectedServiceCenter,
     dateFrom:      dateFrom  || null,
     dateTo:        dateTo    || null,
-  }), [actionFilter, serviceCenterFilter, dateFrom, dateTo]);
+  }), [actionFilter, selectedServiceCenter, dateFrom, dateTo]);
 
   const { rows, loading, error } = useInventoryLog(filters, page, pageSize);
 
@@ -502,14 +512,6 @@ function InventoryLogTab() {
               <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
             ))}
           </TextField>
-          <TextField label="สถานบริการ" select size="small" value={serviceCenterFilter}
-            onChange={e => { setServiceCenterFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-            <MenuItem value="">ทั้งหมด</MenuItem>
-            {centers.map(c => (
-              <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
-            ))}
-          </TextField>
         </Stack>
         <Box sx={{ height: 500 }}>
             <DataGrid
@@ -540,7 +542,7 @@ function InventoryLogTab() {
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 const ALL_TABS: { label: string; roles: StaffRole[]; Component: () => React.JSX.Element }[] = [
-  { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['superadmin'],          Component: AuditLogTab },
+  { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['admin', 'superadmin'], Component: AuditLogTab },
   { label: 'ประวัติสถานะคำขอ',                  roles: ['staff', 'admin', 'superadmin'], Component: RequestStatusLogTab },
   { label: 'ประวัติสถานะนัดหมาย',               roles: ['staff', 'admin', 'superadmin'], Component: AppointmentStatusLogTab },
   { label: 'ประวัติการแก้ไขสต็อก',              roles: ['admin', 'superadmin'], Component: InventoryLogTab },
@@ -570,7 +572,10 @@ export default function AuditLogPage() {
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>บันทึกการตรวจสอบ</Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ การเปลี่ยนแปลงสถานะนัดหมาย และการจัดการสต็อก
+        {role === 'staff'
+          ? 'ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการเปลี่ยนแปลงสถานะคำขอ และการเปลี่ยนแปลงสถานะนัดหมาย'
+          : 'ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ การเปลี่ยนแปลงสถานะนัดหมาย และการจัดการสต็อก'
+        }
       </Typography>
 
       <Tabs

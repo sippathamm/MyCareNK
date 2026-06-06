@@ -96,8 +96,7 @@ const MAX_NOTIFICATIONS = 50;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user?.id ?? '';
-  const { role, profile, loading: roleLoading } = useRoleAccess();
-  const serviceCenter = profile?.service_center ?? null;
+  const { role, loading: roleLoading, serviceCenters, isSuperadmin } = useRoleAccess();
 
   const readIdsRef = useRef<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -163,8 +162,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!userId || roleLoading) return;
 
-    const scFilter = role === 'staff' && serviceCenter
-      ? `service_center=eq.${serviceCenter}`
+    // staff: filter by own SC; admin: filter by their SCs array; superadmin: no filter
+    const scFilter = isSuperadmin ? undefined
+      : serviceCenters.length === 1 ? `service_center=eq.${serviceCenters[0]}`
+      : serviceCenters.length > 1 ? `service_center=in.(${serviceCenters.join(',')})`
       : undefined;
 
     const channel = supabase
@@ -194,7 +195,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userId, role, serviceCenter, roleLoading]);
+  }, [userId, role, serviceCenters, isSuperadmin, roleLoading]);
 
   // Realtime: notification deleted (sync across devices)
   useEffect(() => {

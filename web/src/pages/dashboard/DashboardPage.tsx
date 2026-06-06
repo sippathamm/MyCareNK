@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Typography, Card, CardContent, Grid, TextField, MenuItem, Stack } from '@mui/material';
+import { Box, Typography, Card, CardContent, Grid, TextField, Stack } from '@mui/material';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, PieChart, Pie, Cell, Legend, LineChart, Line, type TooltipContentProps } from 'recharts';
 import type { Session } from '@supabase/supabase-js';
 import { useDashboard } from '../../hooks/useDashboard';
@@ -7,7 +7,7 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useLeadTime } from '../../hooks/useLeadTime';
 import { usePeakTime } from '../../hooks/usePeakTime';
 import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
 
 const STATUS_COLORS = {
@@ -115,20 +115,19 @@ function getDefaultDateTo(): string {
 }
 
 export default function DashboardPage({ session }: DashboardPageProps) {
-  const { profile, role } = useRoleAccess();
+  const { profile, role, isSuperadmin } = useRoleAccess();
   const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
-  const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard();
+  const { selectedServiceCenter } = useServiceCenterFilter();
+  const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard(selectedServiceCenter);
+
+  const isAdmin = role === 'admin';
+  const isAdminOrSuperadmin = isAdmin || isSuperadmin;
 
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(getDefaultDateTo);
-  const [serviceCenter, setServiceCenter] = useState<string>('all');
 
-  const isSuperadmin = role === 'superadmin';
-  const { centers } = useServiceCenters(isSuperadmin);
-  const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
-
-  const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedSC);
-  const { hourlyData, dailyData, loading: ptLoading } = usePeakTime(dateFrom, dateTo, selectedSC);
+  const { current: leadTime, previous: prevLeadTime, loading: ltLoading } = useLeadTime(dateFrom, dateTo, selectedServiceCenter);
+  const { hourlyData, dailyData, loading: ptLoading } = usePeakTime(dateFrom, dateTo, selectedServiceCenter);
   const { demand, trend, loading: demandLoading } = useServiceCenterDemand(dateFrom, dateTo);
 
   const THAI_DAYS = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
@@ -275,7 +274,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
         </Grid>
       </Grid>
 
-      {(role === 'admin' || role === 'superadmin') && (
+      {isAdminOrSuperadmin && (
       <>
       {/* ── Analysis Section ─────────────────────────────────────── */}
       <Typography variant="h6" fontWeight="bold" sx={{ mt: 4, mb: 1.5 }}>
@@ -304,21 +303,6 @@ export default function DashboardPage({ session }: DashboardPageProps) {
               slotProps={{ inputLabel: { shrink: true } }}
               sx={{ minWidth: 160 }}
             />
-            {isSuperadmin && (
-              <TextField
-                label="สถานบริการ"
-                select
-                size="small"
-                value={serviceCenter}
-                onChange={e => setServiceCenter(e.target.value)}
-                sx={{ minWidth: 180 }}
-              >
-                <MenuItem value="all">ทั้งหมด</MenuItem>
-                {centers.map(c => (
-                  <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
-                ))}
-              </TextField>
-            )}
           </Stack>
         </CardContent>
       </Card>

@@ -114,6 +114,26 @@ BEGIN
 END;
 $$;
 
+-- Returns NULL for superadmin (no SC restriction) or text[] of SCs for staff/admin
+CREATE OR REPLACE FUNCTION public.get_my_service_centers()
+RETURNS text[]
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_role public.role;
+  v_scs  text[];
+BEGIN
+  SELECT role, service_centers
+    INTO v_role, v_scs
+    FROM public.staff_profiles
+   WHERE staff_user_id = auth.uid();
+  IF v_role = 'superadmin' THEN RETURN NULL; END IF;
+  RETURN COALESCE(v_scs, ARRAY[]::text[]);
+END;
+$$;
+
 
 -- ============================================================
 -- SECTION 3: TRIGGER FUNCTIONS (created before tables;
@@ -645,20 +665,18 @@ CREATE POLICY "Users can view their own recovery attempts"
 
 -- ── 6. staff_profiles ──────────────────────────────────────
 CREATE TABLE public.staff_profiles (
-  id             uuid              NOT NULL DEFAULT gen_random_uuid(),
-  staff_user_id  uuid              NOT NULL,
-  first_name     varchar(255),
-  last_name      varchar(255),
-  service_center text,
-  created_at     timestamptz                DEFAULT now(),
-  updated_at     timestamptz                DEFAULT now(),
-  role           public.role       NOT NULL DEFAULT 'staff',
+  id               uuid              NOT NULL DEFAULT gen_random_uuid(),
+  staff_user_id    uuid              NOT NULL,
+  first_name       varchar(255),
+  last_name        varchar(255),
+  service_centers  text[],
+  created_at       timestamptz                DEFAULT now(),
+  updated_at       timestamptz                DEFAULT now(),
+  role             public.role       NOT NULL DEFAULT 'staff',
   CONSTRAINT staff_profiles_pkey               PRIMARY KEY (id),
   CONSTRAINT staff_profiles_staff_user_id_key  UNIQUE (staff_user_id),
   CONSTRAINT staff_profiles_staff_user_id_fkey FOREIGN KEY (staff_user_id)
-    REFERENCES auth.users(id) ON DELETE CASCADE,
-  CONSTRAINT staff_profiles_service_center_fkey FOREIGN KEY (service_center)
-    REFERENCES public.service_centers(name)
+    REFERENCES auth.users(id) ON DELETE CASCADE
 );
 
 ALTER TABLE public.staff_profiles ENABLE ROW LEVEL SECURITY;
@@ -708,7 +726,7 @@ ALTER TABLE public.staff_change_logs ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "superadmin_select_change_logs"
   ON public.staff_change_logs FOR SELECT
-  TO authenticated USING (is_superadmin());
+  TO authenticated USING (is_admin() OR is_superadmin());
 
 CREATE POLICY "deny_client_insert_change_logs"
   ON public.staff_change_logs FOR INSERT
@@ -739,16 +757,16 @@ CREATE TABLE public.staff_notifications (
 
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
--- staff: see only notify_staff=true at own SC; admin/superadmin: see everything
+-- staff: see only notify_staff=true at own SC; admin: own SCs; superadmin: everything
 CREATE POLICY "staff_notifications_select"
   ON public.staff_notifications FOR SELECT TO authenticated
   USING (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
       notify_staff = true
-      AND service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      AND (
+        SELECT service_center = ANY(get_my_service_centers())
+           OR get_my_service_centers() IS NULL
       )
     )
   );
@@ -756,12 +774,12 @@ CREATE POLICY "staff_notifications_select"
 CREATE POLICY "staff_notifications_delete"
   ON public.staff_notifications FOR DELETE TO authenticated
   USING (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
       notify_staff = true
-      AND service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      AND (
+        SELECT service_center = ANY(get_my_service_centers())
+           OR get_my_service_centers() IS NULL
       )
     )
   );
@@ -911,12 +929,12 @@ CREATE POLICY "Users can insert their own requests"
 CREATE POLICY "condom_requests_select"
   ON public.condom_requests FOR SELECT
   TO authenticated USING (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
-      is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
-      AND selected_service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      is_staff()
+      AND (
+        get_my_service_centers() IS NULL
+        OR selected_service_center = ANY(get_my_service_centers())
       )
     )
     OR (SELECT auth.uid()) = user_id
@@ -926,23 +944,23 @@ CREATE POLICY "condom_requests_update"
   ON public.condom_requests FOR UPDATE
   TO authenticated
   USING (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
-      is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
-      AND selected_service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      is_staff()
+      AND (
+        get_my_service_centers() IS NULL
+        OR selected_service_center = ANY(get_my_service_centers())
       )
     )
     OR (SELECT auth.uid()) = user_id
   )
   WITH CHECK (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
-      is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
-      AND selected_service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      is_staff()
+      AND (
+        get_my_service_centers() IS NULL
+        OR selected_service_center = ANY(get_my_service_centers())
       )
     )
     OR (
@@ -1098,12 +1116,12 @@ CREATE POLICY "Users can insert their own appointments"
 CREATE POLICY "doctor_appointments_select"
   ON public.doctor_appointments FOR SELECT
   TO authenticated USING (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
       is_staff()
-      AND selected_service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      AND (
+        get_my_service_centers() IS NULL
+        OR selected_service_center = ANY(get_my_service_centers())
       )
     )
     OR (SELECT auth.uid()) = user_id
@@ -1113,23 +1131,23 @@ CREATE POLICY "doctor_appointments_update"
   ON public.doctor_appointments FOR UPDATE
   TO authenticated
   USING (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
-      is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
-      AND selected_service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      is_staff()
+      AND (
+        get_my_service_centers() IS NULL
+        OR selected_service_center = ANY(get_my_service_centers())
       )
     )
     OR (SELECT auth.uid()) = user_id
   )
   WITH CHECK (
-    is_admin() OR is_superadmin()
+    is_superadmin()
     OR (
-      is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
-      AND selected_service_center = (
-        SELECT sp.service_center FROM staff_profiles sp
-        WHERE sp.staff_user_id = (SELECT auth.uid())
+      is_staff()
+      AND (
+        get_my_service_centers() IS NULL
+        OR selected_service_center = ANY(get_my_service_centers())
       )
     )
     OR (
@@ -1325,7 +1343,7 @@ DECLARE
   v_staff_count int;
 BEGIN
   IF NOT is_superadmin() THEN RAISE EXCEPTION 'Unauthorized'; END IF;
-  SELECT COUNT(*) INTO v_staff_count FROM staff_profiles WHERE service_center = p_name;
+  SELECT COUNT(*) INTO v_staff_count FROM staff_profiles WHERE service_centers @> ARRAY[p_name];
   IF v_staff_count > 0 THEN
     RAISE EXCEPTION 'ไม่สามารถลบสถานบริการที่ยังมีเจ้าหน้าที่อยู่ได้ กรุณาย้ายเจ้าหน้าที่ออกก่อน';
   END IF;
@@ -1923,6 +1941,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_my_scs text[] := get_my_service_centers();
 BEGIN
   RETURN QUERY
   WITH date_series AS (
@@ -1932,13 +1952,17 @@ BEGIN
       INTERVAL '1 day'
     )::date AS day
   ),
-  centers AS (SELECT DISTINCT sci.service_center FROM service_center_inventory sci),
+  centers AS (
+    SELECT DISTINCT sci.service_center FROM service_center_inventory sci
+    WHERE (v_my_scs IS NULL OR sci.service_center = ANY(v_my_scs))
+  ),
   daily_raw AS (
     SELECT (il.created_at AT TIME ZONE 'Asia/Bangkok')::date AS day, il.service_center,
       GREATEST(SUM(-il.condom_delta), 0)::integer    AS condom_used,
       GREATEST(SUM(-il.lubricant_delta), 0)::integer AS lubricant_used
     FROM inventory_logs il
     WHERE il.action = 'fulfillment' AND il.created_at >= NOW() - INTERVAL '30 days'
+      AND (v_my_scs IS NULL OR il.service_center = ANY(v_my_scs))
     GROUP BY (il.created_at AT TIME ZONE 'Asia/Bangkok')::date, il.service_center
   )
   SELECT ds.day, c.service_center,
@@ -1998,8 +2022,11 @@ CREATE OR REPLACE FUNCTION public.get_service_center_demand(
   p_date_to   timestamptz
 ) RETURNS TABLE(service_center text, total_requests integer, total_condoms integer, total_lubricants integer)
 LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_my_scs text[] := get_my_service_centers();
 BEGIN
   RETURN QUERY
   SELECT sc.name AS service_center,
@@ -2013,6 +2040,7 @@ BEGIN
          ON r.selected_service_center = sc.name
         AND r.created_at >= p_date_from
         AND r.created_at <= p_date_to
+  WHERE (v_my_scs IS NULL OR sc.name = ANY(v_my_scs))
   GROUP BY sc.name
   ORDER BY total_requests DESC;
 END;
@@ -2021,11 +2049,13 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_service_center_demand_trend()
 RETURNS TABLE(service_center text, day date, request_count integer)
 LANGUAGE plpgsql
+SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 DECLARE
-  v_start date := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok')::date - 29;
-  v_end   date := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok')::date;
+  v_start  date   := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok')::date - 29;
+  v_end    date   := (CURRENT_TIMESTAMP AT TIME ZONE 'Asia/Bangkok')::date;
+  v_my_scs text[] := get_my_service_centers();
 BEGIN
   RETURN QUERY
   SELECT sc.name AS service_center, d.day::date AS day, COALESCE(COUNT(r.id)::integer, 0) AS request_count
@@ -2034,6 +2064,7 @@ BEGIN
   LEFT JOIN condom_requests r
          ON r.selected_service_center = sc.name
         AND (r.created_at AT TIME ZONE 'Asia/Bangkok')::date = d.day
+  WHERE (v_my_scs IS NULL OR sc.name = ANY(v_my_scs))
   GROUP BY sc.name, d.day
   ORDER BY sc.name, d.day;
 END;
@@ -2057,10 +2088,13 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_my_scs text[] := get_my_service_centers();
 BEGIN
-  IF NOT is_superadmin() THEN RAISE EXCEPTION 'Permission denied'; END IF;
+  IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
-  SELECT sp.staff_user_id, sp.first_name::text, sp.last_name::text, sp.service_center,
+  SELECT sp.staff_user_id, sp.first_name::text, sp.last_name::text,
+    (sp.service_centers[1])::text AS service_center,
     COALESCE(COUNT(*) FILTER (WHERE cr.request_status = 'completed')::integer, 0) AS completed_count,
     COALESCE(COUNT(*) FILTER (WHERE cr.request_status IN ('cancelled_by_staff', 'cancelled_by_user'))::integer, 0) AS cancelled_count,
     COALESCE(COUNT(*) FILTER (WHERE cr.is_delay = true)::integer, 0) AS overdue_count,
@@ -2071,8 +2105,9 @@ BEGIN
     ON cr.handled_by = sp.staff_user_id
    AND cr.created_at >= p_date_from
    AND cr.created_at <= p_date_to
-  WHERE (p_service_center IS NULL OR sp.service_center = p_service_center)
-  GROUP BY sp.staff_user_id, sp.first_name, sp.last_name, sp.service_center
+  WHERE (p_service_center IS NULL OR p_service_center = ANY(sp.service_centers))
+    AND (v_my_scs IS NULL OR sp.service_centers && v_my_scs)
+  GROUP BY sp.staff_user_id, sp.first_name, sp.last_name, sp.service_centers
   ORDER BY completed_count DESC, sp.first_name, sp.last_name;
 END;
 $$;
@@ -2093,15 +2128,17 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 DECLARE
-  v_from timestamptz := COALESCE(p_date_from, now() - interval '90 days');
-  v_to   timestamptz := COALESCE(p_date_to,   now());
+  v_from   timestamptz := COALESCE(p_date_from, now() - interval '90 days');
+  v_to     timestamptz := COALESCE(p_date_to,   now());
+  v_my_scs text[]      := get_my_service_centers();
 BEGIN
-  IF NOT is_superadmin() THEN RAISE EXCEPTION 'Permission denied'; END IF;
+  IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
   WITH staff AS (
     SELECT sp.staff_user_id AS uid FROM staff_profiles sp
-    WHERE (p_service_center IS NULL OR sp.service_center = p_service_center)
+    WHERE (p_service_center IS NULL OR p_service_center = ANY(sp.service_centers))
       AND (p_staff_user_id  IS NULL OR sp.staff_user_id  = p_staff_user_id)
+      AND (v_my_scs IS NULL OR sp.service_centers && v_my_scs)
   ),
   weeks AS (
     SELECT generate_series(
@@ -2143,7 +2180,8 @@ CREATE OR REPLACE FUNCTION public.get_request_status_log(
   p_date_from        timestamptz DEFAULT NULL,
   p_date_to          timestamptz DEFAULT NULL,
   p_limit            integer     DEFAULT 50,
-  p_offset           integer     DEFAULT 0
+  p_offset           integer     DEFAULT 0,
+  p_service_center   text        DEFAULT NULL
 ) RETURNS TABLE(
   id               uuid,
   request_id       uuid,
@@ -2158,6 +2196,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_my_scs text[] := get_my_service_centers();
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.staff_profiles WHERE staff_user_id = auth.uid()) THEN
     RAISE EXCEPTION 'Permission denied';
@@ -2181,6 +2221,8 @@ BEGIN
     AND (p_reference_number IS NULL OR cr.reference_number ILIKE '%' || p_reference_number || '%')
     AND (p_date_from        IS NULL OR rsl.changed_at             >= p_date_from)
     AND (p_date_to          IS NULL OR rsl.changed_at             <= p_date_to)
+    AND (v_my_scs           IS NULL OR cr.selected_service_center  = ANY(v_my_scs))
+    AND (p_service_center   IS NULL OR cr.selected_service_center  = p_service_center)
   ORDER BY rsl.changed_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2194,7 +2236,8 @@ CREATE OR REPLACE FUNCTION public.get_appointment_status_log(
   p_date_from        timestamptz DEFAULT NULL,
   p_date_to          timestamptz DEFAULT NULL,
   p_limit            integer     DEFAULT 50,
-  p_offset           integer     DEFAULT 0
+  p_offset           integer     DEFAULT 0,
+  p_service_center   text        DEFAULT NULL
 ) RETURNS TABLE(
   id               uuid,
   appointment_id   uuid,
@@ -2209,6 +2252,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_my_scs text[] := get_my_service_centers();
 BEGIN
   IF NOT EXISTS (SELECT 1 FROM public.staff_profiles WHERE staff_user_id = auth.uid()) THEN
     RAISE EXCEPTION 'Permission denied';
@@ -2226,12 +2271,14 @@ BEGIN
   LEFT JOIN staff_profiles      sp ON sp.staff_user_id = asl.changed_by
   LEFT JOIN user_profiles       up ON up.user_id        = asl.changed_by
   LEFT JOIN doctor_appointments da ON da.id              = asl.appointment_id
-  WHERE (p_performed_by     IS NULL OR asl.changed_by           = p_performed_by)
-    AND (p_from_status      IS NULL OR asl.from_status::text    = p_from_status)
-    AND (p_to_status        IS NULL OR asl.to_status::text      = p_to_status)
+  WHERE (p_performed_by     IS NULL OR asl.changed_by              = p_performed_by)
+    AND (p_from_status      IS NULL OR asl.from_status::text       = p_from_status)
+    AND (p_to_status        IS NULL OR asl.to_status::text         = p_to_status)
     AND (p_reference_number IS NULL OR da.reference_number ILIKE '%' || p_reference_number || '%')
-    AND (p_date_from        IS NULL OR asl.changed_at           >= p_date_from)
-    AND (p_date_to          IS NULL OR asl.changed_at           <= p_date_to)
+    AND (p_date_from        IS NULL OR asl.changed_at             >= p_date_from)
+    AND (p_date_to          IS NULL OR asl.changed_at             <= p_date_to)
+    AND (v_my_scs           IS NULL OR da.selected_service_center  = ANY(v_my_scs))
+    AND (p_service_center   IS NULL OR da.selected_service_center  = p_service_center)
   ORDER BY asl.changed_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2260,6 +2307,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_my_scs text[] := get_my_service_centers();
 BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
@@ -2272,19 +2321,21 @@ BEGIN
     AND (p_service_center IS NULL OR il.service_center    = p_service_center)
     AND (p_date_from      IS NULL OR il.created_at       >= p_date_from)
     AND (p_date_to        IS NULL OR il.created_at       <= p_date_to)
+    AND (v_my_scs IS NULL OR il.service_center = ANY(v_my_scs))
   ORDER BY il.created_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_staff_change_log(
-  p_performed_by uuid        DEFAULT NULL,
-  p_action       text        DEFAULT NULL,
-  p_target_id    text        DEFAULT NULL,
-  p_date_from    timestamptz DEFAULT NULL,
-  p_date_to      timestamptz DEFAULT NULL,
-  p_limit        integer     DEFAULT 50,
-  p_offset       integer     DEFAULT 0
+  p_performed_by   uuid        DEFAULT NULL,
+  p_action         text        DEFAULT NULL,
+  p_target_id      text        DEFAULT NULL,
+  p_date_from      timestamptz DEFAULT NULL,
+  p_date_to        timestamptz DEFAULT NULL,
+  p_limit          integer     DEFAULT 50,
+  p_offset         integer     DEFAULT 0,
+  p_service_center text        DEFAULT NULL
 ) RETURNS TABLE(
   id                   uuid,
   performed_by         uuid,
@@ -2303,7 +2354,7 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NOT is_superadmin() THEN RAISE EXCEPTION 'Permission denied'; END IF;
+  IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
   SELECT al.id, al.performed_by,
     COALESCE(sp.first_name || ' ' || sp.last_name, 'ระบบ'),
@@ -2320,19 +2371,20 @@ BEGIN
   FROM public.staff_change_logs al
   LEFT JOIN staff_profiles sp  ON sp.staff_user_id = al.performed_by
   LEFT JOIN staff_profiles tsp ON tsp.id = al.target_id
-  WHERE (p_performed_by IS NULL OR al.performed_by = p_performed_by)
-    AND (p_action       IS NULL OR al.action::text = p_action)
-    AND (p_target_id    IS NULL OR (
-      COALESCE(al.target_staff_user_id, tsp.staff_user_id)::text ILIKE '%' || p_target_id || '%'
-      OR COALESCE(
-           al.target_name,
-           tsp.first_name || ' ' || tsp.last_name,
-           NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
-           NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
-         ) ILIKE '%' || p_target_id || '%'
-    ))
-    AND (p_date_from IS NULL OR al.created_at >= p_date_from)
-    AND (p_date_to   IS NULL OR al.created_at <= p_date_to)
+  WHERE (p_performed_by   IS NULL OR al.performed_by = p_performed_by)
+    AND (p_action         IS NULL OR al.action::text = p_action)
+    AND (p_target_id      IS NULL OR (
+          COALESCE(al.target_staff_user_id, tsp.staff_user_id)::text ILIKE '%' || p_target_id || '%'
+          OR COALESCE(
+               al.target_name,
+               tsp.first_name || ' ' || tsp.last_name,
+               NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
+               NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
+             ) ILIKE '%' || p_target_id || '%'
+        ))
+    AND (p_date_from      IS NULL OR al.created_at >= p_date_from)
+    AND (p_date_to        IS NULL OR al.created_at <= p_date_to)
+    AND (p_service_center IS NULL OR p_service_center = ANY(tsp.service_centers))
   ORDER BY al.created_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2405,10 +2457,12 @@ GRANT EXECUTE ON FUNCTION public.create_condom_request(uuid, jsonb, integer, tex
 GRANT EXECUTE ON FUNCTION public.create_doctor_appointment(uuid, text, text, date, text, text)        TO authenticated;
 
 -- Log query RPCs
-GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer)     TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_appointment_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_inventory_log(text, text, timestamptz, timestamptz, integer, integer)                      TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text)     TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_appointment_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_inventory_log(text, text, timestamptz, timestamptz, integer, integer)                            TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestamptz, timestamptz, integer, integer, text)             TO authenticated;
+
+GRANT EXECUTE ON FUNCTION public.get_my_service_centers()                                         TO authenticated;
 
 -- write_staff_change_log: intentionally NOT granted to anon/authenticated
 -- (service_role access only — used by Edge Functions)
@@ -2429,6 +2483,12 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.user_monthly_quotas;
 -- ============================================================
 -- SECTION: BACKFILL
 -- ============================================================
+
+-- Backfill service_centers array from service_center for existing staff/admin.
+UPDATE public.staff_profiles
+SET service_centers = ARRAY[service_center]
+WHERE service_center IS NOT NULL
+  AND (service_centers IS NULL OR service_centers = '{}');
 
 -- Ensure every service center has a corresponding inventory row.
 -- Guards against centers created before init_service_center_inventory was wired up.

@@ -65,23 +65,26 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
     >
       <CardContent sx={{ p: 2.5 }}>
         {/* Header */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1, mr: 1 }}>
-            <StorefrontIcon sx={{ color: 'info.main', fontSize: 20, flexShrink: 0 }} />
-            <Typography variant="h6" fontWeight="bold" noWrap>
-              {row.service_center}
-            </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1, mr: 1 }}>
             <Chip
               size="small"
               label={row.is_active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
               sx={{
-                flexShrink: 0,
+                alignSelf: 'flex-start',
                 bgcolor: row.is_active ? '#E8F5E9' : '#F5F5F5',
                 color: row.is_active ? '#2E7D32' : '#9E9E9E',
                 fontSize: '0.65rem',
                 height: 20,
+                mb: 0.5,
               }}
             />
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <StorefrontIcon sx={{ color: 'info.main', fontSize: 20, flexShrink: 0 }} />
+              <Typography variant="h6" fontWeight="bold" noWrap>
+                {row.service_center}
+              </Typography>
+            </Box>
           </Box>
           {isZeroStock && (
             <Chip
@@ -175,7 +178,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 
 export default function InventoryPage() {
   const { forecast, trend, loading, error, refetch } = useInventoryForecast();
-  const { role, profile, loading: roleLoading } = useRoleAccess();
+  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
   const [manageOpen, setManageOpen] = useState(false);
@@ -200,14 +203,18 @@ export default function InventoryPage() {
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
   const canRestock = isAdminOrSuperadmin;
 
-  // staff เห็นเฉพาะสถานบริการตัวเอง
-  const visibleForecast = role === 'staff' && profile?.service_center
-    ? forecast.filter((r) => r.service_center === profile.service_center)
-    : forecast;
+  // staff/admin: filter to own SCs via serviceCenters array; superadmin: sees all
+  const visibleForecast = isSuperadmin
+    ? forecast
+    : serviceCenters.length > 0
+      ? forecast.filter((r) => serviceCenters.includes(r.service_center))
+      : forecast;
 
-  const visibleTrend = role === 'staff' && profile?.service_center
-    ? trend.filter((t) => t.service_center === profile.service_center)
-    : trend;
+  const visibleTrend = isSuperadmin
+    ? trend
+    : serviceCenters.length > 0
+      ? trend.filter((t) => serviceCenters.includes(t.service_center))
+      : trend;
 
   const zeroStockItems = visibleForecast.filter(
     (r) => r.condom_qty <= 0 || r.lubricant_qty <= 0,
@@ -231,7 +238,7 @@ export default function InventoryPage() {
             สต็อกปัจจุบันและการพยากรณ์จากอัตราการใช้
           </Typography>
         </Box>
-        {isAdminOrSuperadmin && (
+        {isSuperadmin && (
           <Button
             variant="contained"
             startIcon={<StorefrontIcon />}
@@ -320,7 +327,7 @@ export default function InventoryPage() {
             ยังไม่มีสถานบริการ
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isAdminOrSuperadmin
+            {isSuperadmin
               ? 'กดปุ่ม "จัดการสถานบริการ" ด้านบนเพื่อเพิ่มสถานบริการใหม่'
               : 'ติดต่อผู้ดูแลระบบเพื่อเพิ่มสถานบริการ'}
           </Typography>

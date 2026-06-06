@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
 import {
   Box, Typography, Paper, Button, IconButton, Tooltip,
   Stack, TextField, Divider, Chip,
@@ -147,6 +148,8 @@ export default function ArticleEditorPage() {
   const { id: articleId } = useParams<{ id: string }>();
   const isEditMode = !!articleId;
   const { session } = useAuth();
+  const { role, loading: roleLoading } = useRoleAccess();
+
   const userId = session?.user?.id ?? '';
 
   // ─── Content state ─────────────────────────────────────────────────────────
@@ -715,6 +718,11 @@ export default function ArticleEditorPage() {
   }
 
   // ─── Render ────────────────────────────────────────────────────────────────
+
+  // Staff cannot access articles pages at all (placed here to satisfy Rules of Hooks)
+  if (!roleLoading && role === 'staff') {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>

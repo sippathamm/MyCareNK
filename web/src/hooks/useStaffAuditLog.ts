@@ -17,11 +17,12 @@ export interface StaffAuditLogRow {
 }
 
 export interface StaffAuditLogFilters {
-  performedBy: string | null;
-  action:      AuditAction | null;
-  targetId:    string | null;
-  dateFrom:    string | null;
-  dateTo:      string | null;
+  performedBy:   string | null;
+  action:        AuditAction | null;
+  targetId:      string | null;
+  dateFrom:      string | null;
+  dateTo:        string | null;
+  serviceCenter: string | null;
 }
 
 function parseError(e: unknown): string {
@@ -50,13 +51,14 @@ export function useStaffAuditLog(
       }
 
       const { data, error: rpcError } = await supabase.rpc('get_staff_change_log', {
-        p_performed_by: filters.performedBy ?? undefined,
-        p_action:       filters.action      ?? undefined,
-        p_target_id:    filters.targetId    ?? undefined,
-        p_date_from:    filters.dateFrom    ? new Date(filters.dateFrom).toISOString() : undefined,
-        p_date_to:      dateTo ?? undefined,
-        p_limit:        pageSize,
-        p_offset:       page * pageSize,
+        p_performed_by:   filters.performedBy   ?? undefined,
+        p_action:         filters.action        ?? undefined,
+        p_target_id:      filters.targetId      ?? undefined,
+        p_date_from:      filters.dateFrom      ? new Date(filters.dateFrom).toISOString() : undefined,
+        p_date_to:        dateTo                ?? undefined,
+        p_limit:          pageSize,
+        p_offset:         page * pageSize,
+        p_service_center: filters.serviceCenter ?? undefined,
       });
 
       if (rpcError) throw rpcError;

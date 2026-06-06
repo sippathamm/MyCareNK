@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Chip, Button, IconButton, Tooltip,
   Stack, TextField,
@@ -77,13 +77,9 @@ function CoverThumbnail({ url }: { url: string | null }) {
 export default function ArticlesPage() {
   const navigate = useNavigate();
   const { articles, staffMap, loading } = useArticles();
-  const { role } = useRoleAccess();
-  const canManage = role === 'admin' || role === 'superadmin';
-
+  const { role, loading: roleLoading } = useRoleAccess();
   const [filter, setFilter] = useState<FilterValue>('all');
   const [titleSearch, setTitleSearch] = useState('');
-
-  // ─── Filter ───────────────────────────────────────────────────────────────
 
   const filtered = useMemo(() => {
     let result = articles;
@@ -101,6 +97,11 @@ export default function ArticlesPage() {
     draft: articles.filter(a => a.status === 'draft').length,
     hidden: articles.filter(a => a.status === 'hidden').length,
   }), [articles]);
+
+  if (roleLoading) return null;
+  if (role === 'staff') return <Navigate to="/dashboard" replace />;
+
+  const canManage = role === 'admin' || role === 'superadmin';
 
   // ─── Columns ──────────────────────────────────────────────────────────────
 
@@ -257,27 +258,29 @@ export default function ArticlesPage() {
             onChange={e => setTitleSearch(e.target.value)}
             sx={{ flexGrow: 1, maxWidth: 360 }}
           />
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {STATUS_FILTERS.map(f => {
-              const active = filter === f.value;
-              return (
-                <Chip
-                  key={f.value}
-                  label={`${f.label} (${counts[f.value]})`}
-                  onClick={() => setFilter(f.value)}
-                  sx={{
-                    fontWeight: active ? 700 : 400,
-                    bgcolor: active ? '#FF9F6B' : 'transparent',
-                    color: active ? 'white' : 'text.secondary',
-                    border: '1px solid',
-                    borderColor: active ? '#FF9F6B' : 'divider',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
-                  }}
-                />
-              );
-            })}
-          </Stack>
+          {canManage && (
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {STATUS_FILTERS.map(f => {
+                const active = filter === f.value;
+                return (
+                  <Chip
+                    key={f.value}
+                    label={`${f.label} (${counts[f.value]})`}
+                    onClick={() => setFilter(f.value)}
+                    sx={{
+                      fontWeight: active ? 700 : 400,
+                      bgcolor: active ? '#FF9F6B' : 'transparent',
+                      color: active ? 'white' : 'text.secondary',
+                      border: '1px solid',
+                      borderColor: active ? '#FF9F6B' : 'divider',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
+                    }}
+                  />
+                );
+              })}
+            </Stack>
+          )}
         </Stack>
 
         {/* DataGrid */}
