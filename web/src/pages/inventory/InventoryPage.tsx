@@ -238,7 +238,7 @@ export default function InventoryPage() {
             สต็อกปัจจุบันและการพยากรณ์จากอัตราการใช้
           </Typography>
         </Box>
-        {isAdminOrSuperadmin && (
+        {isSuperadmin && (
           <Button
             variant="contained"
             startIcon={<StorefrontIcon />}
@@ -327,7 +327,7 @@ export default function InventoryPage() {
             ยังไม่มีสถานบริการ
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isAdminOrSuperadmin
+            {isSuperadmin
               ? 'กดปุ่ม "จัดการสถานบริการ" ด้านบนเพื่อเพิ่มสถานบริการใหม่'
               : 'ติดต่อผู้ดูแลระบบเพื่อเพิ่มสถานบริการ'}
           </Typography>
