@@ -1277,6 +1277,25 @@ CREATE POLICY "public_read_app_versions"
   USING (true);
 
 
+CREATE TABLE public.web_changelogs (
+  id           serial      PRIMARY KEY,
+  version      text        NOT NULL,
+  build_number int         NOT NULL,
+  branch       text        NOT NULL,
+  release_date date        NOT NULL,
+  additions    text[]      NOT NULL DEFAULT '{}',
+  fixes        text[]      NOT NULL DEFAULT '{}',
+  improvements text[]      NOT NULL DEFAULT '{}',
+  others       text[]      NOT NULL DEFAULT '{}',
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+
+ALTER TABLE public.web_changelogs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "authenticated can read web_changelogs"
+  ON public.web_changelogs FOR SELECT TO authenticated USING (true);
+
+
 -- ── Cascade delete trigger on auth.users ───────────────────
 CREATE TRIGGER on_auth_user_deleted
   BEFORE DELETE ON auth.users
@@ -1804,6 +1823,31 @@ $$;
 
 
 -- ── App version RPC ─────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.get_latest_web_changelog(
+  p_branch text DEFAULT 'main'
+) RETURNS TABLE(
+  id           int,
+  version      text,
+  build_number int,
+  branch       text,
+  release_date date,
+  additions    text[],
+  fixes        text[],
+  improvements text[],
+  others       text[]
+)
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+  SELECT id, version, build_number, branch, release_date,
+         additions, fixes, improvements, others
+  FROM web_changelogs
+  WHERE branch = p_branch
+  ORDER BY created_at DESC LIMIT 1;
+$$;
+
+
 CREATE OR REPLACE FUNCTION public.get_latest_app_version(
   p_branch text DEFAULT 'main'
 ) RETURNS TABLE(
@@ -2432,6 +2476,7 @@ GRANT EXECUTE ON FUNCTION public.delete_own_account()        TO authenticated;
 -- Public article + version RPCs (accessible to unauthenticated app users)
 GRANT EXECUTE ON FUNCTION public.get_published_articles(integer, integer) TO anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.get_article_detail(uuid)                 TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.get_latest_web_changelog(text)           TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_latest_app_version(text)             TO anon, authenticated;
 
 -- Analytics — staff/admin only (require authenticated session)
