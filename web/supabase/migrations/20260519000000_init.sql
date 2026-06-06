@@ -2180,7 +2180,8 @@ CREATE OR REPLACE FUNCTION public.get_request_status_log(
   p_date_from        timestamptz DEFAULT NULL,
   p_date_to          timestamptz DEFAULT NULL,
   p_limit            integer     DEFAULT 50,
-  p_offset           integer     DEFAULT 0
+  p_offset           integer     DEFAULT 0,
+  p_service_center   text        DEFAULT NULL
 ) RETURNS TABLE(
   id               uuid,
   request_id       uuid,
@@ -2220,7 +2221,8 @@ BEGIN
     AND (p_reference_number IS NULL OR cr.reference_number ILIKE '%' || p_reference_number || '%')
     AND (p_date_from        IS NULL OR rsl.changed_at             >= p_date_from)
     AND (p_date_to          IS NULL OR rsl.changed_at             <= p_date_to)
-    AND (v_my_scs IS NULL OR cr.selected_service_center = ANY(v_my_scs))
+    AND (v_my_scs           IS NULL OR cr.selected_service_center  = ANY(v_my_scs))
+    AND (p_service_center   IS NULL OR cr.selected_service_center  = p_service_center)
   ORDER BY rsl.changed_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2234,7 +2236,8 @@ CREATE OR REPLACE FUNCTION public.get_appointment_status_log(
   p_date_from        timestamptz DEFAULT NULL,
   p_date_to          timestamptz DEFAULT NULL,
   p_limit            integer     DEFAULT 50,
-  p_offset           integer     DEFAULT 0
+  p_offset           integer     DEFAULT 0,
+  p_service_center   text        DEFAULT NULL
 ) RETURNS TABLE(
   id               uuid,
   appointment_id   uuid,
@@ -2268,13 +2271,14 @@ BEGIN
   LEFT JOIN staff_profiles      sp ON sp.staff_user_id = asl.changed_by
   LEFT JOIN user_profiles       up ON up.user_id        = asl.changed_by
   LEFT JOIN doctor_appointments da ON da.id              = asl.appointment_id
-  WHERE (p_performed_by     IS NULL OR asl.changed_by           = p_performed_by)
-    AND (p_from_status      IS NULL OR asl.from_status::text    = p_from_status)
-    AND (p_to_status        IS NULL OR asl.to_status::text      = p_to_status)
+  WHERE (p_performed_by     IS NULL OR asl.changed_by              = p_performed_by)
+    AND (p_from_status      IS NULL OR asl.from_status::text       = p_from_status)
+    AND (p_to_status        IS NULL OR asl.to_status::text         = p_to_status)
     AND (p_reference_number IS NULL OR da.reference_number ILIKE '%' || p_reference_number || '%')
-    AND (p_date_from        IS NULL OR asl.changed_at           >= p_date_from)
-    AND (p_date_to          IS NULL OR asl.changed_at           <= p_date_to)
-    AND (v_my_scs IS NULL OR da.selected_service_center = ANY(v_my_scs))
+    AND (p_date_from        IS NULL OR asl.changed_at             >= p_date_from)
+    AND (p_date_to          IS NULL OR asl.changed_at             <= p_date_to)
+    AND (v_my_scs           IS NULL OR da.selected_service_center  = ANY(v_my_scs))
+    AND (p_service_center   IS NULL OR da.selected_service_center  = p_service_center)
   ORDER BY asl.changed_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2324,13 +2328,14 @@ END;
 $$;
 
 CREATE OR REPLACE FUNCTION public.get_staff_change_log(
-  p_performed_by uuid        DEFAULT NULL,
-  p_action       text        DEFAULT NULL,
-  p_target_id    text        DEFAULT NULL,
-  p_date_from    timestamptz DEFAULT NULL,
-  p_date_to      timestamptz DEFAULT NULL,
-  p_limit        integer     DEFAULT 50,
-  p_offset       integer     DEFAULT 0
+  p_performed_by   uuid        DEFAULT NULL,
+  p_action         text        DEFAULT NULL,
+  p_target_id      text        DEFAULT NULL,
+  p_date_from      timestamptz DEFAULT NULL,
+  p_date_to        timestamptz DEFAULT NULL,
+  p_limit          integer     DEFAULT 50,
+  p_offset         integer     DEFAULT 0,
+  p_service_center text        DEFAULT NULL
 ) RETURNS TABLE(
   id                   uuid,
   performed_by         uuid,
@@ -2366,19 +2371,20 @@ BEGIN
   FROM public.staff_change_logs al
   LEFT JOIN staff_profiles sp  ON sp.staff_user_id = al.performed_by
   LEFT JOIN staff_profiles tsp ON tsp.id = al.target_id
-  WHERE (p_performed_by IS NULL OR al.performed_by = p_performed_by)
-    AND (p_action       IS NULL OR al.action::text = p_action)
-    AND (p_target_id    IS NULL OR (
-      COALESCE(al.target_staff_user_id, tsp.staff_user_id)::text ILIKE '%' || p_target_id || '%'
-      OR COALESCE(
-           al.target_name,
-           tsp.first_name || ' ' || tsp.last_name,
-           NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
-           NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
-         ) ILIKE '%' || p_target_id || '%'
-    ))
-    AND (p_date_from IS NULL OR al.created_at >= p_date_from)
-    AND (p_date_to   IS NULL OR al.created_at <= p_date_to)
+  WHERE (p_performed_by   IS NULL OR al.performed_by = p_performed_by)
+    AND (p_action         IS NULL OR al.action::text = p_action)
+    AND (p_target_id      IS NULL OR (
+          COALESCE(al.target_staff_user_id, tsp.staff_user_id)::text ILIKE '%' || p_target_id || '%'
+          OR COALESCE(
+               al.target_name,
+               tsp.first_name || ' ' || tsp.last_name,
+               NULLIF(TRIM(COALESCE(al.new_value->>'first_name', '') || ' ' || COALESCE(al.new_value->>'last_name', '')), ' '),
+               NULLIF(TRIM(COALESCE(al.old_value->>'first_name', '') || ' ' || COALESCE(al.old_value->>'last_name', '')), ' ')
+             ) ILIKE '%' || p_target_id || '%'
+        ))
+    AND (p_date_from      IS NULL OR al.created_at >= p_date_from)
+    AND (p_date_to        IS NULL OR al.created_at <= p_date_to)
+    AND (p_service_center IS NULL OR p_service_center = ANY(tsp.service_centers))
   ORDER BY al.created_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -2451,10 +2457,10 @@ GRANT EXECUTE ON FUNCTION public.create_condom_request(uuid, jsonb, integer, tex
 GRANT EXECUTE ON FUNCTION public.create_doctor_appointment(uuid, text, text, date, text, text)        TO authenticated;
 
 -- Log query RPCs
-GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer)     TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_appointment_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_inventory_log(text, text, timestamptz, timestamptz, integer, integer)                      TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestamptz, timestamptz, integer, integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text)     TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_appointment_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_inventory_log(text, text, timestamptz, timestamptz, integer, integer)                            TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestamptz, timestamptz, integer, integer, text)             TO authenticated;
 
 GRANT EXECUTE ON FUNCTION public.get_my_service_centers()                                         TO authenticated;
 
