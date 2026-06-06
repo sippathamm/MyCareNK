@@ -110,6 +110,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
 
+  // Request browser Notification permission once if not yet decided
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
   // Resume AudioContext on any user interaction (bypass browser autoplay policy)
   useEffect(() => {
     const resume = () => {
@@ -192,13 +199,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           const isAppointment = row.source_type === 'doctor_appointment';
           const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
+          const message = buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
           setToastAppointmentEventType(aptEventType);
           setToastEventType(isAppointment ? null : row.event_type as RequestStatus);
-          setToastMessage(buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType));
+          setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
+          if ('Notification' in window && document.hidden && Notification.permission === 'granted') {
+            new Notification('MyCareNK — แจ้งเตือนใหม่', { body: message, icon: '/favicon.png', tag: row.id });
+          }
         }
       )
       .subscribe();

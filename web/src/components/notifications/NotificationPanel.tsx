@@ -42,7 +42,7 @@ function formatRelativeTime(dateStr: string): string {
 }
 
 function StatusDot({ item }: { item: NotificationItem }) {
-  const color = item.is_read ? (getNotifConfig(item)?.color ?? '#9E9E9E') : '#FF9F6B';
+  const color = item.is_read ? (getNotifConfig(item)?.color ?? '#9E9E9E') : '#F44336';
   return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.4 }} />;
 }
 
@@ -116,7 +116,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                       py: 1.5,
                       alignItems: 'flex-start',
                       gap: 1.5,
-                      backgroundColor: item.is_read ? 'transparent' : '#FFF0E6',
+                      borderLeft: item.is_read ? '3px solid transparent' : '3px solid #F44336',
                       '&:hover': { filter: 'brightness(0.96)' },
                     }}
                   >
@@ -135,7 +135,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                           {cfg.label}
                         </Typography>
                         {!item.is_read && (
-                          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#FF9F6B', flexShrink: 0 }} />
+                          <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
                         )}
                       </Box>
                       <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>

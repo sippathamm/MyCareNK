@@ -193,7 +193,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             >
               <Badge
                 badgeContent={unreadCount > 0 ? unreadCount : undefined}
-                sx={{ '& .MuiBadge-badge': { bgcolor: '#FFCDD2', color: '#C62828' } }}
+                color="error"
               >
                 <NotificationsIcon />
               </Badge>
