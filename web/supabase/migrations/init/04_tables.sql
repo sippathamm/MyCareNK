@@ -277,9 +277,8 @@ CREATE POLICY "staff_notifications_select"
 CREATE POLICY "staff_notifications_delete"
   ON public.staff_notifications FOR DELETE TO authenticated
   USING (
-    is_superadmin()
-    OR (is_admin() AND service_center = ANY(get_my_service_centers()))
-    OR service_center = ANY(get_my_service_centers())
+    is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
+    AND service_center = ANY(get_my_service_centers())
   );
 
 
@@ -304,7 +303,27 @@ CREATE POLICY "Allow staff to manage their reads"
   WITH CHECK (staff_user_id = (SELECT auth.uid()));
 
 
--- ── 10. user_notifications ─────────────────────────────────
+-- ── 10. staff_notification_hidden ──────────────────────────
+CREATE TABLE public.staff_notification_hidden (
+  notification_id uuid        NOT NULL,
+  staff_user_id   uuid        NOT NULL,
+  hidden_at       timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT staff_notification_hidden_pkey PRIMARY KEY (notification_id, staff_user_id),
+  CONSTRAINT fk_notification FOREIGN KEY (notification_id)
+    REFERENCES public.staff_notifications(id) ON DELETE CASCADE,
+  CONSTRAINT fk_staff FOREIGN KEY (staff_user_id)
+    REFERENCES auth.users(id) ON DELETE CASCADE
+);
+
+ALTER TABLE public.staff_notification_hidden ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "staff manage own hidden"
+  ON public.staff_notification_hidden TO authenticated
+  USING (staff_user_id = (SELECT auth.uid()))
+  WITH CHECK (staff_user_id = (SELECT auth.uid()));
+
+
+-- ── 11. user_notifications ─────────────────────────────────
 CREATE TABLE public.user_notifications (
   id               uuid        NOT NULL DEFAULT gen_random_uuid(),
   user_id          uuid        NOT NULL,

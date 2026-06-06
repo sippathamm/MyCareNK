@@ -124,7 +124,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Initial load: fetch notifications + read state from DB
+  // Initial load: fetch notifications + read state + hidden state from DB
   // RLS handles filtering automatically:
   //   staff       → service_center=own SC
   //   admin/super → all rows at own SC / everything
@@ -134,9 +134,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     (async () => {
-      const [{ data: readsData }, { data: notifData }] = await Promise.all([
+      const [{ data: readsData }, { data: hiddenData }, { data: notifData }] = await Promise.all([
         supabase
           .from('staff_notification_reads')
+          .select('notification_id')
+          .eq('staff_user_id', userId),
+        supabase
+          .from('staff_notification_hidden')
           .select('notification_id')
           .eq('staff_user_id', userId),
         supabase
@@ -149,8 +153,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
 
       const ids = new Set<string>((readsData ?? []).map(r => r.notification_id));
+      const hiddenIds = new Set<string>((hiddenData ?? []).map(r => r.notification_id));
       setReadIds(ids);
-      setNotifications((notifData ?? []).map(r => ({ ...r, is_read: ids.has(r.id) })));
+      setNotifications(
+        (notifData ?? [])
+          .filter(r => !hiddenIds.has(r.id))
+          .map(r => ({ ...r, is_read: ids.has(r.id) }))
+      );
     })();
 
     return () => { cancelled = true; };
@@ -197,20 +206,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, role, serviceCenters, isSuperadmin, roleLoading]);
 
-  // Realtime: notification deleted (sync across devices)
+  // Realtime: soft-delete hidden row inserted on another device → hide locally
   useEffect(() => {
     if (!userId) return;
 
     const channel = supabase
-      .channel('notification-deletes')
+      .channel('notification-hidden-sync')
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'staff_notifications' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'staff_notification_hidden',
+          filter: `staff_user_id=eq.${userId}`,
+        },
         (payload) => {
-          const deletedId = (payload.old as { id?: string }).id;
-          if (!deletedId) return;
-          setNotifications(prev => prev.filter(n => n.id !== deletedId));
-          setReadIds(prev => { const next = new Set(prev); next.delete(deletedId); return next; });
+          const { notification_id } = payload.new as { notification_id: string };
+          setNotifications(prev => prev.filter(n => n.id !== notification_id));
+          setReadIds(prev => { const next = new Set(prev); next.delete(notification_id); return next; });
         }
       )
       .subscribe();
@@ -287,12 +300,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteNotification = useCallback(async (id: string) => {
+    if (!userId) return;
     // Optimistic update
     setNotifications(prev => prev.filter(n => n.id !== id));
     setReadIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-    // Delete from DB (cascade deletes staff_notification_reads rows too)
-    await supabase.from('staff_notifications').delete().eq('id', id);
-  }, []);
+    // Soft delete: insert into staff_notification_hidden (per-user isolation)
+    await supabase.from('staff_notification_hidden').upsert(
+      { notification_id: id, staff_user_id: userId },
+      { onConflict: 'notification_id,staff_user_id' }
+    );
+  }, [userId]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
