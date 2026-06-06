@@ -10,6 +10,7 @@ import StorefrontIcon from '@mui/icons-material/Storefront';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import HomeIcon from '@mui/icons-material/Home';
+import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import { useServiceCenters, type ServiceCenterRow } from '../../hooks/useServiceCenters';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { supabase } from '../../lib/supabase';
@@ -108,6 +109,14 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
             )}
           </Box>
         )}
+
+        {/* Staff counts */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+          <PeopleOutlineIcon sx={{ fontSize: 13, color: 'text.disabled', flexShrink: 0 }} />
+          <Typography variant="caption" color="text.secondary">
+            เจ้าหน้าที่ {center.staff_count} · ผู้ดูแล {center.admin_count}
+          </Typography>
+        </Box>
 
         <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
           {/* Location chip */}

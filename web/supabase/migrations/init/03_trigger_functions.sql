@@ -396,4 +396,28 @@ BEGIN
 END;
 $$;
 
+-- ── staff_profiles ──────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.refresh_service_center_staff_counts()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  UPDATE public.service_centers sc SET
+    staff_count = (
+      SELECT COUNT(*) FROM public.staff_profiles sp
+      WHERE sp.role = 'staff' AND sp.service_centers @> ARRAY[sc.name]
+    ),
+    admin_count = (
+      SELECT COUNT(*) FROM public.staff_profiles sp
+      WHERE sp.role = 'admin' AND sp.service_centers @> ARRAY[sc.name]
+    ),
+    superadmin_count = (
+      SELECT COUNT(*) FROM public.staff_profiles WHERE role = 'superadmin'
+    );
+  RETURN NULL;
+END;
+$$;
+
 

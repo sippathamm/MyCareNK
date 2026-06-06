@@ -38,6 +38,9 @@ CREATE TABLE public.service_centers (
   appointment_service_enabled boolean     NOT NULL DEFAULT false,
   pickup_times                text[]      NOT NULL DEFAULT '{08:00}',
   appointment_times           text[]      NOT NULL DEFAULT '{08:00}',
+  staff_count                 int         NOT NULL DEFAULT 0,
+  admin_count                 int         NOT NULL DEFAULT 0,
+  superadmin_count            int         NOT NULL DEFAULT 0,
   CONSTRAINT service_centers_pkey PRIMARY KEY (name)
 );
 
@@ -205,6 +208,10 @@ CREATE POLICY "Staff can view all staff profiles"
 CREATE TRIGGER protect_role_update
   BEFORE UPDATE ON public.staff_profiles
   FOR EACH ROW EXECUTE FUNCTION protect_staff_role_column();
+
+CREATE TRIGGER update_staff_counts_on_profile_change
+  AFTER INSERT OR UPDATE OR DELETE ON public.staff_profiles
+  FOR EACH STATEMENT EXECUTE FUNCTION refresh_service_center_staff_counts();
 
 
 -- ── 7. staff_change_logs ────────────────────────────────────

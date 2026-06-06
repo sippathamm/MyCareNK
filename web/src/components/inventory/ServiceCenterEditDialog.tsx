@@ -379,6 +379,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const lng = parseFloat(longitude.trim());
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
   const canDelete = center !== null && !center.is_active;
+  const hasAssignedStaff = center !== null && (center.staff_count + center.admin_count) > 0;
   const currentEnabled = scheduleTab === 'condom' ? condomEnabled : appointmentEnabled;
   const isInvalidTime = (t: string): boolean => {
     if (!TIME_REGEX.test(t)) return false;
@@ -729,7 +730,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
                   variant="contained"
                   color="error"
                   startIcon={<DeleteIcon />}
-                  onClick={() => setConfirmDeleteOpen(true)}
+                  onClick={() => hasAssignedStaff ? setStaffBlockDialog(true) : setConfirmDeleteOpen(true)}
                   disabled={!canDelete || saving || deleting}
                 >
                   ลบ
@@ -792,7 +793,11 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       <Divider />
       <DialogContent sx={{ pt: 2.5 }}>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-          ไม่สามารถลบสถานบริการ <strong>{center?.name}</strong> ได้ เนื่องจากยังมีบัญชีเจ้าหน้าที่ที่ผูกกับสถานบริการนี้อยู่
+          ไม่สามารถลบสถานบริการ <strong>{center?.name}</strong> ได้ เนื่องจากยังมี
+          {center && center.staff_count > 0 && <> เจ้าหน้าที่ <strong>{center.staff_count} คน</strong></>}
+          {center && center.staff_count > 0 && center.admin_count > 0 && ' และ'}
+          {center && center.admin_count > 0 && <> ผู้ดูแล <strong>{center.admin_count} คน</strong></>}
+          {' '}ผูกกับสถานบริการนี้อยู่
         </Typography>
         <Typography variant="body2" color="text.secondary">
           กรุณาไปที่หน้า <strong>จัดการเจ้าหน้าที่</strong> และย้ายหรือลบเจ้าหน้าที่ทุกคนออกจากสถานบริการนี้ก่อน จึงจะสามารถลบได้

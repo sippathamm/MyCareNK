@@ -16,6 +16,9 @@ export interface ServiceCenterRow {
   appointment_service_enabled: boolean;
   pickup_times: string[];
   appointment_times: string[];
+  staff_count: number;
+  admin_count: number;
+  superadmin_count: number;
 }
 
 export function useServiceCenters(enabled = true) {
