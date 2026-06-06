@@ -198,21 +198,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
-DECLARE
-  v_metadata jsonb := '{}';
-  v_name     text;
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.request_status IS DISTINCT FROM NEW.request_status THEN
-    IF NEW.request_status = 'preparing' AND NEW.handled_by IS NOT NULL THEN
-      SELECT CONCAT(first_name, ' ', last_name)
-        INTO v_name
-        FROM staff_profiles
-       WHERE staff_user_id = NEW.handled_by;
-      IF v_name IS NOT NULL THEN
-        v_metadata := jsonb_build_object('handled_by_name', v_name);
-      END IF;
-    END IF;
-
     INSERT INTO staff_notifications
       (source_type, source_id, reference_number, event_type, service_center, notify_staff, metadata)
     VALUES (
@@ -221,8 +208,8 @@ BEGIN
       NEW.reference_number,
       NEW.request_status::text,
       NEW.selected_service_center,
-      NEW.request_status IN ('pending', 'preparing', 'completed'),
-      v_metadata
+      true,
+      '{}'
     );
   END IF;
   RETURN NEW;
@@ -298,21 +285,8 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
-DECLARE
-  v_metadata jsonb := '{}';
-  v_name     text;
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    IF NEW.appointment_status = 'confirmed' AND NEW.handled_by IS NOT NULL THEN
-      SELECT CONCAT(first_name, ' ', last_name)
-        INTO v_name
-        FROM staff_profiles
-       WHERE staff_user_id = NEW.handled_by;
-      IF v_name IS NOT NULL THEN
-        v_metadata := jsonb_build_object('handled_by_name', v_name);
-      END IF;
-    END IF;
-
     INSERT INTO staff_notifications
       (source_type, source_id, reference_number, event_type, service_center, notify_staff, metadata)
     VALUES (
@@ -321,8 +295,8 @@ BEGIN
       NEW.reference_number,
       NEW.appointment_status::text,
       NEW.selected_service_center,
-      NEW.appointment_status IN ('pending', 'confirmed', 'completed'),
-      v_metadata
+      true,
+      '{}'
     );
   END IF;
   RETURN NEW;
