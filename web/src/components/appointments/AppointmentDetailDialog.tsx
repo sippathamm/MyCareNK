@@ -29,6 +29,7 @@ export interface AppointmentData {
   appointment_status: Enums<'appointment_status'>;
   cancel_reason: string | null;
   handled_by: string | null;
+  handled_by_name: string | null;
   created_at: string;
   updated_at: string;
   phone_number: string | null;
@@ -140,6 +141,12 @@ export default function AppointmentDetailDialog({
                   <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
                   <StatusChip status={appointment.appointment_status} />
                 </Box>
+                {appointment.handled_by_name && (
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="subtitle2" color="text.secondary">ดำเนินการโดย</Typography>
+                    <Typography variant="body1">{appointment.handled_by_name}</Typography>
+                  </Box>
+                )}
 
                 <Divider sx={{ my: 1 }} />
 

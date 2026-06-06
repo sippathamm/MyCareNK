@@ -69,6 +69,9 @@ BEGIN
   IF NEW.request_status = 'preparing' AND OLD.handled_by IS NULL THEN
     NEW.handled_by = auth.uid();
   END IF;
+  IF NEW.request_status = 'cancelled_by_staff' THEN
+    NEW.handled_by = auth.uid();
+  END IF;
   IF NEW.request_status IN ('completed', 'cancelled_by_user', 'cancelled_by_staff') THEN
     NEW.completed_at = now();
   END IF;
@@ -201,14 +204,14 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.request_status IS DISTINCT FROM NEW.request_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, notify_staff)
+      (source_type, source_id, reference_number, event_type, service_center, metadata)
     VALUES (
       'condom_request',
       NEW.id,
       NEW.reference_number,
       NEW.request_status::text,
       NEW.selected_service_center,
-      NEW.request_status = 'pending'
+      '{}'
     );
   END IF;
   RETURN NEW;
@@ -287,14 +290,14 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, notify_staff)
+      (source_type, source_id, reference_number, event_type, service_center, metadata)
     VALUES (
       'doctor_appointment',
       NEW.id,
       NEW.reference_number,
       NEW.appointment_status::text,
       NEW.selected_service_center,
-      NEW.appointment_status = 'pending'
+      '{}'
     );
   END IF;
   RETURN NEW;
@@ -393,6 +396,25 @@ BEGIN
   DELETE FROM public.user_profiles WHERE user_id = OLD.id;
 
   RETURN OLD;
+END;
+$$;
+
+-- ── doctor_appointments ─────────────────────────────────────
+-- Mirrors set_handled_by_and_completed_at for appointments:
+-- sets handled_by = auth.uid() on first pending→confirmed transition.
+CREATE OR REPLACE FUNCTION public.set_appointment_handled_by()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.appointment_status = 'confirmed' AND OLD.handled_by IS NULL THEN
+    NEW.handled_by = auth.uid();
+  END IF;
+  IF NEW.appointment_status = 'cancelled_by_staff' THEN
+    NEW.handled_by = auth.uid();
+  END IF;
+  RETURN NEW;
 END;
 $$;
 

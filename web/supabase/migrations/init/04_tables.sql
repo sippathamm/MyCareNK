@@ -260,37 +260,26 @@ CREATE TABLE public.staff_notifications (
   source_id        uuid        NOT NULL,
   metadata         jsonb       NOT NULL DEFAULT '{}',
   service_center   text,
-  notify_staff     boolean     NOT NULL DEFAULT false,
   CONSTRAINT staff_notifications_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
--- staff: see only notify_staff=true at own SC; admin: own SCs; superadmin: everything
+-- staff: own SC; admin: all at own SC; superadmin: everything
 CREATE POLICY "staff_notifications_select"
   ON public.staff_notifications FOR SELECT TO authenticated
   USING (
     is_superadmin()
-    OR (
-      notify_staff = true
-      AND (
-        SELECT service_center = ANY(get_my_service_centers())
-           OR get_my_service_centers() IS NULL
-      )
-    )
+    OR (is_admin() AND service_center = ANY(get_my_service_centers()))
+    OR service_center = ANY(get_my_service_centers())
   );
 
 CREATE POLICY "staff_notifications_delete"
   ON public.staff_notifications FOR DELETE TO authenticated
   USING (
     is_superadmin()
-    OR (
-      notify_staff = true
-      AND (
-        SELECT service_center = ANY(get_my_service_centers())
-           OR get_my_service_centers() IS NULL
-      )
-    )
+    OR (is_admin() AND service_center = ANY(get_my_service_centers()))
+    OR service_center = ANY(get_my_service_centers())
   );
 
 
@@ -668,6 +657,10 @@ CREATE POLICY "doctor_appointments_update"
 CREATE TRIGGER update_doctor_appointments_updated_at
   BEFORE UPDATE ON public.doctor_appointments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER set_appointment_handled_by
+  BEFORE UPDATE OF appointment_status ON public.doctor_appointments
+  FOR EACH ROW EXECUTE FUNCTION set_appointment_handled_by();
 
 CREATE TRIGGER track_appointment_status
   AFTER UPDATE OF appointment_status ON public.doctor_appointments
