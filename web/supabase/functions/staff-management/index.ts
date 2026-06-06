@@ -387,6 +387,19 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }));
     }
 
+    if (hasActualServiceCentersChange && profileBefore.data) {
+      auditTasks.push(serviceClient.rpc('write_staff_change_log', {
+        p_performed_by:         user.id,
+        p_action:               'staff_profile_updated',
+        p_target_table:         'staff_profiles',
+        p_target_id:            profileBefore.data.id,
+        p_old_value:            { service_centers: oldServiceCenters },
+        p_new_value:            { service_centers },
+        p_target_staff_user_id: user_id,
+        p_target_name:          targetName,
+      }));
+    }
+
     if (auditTasks.length > 0) {
       await Promise.all(auditTasks);
     }
