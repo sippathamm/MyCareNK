@@ -18,6 +18,7 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useAuth } from '../../hooks/useAuth';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 import type { Enums } from '../../lib/database.types';
@@ -490,10 +491,14 @@ export default function StaffManagementPage() {
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
   const { centers } = useServiceCenters();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   // Admin can only assign staff to their own SCs; superadmin can use all centers
   const centerNames = isSuperadmin
     ? centers.map(c => c.name)
     : centers.filter(c => serviceCenters.includes(c.name)).map(c => c.name);
+  const filteredStaff = selectedServiceCenter === null
+    ? staff
+    : staff.filter(s => s.service_centers.includes(selectedServiceCenter));
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
 
@@ -594,7 +599,7 @@ export default function StaffManagementPage() {
       <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
         <Box sx={{ height: 500, width: '100%' }}>
           <DataGrid
-            rows={staff}
+            rows={filteredStaff}
             getRowId={(row) => row.staff_user_id}
             columns={columns}
             loading={loading}

@@ -182,6 +182,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
                       {role ? ROLE_LABELS[role] ?? role : ''}
                     </Typography>
                     {chipCenters.length > 0 && (
+                      <Typography variant="caption" color="text.secondary">|</Typography>
+                    )}
+                    {chipCenters.length > 0 && (
                       hasDropdown ? (
                         <Chip
                           label={selectedServiceCenter ?? 'ทั้งหมด'}

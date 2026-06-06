@@ -19,6 +19,7 @@ export interface AppointmentStatusLogFilters {
   referenceNumber: string | null;
   dateFrom:        string | null;
   dateTo:          string | null;
+  serviceCenter:   string | null;
 }
 
 function parseError(e: unknown): string {
@@ -51,10 +52,11 @@ export function useAppointmentStatusLog(
         p_from_status:      filters.fromStatus      ?? undefined,
         p_to_status:        filters.toStatus        ?? undefined,
         p_reference_number: filters.referenceNumber ?? undefined,
-        p_date_from:        filters.dateFrom ? new Date(filters.dateFrom).toISOString() : undefined,
-        p_date_to:          dateTo ?? undefined,
+        p_date_from:        filters.dateFrom        ? new Date(filters.dateFrom).toISOString() : undefined,
+        p_date_to:          dateTo                  ?? undefined,
         p_limit:            pageSize,
         p_offset:           page * pageSize,
+        p_service_center:   filters.serviceCenter   ?? undefined,
       });
 
       if (rpcError) throw rpcError;

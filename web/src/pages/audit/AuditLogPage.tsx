@@ -129,6 +129,7 @@ function InventoryQtyChip({ value }: { value: unknown }) {
 
 function AuditLogTab() {
   const { role } = useRoleAccess();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
@@ -144,12 +145,13 @@ function AuditLogTab() {
   const resetPage = useCallback(() => setPage(0), []);
 
   const filters = useMemo<StaffAuditLogFilters>(() => ({
-    performedBy: null,
-    action:      (actionFilter as AuditAction) || null,
-    targetId:    targetIdFilter.trim() || null,
-    dateFrom:    dateFrom  || null,
-    dateTo:      dateTo    || null,
-  }), [actionFilter, targetIdFilter, dateFrom, dateTo]);
+    performedBy:   null,
+    action:        (actionFilter as AuditAction) || null,
+    targetId:      targetIdFilter.trim() || null,
+    dateFrom:      dateFrom  || null,
+    dateTo:        dateTo    || null,
+    serviceCenter: selectedServiceCenter,
+  }), [actionFilter, targetIdFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useStaffAuditLog(filters, page, pageSize);
 
@@ -228,6 +230,7 @@ function AuditLogTab() {
 // ─── Tab 2: Request Status Log ────────────────────────────────────────────────
 
 function RequestStatusLogTab() {
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [fromStatus, setFromStatus] = useState('');
@@ -245,7 +248,8 @@ function RequestStatusLogTab() {
     referenceNumber: refNumFilter.trim() || null,
     dateFrom:        dateFrom   || null,
     dateTo:          dateTo     || null,
-  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
+    serviceCenter:   selectedServiceCenter,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useRequestStatusLog(filters, page, pageSize);
 
@@ -343,6 +347,7 @@ const APPOINTMENT_STATUS_OPTIONS = [
 ];
 
 function AppointmentStatusLogTab() {
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [fromStatus, setFromStatus] = useState('');
@@ -360,7 +365,8 @@ function AppointmentStatusLogTab() {
     referenceNumber: refNumFilter.trim() || null,
     dateFrom:        dateFrom   || null,
     dateTo:          dateTo     || null,
-  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
+    serviceCenter:   selectedServiceCenter,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useAppointmentStatusLog(filters, page, pageSize);
 
