@@ -81,13 +81,6 @@ export default function ArticlesPage() {
   const [filter, setFilter] = useState<FilterValue>('all');
   const [titleSearch, setTitleSearch] = useState('');
 
-  if (roleLoading) return null;
-  if (role === 'staff') return <Navigate to="/dashboard" replace />;
-
-  const canManage = role === 'admin' || role === 'superadmin';
-
-  // ─── Filter ───────────────────────────────────────────────────────────────
-
   const filtered = useMemo(() => {
     let result = articles;
     if (filter !== 'all') result = result.filter(a => a.status === filter);
@@ -104,6 +97,11 @@ export default function ArticlesPage() {
     draft: articles.filter(a => a.status === 'draft').length,
     hidden: articles.filter(a => a.status === 'hidden').length,
   }), [articles]);
+
+  if (roleLoading) return null;
+  if (role === 'staff') return <Navigate to="/dashboard" replace />;
+
+  const canManage = role === 'admin' || role === 'superadmin';
 
   // ─── Columns ──────────────────────────────────────────────────────────────
 
