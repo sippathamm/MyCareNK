@@ -1,9 +1,10 @@
-import { useRef, useState, useEffect, type ReactNode } from 'react';
+import { useRef, useState, useEffect, useMemo, type ReactNode } from 'react';
 import {
   Box, Typography, Button, Avatar, Drawer, List, ListItem, ListItemButton,
   ListItemIcon, ListItemText, AppBar, Toolbar, Divider, CircularProgress,
   IconButton, Badge, Snackbar, Alert, Tooltip, Tab, Tabs,
   Dialog, DialogTitle, DialogContent, DialogActions,
+  Chip, Menu, MenuItem,
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -21,13 +22,16 @@ import ArticleIcon from '@mui/icons-material/Article';
 import SystemUpdateAltIcon from '@mui/icons-material/SystemUpdateAlt';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import DownloadIcon from '@mui/icons-material/Download';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import { QRCodeSVG } from 'qrcode.react';
 
 const APP_RELEASES_URL = 'https://github.com/sippathamm/MyCareNK/releases';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
+import { ServiceCenterFilterContext } from '../../contexts/ServiceCenterFilterContext';
 import NotificationPanel from '../notifications/NotificationPanel';
 
 const DRAWER_OPEN_WIDTH = 260;
@@ -52,6 +56,18 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const toastCfg = toastIsAppointment
     ? APPOINTMENT_STATUS_CONFIG[(toastAppointmentEventType ?? 'pending') as AppointmentEventType]
     : (toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null);
+
+  const { centers: allCenters } = useServiceCenters(isSuperadmin ?? false);
+  const chipCenters: string[] = isSuperadmin ? allCenters.map(c => c.name) : serviceCenters;
+  const hasDropdown = chipCenters.length > 1;
+
+  const [selectedServiceCenter, setSelectedServiceCenter] = useState<string | null>(null);
+  const [anchorElSC, setAnchorElSC] = useState<HTMLElement | null>(null);
+
+  const filterContextValue = useMemo(
+    () => ({ selectedServiceCenter }),
+    [selectedServiceCenter],
+  );
 
   const bellRef = useRef<HTMLButtonElement>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
@@ -114,6 +130,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }
 
   return (
+    <ServiceCenterFilterContext.Provider value={filterContextValue}>
     <Box sx={{ display: 'flex' }}>
       {/* App Bar */}
       <AppBar
@@ -160,9 +177,33 @@ export default function MainLayout({ children }: MainLayoutProps) {
                   <Typography variant="body2" fontWeight="bold">
                     {profile.first_name} {profile.last_name}
                   </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {role ? ROLE_LABELS[role] ?? role : ''}{isSuperadmin ? '' : serviceCenters.length > 0 ? ` | ${serviceCenters.join(', ')}` : ''}
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
+                    <Typography variant="caption" color="text.secondary">
+                      {role ? ROLE_LABELS[role] ?? role : ''}
+                    </Typography>
+                    {chipCenters.length > 0 && (
+                      hasDropdown ? (
+                        <Chip
+                          label={selectedServiceCenter ?? 'ทั้งหมด'}
+                          size="small"
+                          onClick={(e) => setAnchorElSC(e.currentTarget)}
+                          onDelete={(e) => setAnchorElSC(e.currentTarget)}
+                          deleteIcon={<ArrowDropDownIcon sx={{ fontSize: '16px !important' }} />}
+                          sx={{
+                            height: 18, fontSize: '0.7rem', cursor: 'pointer',
+                            bgcolor: 'rgba(255,159,107,0.12)', color: 'primary.main',
+                            '& .MuiChip-deleteIcon': { color: 'primary.main' },
+                          }}
+                        />
+                      ) : (
+                        <Chip
+                          label={chipCenters[0]}
+                          size="small"
+                          sx={{ height: 18, fontSize: '0.7rem', bgcolor: 'rgba(255,159,107,0.12)', color: 'primary.main' }}
+                        />
+                      )
+                    )}
+                  </Box>
                 </Box>
                 <Avatar sx={{ bgcolor: 'primary.main' }}>
                   {profile.first_name?.[0]?.toUpperCase() || 'U'}
@@ -396,6 +437,31 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </DialogActions>
       </Dialog>
 
+      {/* SC Dropdown Menu */}
+      <Menu
+        anchorEl={anchorElSC}
+        open={Boolean(anchorElSC)}
+        onClose={() => setAnchorElSC(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+      >
+        <MenuItem
+          selected={selectedServiceCenter === null}
+          onClick={() => { setSelectedServiceCenter(null); setAnchorElSC(null); }}
+        >
+          ทั้งหมด
+        </MenuItem>
+        {chipCenters.map(name => (
+          <MenuItem
+            key={name}
+            selected={selectedServiceCenter === name}
+            onClick={() => { setSelectedServiceCenter(name); setAnchorElSC(null); }}
+          >
+            {name}
+          </MenuItem>
+        ))}
+      </Menu>
+
       {/* Notification Panel (Popover) */}
       <NotificationPanel
         anchorEl={anchorEl}
@@ -425,5 +491,6 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </Alert>
       </Snackbar>
     </Box>
+    </ServiceCenterFilterContext.Provider>
   );
 }

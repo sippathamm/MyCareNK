@@ -7,7 +7,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess, type StaffRole } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
@@ -438,11 +438,10 @@ function AppointmentStatusLogTab() {
 // ─── Tab 4: Inventory Log ─────────────────────────────────────────────────────
 
 function InventoryLogTab() {
-  const { centers } = useServiceCenters();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
-  const [serviceCenterFilter, setServiceCenterFilter] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [detailRow, setDetailRow] = useState<InventoryLogRow | null>(null);
@@ -451,10 +450,10 @@ function InventoryLogTab() {
 
   const filters = useMemo<InventoryLogFilters>(() => ({
     action:        (actionFilter as AuditAction) || null,
-    serviceCenter: serviceCenterFilter || null,
+    serviceCenter: selectedServiceCenter,
     dateFrom:      dateFrom  || null,
     dateTo:        dateTo    || null,
-  }), [actionFilter, serviceCenterFilter, dateFrom, dateTo]);
+  }), [actionFilter, selectedServiceCenter, dateFrom, dateTo]);
 
   const { rows, loading, error } = useInventoryLog(filters, page, pageSize);
 
@@ -505,14 +504,6 @@ function InventoryLogTab() {
             <MenuItem value="">ทั้งหมด</MenuItem>
             {INVENTORY_AUDIT_ACTIONS.map(v => (
               <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
-            ))}
-          </TextField>
-          <TextField label="สถานบริการ" select size="small" value={serviceCenterFilter}
-            onChange={e => { setServiceCenterFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-            <MenuItem value="">ทั้งหมด</MenuItem>
-            {centers.map(c => (
-              <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
             ))}
           </TextField>
         </Stack>

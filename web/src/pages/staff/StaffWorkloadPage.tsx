@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  Box, Typography, Paper, TextField, MenuItem, Stack,
+  Box, Typography, Paper, TextField, Stack,
   Chip, Alert, Switch, FormControlLabel, Divider, IconButton, Tooltip,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -8,7 +8,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
 import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
@@ -46,15 +46,13 @@ const thGridLocale = createThGridLocale('ไม่มีข้อมูลใน
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffWorkloadPage() {
-  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
+  const { role, loading: roleLoading } = useRoleAccess();
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
-  const { centers: allCenters } = useServiceCenters(isAdminOrSuperadmin);
-  const centers = isSuperadmin ? allCenters : allCenters.filter(c => serviceCenters.includes(c.name));
+  const { selectedServiceCenter } = useServiceCenterFilter();
 
   // Main filter
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(getDefaultDateTo);
-  const [serviceCenter, setServiceCenter] = useState<string>('all');
 
   // Comparison
   const [compareEnabled, setCompareEnabled] = useState(false);
@@ -64,10 +62,8 @@ export default function StaffWorkloadPage() {
   // Detail dialog
   const [detailRow, setDetailRow] = useState<EnrichedRow | null>(null);
 
-  const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
-
   const { data, compareData, loading, error } = useStaffWorkload(
-    dateFrom, dateTo, selectedSC,
+    dateFrom, dateTo, selectedServiceCenter,
     compareEnabled ? compareDateFrom : null,
     compareEnabled ? compareDateTo : null,
   );
@@ -202,10 +198,6 @@ export default function StaffWorkloadPage() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom} onChange={e => setDateFrom(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
             <TextField label="ถึงวันที่" type="date" size="small" value={dateTo} onChange={e => setDateTo(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="สถานบริการ" select size="small" value={serviceCenter} onChange={e => setServiceCenter(e.target.value)} sx={{ minWidth: 180 }}>
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              {centers.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
-            </TextField>
             <FormControlLabel
               control={<Switch size="small" checked={compareEnabled} onChange={e => handleCompareToggle(e.target.checked)} />}
               label={<Typography variant="body2">เปรียบเทียบช่วงเวลา</Typography>}
@@ -255,7 +247,7 @@ export default function StaffWorkloadPage() {
         row={detailRow}
         dateFrom={dateFrom}
         dateTo={dateTo}
-        serviceCenter={selectedSC}
+        serviceCenter={selectedServiceCenter}
         onClose={() => setDetailRow(null)}
       />
     </Box>

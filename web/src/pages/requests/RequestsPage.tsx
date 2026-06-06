@@ -11,7 +11,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 import { useRequests } from '../../hooks/useRequests';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
 
@@ -21,13 +21,10 @@ export default function RequestsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { requests, setRequests, loading } = useRequests();
-  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
-  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
-  const { centers: allCenters } = useServiceCenters(isAdminOrSuperadmin);
-  const centers = isSuperadmin ? allCenters : allCenters.filter(c => serviceCenters.includes(c.name));
+  const { role, loading: roleLoading } = useRoleAccess();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -101,8 +98,7 @@ export default function RequestsPage() {
     const matchStatus = statusFilter === 'all'
       || r.request_status === statusFilter
       || (statusFilter === 'cancelled' && (r.request_status === 'cancelled_by_user' || r.request_status === 'cancelled_by_staff'));
-    const matchServiceCenter = !isAdminOrSuperadmin || serviceCenterFilter === 'all'
-      || r.selected_service_center === serviceCenterFilter;
+    const matchServiceCenter = selectedServiceCenter === null || r.selected_service_center === selectedServiceCenter;
     return matchSearch && matchStatus && matchServiceCenter;
   });
 
@@ -202,21 +198,6 @@ export default function RequestsPage() {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
-          {isAdminOrSuperadmin && (
-            <TextField
-              select
-              label="สถานบริการ"
-              size="small"
-              value={serviceCenterFilter}
-              onChange={(e) => setServiceCenterFilter(e.target.value)}
-              sx={{ minWidth: 200 }}
-            >
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              {centers.map(c => (
-                <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
-              ))}
-            </TextField>
-          )}
           <TextField
             select
             label="สถานะ"
