@@ -128,6 +128,7 @@ function InventoryQtyChip({ value }: { value: unknown }) {
 // ─── Tab 1: Staff Audit Log ───────────────────────────────────────────────────
 
 function AuditLogTab() {
+  const { role } = useRoleAccess();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
@@ -135,6 +136,10 @@ function AuditLogTab() {
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [detailRow, setDetailRow] = useState<StaffAuditLogRow | null>(null);
+
+  const availableActions = STAFF_AUDIT_ACTIONS.filter(
+    v => role !== 'admin' || v !== AUDIT_ACTION.ROLE_UPDATED
+  );
 
   const resetPage = useCallback(() => setPage(0), []);
 
@@ -187,7 +192,7 @@ function AuditLogTab() {
             onChange={e => { setActionFilter(e.target.value); resetPage(); }} sx={{ minWidth: 220 }}
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">ทั้งหมด</MenuItem>
-            {STAFF_AUDIT_ACTIONS.map(v => (
+            {availableActions.map(v => (
               <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
             ))}
           </TextField>
