@@ -28,6 +28,12 @@ import { QRCodeSVG } from 'qrcode.react';
 const APP_RELEASES_URL = 'https://github.com/sippathamm/MyCareNK/releases';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
+import WhatsNewDialog, { type WhatsNewData } from '../shared/WhatsNewDialog';
+
+declare const __APP_VERSION__: string;
+
+const getWebBranch = (v: string): string =>
+  v.includes('-preview') ? 'preview' : v.includes('-dev') ? 'dev' : 'main';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
@@ -72,6 +78,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const bellRef = useRef<HTMLButtonElement>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [whatsNewOpen, setWhatsNewOpen] = useState(false);
+  const [whatsNewData, setWhatsNewData] = useState<WhatsNewData | null>(null);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [downloadTab, setDownloadTab] = useState<'release' | 'preview'>('release');
   const [releaseUrl, setReleaseUrl] = useState<string | null>(null);
@@ -104,6 +112,26 @@ export default function MainLayout({ children }: MainLayoutProps) {
       setDownloadUrlLoading(false);
     })();
   }, [downloadDialogOpen]);
+
+  useEffect(() => {
+    if (loading || !role) return;
+    (async () => {
+      const branch = getWebBranch(__APP_VERSION__);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data } = await (supabase as any).rpc('get_latest_web_changelog', { p_branch: branch });
+      const entry = (data as WhatsNewData[] | null)?.[0];
+      if (!entry) return;
+      if (localStorage.getItem('whats_new_seen_version') !== entry.version) {
+        setWhatsNewData(entry);
+        setWhatsNewOpen(true);
+      }
+    })();
+  }, [loading, role]);
+
+  const handleWhatsNewClose = () => {
+    if (whatsNewData) localStorage.setItem('whats_new_seen_version', whatsNewData.version);
+    setWhatsNewOpen(false);
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -493,6 +521,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
           {toastMessage}
         </Alert>
       </Snackbar>
+      {whatsNewData && (
+        <WhatsNewDialog
+          open={whatsNewOpen}
+          onClose={handleWhatsNewClose}
+          data={whatsNewData}
+        />
+      )}
     </Box>
     </ServiceCenterFilterContext.Provider>
   );
