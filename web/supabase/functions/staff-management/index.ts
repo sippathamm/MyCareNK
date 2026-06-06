@@ -266,7 +266,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }
       // Admin cannot change name/email of other admins or self
       if (profileBefore.data?.role === 'admin' || user_id === user.id) {
-        return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลหรือบัญชีของตัวเองได้');
+        return jsonResponse(403, 'error', 'ไม่สามารถแก้ไขข้อมูลได้ โปรดติดต่อผู้ดูแลสูงสุด');
       }
       // Admin can only modify staff in their own SCs
       const targetSCs: string[] = (profileBefore.data?.service_centers as string[] | null) ?? [];

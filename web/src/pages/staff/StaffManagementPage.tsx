@@ -315,6 +315,12 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 
   const handleSave = async () => {
     if (!staff) return;
+    if (!isRestricted && !isNameEmailLocked) {
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+      }
+    }
     if (!isRoleScLocked) {
       const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
       if (isDowngrade) { setConfirmDowngradeOpen(true); return; }
@@ -349,16 +355,16 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
           )}
           {!isRestricted && isNameEmailLocked && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              ผู้ดูแลไม่สามารถแก้ไขข้อมูลผู้ดูแลหรือบัญชีของตัวเองได้
+              ไม่สามารถแก้ไขข้อมูลได้ โปรดติดต่อผู้ดูแลสูงสุด
             </Alert>
           )}
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
             <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted || isNameEmailLocked} />
-              <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted || isNameEmailLocked} />
+              <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth required disabled={isRestricted || isNameEmailLocked} />
+              <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth required disabled={isRestricted || isNameEmailLocked} />
             </Box>
-            <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted || isNameEmailLocked} />
+            <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth required disabled={isRestricted || isNameEmailLocked} />
             {role === 'staff' ? (
               <TextField
                 select label="สถานบริการ" required fullWidth disabled={isRestricted || isRoleScLocked}
@@ -394,7 +400,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
             )}
             <TextField
               select label="ระดับสิทธิ์" value={role}
-              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth disabled={isRestricted || isRoleScLocked}
+              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth required disabled={isRestricted || isRoleScLocked}
             >
               {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
