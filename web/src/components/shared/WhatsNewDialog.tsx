@@ -60,7 +60,7 @@ export default function WhatsNewDialog({ open, onClose, data }: WhatsNewDialogPr
       </DialogTitle>
       <Divider />
       <DialogContent sx={{ pt: 2.5 }}>
-        <Typography variant="subtitle2" color="text.secondary">
+        <Typography variant="body1" color="text.secondary">
           {data.version} – {formatThaiDate(data.release_date)}
         </Typography>
         <Section label="เพิ่ม" items={data.additions} />
