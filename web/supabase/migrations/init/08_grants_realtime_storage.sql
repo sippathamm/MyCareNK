@@ -91,6 +91,7 @@ ALTER PUBLICATION supabase_realtime ADD TABLE public.condom_requests;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.doctor_appointments;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.staff_notifications;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.staff_notification_reads;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.staff_notification_hidden;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.user_notifications;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.user_notification_reads;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.user_monthly_quotas;
