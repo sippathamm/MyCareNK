@@ -260,19 +260,18 @@ CREATE TABLE public.staff_notifications (
   source_id        uuid        NOT NULL,
   metadata         jsonb       NOT NULL DEFAULT '{}',
   service_center   text,
-  notify_staff     boolean     NOT NULL DEFAULT false,
   CONSTRAINT staff_notifications_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
--- staff: notify_staff=true AND own SC; admin: all at own SC; superadmin: everything
+-- staff: own SC; admin: all at own SC; superadmin: everything
 CREATE POLICY "staff_notifications_select"
   ON public.staff_notifications FOR SELECT TO authenticated
   USING (
     is_superadmin()
     OR (is_admin() AND service_center = ANY(get_my_service_centers()))
-    OR (notify_staff = true AND service_center = ANY(get_my_service_centers()))
+    OR service_center = ANY(get_my_service_centers())
   );
 
 CREATE POLICY "staff_notifications_delete"
@@ -280,7 +279,7 @@ CREATE POLICY "staff_notifications_delete"
   USING (
     is_superadmin()
     OR (is_admin() AND service_center = ANY(get_my_service_centers()))
-    OR (notify_staff = true AND service_center = ANY(get_my_service_centers()))
+    OR service_center = ANY(get_my_service_centers())
   );
 
 

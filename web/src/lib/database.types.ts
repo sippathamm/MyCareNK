@@ -486,7 +486,6 @@ export type Database = {
           event_type: string
           id: string
           metadata: Json
-          notify_staff: boolean
           reference_number: string
           service_center: string | null
           source_id: string
@@ -497,7 +496,6 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
-          notify_staff?: boolean
           reference_number?: string
           service_center?: string | null
           source_id: string
@@ -508,7 +506,6 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
-          notify_staff?: boolean
           reference_number?: string
           service_center?: string | null
           source_id?: string

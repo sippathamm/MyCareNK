@@ -126,8 +126,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   // Initial load: fetch notifications + read state from DB
   // RLS handles filtering automatically:
-  //   staff       → notify_staff=true AND service_center=own SC
-  //   admin/super → all rows
+  //   staff       → service_center=own SC
+  //   admin/super → all rows at own SC / everything
   useEffect(() => {
     if (!userId || roleLoading) return;
 
@@ -141,7 +141,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .eq('staff_user_id', userId),
         supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, reference_number, event_type, notify_staff, service_center, metadata, created_at')
+          .select('id, source_type, source_id, reference_number, event_type, service_center, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
@@ -157,7 +157,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [userId, roleLoading]);
 
   // Realtime: new notification inserted
-  // staff → server-side filter by service_center; RLS additionally enforces notify_staff=true
+  // staff → server-side filter by service_center; RLS enforces own SC
   // admin/superadmin → no filter, receive all events
   useEffect(() => {
     if (!userId || roleLoading) return;

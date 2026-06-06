@@ -204,14 +204,13 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.request_status IS DISTINCT FROM NEW.request_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, notify_staff, metadata)
+      (source_type, source_id, reference_number, event_type, service_center, metadata)
     VALUES (
       'condom_request',
       NEW.id,
       NEW.reference_number,
       NEW.request_status::text,
       NEW.selected_service_center,
-      true,
       '{}'
     );
   END IF;
@@ -291,14 +290,13 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, notify_staff, metadata)
+      (source_type, source_id, reference_number, event_type, service_center, metadata)
     VALUES (
       'doctor_appointment',
       NEW.id,
       NEW.reference_number,
       NEW.appointment_status::text,
       NEW.selected_service_center,
-      true,
       '{}'
     );
   END IF;
