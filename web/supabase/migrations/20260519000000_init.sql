@@ -2093,7 +2093,8 @@ DECLARE
 BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
-  SELECT sp.staff_user_id, sp.first_name::text, sp.last_name::text, sp.service_center,
+  SELECT sp.staff_user_id, sp.first_name::text, sp.last_name::text,
+    (sp.service_centers[1])::text AS service_center,
     COALESCE(COUNT(*) FILTER (WHERE cr.request_status = 'completed')::integer, 0) AS completed_count,
     COALESCE(COUNT(*) FILTER (WHERE cr.request_status IN ('cancelled_by_staff', 'cancelled_by_user'))::integer, 0) AS cancelled_count,
     COALESCE(COUNT(*) FILTER (WHERE cr.is_delay = true)::integer, 0) AS overdue_count,
@@ -2104,9 +2105,9 @@ BEGIN
     ON cr.handled_by = sp.staff_user_id
    AND cr.created_at >= p_date_from
    AND cr.created_at <= p_date_to
-  WHERE (p_service_center IS NULL OR sp.service_center = p_service_center)
-    AND (v_my_scs IS NULL OR sp.service_center = ANY(v_my_scs))
-  GROUP BY sp.staff_user_id, sp.first_name, sp.last_name, sp.service_center
+  WHERE (p_service_center IS NULL OR p_service_center = ANY(sp.service_centers))
+    AND (v_my_scs IS NULL OR sp.service_centers && v_my_scs)
+  GROUP BY sp.staff_user_id, sp.first_name, sp.last_name, sp.service_centers
   ORDER BY completed_count DESC, sp.first_name, sp.last_name;
 END;
 $$;
@@ -2135,9 +2136,9 @@ BEGIN
   RETURN QUERY
   WITH staff AS (
     SELECT sp.staff_user_id AS uid FROM staff_profiles sp
-    WHERE (p_service_center IS NULL OR sp.service_center = p_service_center)
+    WHERE (p_service_center IS NULL OR p_service_center = ANY(sp.service_centers))
       AND (p_staff_user_id  IS NULL OR sp.staff_user_id  = p_staff_user_id)
-      AND (v_my_scs IS NULL OR sp.service_center = ANY(v_my_scs))
+      AND (v_my_scs IS NULL OR sp.service_centers && v_my_scs)
   ),
   weeks AS (
     SELECT generate_series(
