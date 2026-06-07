@@ -46,19 +46,19 @@ CREATE TABLE public.service_centers (
 
 ALTER TABLE public.service_centers ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "authenticated read"
+CREATE POLICY "Authenticated users can read service centers"
   ON public.service_centers FOR SELECT
   TO authenticated USING (true);
 
-CREATE POLICY "admin can update"
+CREATE POLICY "Admins can update service centers"
   ON public.service_centers FOR UPDATE
   TO authenticated USING (is_admin() OR is_superadmin());
 
-CREATE POLICY "superadmin can insert"
+CREATE POLICY "Superadmins can insert service centers"
   ON public.service_centers FOR INSERT
   TO authenticated WITH CHECK (is_superadmin());
 
-CREATE TRIGGER update_service_centers_updated_at
+CREATE TRIGGER trigger_update_updated_at_column_service_centers
   BEFORE UPDATE ON public.service_centers
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -106,7 +106,7 @@ CREATE TABLE public.user_monthly_quotas (
   used_lubricants integer              DEFAULT 0,
   updated_at      timestamptz          DEFAULT now(),
   CONSTRAINT user_monthly_quotas_pkey       PRIMARY KEY (id),
-  CONSTRAINT user_monthly_quotas_user_month UNIQUE (user_id, month),
+  CONSTRAINT user_monthly_quotas_user_id_month_key UNIQUE (user_id, month),
   CONSTRAINT user_monthly_quotas_user_id_fkey FOREIGN KEY (user_id)
     REFERENCES auth.users(id) ON DELETE CASCADE
 );
@@ -205,11 +205,11 @@ CREATE POLICY "Staff can view all staff profiles"
   ON public.staff_profiles FOR SELECT
   USING (is_staff());
 
-CREATE TRIGGER protect_role_update
+CREATE TRIGGER trigger_protect_staff_role_column
   BEFORE UPDATE ON public.staff_profiles
   FOR EACH ROW EXECUTE FUNCTION protect_staff_role_column();
 
-CREATE TRIGGER update_staff_counts_on_profile_change
+CREATE TRIGGER trigger_refresh_service_center_staff_counts
   AFTER INSERT OR UPDATE OR DELETE ON public.staff_profiles
   FOR EACH STATEMENT EXECUTE FUNCTION refresh_service_center_staff_counts();
 
@@ -233,19 +233,19 @@ CREATE TABLE public.staff_change_logs (
 
 ALTER TABLE public.staff_change_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "superadmin_select_change_logs"
+CREATE POLICY "Admins and superadmins can read change logs"
   ON public.staff_change_logs FOR SELECT
   TO authenticated USING (is_admin() OR is_superadmin());
 
-CREATE POLICY "deny_client_insert_change_logs"
+CREATE POLICY "No one can insert change logs directly"
   ON public.staff_change_logs FOR INSERT
   TO authenticated WITH CHECK (false);
 
-CREATE POLICY "deny_update_change_logs"
+CREATE POLICY "No one can update change logs"
   ON public.staff_change_logs FOR UPDATE
   TO authenticated USING (false);
 
-CREATE POLICY "deny_delete_change_logs"
+CREATE POLICY "No one can delete change logs"
   ON public.staff_change_logs FOR DELETE
   TO authenticated USING (false);
 
@@ -269,7 +269,7 @@ CREATE TABLE public.staff_notifications (
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
 -- staff: own SC; admin: own SC; superadmin: all — each filtered by notify_* flag
-CREATE POLICY "staff_notifications_select"
+CREATE POLICY "Staff can read their own notifications"
   ON public.staff_notifications FOR SELECT TO authenticated
   USING (
     (is_superadmin() AND notify_superadmin)
@@ -277,7 +277,7 @@ CREATE POLICY "staff_notifications_select"
     OR (NOT is_admin() AND NOT is_superadmin() AND notify_staff AND service_center = ANY(get_my_service_centers()))
   );
 
-CREATE POLICY "staff_notifications_delete"
+CREATE POLICY "Staff can delete their own notifications"
   ON public.staff_notifications FOR DELETE TO authenticated
   USING (
     is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
@@ -299,7 +299,7 @@ CREATE TABLE public.staff_notification_reads (
 
 ALTER TABLE public.staff_notification_reads ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow staff to manage their reads"
+CREATE POLICY "Staff can manage their own notification reads"
   ON public.staff_notification_reads
   TO authenticated
   USING (staff_user_id = (SELECT auth.uid()))
@@ -320,7 +320,7 @@ CREATE TABLE public.staff_notification_hidden (
 
 ALTER TABLE public.staff_notification_hidden ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "staff manage own hidden"
+CREATE POLICY "Staff can manage their own hidden notifications"
   ON public.staff_notification_hidden TO authenticated
   USING (staff_user_id = (SELECT auth.uid()))
   WITH CHECK (staff_user_id = (SELECT auth.uid()));
@@ -343,7 +343,7 @@ CREATE TABLE public.user_notifications (
 
 ALTER TABLE public.user_notifications ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "users_select_own"
+CREATE POLICY "Users can read their own notifications"
   ON public.user_notifications FOR SELECT
   TO authenticated USING (user_id = (SELECT auth.uid()));
 
@@ -362,11 +362,11 @@ CREATE TABLE public.user_notification_reads (
 
 ALTER TABLE public.user_notification_reads ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "users_select_own_reads"
+CREATE POLICY "Users can read their own notification reads"
   ON public.user_notification_reads FOR SELECT
   TO authenticated USING (user_id = (SELECT auth.uid()));
 
-CREATE POLICY "users_insert_own_reads"
+CREATE POLICY "Users can insert their own notification reads"
   ON public.user_notification_reads FOR INSERT
   TO authenticated WITH CHECK (user_id = (SELECT auth.uid()));
 
@@ -394,22 +394,22 @@ CREATE POLICY "Staff can read inventory"
   ON public.service_center_inventory FOR SELECT
   TO authenticated USING (is_staff());
 
-CREATE POLICY "No direct insert"
+CREATE POLICY "No one can insert inventory directly"
   ON public.service_center_inventory FOR INSERT
   TO authenticated WITH CHECK (false);
 
 -- NOTE: TO PUBLIC (not TO authenticated) — matches production DB
-CREATE POLICY "Admin or superadmin can update inventory"
+CREATE POLICY "Admins can update inventory"
   ON public.service_center_inventory FOR UPDATE
   TO PUBLIC
   USING (is_admin() OR is_superadmin())
   WITH CHECK (is_admin() OR is_superadmin());
 
-CREATE POLICY "No direct delete"
+CREATE POLICY "No one can delete inventory directly"
   ON public.service_center_inventory FOR DELETE
   TO authenticated USING (false);
 
-CREATE TRIGGER update_service_center_inventory_updated_at
+CREATE TRIGGER trigger_update_updated_at_column_service_center_inventory
   BEFORE UPDATE ON public.service_center_inventory
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
@@ -446,7 +446,7 @@ CREATE POLICY "Users can insert their own requests"
   ON public.condom_requests FOR INSERT
   TO authenticated WITH CHECK ((SELECT auth.uid()) = user_id);
 
-CREATE POLICY "condom_requests_select"
+CREATE POLICY "Users and staff can read requests"
   ON public.condom_requests FOR SELECT
   TO authenticated USING (
     is_superadmin()
@@ -460,7 +460,7 @@ CREATE POLICY "condom_requests_select"
     OR (SELECT auth.uid()) = user_id
   );
 
-CREATE POLICY "condom_requests_update"
+CREATE POLICY "Users and staff can update requests"
   ON public.condom_requests FOR UPDATE
   TO authenticated
   USING (
@@ -489,47 +489,47 @@ CREATE POLICY "condom_requests_update"
     )
   );
 
-CREATE TRIGGER update_condom_requests_updated_at
+CREATE TRIGGER trigger_update_updated_at_column_condom_requests
   BEFORE UPDATE ON public.condom_requests
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_request_is_delay
+CREATE TRIGGER trigger_set_is_delay
   BEFORE UPDATE ON public.condom_requests
   FOR EACH ROW EXECUTE FUNCTION set_is_delay();
 
-CREATE TRIGGER set_handled_by_and_completed_at
+CREATE TRIGGER trigger_set_handled_by_and_completed_at
   BEFORE UPDATE OF request_status ON public.condom_requests
   FOR EACH ROW WHEN (OLD.request_status IS DISTINCT FROM NEW.request_status)
   EXECUTE FUNCTION set_handled_by_and_completed_at();
 
-CREATE TRIGGER prevent_staff_full_update
+CREATE TRIGGER trigger_check_staff_update_columns
   BEFORE UPDATE ON public.condom_requests
   FOR EACH ROW EXECUTE FUNCTION check_staff_update_columns();
 
-CREATE TRIGGER track_request_status
+CREATE TRIGGER trigger_track_request_status
   AFTER UPDATE ON public.condom_requests
   FOR EACH ROW WHEN (OLD.request_status IS DISTINCT FROM NEW.request_status)
   EXECUTE FUNCTION track_request_status();
 
-CREATE TRIGGER deduct_inventory_on_request_complete
+CREATE TRIGGER trigger_deduct_inventory_on_complete
   AFTER UPDATE OF request_status ON public.condom_requests
   FOR EACH ROW WHEN (
     NEW.request_status = 'completed'::public.request_status
     AND OLD.request_status <> 'completed'::public.request_status
   ) EXECUTE FUNCTION deduct_inventory_on_complete();
 
-CREATE TRIGGER restore_quota_on_staff_cancel_pending
+CREATE TRIGGER trigger_restore_quota_on_staff_cancel_pending
   AFTER UPDATE OF request_status ON public.condom_requests
   FOR EACH ROW WHEN (
     NEW.request_status = 'cancelled_by_staff'::public.request_status
     AND OLD.request_status = 'pending'::public.request_status
   ) EXECUTE FUNCTION restore_quota_on_staff_cancel_pending();
 
-CREATE TRIGGER notify_staff_on_request_change
+CREATE TRIGGER trigger_handle_staff_request_notification
   AFTER INSERT OR UPDATE OF request_status ON public.condom_requests
   FOR EACH ROW EXECUTE FUNCTION handle_staff_request_notification();
 
-CREATE TRIGGER notify_user_on_request_change
+CREATE TRIGGER trigger_handle_user_request_notification
   AFTER INSERT OR UPDATE ON public.condom_requests
   FOR EACH ROW EXECUTE FUNCTION handle_user_request_notification();
 
@@ -585,7 +585,7 @@ CREATE TABLE public.inventory_logs (
 
 ALTER TABLE public.inventory_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "admin_insert_inventory_logs"
+CREATE POLICY "Admins can insert inventory logs"
   ON public.inventory_logs FOR INSERT
   TO authenticated WITH CHECK (
     EXISTS (
@@ -595,15 +595,15 @@ CREATE POLICY "admin_insert_inventory_logs"
     )
   );
 
-CREATE POLICY "superadmin_read_inventory_logs"
+CREATE POLICY "Superadmins can read inventory logs"
   ON public.inventory_logs FOR SELECT
   TO authenticated USING (is_superadmin());
 
-CREATE TRIGGER apply_inventory_adjustment
+CREATE TRIGGER trigger_apply_inventory_adjustment
   AFTER INSERT ON public.inventory_logs
   FOR EACH ROW EXECUTE FUNCTION apply_inventory_adjustment();
 
-CREATE TRIGGER notify_staff_on_stock_operation
+CREATE TRIGGER trigger_notify_staff_on_stock_operation
   AFTER INSERT ON public.inventory_logs
   FOR EACH ROW EXECUTE FUNCTION notify_staff_on_stock_operation();
 
@@ -637,7 +637,7 @@ CREATE POLICY "Users can insert their own appointments"
   ON public.doctor_appointments FOR INSERT
   TO authenticated WITH CHECK ((SELECT auth.uid()) = user_id);
 
-CREATE POLICY "doctor_appointments_select"
+CREATE POLICY "Users and staff can read appointments"
   ON public.doctor_appointments FOR SELECT
   TO authenticated USING (
     is_superadmin()
@@ -651,7 +651,7 @@ CREATE POLICY "doctor_appointments_select"
     OR (SELECT auth.uid()) = user_id
   );
 
-CREATE POLICY "doctor_appointments_update"
+CREATE POLICY "Users and staff can update appointments"
   ON public.doctor_appointments FOR UPDATE
   TO authenticated
   USING (
@@ -680,23 +680,23 @@ CREATE POLICY "doctor_appointments_update"
     )
   );
 
-CREATE TRIGGER update_doctor_appointments_updated_at
+CREATE TRIGGER trigger_update_updated_at_column_doctor_appointments
   BEFORE UPDATE ON public.doctor_appointments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER set_appointment_handled_by
+CREATE TRIGGER trigger_set_appointment_handled_by
   BEFORE UPDATE OF appointment_status ON public.doctor_appointments
   FOR EACH ROW EXECUTE FUNCTION set_appointment_handled_by();
 
-CREATE TRIGGER track_appointment_status
+CREATE TRIGGER trigger_track_appointment_status
   AFTER UPDATE OF appointment_status ON public.doctor_appointments
   FOR EACH ROW EXECUTE FUNCTION track_appointment_status();
 
-CREATE TRIGGER notify_staff_on_appointment_change
+CREATE TRIGGER trigger_handle_staff_appointment_notification
   AFTER INSERT OR UPDATE OF appointment_status ON public.doctor_appointments
   FOR EACH ROW EXECUTE FUNCTION handle_staff_appointment_notification();
 
-CREATE TRIGGER notify_user_on_appointment_change
+CREATE TRIGGER trigger_handle_user_appointment_notification
   AFTER INSERT OR UPDATE ON public.doctor_appointments
   FOR EACH ROW EXECUTE FUNCTION handle_user_appointment_notification();
 
@@ -716,7 +716,7 @@ CREATE TABLE public.appointment_status_logs (
 
 ALTER TABLE public.appointment_status_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "staff can read appointment status logs"
+CREATE POLICY "Staff can read appointment status logs"
   ON public.appointment_status_logs FOR SELECT
   TO authenticated USING (
     EXISTS (
@@ -758,30 +758,30 @@ CREATE TABLE public.articles (
 ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
 
 -- Anon: published articles only (app users not logged in)
-CREATE POLICY "anon_read_published_articles"
+CREATE POLICY "Anyone can read published articles"
   ON public.articles FOR SELECT
   TO anon USING (status = 'published');
 
 -- Admin / Superadmin: full read (all statuses)
-CREATE POLICY "admin_read_all_articles"
+CREATE POLICY "Admins can read all articles"
   ON public.articles FOR SELECT
   TO authenticated USING (is_admin() OR is_superadmin());
 
 -- Staff (non-admin/superadmin): published only
-CREATE POLICY "staff_read_published_articles"
+CREATE POLICY "Staff can read published articles"
   ON public.articles FOR SELECT
   TO authenticated USING (is_staff() AND status = 'published');
 
 -- Admin / Superadmin: write access
-CREATE POLICY "admin_insert_articles"
+CREATE POLICY "Admins can insert articles"
   ON public.articles FOR INSERT
   TO authenticated WITH CHECK (is_admin() OR is_superadmin());
 
-CREATE POLICY "admin_update_articles"
+CREATE POLICY "Admins can update articles"
   ON public.articles FOR UPDATE
   TO authenticated USING (is_admin() OR is_superadmin());
 
-CREATE POLICY "admin_delete_articles"
+CREATE POLICY "Admins can delete articles"
   ON public.articles FOR DELETE
   TO authenticated USING (is_admin() OR is_superadmin());
 
@@ -800,7 +800,7 @@ CREATE TABLE public.app_versions (
 
 ALTER TABLE public.app_versions ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "public_read_app_versions"
+CREATE POLICY "Anyone can read app versions"
   ON public.app_versions FOR SELECT
   USING (true);
 
@@ -820,12 +820,12 @@ CREATE TABLE public.web_changelogs (
 
 ALTER TABLE public.web_changelogs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "authenticated can read web_changelogs"
+CREATE POLICY "Authenticated users can read web changelogs"
   ON public.web_changelogs FOR SELECT TO authenticated USING (true);
 
 
 -- ── Cascade delete trigger on auth.users ───────────────────
-CREATE TRIGGER on_auth_user_deleted
+CREATE TRIGGER trigger_handle_user_deleted
   BEFORE DELETE ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_user_deleted();
 
