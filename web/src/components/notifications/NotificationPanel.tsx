@@ -9,7 +9,9 @@ import {
   IconButton,
 } from '@mui/material';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useNotification,
@@ -54,6 +56,14 @@ interface NotificationPanelProps {
 export default function NotificationPanel({ anchorEl, onClose }: NotificationPanelProps) {
   const navigate = useNavigate();
   const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotification();
+  const [notifPermission, setNotifPermission] = useState<NotificationPermission>(
+    'Notification' in window ? Notification.permission : 'denied'
+  );
+
+  const handleEnableNotifications = async () => {
+    const result = await Notification.requestPermission();
+    setNotifPermission(result);
+  };
 
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
@@ -89,11 +99,23 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
       {/* Header */}
       <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid', borderColor: 'divider' }}>
         <Typography fontWeight="bold" fontSize="0.95rem">การแจ้งเตือน</Typography>
-        {notifications.some(n => !n.is_read) && (
-          <Button size="small" onClick={markAllAsRead} sx={{ fontSize: '0.75rem', textTransform: 'none', py: 0 }}>
-            อ่านทั้งหมด
-          </Button>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          {notifPermission === 'default' && (
+            <Button
+              size="small"
+              startIcon={<NotificationsActiveIcon sx={{ fontSize: '0.9rem !important' }} />}
+              onClick={handleEnableNotifications}
+              sx={{ fontSize: '0.72rem', textTransform: 'none', py: 0, color: 'warning.main' }}
+            >
+              เปิดการแจ้งเตือน
+            </Button>
+          )}
+          {notifications.some(n => !n.is_read) && (
+            <Button size="small" onClick={markAllAsRead} sx={{ fontSize: '0.75rem', textTransform: 'none', py: 0 }}>
+              อ่านทั้งหมด
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {/* List */}
