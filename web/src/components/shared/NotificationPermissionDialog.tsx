@@ -4,8 +4,7 @@ import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 const DISMISSED_KEY = 'notif_permission_dismissed';
 
 export function shouldShowPermissionDialog(): boolean {
-  if (!('Notification' in window)) return false;
-  if (Notification.permission !== 'default') return false;
+  if ('Notification' in window && Notification.permission !== 'default') return false;
   return sessionStorage.getItem(DISMISSED_KEY) !== '1';
 }
 
@@ -16,7 +15,7 @@ interface NotificationPermissionDialogProps {
 
 export default function NotificationPermissionDialog({ open, onClose }: NotificationPermissionDialogProps) {
   const handleEnable = async () => {
-    await Notification.requestPermission();
+    if ('Notification' in window) await Notification.requestPermission();
     onClose();
   };
 
