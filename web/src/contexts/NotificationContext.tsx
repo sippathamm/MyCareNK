@@ -32,9 +32,21 @@ export function isStockNotification(item: NotificationItem): boolean {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function isStaffManagementNotification(item: NotificationItem): boolean {
+  return item.source_type === 'staff_management';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export const STOCK_OPERATION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   restock:    { label: 'เติมสต็อก', color: '#4CAF50', bg: '#EBF7EC' },
   adjustment: { label: 'ปรับสต็อก', color: '#FF9800', bg: '#FFF3E0' },
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const STAFF_MANAGEMENT_CONFIG: { label: string; color: string; bg: string } = {
+  label: 'การจัดการเจ้าหน้าที่',
+  color: '#5C6BC0',
+  bg: '#EDE7F6',
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -55,6 +67,7 @@ interface NotificationContextValue {
   toastIsAppointment: boolean;
   toastAppointmentEventType: AppointmentEventType | null;
   toastIsStock: boolean;
+  toastIsStaffManagement: boolean;
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -119,6 +132,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastIsAppointment, setToastIsAppointment] = useState(false);
   const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
   const [toastIsStock, setToastIsStock] = useState(false);
+  const [toastIsStaffManagement, setToastIsStaffManagement] = useState(false);
 
   // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
@@ -211,6 +225,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           const row = payload.new as Tables<'staff_notifications'>;
           const isAppointment = row.source_type === 'doctor_appointment';
           const isStock = row.source_type === 'stock_operation';
+          const isStaffMgmt = row.source_type === 'staff_management';
           const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
           const message = isStock
@@ -218,12 +233,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                 row.metadata as { actor_name: string; service_center_name: string; action_type: string },
                 !isAdmin && !isSuperadmin,
               )
-            : buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
+            : isStaffMgmt
+              ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
+              : buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
           setToastIsStock(isStock);
+          setToastIsStaffManagement(isStaffMgmt);
           setToastAppointmentEventType(aptEventType);
-          setToastEventType(isAppointment || isStock ? null : row.event_type as RequestStatus);
+          setToastEventType(isAppointment || isStock || isStaffMgmt ? null : row.event_type as RequestStatus);
           setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
@@ -328,6 +346,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setToastOpen(false);
     setToastIsAppointment(false);
     setToastIsStock(false);
+    setToastIsStaffManagement(false);
     setToastAppointmentEventType(null);
   }, []);
 
@@ -347,7 +366,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -397,4 +416,19 @@ export function buildStockMessage(
     return `สถานบริการของคุณถูก${actionLabel} โดย ${metadata.actor_name}`;
   }
   return `สถานบริการ ${metadata.service_center_name} ถูก${actionLabel} โดย ${metadata.actor_name}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildStaffManagementMessage(
+  metadata: { actor_name: string; target_name: string; action_type: string },
+): string {
+  const { actor_name, target_name, action_type } = metadata;
+  switch (action_type) {
+    case 'add':          return `${actor_name} เพิ่ม ${target_name}`;
+    case 'remove':       return `${actor_name} ลบ ${target_name}`;
+    case 'edit_profile': return `${actor_name} แก้ไขโปรไฟล์ ${target_name}`;
+    case 'edit_email':   return `${actor_name} แก้ไขอีเมล ${target_name}`;
+    case 'edit_role':    return `${actor_name} แก้ไขระดับสิทธิ์ ${target_name}`;
+    default:             return `${actor_name} แก้ไข ${target_name}`;
+  }
 }

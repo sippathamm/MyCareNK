@@ -7,9 +7,12 @@ import {
   STATUS_CONFIG,
   APPOINTMENT_STATUS_CONFIG,
   STOCK_OPERATION_CONFIG,
+  STAFF_MANAGEMENT_CONFIG,
   isAppointmentNotification,
   isStockNotification,
+  isStaffManagementNotification,
   buildStockMessage,
+  buildStaffManagementMessage,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -22,6 +25,9 @@ function getNotifConfig(item: NotificationItem) {
   }
   if (isStockNotification(item)) {
     return STOCK_OPERATION_CONFIG[item.event_type] ?? STOCK_OPERATION_CONFIG.restock;
+  }
+  if (isStaffManagementNotification(item)) {
+    return STAFF_MANAGEMENT_CONFIG;
   }
   return STATUS_CONFIG[item.event_type as RequestStatus];
 }
@@ -58,12 +64,15 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
 }) {
   const cfg = getNotifConfig(item);
   const isStock = isStockNotification(item);
+  const isStaffMgmt = isStaffManagementNotification(item);
   const label = isStock
     ? buildStockMessage(
         item.metadata as { actor_name: string; service_center_name: string; action_type: string },
         isViewerStaff,
       )
-    : cfg.label;
+    : isStaffMgmt
+      ? buildStaffManagementMessage(item.metadata as { actor_name: string; target_name: string; action_type: string })
+      : cfg.label;
   return (
     <ListItemButton
       onClick={() => onItemClick(item)}
@@ -90,7 +99,7 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
           )}
         </Box>
-        {!isStock && (
+        {!isStock && !isStaffMgmt && (
           <Typography variant="body2" color="text.secondary">
             {item.reference_number}
           </Typography>
@@ -123,6 +132,8 @@ export default function NotificationsPage() {
       navigate('/appointments', { state: { openAppointmentId: item.source_id } });
     } else if (isStockNotification(item)) {
       navigate('/inventory');
+    } else if (isStaffManagementNotification(item)) {
+      navigate('/staff');
     } else {
       navigate('/requests', { state: { openRequestId: item.source_id } });
     }
