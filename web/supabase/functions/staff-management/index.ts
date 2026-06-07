@@ -213,8 +213,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     ]);
     const snapshotEmail = authUserSnapshot.data?.user?.email ?? null;
 
-    if (isAdmin && profileSnapshot?.role === 'superadmin') {
-      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถลบบัญชีผู้ดูแลสูงสุดได้');
+    if (profileSnapshot?.role === 'superadmin') {
+      return jsonResponse(403, 'error', 'ไม่สามารถลบบัญชีผู้ดูแลสูงสุดได้');
+    }
+
+    if (isAdmin && profileSnapshot?.role === 'admin') {
+      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถลบบัญชีผู้ดูแลด้วยกันได้');
     }
 
     // Admin can only delete staff in their own SCs
