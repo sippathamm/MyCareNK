@@ -110,6 +110,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
 
+  // Request browser Notification permission once if not yet decided
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
+
   // Resume AudioContext on any user interaction (bypass browser autoplay policy)
   useEffect(() => {
     const resume = () => {
@@ -124,24 +131,28 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Initial load: fetch notifications + read state from DB
+  // Initial load: fetch notifications + read state + hidden state from DB
   // RLS handles filtering automatically:
-  //   staff       → notify_staff=true AND service_center=own SC
-  //   admin/super → all rows
+  //   staff       → service_center=own SC
+  //   admin/super → all rows at own SC / everything
   useEffect(() => {
     if (!userId || roleLoading) return;
 
     let cancelled = false;
 
     (async () => {
-      const [{ data: readsData }, { data: notifData }] = await Promise.all([
+      const [{ data: readsData }, { data: hiddenData }, { data: notifData }] = await Promise.all([
         supabase
           .from('staff_notification_reads')
           .select('notification_id')
           .eq('staff_user_id', userId),
         supabase
+          .from('staff_notification_hidden')
+          .select('notification_id')
+          .eq('staff_user_id', userId),
+        supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, reference_number, event_type, notify_staff, service_center, metadata, created_at')
+          .select('id, source_type, source_id, reference_number, event_type, service_center, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
@@ -149,15 +160,20 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (cancelled) return;
 
       const ids = new Set<string>((readsData ?? []).map(r => r.notification_id));
+      const hiddenIds = new Set<string>((hiddenData ?? []).map(r => r.notification_id));
       setReadIds(ids);
-      setNotifications((notifData ?? []).map(r => ({ ...r, is_read: ids.has(r.id) })));
+      setNotifications(
+        (notifData ?? [])
+          .filter(r => !hiddenIds.has(r.id))
+          .map(r => ({ ...r, is_read: ids.has(r.id) }))
+      );
     })();
 
     return () => { cancelled = true; };
   }, [userId, roleLoading]);
 
   // Realtime: new notification inserted
-  // staff → server-side filter by service_center; RLS additionally enforces notify_staff=true
+  // staff → server-side filter by service_center; RLS enforces own SC
   // admin/superadmin → no filter, receive all events
   useEffect(() => {
     if (!userId || roleLoading) return;
@@ -183,13 +199,17 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           const isAppointment = row.source_type === 'doctor_appointment';
           const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
+          const message = buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
           setToastAppointmentEventType(aptEventType);
           setToastEventType(isAppointment ? null : row.event_type as RequestStatus);
-          setToastMessage(buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType));
+          setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
+          if ('Notification' in window && document.hidden && Notification.permission === 'granted') {
+            new Notification('MyCareNK — แจ้งเตือนใหม่', { body: message, icon: '/favicon.png', tag: row.id });
+          }
         }
       )
       .subscribe();
@@ -197,20 +217,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     return () => { supabase.removeChannel(channel); };
   }, [userId, role, serviceCenters, isSuperadmin, roleLoading]);
 
-  // Realtime: notification deleted (sync across devices)
+  // Realtime: soft-delete hidden row inserted on another device → hide locally
   useEffect(() => {
     if (!userId) return;
 
     const channel = supabase
-      .channel('notification-deletes')
+      .channel('notification-hidden-sync')
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'staff_notifications' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'staff_notification_hidden',
+          filter: `staff_user_id=eq.${userId}`,
+        },
         (payload) => {
-          const deletedId = (payload.old as { id?: string }).id;
-          if (!deletedId) return;
-          setNotifications(prev => prev.filter(n => n.id !== deletedId));
-          setReadIds(prev => { const next = new Set(prev); next.delete(deletedId); return next; });
+          const { notification_id } = payload.new as { notification_id: string };
+          setNotifications(prev => prev.filter(n => n.id !== notification_id));
+          setReadIds(prev => { const next = new Set(prev); next.delete(notification_id); return next; });
         }
       )
       .subscribe();
@@ -287,12 +311,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const deleteNotification = useCallback(async (id: string) => {
+    if (!userId) return;
     // Optimistic update
     setNotifications(prev => prev.filter(n => n.id !== id));
     setReadIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-    // Delete from DB (cascade deletes staff_notification_reads rows too)
-    await supabase.from('staff_notifications').delete().eq('id', id);
-  }, []);
+    // Soft delete: insert into staff_notification_hidden (per-user isolation)
+    await supabase.from('staff_notification_hidden').upsert(
+      { notification_id: id, staff_user_id: userId },
+      { onConflict: 'notification_id,staff_user_id' }
+    );
+  }, [userId]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 

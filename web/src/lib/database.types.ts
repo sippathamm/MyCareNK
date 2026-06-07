@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -454,6 +454,32 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_notification_hidden: {
+        Row: {
+          hidden_at: string
+          notification_id: string
+          staff_user_id: string
+        }
+        Insert: {
+          hidden_at?: string
+          notification_id: string
+          staff_user_id: string
+        }
+        Update: {
+          hidden_at?: string
+          notification_id?: string
+          staff_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_notification"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "staff_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       staff_notification_reads: {
         Row: {
           notification_id: string
@@ -486,7 +512,6 @@ export type Database = {
           event_type: string
           id: string
           metadata: Json
-          notify_staff: boolean
           reference_number: string
           service_center: string | null
           source_id: string
@@ -497,7 +522,6 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
-          notify_staff?: boolean
           reference_number?: string
           service_center?: string | null
           source_id: string
@@ -508,7 +532,6 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
-          notify_staff?: boolean
           reference_number?: string
           service_center?: string | null
           source_id?: string

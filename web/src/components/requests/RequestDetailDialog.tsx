@@ -22,6 +22,7 @@ export interface RequestData {
   message: string | null;
   cancel_reason: string | null;
   handled_by: string | null;
+  handled_by_name: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
@@ -161,6 +162,12 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
                   }
                 })()}
               </Box>
+              {request.handled_by_name && (
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="subtitle2" color="text.secondary">ดำเนินการโดย</Typography>
+                  <Typography variant="body1">{request.handled_by_name}</Typography>
+                </Box>
+              )}
 
               <Divider sx={{ my: 1 }} />
 
