@@ -29,6 +29,7 @@ const APP_RELEASES_URL = 'https://github.com/sippathamm/MyCareNK/releases';
 import { useAuth } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import WhatsNewDialog, { type WhatsNewData } from '../shared/WhatsNewDialog';
+import NotificationPermissionDialog, { shouldShowPermissionDialog } from '../shared/NotificationPermissionDialog';
 
 declare const __APP_VERSION__: string;
 
@@ -80,6 +81,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const [whatsNewData, setWhatsNewData] = useState<WhatsNewData | null>(null);
+  const [notifPermDialogOpen, setNotifPermDialogOpen] = useState(false);
   const [downloadDialogOpen, setDownloadDialogOpen] = useState(false);
   const [downloadTab, setDownloadTab] = useState<'release' | 'preview'>('release');
   const [releaseUrl, setReleaseUrl] = useState<string | null>(null);
@@ -115,6 +117,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   useEffect(() => {
     if (loading || !role) return;
+    if (shouldShowPermissionDialog()) setNotifPermDialogOpen(true);
     (async () => {
       const branch = getWebBranch(__APP_VERSION__);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -193,7 +196,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             >
               <Badge
                 badgeContent={unreadCount > 0 ? unreadCount : undefined}
-                sx={{ '& .MuiBadge-badge': { bgcolor: '#FFCDD2', color: '#C62828' } }}
+                color="error"
               >
                 <NotificationsIcon />
               </Badge>
@@ -528,6 +531,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
           data={whatsNewData}
         />
       )}
+      <NotificationPermissionDialog
+        open={notifPermDialogOpen}
+        onClose={() => setNotifPermDialogOpen(false)}
+      />
     </Box>
     </ServiceCenterFilterContext.Provider>
   );
