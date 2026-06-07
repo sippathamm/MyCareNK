@@ -15,15 +15,22 @@ import {
   useNotification,
   STATUS_CONFIG,
   APPOINTMENT_STATUS_CONFIG,
+  STOCK_OPERATION_CONFIG,
   isAppointmentNotification,
+  isStockNotification,
+  buildStockMessage,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
 } from '../../contexts/NotificationContext';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 function getNotifConfig(item: NotificationItem) {
   if (isAppointmentNotification(item)) {
     return APPOINTMENT_STATUS_CONFIG[item.event_type as AppointmentEventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  }
+  if (isStockNotification(item)) {
+    return STOCK_OPERATION_CONFIG[item.event_type] ?? STOCK_OPERATION_CONFIG.restock;
   }
   return STATUS_CONFIG[item.event_type as RequestStatus];
 }
@@ -54,12 +61,16 @@ interface NotificationPanelProps {
 export default function NotificationPanel({ anchorEl, onClose }: NotificationPanelProps) {
   const navigate = useNavigate();
   const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotification();
+  const { isAdmin, isSuperadmin } = useRoleAccess();
+  const isViewerStaff = !isAdmin && !isSuperadmin;
 
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
     onClose();
     if (isAppointmentNotification(item)) {
       navigate('/appointments', { state: { openAppointmentId: item.source_id } });
+    } else if (isStockNotification(item)) {
+      navigate('/inventory');
     } else {
       navigate('/requests', { state: { openRequestId: item.source_id } });
     }
@@ -107,6 +118,13 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
           <List disablePadding sx={{ overflowY: 'auto', maxHeight: 420 }}>
             {displayed.map((item, idx) => {
               const cfg = getNotifConfig(item);
+              const isStock = isStockNotification(item);
+              const label = isStock
+                ? buildStockMessage(
+                    item.metadata as { actor_name: string; service_center_name: string; action_type: string },
+                    isViewerStaff,
+                  )
+                : cfg.label;
               return (
                 <Box key={item.id}>
                   <ListItemButton
@@ -131,15 +149,17 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                           sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
                           noWrap
                         >
-                          {cfg.label}
+                          {label}
                         </Typography>
                         {!item.is_read && (
                           <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
                         )}
                       </Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
-                        {item.reference_number}
-                      </Typography>
+                      {!isStock && (
+                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                          {item.reference_number}
+                        </Typography>
+                      )}
                       <Typography variant="caption" color="text.disabled">
                         {formatRelativeTime(item.created_at)}
                       </Typography>
