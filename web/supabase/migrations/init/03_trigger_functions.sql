@@ -15,7 +15,7 @@
 --                      restore_quota_on_staff_cancel_pending,
 --                      handle_staff_request_notification,
 --                      handle_user_request_notification
---   inventory_logs   — apply_inventory_adjustment
+--   inventory_logs   — apply_inventory_adjustment, notify_staff_on_stock_operation
 --   doctor_appts     — handle_staff_appointment_notification,
 --                      handle_user_appointment_notification,
 --                      track_appointment_status
@@ -276,6 +276,51 @@ BEGIN
         updated_at    = NOW()
     WHERE service_center = NEW.service_center;
   END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- ── inventory_logs (stock notifications) ───────────────────
+CREATE OR REPLACE FUNCTION public.notify_staff_on_stock_operation()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_actor_name text;
+  v_actor_role public.role;
+BEGIN
+  IF NEW.action NOT IN ('restock', 'adjustment') THEN
+    RETURN NEW;
+  END IF;
+
+  SELECT first_name || ' ' || last_name, role
+    INTO v_actor_name, v_actor_role
+    FROM public.staff_profiles
+   WHERE staff_user_id = NEW.performed_by;
+
+  v_actor_name := COALESCE(v_actor_name, '');
+
+  INSERT INTO public.staff_notifications
+    (source_type, source_id, reference_number, event_type, service_center,
+     notify_staff, notify_admin, notify_superadmin, metadata)
+  VALUES (
+    'stock_operation',
+    NEW.id,
+    '',
+    NEW.action::text,
+    NEW.service_center,
+    true,
+    true,
+    COALESCE(v_actor_role = 'admin', false),
+    jsonb_build_object(
+      'actor_name',          v_actor_name,
+      'service_center_name', NEW.service_center,
+      'action_type',         NEW.action::text
+    )
+  );
+
   RETURN NEW;
 END;
 $$;
