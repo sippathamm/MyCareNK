@@ -33,8 +33,8 @@ END;
 $$;
 
 -- ── 3. Trigger ───────────────────────────────────────────────
-DROP TRIGGER IF EXISTS update_staff_counts_on_profile_change ON public.staff_profiles;
-CREATE TRIGGER update_staff_counts_on_profile_change
+DROP TRIGGER IF EXISTS trigger_refresh_service_center_staff_counts ON public.staff_profiles;
+CREATE TRIGGER trigger_refresh_service_center_staff_counts
   AFTER INSERT OR UPDATE OR DELETE ON public.staff_profiles
   FOR EACH STATEMENT EXECUTE FUNCTION public.refresh_service_center_staff_counts();
 
