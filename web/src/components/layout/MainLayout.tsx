@@ -37,7 +37,7 @@ const getWebBranch = (v: string): string =>
   v.includes('-preview') ? 'preview' : v.includes('-dev') ? 'dev' : 'main';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
-import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
+import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, STOCK_OPERATION_CONFIG, STAFF_MANAGEMENT_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
 import { ServiceCenterFilterContext } from '../../contexts/ServiceCenterFilterContext';
 import NotificationPanel from '../notifications/NotificationPanel';
 
@@ -59,10 +59,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation();
   const { logout } = useAuth();
   const { role, profile, loading, serviceCenters, isSuperadmin } = useRoleAccess();
-  const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast } = useNotification();
+  const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, closeToast } = useNotification();
   const toastCfg = toastIsAppointment
     ? APPOINTMENT_STATUS_CONFIG[(toastAppointmentEventType ?? 'pending') as AppointmentEventType]
-    : (toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null);
+    : toastIsStock
+      ? (STOCK_OPERATION_CONFIG[toastEventType ?? ''] ?? STOCK_OPERATION_CONFIG.restock)
+      : toastIsStaffManagement
+        ? STAFF_MANAGEMENT_CONFIG
+        : (toastEventType ? STATUS_CONFIG[toastEventType as RequestStatus] : null);
 
   const { centers: allCenters } = useServiceCenters(isSuperadmin ?? false);
   const chipCenters: string[] = isSuperadmin ? allCenters.map(c => c.name) : serviceCenters;

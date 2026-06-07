@@ -36,7 +36,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Verify caller is admin or superadmin; load service_centers for SC scoping
   const { data: callerProfile, error: callerErr } = await serviceClient
     .from('staff_profiles')
-    .select('role, service_centers')
+    .select('role, service_centers, first_name, last_name')
     .eq('staff_user_id', user.id)
     .single();
 
@@ -46,6 +46,29 @@ Deno.serve(async (req: Request): Promise<Response> => {
 
   const callerSCs: string[] = callerProfile.service_centers ?? [];
   const isAdmin = callerProfile.role === 'admin';
+  const callerName = `${callerProfile.first_name ?? ''} ${callerProfile.last_name ?? ''}`.trim();
+
+  const insertStaffManagementNotif = (
+    profileId: string,
+    eventType: string,
+    targetName: string,
+    targetSCs: string[],
+  ) => {
+    if (targetSCs.length === 0) return Promise.resolve();
+    return serviceClient.from('staff_notifications').insert(
+      targetSCs.map(sc => ({
+        source_type: 'staff_management',
+        source_id: profileId,
+        reference_number: '',
+        event_type: eventType,
+        service_center: sc,
+        notify_staff: false,
+        notify_admin: true,
+        notify_superadmin: isAdmin,
+        metadata: { actor_name: callerName, target_name: targetName, action_type: eventType },
+      }))
+    );
+  };
 
   let body: { action?: unknown; [key: string]: unknown };
   try {
@@ -157,15 +180,18 @@ Deno.serve(async (req: Request): Promise<Response> => {
       return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
     }
 
-    await serviceClient.rpc('write_staff_change_log', {
-      p_performed_by:         user.id,
-      p_action:               'staff_created',
-      p_target_table:         'staff_profiles',
-      p_target_id:            profileData!.id,
-      p_new_value:            { email, first_name, last_name, service_centers: requestedSCs, role },
-      p_target_staff_user_id: authData.user.id,
-      p_target_name:          `${first_name} ${last_name}`,
-    });
+    await Promise.all([
+      serviceClient.rpc('write_staff_change_log', {
+        p_performed_by:         user.id,
+        p_action:               'staff_created',
+        p_target_table:         'staff_profiles',
+        p_target_id:            profileData!.id,
+        p_new_value:            { email, first_name, last_name, service_centers: requestedSCs, role },
+        p_target_staff_user_id: authData.user.id,
+        p_target_name:          `${first_name} ${last_name}`,
+      }),
+      insertStaffManagementNotif(profileData!.id, 'add', `${first_name} ${last_name}`, requestedSCs),
+    ]);
 
     return jsonResponse(201, 'success', 'สร้างบัญชีสำเร็จ', { user_id: userId });
   }
@@ -187,8 +213,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
     ]);
     const snapshotEmail = authUserSnapshot.data?.user?.email ?? null;
 
-    if (isAdmin && profileSnapshot?.role === 'superadmin') {
-      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถลบบัญชีผู้ดูแลสูงสุดได้');
+    if (profileSnapshot?.role === 'superadmin') {
+      return jsonResponse(403, 'error', 'ไม่สามารถลบบัญชีผู้ดูแลสูงสุดได้');
+    }
+
+    if (isAdmin && profileSnapshot?.role === 'admin') {
+      return jsonResponse(403, 'error', 'ผู้ดูแลไม่สามารถลบบัญชีผู้ดูแลด้วยกันได้');
     }
 
     // Admin can only delete staff in their own SCs
@@ -205,21 +235,26 @@ Deno.serve(async (req: Request): Promise<Response> => {
     }
 
     if (profileSnapshot) {
-      await serviceClient.rpc('write_staff_change_log', {
-        p_performed_by:         user.id,
-        p_action:               'staff_deleted',
-        p_target_table:         'staff_profiles',
-        p_target_id:            profileSnapshot.id,
-        p_old_value:            {
-          email: snapshotEmail,
-          first_name: profileSnapshot.first_name,
-          last_name: profileSnapshot.last_name,
-          service_centers: profileSnapshot.service_centers,
-          role: profileSnapshot.role,
-        },
-        p_target_staff_user_id: user_id,
-        p_target_name:          `${profileSnapshot.first_name} ${profileSnapshot.last_name}`,
-      });
+      const deletedName = `${profileSnapshot.first_name} ${profileSnapshot.last_name}`;
+      const deletedSCs = (profileSnapshot.service_centers as string[] | null) ?? [];
+      await Promise.all([
+        serviceClient.rpc('write_staff_change_log', {
+          p_performed_by:         user.id,
+          p_action:               'staff_deleted',
+          p_target_table:         'staff_profiles',
+          p_target_id:            profileSnapshot.id,
+          p_old_value:            {
+            email: snapshotEmail,
+            first_name: profileSnapshot.first_name,
+            last_name: profileSnapshot.last_name,
+            service_centers: profileSnapshot.service_centers,
+            role: profileSnapshot.role,
+          },
+          p_target_staff_user_id: user_id,
+          p_target_name:          deletedName,
+        }),
+        insertStaffManagementNotif(profileSnapshot.id, 'remove', deletedName, deletedSCs),
+      ]);
     }
 
     return jsonResponse(200, 'success', 'ลบบัญชีสำเร็จ');
@@ -400,9 +435,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
       }));
     }
 
-    if (auditTasks.length > 0) {
-      await Promise.all(auditTasks);
+    const notifTasks: Promise<unknown>[] = [];
+    const oldSCsForNotif = (profileBefore.data?.service_centers as string[] | null) ?? [];
+    const targetNameForNotif = targetName ?? '';
+    const sourceIdForNotif = profileBefore.data?.id ?? '';
+
+    if (hasActualProfileChange) notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_profile', targetNameForNotif, oldSCsForNotif));
+    if (hasActualEmailChange) notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_email', targetNameForNotif, oldSCsForNotif));
+    if (hasActualRoleChange) notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_role', targetNameForNotif, oldSCsForNotif));
+    if (hasActualServiceCentersChange) {
+      const mergedSCs = [...new Set([...oldSCsForNotif, ...effectiveSCs])];
+      notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_profile', targetNameForNotif, mergedSCs));
     }
+
+    await Promise.all([...auditTasks, ...notifTasks]);
 
     return jsonResponse(200, 'success', 'แก้ไขข้อมูลสำเร็จ');
   }

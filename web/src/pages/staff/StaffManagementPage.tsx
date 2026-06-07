@@ -431,7 +431,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
             startIcon={deleting ? undefined : <DeleteIcon />}
             endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
             onClick={() => setConfirmDeleteOpen(true)}
-            disabled={deleting || isRestricted || (staff?.staff_user_id === currentUserId)}
+            disabled={deleting || staff?.role === 'superadmin' || (isCallerAdmin && staff?.role === 'admin') || (staff?.staff_user_id === currentUserId)}
             sx={{ mr: 'auto' }}
           >
             ลบ

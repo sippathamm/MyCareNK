@@ -6,15 +6,28 @@ import {
   useNotification,
   STATUS_CONFIG,
   APPOINTMENT_STATUS_CONFIG,
+  STOCK_OPERATION_CONFIG,
+  STAFF_MANAGEMENT_CONFIG,
   isAppointmentNotification,
+  isStockNotification,
+  isStaffManagementNotification,
+  buildStockMessage,
+  buildStaffManagementMessage,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
 } from '../../contexts/NotificationContext';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 function getNotifConfig(item: NotificationItem) {
   if (isAppointmentNotification(item)) {
     return APPOINTMENT_STATUS_CONFIG[item.event_type as AppointmentEventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  }
+  if (isStockNotification(item)) {
+    return STOCK_OPERATION_CONFIG[item.event_type] ?? STOCK_OPERATION_CONFIG.restock;
+  }
+  if (isStaffManagementNotification(item)) {
+    return STAFF_MANAGEMENT_CONFIG;
   }
   return STATUS_CONFIG[item.event_type as RequestStatus];
 }
@@ -43,12 +56,23 @@ function StatusDot({ item }: { item: NotificationItem }) {
   return <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: color, flexShrink: 0, mt: 0.5 }} />;
 }
 
-function NotificationRow({ item, onItemClick, onDelete }: {
+function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
   item: NotificationItem;
+  isViewerStaff: boolean;
   onItemClick: (item: NotificationItem) => void;
   onDelete: (e: React.MouseEvent, id: string) => void;
 }) {
   const cfg = getNotifConfig(item);
+  const isStock = isStockNotification(item);
+  const isStaffMgmt = isStaffManagementNotification(item);
+  const label = isStock
+    ? buildStockMessage(
+        item.metadata as { actor_name: string; service_center_name: string; action_type: string },
+        isViewerStaff,
+      )
+    : isStaffMgmt
+      ? buildStaffManagementMessage(item.metadata as { actor_name: string; target_name: string; action_type: string })
+      : cfg.label;
   return (
     <ListItemButton
       onClick={() => onItemClick(item)}
@@ -69,15 +93,17 @@ function NotificationRow({ item, onItemClick, onDelete }: {
             fontWeight={item.is_read ? 400 : 600}
             sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
           >
-            {cfg.label}
+            {label}
           </Typography>
           {!item.is_read && (
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
           )}
         </Box>
-        <Typography variant="body2" color="text.secondary">
-          {item.reference_number}
-        </Typography>
+        {!isStock && !isStaffMgmt && (
+          <Typography variant="body2" color="text.secondary">
+            {item.reference_number}
+          </Typography>
+        )}
         <Typography variant="caption" color="text.disabled">
           {formatAbsoluteDateTime(item.created_at)} · {formatRelativeTime(item.created_at)}
         </Typography>
@@ -97,11 +123,17 @@ function NotificationRow({ item, onItemClick, onDelete }: {
 export default function NotificationsPage() {
   const navigate = useNavigate();
   const { notifications, markAsRead, markAllAsRead, deleteNotification } = useNotification();
+  const { isAdmin, isSuperadmin } = useRoleAccess();
+  const isViewerStaff = !isAdmin && !isSuperadmin;
 
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
     if (isAppointmentNotification(item)) {
       navigate('/appointments', { state: { openAppointmentId: item.source_id } });
+    } else if (isStockNotification(item)) {
+      navigate('/inventory');
+    } else if (isStaffManagementNotification(item)) {
+      navigate('/staff');
     } else {
       navigate('/requests', { state: { openRequestId: item.source_id } });
     }
@@ -142,7 +174,7 @@ export default function NotificationsPage() {
           <List disablePadding>
             {notifications.map((item, idx) => (
               <Box key={item.id}>
-                <NotificationRow item={item} onItemClick={handleItemClick} onDelete={handleDelete} />
+                <NotificationRow item={item} isViewerStaff={isViewerStaff} onItemClick={handleItemClick} onDelete={handleDelete} />
                 {idx < notifications.length - 1 && <Divider />}
               </Box>
             ))}

@@ -27,6 +27,29 @@ export function isAppointmentNotification(item: NotificationItem): boolean {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function isStockNotification(item: NotificationItem): boolean {
+  return item.source_type === 'stock_operation';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function isStaffManagementNotification(item: NotificationItem): boolean {
+  return item.source_type === 'staff_management';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const STOCK_OPERATION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  restock:    { label: 'เติมสต็อก', color: '#4CAF50', bg: '#EBF7EC' },
+  adjustment: { label: 'ปรับสต็อก', color: '#FF9800', bg: '#FFF3E0' },
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const STAFF_MANAGEMENT_CONFIG: { label: string; color: string; bg: string } = {
+  label: 'การจัดการเจ้าหน้าที่',
+  color: '#5C6BC0',
+  bg: '#EDE7F6',
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
 export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
   pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
   confirmed:          { label: 'ยืนยันนัดหมาย',           color: '#BA68C8', bg: '#F5EAF9' },
@@ -43,6 +66,8 @@ interface NotificationContextValue {
   toastEventType: RequestStatus | null;
   toastIsAppointment: boolean;
   toastAppointmentEventType: AppointmentEventType | null;
+  toastIsStock: boolean;
+  toastIsStaffManagement: boolean;
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -96,7 +121,7 @@ const MAX_NOTIFICATIONS = 50;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user?.id ?? '';
-  const { role, loading: roleLoading, serviceCenters, isSuperadmin } = useRoleAccess();
+  const { role, loading: roleLoading, serviceCenters, isSuperadmin, isAdmin } = useRoleAccess();
 
   const readIdsRef = useRef<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -106,6 +131,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastEventType, setToastEventType] = useState<RequestStatus | null>(null);
   const [toastIsAppointment, setToastIsAppointment] = useState(false);
   const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
+  const [toastIsStock, setToastIsStock] = useState(false);
+  const [toastIsStaffManagement, setToastIsStaffManagement] = useState(false);
 
   // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
@@ -197,13 +224,24 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         (payload) => {
           const row = payload.new as Tables<'staff_notifications'>;
           const isAppointment = row.source_type === 'doctor_appointment';
+          const isStock = row.source_type === 'stock_operation';
+          const isStaffMgmt = row.source_type === 'staff_management';
           const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
-          const message = buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
+          const message = isStock
+            ? buildStockMessage(
+                row.metadata as { actor_name: string; service_center_name: string; action_type: string },
+                !isAdmin && !isSuperadmin,
+              )
+            : isStaffMgmt
+              ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
+              : buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
+          setToastIsStock(isStock);
+          setToastIsStaffManagement(isStaffMgmt);
           setToastAppointmentEventType(aptEventType);
-          setToastEventType(isAppointment ? null : row.event_type as RequestStatus);
+          setToastEventType(isAppointment || isStock || isStaffMgmt ? null : row.event_type as RequestStatus);
           setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
@@ -215,7 +253,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userId, role, serviceCenters, isSuperadmin, roleLoading]);
+  }, [userId, role, serviceCenters, isSuperadmin, isAdmin, roleLoading]);
 
   // Realtime: soft-delete hidden row inserted on another device → hide locally
   useEffect(() => {
@@ -307,6 +345,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const closeToast = useCallback(() => {
     setToastOpen(false);
     setToastIsAppointment(false);
+    setToastIsStock(false);
+    setToastIsStaffManagement(false);
     setToastAppointmentEventType(null);
   }, []);
 
@@ -326,7 +366,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -364,4 +404,31 @@ function buildToastMessage(
     ? (APPOINTMENT_STATUS_CONFIG[appointmentEventType ?? 'pending']?.label ?? 'นัดหมาย')
     : (STATUS_CONFIG[eventType]?.label ?? eventType);
   return `${label}: ${referenceNumber}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildStockMessage(
+  metadata: { actor_name: string; service_center_name: string; action_type: string },
+  isViewerStaff: boolean,
+): string {
+  const actionLabel = metadata.action_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  if (isViewerStaff) {
+    return `สถานบริการของคุณถูก${actionLabel} โดย ${metadata.actor_name}`;
+  }
+  return `สถานบริการ ${metadata.service_center_name} ถูก${actionLabel} โดย ${metadata.actor_name}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildStaffManagementMessage(
+  metadata: { actor_name: string; target_name: string; action_type: string },
+): string {
+  const { actor_name, target_name, action_type } = metadata;
+  switch (action_type) {
+    case 'add':          return `${actor_name} เพิ่ม ${target_name}`;
+    case 'remove':       return `${actor_name} ลบ ${target_name}`;
+    case 'edit_profile': return `${actor_name} แก้ไขโปรไฟล์ ${target_name}`;
+    case 'edit_email':   return `${actor_name} แก้ไขอีเมล ${target_name}`;
+    case 'edit_role':    return `${actor_name} แก้ไขระดับสิทธิ์ ${target_name}`;
+    default:             return `${actor_name} แก้ไข ${target_name}`;
+  }
 }

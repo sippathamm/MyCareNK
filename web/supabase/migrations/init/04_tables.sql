@@ -260,18 +260,21 @@ CREATE TABLE public.staff_notifications (
   source_id        uuid        NOT NULL,
   metadata         jsonb       NOT NULL DEFAULT '{}',
   service_center   text,
+  notify_staff     boolean     NOT NULL DEFAULT true,
+  notify_admin     boolean     NOT NULL DEFAULT true,
+  notify_superadmin boolean    NOT NULL DEFAULT true,
   CONSTRAINT staff_notifications_pkey PRIMARY KEY (id)
 );
 
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
--- staff: own SC; admin: all at own SC; superadmin: everything
+-- staff: own SC; admin: own SC; superadmin: all — each filtered by notify_* flag
 CREATE POLICY "staff_notifications_select"
   ON public.staff_notifications FOR SELECT TO authenticated
   USING (
-    is_superadmin()
-    OR (is_admin() AND service_center = ANY(get_my_service_centers()))
-    OR service_center = ANY(get_my_service_centers())
+    (is_superadmin() AND notify_superadmin)
+    OR (is_admin() AND NOT is_superadmin() AND notify_admin AND service_center = ANY(get_my_service_centers()))
+    OR (NOT is_admin() AND NOT is_superadmin() AND notify_staff AND service_center = ANY(get_my_service_centers()))
   );
 
 CREATE POLICY "staff_notifications_delete"
@@ -599,6 +602,10 @@ CREATE POLICY "superadmin_read_inventory_logs"
 CREATE TRIGGER apply_inventory_adjustment
   AFTER INSERT ON public.inventory_logs
   FOR EACH ROW EXECUTE FUNCTION apply_inventory_adjustment();
+
+CREATE TRIGGER notify_staff_on_stock_operation
+  AFTER INSERT ON public.inventory_logs
+  FOR EACH ROW EXECUTE FUNCTION notify_staff_on_stock_operation();
 
 
 -- ── 16. doctor_appointments ────────────────────────────────
