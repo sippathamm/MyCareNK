@@ -185,6 +185,7 @@ jobs:
             **ดาวน์โหลด:** ดู Assets ด้านล่าง
             - `MyCareNK-v${{ steps.version.outputs.semver }}.apk` — release build (แนะนำ)
             - `MyCareNK-v${{ steps.version.outputs.semver }}-debug.apk` — debug build
+            
             **ติดตั้ง:** ต้องเปิด "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก" ในการตั้งค่า Android ก่อน
           files: |
             MyCareNK-v${{ steps.version.outputs.semver }}-debug.apk
