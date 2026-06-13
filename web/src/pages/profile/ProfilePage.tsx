@@ -76,7 +76,9 @@ export default function ProfilePage() {
       setAlert({ severity: 'error', message: 'ยังไม่ได้ตั้งค่า LINE Login Channel ID' });
       return;
     }
-    const state = crypto.randomUUID();
+    const bytes = new Uint8Array(16);
+    crypto.getRandomValues(bytes);
+    const state = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
     sessionStorage.setItem('line_oauth_state', state);
     const params = new URLSearchParams({
       response_type: 'code',
