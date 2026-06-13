@@ -218,7 +218,6 @@ export default function ProfilePage() {
                     <Button
                       variant="outlined"
                       color="error"
-                      size="small"
                       startIcon={<LinkOffIcon />}
                       onClick={handleUnlink}
                       loading={unlinking}
@@ -233,13 +232,13 @@ export default function ProfilePage() {
                       component="img"
                       src="https://qr-official.line.me/gs/M_663mvfrd_GW.png?oat_content=qr"
                       alt="QR Code LINE OA"
-                      sx={{ width: 80, height: 80, borderRadius: 1, flexShrink: 0 }}
+                      sx={{ width: 120, height: 120, borderRadius: 1, flexShrink: 0 }}
                     />
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="body2" fontWeight="bold" mb={0.5}>
                         เพิ่ม LINE OA เป็นเพื่อนเพื่อรับการแจ้งเตือน
                       </Typography>
-                      <Typography variant="caption" color="text.secondary" display="block" mb={1}>
+                      <Typography variant="caption" color="text.secondary" display="block" mb={1.5}>
                         สแกน QR Code หรือกดปุ่มด้านล่างเพื่อเพิ่มเพื่อน
                       </Typography>
                       <Button
@@ -247,7 +246,6 @@ export default function ProfilePage() {
                         href="https://lin.ee/YSncBQN"
                         target="_blank"
                         rel="noopener noreferrer"
-                        size="small"
                         variant="contained"
                         sx={{ bgcolor: '#06C755', '&:hover': { bgcolor: '#05b54d' } }}
                       >
