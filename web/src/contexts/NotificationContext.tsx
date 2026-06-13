@@ -432,3 +432,32 @@ export function buildStaffManagementMessage(
     default:             return `${actor_name} แก้ไข ${target_name}`;
   }
 }
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderStockMessageJSX(
+  metadata: { actor_name: string; service_center_name: string; action_type: string },
+  isViewerStaff: boolean,
+): ReactNode {
+  const actionLabel = metadata.action_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  if (isViewerStaff) {
+    return <>สถานบริการของคุณถูก{actionLabel} โดย <strong>{metadata.actor_name}</strong></>;
+  }
+  return <>สถานบริการ <strong>{metadata.service_center_name}</strong> ถูก{actionLabel} โดย <strong>{metadata.actor_name}</strong></>;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderStaffManagementMessageJSX(
+  metadata: { actor_name: string; target_name: string; action_type: string },
+): ReactNode {
+  const { actor_name, target_name, action_type } = metadata;
+  const actor = <strong>{actor_name}</strong>;
+  const target = <strong>{target_name}</strong>;
+  switch (action_type) {
+    case 'add':          return <>{actor} เพิ่ม {target}</>;
+    case 'remove':       return <>{actor} ลบ {target}</>;
+    case 'edit_profile': return <>{actor} แก้ไขโปรไฟล์ {target}</>;
+    case 'edit_email':   return <>{actor} แก้ไขอีเมล {target}</>;
+    case 'edit_role':    return <>{actor} แก้ไขระดับสิทธิ์ {target}</>;
+    default:             return <>{actor} แก้ไข {target}</>;
+  }
+}

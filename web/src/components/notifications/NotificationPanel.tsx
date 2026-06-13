@@ -7,6 +7,7 @@ import {
   Divider,
   Button,
   IconButton,
+  Chip,
 } from '@mui/material';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -20,8 +21,8 @@ import {
   isAppointmentNotification,
   isStockNotification,
   isStaffManagementNotification,
-  buildStockMessage,
-  buildStaffManagementMessage,
+  renderStockMessageJSX,
+  renderStaffManagementMessageJSX,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -128,14 +129,15 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
               const cfg = getNotifConfig(item);
               const isStock = isStockNotification(item);
               const isStaffMgmt = isStaffManagementNotification(item);
-              const label = isStock
-                ? buildStockMessage(
+              const isSystem = isStock || isStaffMgmt;
+              const jsxMessage = isStock
+                ? renderStockMessageJSX(
                     item.metadata as { actor_name: string; service_center_name: string; action_type: string },
                     isViewerStaff,
                   )
                 : isStaffMgmt
-                  ? buildStaffManagementMessage(item.metadata as { actor_name: string; target_name: string; action_type: string })
-                  : cfg.label;
+                  ? renderStaffManagementMessageJSX(item.metadata as { actor_name: string; target_name: string; action_type: string })
+                  : null;
               return (
                 <Box key={item.id}>
                   <ListItemButton
@@ -154,19 +156,32 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                     {/* Content */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography
-                          variant="body2"
-                          fontWeight={item.is_read ? 400 : 600}
-                          sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
-                          noWrap
-                        >
-                          {label}
-                        </Typography>
+                        {isSystem ? (
+                          <Chip label="ระบบ" size="small" sx={{ height: 20, fontSize: '0.68rem', borderRadius: 1 }} />
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            fontWeight={item.is_read ? 400 : 600}
+                            sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
+                            noWrap
+                          >
+                            {cfg.label}
+                          </Typography>
+                        )}
                         {!item.is_read && (
                           <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
                         )}
                       </Box>
-                      {!isStock && !isStaffMgmt && (
+                      {isSystem && (
+                        <Typography
+                          variant="body2"
+                          fontWeight={item.is_read ? 400 : 600}
+                          sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B', mt: 0.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        >
+                          {jsxMessage}
+                        </Typography>
+                      )}
+                      {!isSystem && (
                         <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
                           {item.reference_number}
                         </Typography>
