@@ -544,12 +544,13 @@ CREATE TRIGGER trigger_handle_user_request_notification
 
 -- ── 14. request_status_logs ────────────────────────────────
 CREATE TABLE public.request_status_logs (
-  id          uuid                  NOT NULL DEFAULT gen_random_uuid(),
-  request_id  uuid                  NOT NULL,
-  from_status public.request_status,
-  to_status   public.request_status NOT NULL,
-  changed_by  uuid,
-  changed_at  timestamptz           NOT NULL DEFAULT now(),
+  id              uuid                  NOT NULL DEFAULT gen_random_uuid(),
+  request_id      uuid                  NOT NULL,
+  from_status     public.request_status,
+  to_status       public.request_status NOT NULL,
+  changed_by      uuid,
+  changed_by_name text,
+  changed_at      timestamptz           NOT NULL DEFAULT now(),
   CONSTRAINT request_status_logs_pkey            PRIMARY KEY (id),
   CONSTRAINT request_status_logs_request_id_fkey FOREIGN KEY (request_id)
     REFERENCES public.condom_requests(id) ON DELETE CASCADE,
@@ -576,6 +577,7 @@ CREATE POLICY "No one can delete status logs"
 CREATE TABLE public.inventory_logs (
   id                   uuid                NOT NULL DEFAULT gen_random_uuid(),
   performed_by         uuid,
+  performed_by_name    text,
   action               public.audit_action NOT NULL,
   service_center       text                NOT NULL,
   condom_delta         integer             NOT NULL DEFAULT 0,
@@ -606,6 +608,10 @@ CREATE POLICY "Admins can insert inventory logs"
 CREATE POLICY "Superadmins can read inventory logs"
   ON public.inventory_logs FOR SELECT
   TO authenticated USING (is_superadmin());
+
+CREATE TRIGGER trigger_set_inventory_log_performer_name
+  BEFORE INSERT ON public.inventory_logs
+  FOR EACH ROW EXECUTE FUNCTION set_inventory_log_performer_name();
 
 CREATE TRIGGER trigger_apply_inventory_adjustment
   AFTER INSERT ON public.inventory_logs
@@ -711,12 +717,13 @@ CREATE TRIGGER trigger_handle_user_appointment_notification
 
 -- ── 17. appointment_status_logs ────────────────────────────
 CREATE TABLE public.appointment_status_logs (
-  id             uuid                      NOT NULL DEFAULT gen_random_uuid(),
-  appointment_id uuid                      NOT NULL,
-  from_status    public.appointment_status,
-  to_status      public.appointment_status NOT NULL,
-  changed_by     uuid,
-  changed_at     timestamptz               NOT NULL DEFAULT now(),
+  id              uuid                      NOT NULL DEFAULT gen_random_uuid(),
+  appointment_id  uuid                      NOT NULL,
+  from_status     public.appointment_status,
+  to_status       public.appointment_status NOT NULL,
+  changed_by      uuid,
+  changed_by_name text,
+  changed_at      timestamptz               NOT NULL DEFAULT now(),
   CONSTRAINT appointment_status_logs_pkey                PRIMARY KEY (id),
   CONSTRAINT appointment_status_logs_appointment_id_fkey FOREIGN KEY (appointment_id)
     REFERENCES public.doctor_appointments(id) ON DELETE CASCADE

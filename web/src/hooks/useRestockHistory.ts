@@ -8,6 +8,7 @@ export interface RestockHistoryRow {
   lubricant_delta: number;
   created_at: string;
   performed_by: string | null;
+  performed_by_name: string | null;
   performer_name: string;
   note: string | null;
 }
@@ -25,7 +26,7 @@ export function useRestockHistory() {
       await Promise.all([
         supabase
           .from('inventory_logs')
-          .select('id, service_center, action, condom_delta, lubricant_delta, created_at, note, performed_by')
+          .select('id, service_center, action, condom_delta, lubricant_delta, created_at, note, performed_by, performed_by_name')
           .in('action', ['restock', 'adjustment'])
           .order('created_at', { ascending: false })
           .limit(200),
@@ -51,7 +52,7 @@ export function useRestockHistory() {
       (logs ?? []).map((t) => ({
         ...t,
         action: t.action as 'restock' | 'adjustment',
-        performer_name: profileMap.get(t.performed_by ?? '') ?? 'ไม่ทราบชื่อ',
+        performer_name: profileMap.get(t.performed_by ?? '') ?? t.performed_by_name ?? 'ไม่ทราบชื่อ',
       })),
     );
     setLoading(false);

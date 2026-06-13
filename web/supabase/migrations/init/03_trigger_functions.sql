@@ -112,8 +112,15 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  INSERT INTO public.request_status_logs (request_id, from_status, to_status, changed_by, changed_at)
-  VALUES (NEW.id, OLD.request_status, NEW.request_status, auth.uid(), now());
+  INSERT INTO public.request_status_logs (request_id, from_status, to_status, changed_by, changed_by_name, changed_at)
+  VALUES (
+    NEW.id,
+    OLD.request_status,
+    NEW.request_status,
+    auth.uid(),
+    (SELECT first_name || ' ' || last_name FROM public.staff_profiles WHERE staff_user_id = auth.uid()),
+    now()
+  );
   RETURN NEW;
 END;
 $$;
@@ -390,8 +397,32 @@ SET search_path TO 'public'
 AS $$
 BEGIN
   IF OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    INSERT INTO appointment_status_logs (appointment_id, from_status, to_status, changed_by, changed_at)
-    VALUES (NEW.id, OLD.appointment_status, NEW.appointment_status, auth.uid(), now());
+    INSERT INTO appointment_status_logs (appointment_id, from_status, to_status, changed_by, changed_by_name, changed_at)
+    VALUES (
+      NEW.id,
+      OLD.appointment_status,
+      NEW.appointment_status,
+      auth.uid(),
+      (SELECT first_name || ' ' || last_name FROM public.staff_profiles WHERE staff_user_id = auth.uid()),
+      now()
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_inventory_log_performer_name()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.performed_by IS NOT NULL THEN
+    SELECT first_name || ' ' || last_name
+    INTO NEW.performed_by_name
+    FROM public.staff_profiles
+    WHERE staff_user_id = NEW.performed_by;
   END IF;
   RETURN NEW;
 END;

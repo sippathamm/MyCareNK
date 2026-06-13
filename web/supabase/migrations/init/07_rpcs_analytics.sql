@@ -384,8 +384,9 @@ BEGIN
   SELECT rsl.id, rsl.request_id, cr.reference_number,
     rsl.changed_by AS performed_by,
     CASE
-      WHEN sp.staff_user_id IS NOT NULL THEN sp.first_name || ' ' || sp.last_name
-      WHEN up.user_id       IS NOT NULL THEN 'ผู้ใช้'
+      WHEN rsl.changed_by_name IS NOT NULL THEN rsl.changed_by_name
+      WHEN sp.staff_user_id    IS NOT NULL THEN sp.first_name || ' ' || sp.last_name
+      WHEN up.user_id          IS NOT NULL THEN 'ผู้ใช้'
       ELSE 'ระบบ'
     END AS full_name,
     rsl.from_status::text, rsl.to_status::text, rsl.changed_at
@@ -440,8 +441,9 @@ BEGIN
   SELECT asl.id, asl.appointment_id, da.reference_number,
     asl.changed_by AS performed_by,
     CASE
-      WHEN sp.staff_user_id IS NOT NULL THEN sp.first_name || ' ' || sp.last_name
-      WHEN up.user_id       IS NOT NULL THEN 'ผู้ใช้'
+      WHEN asl.changed_by_name IS NOT NULL THEN asl.changed_by_name
+      WHEN sp.staff_user_id    IS NOT NULL THEN sp.first_name || ' ' || sp.last_name
+      WHEN up.user_id          IS NOT NULL THEN 'ผู้ใช้'
       ELSE 'ระบบ'
     END AS full_name,
     asl.from_status::text, asl.to_status::text, asl.changed_at
@@ -491,7 +493,7 @@ BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
   SELECT il.id, il.performed_by,
-    COALESCE(sp.first_name || ' ' || sp.last_name, 'ระบบ') AS full_name,
+    COALESCE(il.performed_by_name, sp.first_name || ' ' || sp.last_name, 'ระบบ') AS full_name,
     il.action, il.service_center, il.condom_delta, il.lubricant_delta, il.reason, il.note, il.created_at
   FROM public.inventory_logs il
   LEFT JOIN staff_profiles sp ON sp.staff_user_id = il.performed_by
