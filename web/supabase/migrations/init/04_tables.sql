@@ -222,6 +222,7 @@ CREATE TRIGGER trigger_refresh_service_center_staff_counts
 CREATE TABLE public.staff_change_logs (
   id                   uuid                NOT NULL DEFAULT gen_random_uuid(),
   performed_by         uuid,
+  performed_by_name    text,
   action               public.audit_action NOT NULL,
   target_table         text                NOT NULL,
   target_id            uuid                NOT NULL,

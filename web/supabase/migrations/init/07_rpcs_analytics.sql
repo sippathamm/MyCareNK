@@ -537,7 +537,7 @@ BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Permission denied'; END IF;
   RETURN QUERY
   SELECT al.id, al.performed_by,
-    COALESCE(sp.first_name || ' ' || sp.last_name, 'ระบบ'),
+    COALESCE(al.performed_by_name, sp.first_name || ' ' || sp.last_name, 'ระบบ'),
     al.action, al.target_id,
     COALESCE(al.target_staff_user_id, tsp.staff_user_id),
     al.target_name,
