@@ -178,7 +178,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                       )}
                       {!isSystem && (
                         <Typography variant="caption" color="text.primary" fontWeight="bold" sx={{ display: 'block' }} noWrap>
-                          {item.reference_number}
+                          {(item.metadata as { reference_number?: string })?.reference_number}
                         </Typography>
                       )}
                       <Typography variant="caption" color="text.disabled">

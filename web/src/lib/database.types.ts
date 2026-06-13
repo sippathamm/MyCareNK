@@ -512,7 +512,6 @@ export type Database = {
           event_type: string
           id: string
           metadata: Json
-          reference_number: string
           service_center: string | null
           source_id: string
           source_type: string
@@ -522,7 +521,6 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
-          reference_number?: string
           service_center?: string | null
           source_id: string
           source_type: string
@@ -532,7 +530,6 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
-          reference_number?: string
           service_center?: string | null
           source_id?: string
           source_type?: string

@@ -8,9 +8,9 @@ Deno.serve(async (req: Request): Promise<Response> => {
   let notification: {
     id: string;
     source_type: string;
-    reference_number: string;
     event_type: string;
     service_center: string | null;
+    metadata: { reference_number?: string; [key: string]: unknown };
     [key: string]: unknown;
   };
 
@@ -20,7 +20,8 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response('Bad request', { status: 400 });
   }
 
-  const { service_center, source_type, reference_number } = notification;
+  const { service_center, source_type } = notification;
+  const reference_number = notification.metadata?.reference_number ?? '';
 
   if (!service_center) {
     return new Response('OK', { status: 200 });

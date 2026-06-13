@@ -109,7 +109,7 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
         )}
         {!isSystem && (
           <Typography variant="body2" color="text.primary" fontWeight="bold">
-            {item.reference_number}
+            {(item.metadata as { reference_number?: string })?.reference_number}
           </Typography>
         )}
         <Typography variant="caption" color="text.disabled">

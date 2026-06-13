@@ -204,14 +204,13 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.request_status IS DISTINCT FROM NEW.request_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, metadata)
+      (source_type, source_id, event_type, service_center, metadata)
     VALUES (
       'condom_request',
       NEW.id,
-      NEW.reference_number,
       NEW.request_status::text,
       NEW.selected_service_center,
-      '{}'
+      jsonb_build_object('reference_number', NEW.reference_number)
     );
   END IF;
   RETURN NEW;
@@ -303,12 +302,11 @@ BEGIN
   v_actor_name := COALESCE(v_actor_name, '');
 
   INSERT INTO public.staff_notifications
-    (source_type, source_id, reference_number, event_type, service_center,
+    (source_type, source_id, event_type, service_center,
      notify_staff, notify_admin, notify_superadmin, metadata)
   VALUES (
     'stock_operation',
     NEW.id,
-    '',
     NEW.action::text,
     NEW.service_center,
     true,
@@ -335,14 +333,13 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, metadata)
+      (source_type, source_id, event_type, service_center, metadata)
     VALUES (
       'doctor_appointment',
       NEW.id,
-      NEW.reference_number,
       NEW.appointment_status::text,
       NEW.selected_service_center,
-      '{}'
+      jsonb_build_object('reference_number', NEW.reference_number)
     );
   END IF;
   RETURN NEW;

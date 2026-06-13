@@ -179,7 +179,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .eq('staff_user_id', userId),
         supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, reference_number, event_type, service_center, metadata, created_at')
+          .select('id, source_type, source_id, event_type, service_center, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
@@ -235,7 +235,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               )
             : isStaffMgmt
               ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
-              : buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
+              : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
           setToastIsStock(isStock);

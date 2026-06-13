@@ -256,17 +256,16 @@ CREATE POLICY "No one can delete change logs"
 
 -- ── 8. staff_notifications ─────────────────────────────────
 CREATE TABLE public.staff_notifications (
-  id               uuid        NOT NULL DEFAULT gen_random_uuid(),
-  reference_number text        NOT NULL DEFAULT '',
-  created_at       timestamptz NOT NULL DEFAULT timezone('utc', now()),
-  event_type       text        NOT NULL,
-  source_type      text        NOT NULL,
-  source_id        uuid        NOT NULL,
-  metadata         jsonb       NOT NULL DEFAULT '{}',
-  service_center   text,
-  notify_staff     boolean     NOT NULL DEFAULT true,
-  notify_admin     boolean     NOT NULL DEFAULT true,
-  notify_superadmin boolean    NOT NULL DEFAULT true,
+  id                uuid        NOT NULL DEFAULT gen_random_uuid(),
+  created_at        timestamptz NOT NULL DEFAULT timezone('utc', now()),
+  event_type        text        NOT NULL,
+  source_type       text        NOT NULL,
+  source_id         uuid        NOT NULL,
+  metadata          jsonb       NOT NULL DEFAULT '{}',
+  service_center    text,
+  notify_staff      boolean     NOT NULL DEFAULT true,
+  notify_admin      boolean     NOT NULL DEFAULT true,
+  notify_superadmin boolean     NOT NULL DEFAULT true,
   CONSTRAINT staff_notifications_pkey PRIMARY KEY (id)
 );
 
