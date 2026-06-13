@@ -463,6 +463,30 @@ BEGIN
 END;
 $$;
 
+-- ── staff_notifications (LINE push) ────────────────────────
+-- Calls line-notify Edge Function via pg_net for pending notifications.
+CREATE OR REPLACE FUNCTION public.notify_line_on_staff_notification()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.event_type <> 'pending' OR NEW.service_center IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  PERFORM net.http_post(
+    url     := 'https://acvgazsivfvztwoyyecu.supabase.co/functions/v1/line-notify'::text,
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body    := to_jsonb(NEW),
+    timeout_milliseconds := 5000
+  );
+
+  RETURN NEW;
+END;
+$$;
+
 -- ── staff_profiles ──────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.refresh_service_center_staff_counts()
 RETURNS trigger

@@ -545,6 +545,9 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          line_display_name: string | null
+          line_picture_url: string | null
+          line_user_id: string | null
           role: Database["public"]["Enums"]["role"]
           service_centers: string[] | null
           staff_user_id: string
@@ -555,6 +558,9 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          line_display_name?: string | null
+          line_picture_url?: string | null
+          line_user_id?: string | null
           role?: Database["public"]["Enums"]["role"]
           service_centers?: string[] | null
           staff_user_id: string
@@ -565,6 +571,9 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          line_display_name?: string | null
+          line_picture_url?: string | null
+          line_user_id?: string | null
           role?: Database["public"]["Enums"]["role"]
           service_centers?: string[] | null
           staff_user_id?: string

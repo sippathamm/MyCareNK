@@ -170,16 +170,20 @@ CREATE POLICY "Users can view their own recovery attempts"
 
 -- ── 6. staff_profiles ──────────────────────────────────────
 CREATE TABLE public.staff_profiles (
-  id               uuid              NOT NULL DEFAULT gen_random_uuid(),
-  staff_user_id    uuid              NOT NULL,
-  first_name       varchar(255),
-  last_name        varchar(255),
-  service_centers  text[],
-  created_at       timestamptz                DEFAULT now(),
-  updated_at       timestamptz                DEFAULT now(),
-  role             public.role       NOT NULL DEFAULT 'staff',
+  id                uuid              NOT NULL DEFAULT gen_random_uuid(),
+  staff_user_id     uuid              NOT NULL,
+  first_name        varchar(255),
+  last_name         varchar(255),
+  service_centers   text[],
+  created_at        timestamptz                DEFAULT now(),
+  updated_at        timestamptz                DEFAULT now(),
+  role              public.role       NOT NULL DEFAULT 'staff',
+  line_user_id      text,
+  line_display_name text,
+  line_picture_url  text,
   CONSTRAINT staff_profiles_pkey               PRIMARY KEY (id),
   CONSTRAINT staff_profiles_staff_user_id_key  UNIQUE (staff_user_id),
+  CONSTRAINT staff_profiles_line_user_id_key   UNIQUE (line_user_id),
   CONSTRAINT staff_profiles_staff_user_id_fkey FOREIGN KEY (staff_user_id)
     REFERENCES auth.users(id) ON DELETE CASCADE
 );
@@ -283,6 +287,11 @@ CREATE POLICY "Staff can delete their own notifications"
     is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
     AND service_center = ANY(get_my_service_centers())
   );
+
+CREATE TRIGGER trigger_notify_line_on_staff_notification
+  AFTER INSERT ON public.staff_notifications
+  FOR EACH ROW
+  EXECUTE FUNCTION public.notify_line_on_staff_notification();
 
 
 -- ── 9. staff_notification_reads ────────────────────────────

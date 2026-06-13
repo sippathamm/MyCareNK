@@ -243,9 +243,14 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     )}
                   </Box>
                 </Box>
-                <Avatar sx={{ bgcolor: 'primary.main' }}>
-                  {profile.first_name?.[0]?.toUpperCase() || 'U'}
-                </Avatar>
+                <Tooltip title="โปรไฟล์">
+                  <Avatar
+                    sx={{ bgcolor: 'primary.main', cursor: 'pointer' }}
+                    onClick={() => navigate('/profile')}
+                  >
+                    {profile.first_name?.[0]?.toUpperCase() || 'U'}
+                  </Avatar>
+                </Tooltip>
               </Box>
             )}
           </Box>
