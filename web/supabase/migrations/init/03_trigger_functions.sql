@@ -112,8 +112,15 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  INSERT INTO public.request_status_logs (request_id, from_status, to_status, changed_by, changed_at)
-  VALUES (NEW.id, OLD.request_status, NEW.request_status, auth.uid(), now());
+  INSERT INTO public.request_status_logs (request_id, from_status, to_status, changed_by, changed_by_name, changed_at)
+  VALUES (
+    NEW.id,
+    OLD.request_status,
+    NEW.request_status,
+    auth.uid(),
+    (SELECT first_name || ' ' || last_name FROM public.staff_profiles WHERE staff_user_id = auth.uid()),
+    now()
+  );
   RETURN NEW;
 END;
 $$;
@@ -204,14 +211,13 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.request_status IS DISTINCT FROM NEW.request_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, metadata)
+      (source_type, source_id, event_type, service_center, metadata)
     VALUES (
       'condom_request',
       NEW.id,
-      NEW.reference_number,
       NEW.request_status::text,
       NEW.selected_service_center,
-      '{}'
+      jsonb_build_object('reference_number', NEW.reference_number)
     );
   END IF;
   RETURN NEW;
@@ -303,12 +309,11 @@ BEGIN
   v_actor_name := COALESCE(v_actor_name, '');
 
   INSERT INTO public.staff_notifications
-    (source_type, source_id, reference_number, event_type, service_center,
+    (source_type, source_id, event_type, service_center,
      notify_staff, notify_admin, notify_superadmin, metadata)
   VALUES (
     'stock_operation',
     NEW.id,
-    '',
     NEW.action::text,
     NEW.service_center,
     true,
@@ -335,14 +340,13 @@ AS $$
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
     INSERT INTO staff_notifications
-      (source_type, source_id, reference_number, event_type, service_center, metadata)
+      (source_type, source_id, event_type, service_center, metadata)
     VALUES (
       'doctor_appointment',
       NEW.id,
-      NEW.reference_number,
       NEW.appointment_status::text,
       NEW.selected_service_center,
-      '{}'
+      jsonb_build_object('reference_number', NEW.reference_number)
     );
   END IF;
   RETURN NEW;
@@ -393,8 +397,32 @@ SET search_path TO 'public'
 AS $$
 BEGIN
   IF OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    INSERT INTO appointment_status_logs (appointment_id, from_status, to_status, changed_by, changed_at)
-    VALUES (NEW.id, OLD.appointment_status, NEW.appointment_status, auth.uid(), now());
+    INSERT INTO appointment_status_logs (appointment_id, from_status, to_status, changed_by, changed_by_name, changed_at)
+    VALUES (
+      NEW.id,
+      OLD.appointment_status,
+      NEW.appointment_status,
+      auth.uid(),
+      (SELECT first_name || ' ' || last_name FROM public.staff_profiles WHERE staff_user_id = auth.uid()),
+      now()
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION public.set_inventory_log_performer_name()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.performed_by IS NOT NULL THEN
+    SELECT first_name || ' ' || last_name
+    INTO NEW.performed_by_name
+    FROM public.staff_profiles
+    WHERE staff_user_id = NEW.performed_by;
   END IF;
   RETURN NEW;
 END;
@@ -417,8 +445,9 @@ BEGIN
   UPDATE public.doctor_appointments     SET handled_by   = NULL WHERE handled_by   = OLD.id;
   UPDATE public.request_status_logs     SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
-  UPDATE public.inventory_logs          SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.staff_change_logs       SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.inventory_logs           SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.service_center_inventory SET updated_by   = NULL WHERE updated_by   = OLD.id;
+  UPDATE public.staff_change_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.articles SET created_by   = NULL WHERE created_by   = OLD.id;
   UPDATE public.articles SET updated_by   = NULL WHERE updated_by   = OLD.id;
   UPDATE public.articles SET published_by = NULL WHERE published_by = OLD.id;
@@ -459,6 +488,30 @@ BEGIN
   IF NEW.appointment_status = 'cancelled_by_staff' THEN
     NEW.handled_by = auth.uid();
   END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- ── staff_notifications (LINE push) ────────────────────────
+-- Calls line-notify Edge Function via pg_net for pending notifications.
+CREATE OR REPLACE FUNCTION public.notify_line_on_staff_notification()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NEW.event_type <> 'pending' OR NEW.service_center IS NULL THEN
+    RETURN NEW;
+  END IF;
+
+  PERFORM net.http_post(
+    url     := 'https://acvgazsivfvztwoyyecu.supabase.co/functions/v1/line-notify'::text,
+    headers := '{"Content-Type": "application/json"}'::jsonb,
+    body    := to_jsonb(NEW),
+    timeout_milliseconds := 5000
+  );
+
   RETURN NEW;
 END;
 $$;

@@ -29,14 +29,17 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_performer_id uuid := COALESCE(p_performed_by, auth.uid());
 BEGIN
   INSERT INTO public.staff_change_logs (
-    performed_by, action, target_table, target_id,
+    performed_by, performed_by_name, action, target_table, target_id,
     old_value, new_value,
     target_staff_user_id, target_name
   )
   VALUES (
-    COALESCE(p_performed_by, auth.uid()),
+    v_performer_id,
+    (SELECT first_name || ' ' || last_name FROM public.staff_profiles WHERE staff_user_id = v_performer_id),
     p_action, p_target_table, p_target_id,
     p_old_value, p_new_value,
     p_target_staff_user_id, p_target_name
