@@ -11,6 +11,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     reference_number: string;
     event_type: string;
     service_center: string | null;
+    [key: string]: unknown;
   };
 
   try {

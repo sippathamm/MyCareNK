@@ -477,9 +477,9 @@ BEGIN
   END IF;
 
   PERFORM net.http_post(
-    url     := 'https://acvgazsivfvztwoyyecu.supabase.co/functions/v1/line-notify',
+    url     := 'https://acvgazsivfvztwoyyecu.supabase.co/functions/v1/line-notify'::text,
     headers := '{"Content-Type": "application/json"}'::jsonb,
-    body    := to_jsonb(NEW)::text,
+    body    := to_jsonb(NEW),
     timeout_milliseconds := 5000
   );
 
