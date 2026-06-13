@@ -179,7 +179,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .eq('staff_user_id', userId),
         supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, reference_number, event_type, service_center, metadata, created_at')
+          .select('id, source_type, source_id, event_type, service_center, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
@@ -235,7 +235,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               )
             : isStaffMgmt
               ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
-              : buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType);
+              : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
           setToastIsStock(isStock);
@@ -430,5 +430,34 @@ export function buildStaffManagementMessage(
     case 'edit_email':   return `${actor_name} แก้ไขอีเมล ${target_name}`;
     case 'edit_role':    return `${actor_name} แก้ไขระดับสิทธิ์ ${target_name}`;
     default:             return `${actor_name} แก้ไข ${target_name}`;
+  }
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderStockMessageJSX(
+  metadata: { actor_name: string; service_center_name: string; action_type: string },
+  isViewerStaff: boolean,
+): ReactNode {
+  const actionLabel = metadata.action_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  if (isViewerStaff) {
+    return <>สถานบริการของคุณถูก{actionLabel} โดย <strong>{metadata.actor_name}</strong></>;
+  }
+  return <>สถานบริการ <strong>{metadata.service_center_name}</strong> ถูก{actionLabel} โดย <strong>{metadata.actor_name}</strong></>;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderStaffManagementMessageJSX(
+  metadata: { actor_name: string; target_name: string; action_type: string },
+): ReactNode {
+  const { actor_name, target_name, action_type } = metadata;
+  const actor = <strong>{actor_name}</strong>;
+  const target = <strong>{target_name}</strong>;
+  switch (action_type) {
+    case 'add':          return <>{actor} เพิ่ม {target}</>;
+    case 'remove':       return <>{actor} ลบ {target}</>;
+    case 'edit_profile': return <>{actor} แก้ไขโปรไฟล์ {target}</>;
+    case 'edit_email':   return <>{actor} แก้ไขอีเมล {target}</>;
+    case 'edit_role':    return <>{actor} แก้ไขระดับสิทธิ์ {target}</>;
+    default:             return <>{actor} แก้ไข {target}</>;
   }
 }

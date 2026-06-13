@@ -11,8 +11,8 @@ import {
   isAppointmentNotification,
   isStockNotification,
   isStaffManagementNotification,
-  buildStockMessage,
-  buildStaffManagementMessage,
+  renderStockMessageJSX,
+  renderStaffManagementMessageJSX,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -65,14 +65,17 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
   const cfg = getNotifConfig(item);
   const isStock = isStockNotification(item);
   const isStaffMgmt = isStaffManagementNotification(item);
-  const label = isStock
-    ? buildStockMessage(
+  const isSystem = isStock || isStaffMgmt;
+
+  const jsxMessage = isStock
+    ? renderStockMessageJSX(
         item.metadata as { actor_name: string; service_center_name: string; action_type: string },
         isViewerStaff,
       )
     : isStaffMgmt
-      ? buildStaffManagementMessage(item.metadata as { actor_name: string; target_name: string; action_type: string })
-      : cfg.label;
+      ? renderStaffManagementMessageJSX(item.metadata as { actor_name: string; target_name: string; action_type: string })
+      : null;
+
   return (
     <ListItemButton
       onClick={() => onItemClick(item)}
@@ -93,15 +96,20 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
             fontWeight={item.is_read ? 400 : 600}
             sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
           >
-            {label}
+            {isSystem ? 'ระบบ' : cfg.label}
           </Typography>
           {!item.is_read && (
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
           )}
         </Box>
-        {!isStock && !isStaffMgmt && (
-          <Typography variant="body2" color="text.secondary">
-            {item.reference_number}
+        {isSystem && (
+          <Typography variant="body2" color="text.primary">
+            {jsxMessage}
+          </Typography>
+        )}
+        {!isSystem && (
+          <Typography variant="body2" color="text.primary" fontWeight="bold">
+            {(item.metadata as { reference_number?: string })?.reference_number}
           </Typography>
         )}
         <Typography variant="caption" color="text.disabled">

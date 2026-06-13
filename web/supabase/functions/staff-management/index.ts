@@ -59,7 +59,6 @@ Deno.serve(async (req: Request): Promise<Response> => {
       targetSCs.map(sc => ({
         source_type: 'staff_management',
         source_id: profileId,
-        reference_number: '',
         event_type: eventType,
         service_center: sc,
         notify_staff: false,

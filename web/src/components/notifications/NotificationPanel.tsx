@@ -20,8 +20,8 @@ import {
   isAppointmentNotification,
   isStockNotification,
   isStaffManagementNotification,
-  buildStockMessage,
-  buildStaffManagementMessage,
+  renderStockMessageJSX,
+  renderStaffManagementMessageJSX,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -128,14 +128,15 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
               const cfg = getNotifConfig(item);
               const isStock = isStockNotification(item);
               const isStaffMgmt = isStaffManagementNotification(item);
-              const label = isStock
-                ? buildStockMessage(
+              const isSystem = isStock || isStaffMgmt;
+              const jsxMessage = isStock
+                ? renderStockMessageJSX(
                     item.metadata as { actor_name: string; service_center_name: string; action_type: string },
                     isViewerStaff,
                   )
                 : isStaffMgmt
-                  ? buildStaffManagementMessage(item.metadata as { actor_name: string; target_name: string; action_type: string })
-                  : cfg.label;
+                  ? renderStaffManagementMessageJSX(item.metadata as { actor_name: string; target_name: string; action_type: string })
+                  : null;
               return (
                 <Box key={item.id}>
                   <ListItemButton
@@ -160,15 +161,24 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                           sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
                           noWrap
                         >
-                          {label}
+                          {isSystem ? 'ระบบ' : cfg.label}
                         </Typography>
                         {!item.is_read && (
                           <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
                         )}
                       </Box>
-                      {!isStock && !isStaffMgmt && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
-                          {item.reference_number}
+                      {isSystem && (
+                        <Typography
+                          variant="caption"
+                          color="text.primary"
+                          sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                        >
+                          {jsxMessage}
+                        </Typography>
+                      )}
+                      {!isSystem && (
+                        <Typography variant="caption" color="text.primary" fontWeight="bold" sx={{ display: 'block' }} noWrap>
+                          {(item.metadata as { reference_number?: string })?.reference_number}
                         </Typography>
                       )}
                       <Typography variant="caption" color="text.disabled">
