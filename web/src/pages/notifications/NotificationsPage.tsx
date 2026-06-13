@@ -1,4 +1,4 @@
-import { Box, Typography, Paper, List, ListItemButton, Divider, Button, IconButton, Chip } from '@mui/material';
+import { Box, Typography, Paper, List, ListItemButton, Divider, Button, IconButton } from '@mui/material';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import { useNavigate } from 'react-router-dom';
@@ -91,32 +91,24 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
 
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {isSystem ? (
-            <Chip label="ระบบ" size="small" sx={{ height: 20, fontSize: '0.68rem', borderRadius: 1 }} />
-          ) : (
-            <Typography
-              variant="body2"
-              fontWeight={item.is_read ? 400 : 600}
-              sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
-            >
-              {cfg.label}
-            </Typography>
-          )}
+          <Typography
+            variant="body2"
+            fontWeight={item.is_read ? 400 : 600}
+            sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
+          >
+            {isSystem ? 'ระบบ' : cfg.label}
+          </Typography>
           {!item.is_read && (
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
           )}
         </Box>
         {isSystem && (
-          <Typography
-            variant="body2"
-            fontWeight={item.is_read ? 400 : 600}
-            sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B', mt: 0.25 }}
-          >
+          <Typography variant="body2" color="text.primary">
             {jsxMessage}
           </Typography>
         )}
         {!isSystem && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" color="text.primary" fontWeight="bold">
             {item.reference_number}
           </Typography>
         )}

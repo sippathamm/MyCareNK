@@ -7,7 +7,6 @@ import {
   Divider,
   Button,
   IconButton,
-  Chip,
 } from '@mui/material';
 import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -156,33 +155,29 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                     {/* Content */}
                     <Box sx={{ flex: 1, minWidth: 0 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {isSystem ? (
-                          <Chip label="ระบบ" size="small" sx={{ height: 20, fontSize: '0.68rem', borderRadius: 1 }} />
-                        ) : (
-                          <Typography
-                            variant="body2"
-                            fontWeight={item.is_read ? 400 : 600}
-                            sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
-                            noWrap
-                          >
-                            {cfg.label}
-                          </Typography>
-                        )}
+                        <Typography
+                          variant="body2"
+                          fontWeight={item.is_read ? 400 : 600}
+                          sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
+                          noWrap
+                        >
+                          {isSystem ? 'ระบบ' : cfg.label}
+                        </Typography>
                         {!item.is_read && (
                           <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
                         )}
                       </Box>
                       {isSystem && (
                         <Typography
-                          variant="body2"
-                          fontWeight={item.is_read ? 400 : 600}
-                          sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B', mt: 0.25, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                          variant="caption"
+                          color="text.primary"
+                          sx={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
                         >
                           {jsxMessage}
                         </Typography>
                       )}
                       {!isSystem && (
-                        <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }} noWrap>
+                        <Typography variant="caption" color="text.primary" fontWeight="bold" sx={{ display: 'block' }} noWrap>
                           {item.reference_number}
                         </Typography>
                       )}
