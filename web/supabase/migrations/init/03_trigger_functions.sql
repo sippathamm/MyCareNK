@@ -417,8 +417,9 @@ BEGIN
   UPDATE public.doctor_appointments     SET handled_by   = NULL WHERE handled_by   = OLD.id;
   UPDATE public.request_status_logs     SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
-  UPDATE public.inventory_logs          SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.staff_change_logs       SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.inventory_logs           SET performed_by = NULL WHERE performed_by = OLD.id;
+  UPDATE public.service_center_inventory SET updated_by   = NULL WHERE updated_by   = OLD.id;
+  UPDATE public.staff_change_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.articles SET created_by   = NULL WHERE created_by   = OLD.id;
   UPDATE public.articles SET updated_by   = NULL WHERE updated_by   = OLD.id;
   UPDATE public.articles SET published_by = NULL WHERE published_by = OLD.id;
