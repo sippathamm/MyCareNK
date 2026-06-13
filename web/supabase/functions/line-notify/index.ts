@@ -57,12 +57,12 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const typeLabel =
-    source_type === 'doctor_appointment' ? 'นัดหมายแพทย์' : 'คำขอถุงยางอนามัย';
+    source_type === 'doctor_appointment' ? 'นัดพบแพทย์' : 'ขอถุงยางอนามัย';
   const messageText = [
     'มีรายการใหม่เข้ามา!',
     `📍 สถานบริการ: ${service_center}`,
     `📋 ประเภท: ${typeLabel}`,
-    `🔖 เลขอ้างอิง: ${reference_number}`,
+    `🔖 รหัสอ้างอิง: ${reference_number}`,
   ].join('\n');
 
   // Send per-user; allSettled so one failure doesn't abort the rest
