@@ -17,6 +17,8 @@ import AuditLogPage from './pages/audit/AuditLogPage';
 import AppointmentsPage from './pages/appointments/AppointmentsPage';
 import ArticlesPage from './pages/articles/ArticlesPage';
 import ArticleEditorPage from './pages/articles/ArticleEditorPage';
+import ProfilePage from './pages/profile/ProfilePage';
+import LineCallbackPage from './pages/line-callback/LineCallbackPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -55,6 +57,16 @@ function App() {
         element={<UpdatePasswordPage loading={loading} errorMsg={errorMsg} onSubmit={updatePassword} />}
       />
 
+      {/* LINE OAuth callback — protected but no MainLayout (redirect handler) */}
+      <Route
+        path="/line-callback"
+        element={
+          <ProtectedRoute session={session} isInitializing={isInitializing}>
+            <LineCallbackPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Protected Routes inside MainLayout */}
       <Route
         path="/*"
@@ -74,6 +86,7 @@ function App() {
                   <Route path="articles" element={<ArticlesPage />} />
                   <Route path="articles/new" element={<ArticleEditorPage />} />
                   <Route path="articles/:id/edit" element={<ArticleEditorPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </MainLayout>
