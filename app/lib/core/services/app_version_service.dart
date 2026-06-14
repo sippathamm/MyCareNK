@@ -1,9 +1,7 @@
-import 'dart:io';
+import 'dart:async';
 
-import 'package:dio/dio.dart';
-import 'package:open_file/open_file.dart';
+import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AppVersionInfo {
@@ -39,7 +37,15 @@ class AppVersionInfo {
 }
 
 class AppVersionService {
+  static const _channel = MethodChannel('com.sippathamm.mycarenk/download');
   static final _supabase = Supabase.instance.client;
+
+  // Mirrors Android DownloadManager status constants
+  static const int statusPending = 1;
+  static const int statusRunning = 2;
+  static const int statusPaused = 4;
+  static const int statusSuccessful = 8;
+  static const int statusFailed = 16;
 
   // Strips pre-release suffix and returns [major, minor, patch].
   static List<int> _parseSemver(String version) {
@@ -63,7 +69,6 @@ class AppVersionService {
   }
 
   // Detects which branch to query based on the local version string.
-  // -preview → 'preview'; -dev → 'dev' (no rows → no update); no suffix → 'main'.
   static String _detectBranch(String localVersion) {
     if (localVersion.contains('-preview')) return 'preview';
     if (localVersion.contains('-dev')) return 'dev';
@@ -74,12 +79,10 @@ class AppVersionService {
     try {
       final info = await PackageInfo.fromPlatform();
       final branch = _detectBranch(info.version);
-
       final rows = await _supabase.rpc(
         'get_latest_app_version',
         params: {'p_branch': branch},
       );
-
       if (rows == null || (rows as List).isEmpty) return null;
       return AppVersionInfo.fromMap(rows.first as Map<String, dynamic>);
     } catch (_) {
@@ -92,11 +95,8 @@ class AppVersionService {
       final info = await PackageInfo.fromPlatform();
       final remote = await getLatestVersion();
       if (remote == null) return false;
-
       final semverCmp = _compareVersions(remote.version, info.version);
       if (semverCmp != 0) return semverCmp > 0;
-
-      // Semver equal on preview builds → fall back to build number.
       if (info.version.contains('-')) {
         final localBuild = int.tryParse(info.buildNumber) ?? 0;
         return remote.buildNumber > localBuild;
@@ -107,34 +107,37 @@ class AppVersionService {
     }
   }
 
-  // Downloads the APK to the app's external downloads dir with progress.
-  // Returns the local file path on success. Pass cancelToken to support cancellation.
-  Future<String> downloadApk(
-    String url,
-    void Function(double progress) onProgress, {
-    CancelToken? cancelToken,
-  }) async {
-    final dir = await getExternalStorageDirectory();
-    final downloadDir = Directory('${dir!.path}/Downloads');
-    if (!await downloadDir.exists()) {
-      await downloadDir.create(recursive: true);
-    }
-    final savePath = '${downloadDir.path}/MyCareNK_update.apk';
-
-    final dio = Dio();
-    await dio.download(
-      url,
-      savePath,
-      cancelToken: cancelToken,
-      onReceiveProgress: (received, total) {
-        if (total > 0) onProgress(received / total);
-      },
-    );
-
-    return savePath;
+  // Enqueues the APK download via system DownloadManager.
+  // Returns the DownloadManager download ID for progress tracking.
+  Future<int> startDownload(String url) async {
+    final id = await _channel.invokeMethod<int>('downloadApk', {
+      'url': url,
+      'fileName': 'MyCareNK_update.apk',
+    });
+    return id!;
   }
 
-  Future<OpenResult> openApk(String filePath) async {
-    return OpenFile.open(filePath);
+  // Polls the current progress of a download. Returns status, downloaded
+  // bytes, and total bytes (all as int).
+  Future<Map<String, int>> getDownloadProgress(int downloadId) async {
+    final result = await _channel.invokeMethod<Map<Object?, Object?>>(
+      'getDownloadProgress',
+      {'downloadId': downloadId},
+    );
+    final map = result!;
+    return {
+      'status': (map['status'] as num).toInt(),
+      'downloaded': (map['downloaded'] as num).toInt(),
+      'total': (map['total'] as num).toInt(),
+    };
+  }
+
+  Future<void> cancelDownload(int downloadId) async {
+    await _channel.invokeMethod<void>('cancelDownload', {'downloadId': downloadId});
+  }
+
+  // Opens the system Downloads app so the user can tap the APK to install.
+  Future<void> openDownloadsFolder() async {
+    await _channel.invokeMethod<void>('openDownloadsFolder');
   }
 }

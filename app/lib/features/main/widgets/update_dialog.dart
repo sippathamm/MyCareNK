@@ -1,11 +1,8 @@
-import 'dart:io';
+import 'dart:async';
 
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:open_file/open_file.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:path_provider/path_provider.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/services/app_version_service.dart';
 
@@ -35,9 +32,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
   _DownloadState _state = _DownloadState.idle;
   double _progress = 0;
   String? _errorMessage;
-  String? _localPath;
   String _currentVersion = '';
-  CancelToken? _cancelToken;
+  int? _downloadId;
+  Timer? _pollTimer;
 
   final _service = AppVersionService();
 
@@ -45,26 +42,11 @@ class _UpdateDialogState extends State<UpdateDialog> {
   void initState() {
     super.initState();
     _loadCurrentVersion();
-    _checkExistingDownload();
-  }
-
-  Future<void> _checkExistingDownload() async {
-    final dir = await getExternalStorageDirectory();
-    if (dir == null) return;
-    final path = '${dir.path}/Downloads/MyCareNK_update.apk';
-    if (await File(path).exists()) {
-      if (mounted) {
-        setState(() {
-          _localPath = path;
-          _state = _DownloadState.downloaded;
-        });
-      }
-    }
   }
 
   @override
   void dispose() {
-    _cancelToken?.cancel();
+    _pollTimer?.cancel();
     super.dispose();
   }
 
@@ -74,13 +56,6 @@ class _UpdateDialogState extends State<UpdateDialog> {
   }
 
   Future<void> _startDownload() async {
-    // Skip re-download if already finished
-    if (_state == _DownloadState.downloaded && _localPath != null) {
-      await _openInstaller();
-      return;
-    }
-
-    _cancelToken = CancelToken();
     setState(() {
       _state = _DownloadState.downloading;
       _progress = 0;
@@ -88,25 +63,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
     });
 
     try {
-      final path = await _service.downloadApk(
-        widget.versionInfo.downloadUrl,
-        (p) {
-          if (mounted) setState(() => _progress = p);
-        },
-        cancelToken: _cancelToken,
-      );
-      _localPath = path;
-      if (mounted) setState(() => _state = _DownloadState.downloaded);
-    } on DioException catch (e) {
-      if (!mounted) return;
-      if (e.type == DioExceptionType.cancel) {
-        setState(() => _state = _DownloadState.idle);
-      } else {
-        setState(() {
-          _state = _DownloadState.error;
-          _errorMessage = 'ดาวน์โหลดล้มเหลว กรุณาลองใหม่';
-        });
-      }
+      final id = await _service.startDownload(widget.versionInfo.downloadUrl);
+      _downloadId = id;
+      _startPolling(id);
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -117,26 +76,63 @@ class _UpdateDialogState extends State<UpdateDialog> {
     }
   }
 
-  void _cancelDownload() {
-    _cancelToken?.cancel();
+  void _startPolling(int downloadId) {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(milliseconds: 500), (_) async {
+      if (!mounted) {
+        _pollTimer?.cancel();
+        return;
+      }
+      try {
+        final progress = await _service.getDownloadProgress(downloadId);
+        if (!mounted) return;
+        final status = progress['status']!;
+        if (status == AppVersionService.statusSuccessful) {
+          _pollTimer?.cancel();
+          setState(() => _state = _DownloadState.downloaded);
+        } else if (status == AppVersionService.statusFailed) {
+          _pollTimer?.cancel();
+          setState(() {
+            _state = _DownloadState.error;
+            _errorMessage = 'ดาวน์โหลดล้มเหลว กรุณาลองใหม่';
+          });
+        } else {
+          final total = progress['total']!;
+          final downloaded = progress['downloaded']!;
+          if (total > 0) setState(() => _progress = downloaded / total);
+        }
+      } catch (_) {
+        // ignore transient poll errors
+      }
+    });
   }
 
-  Future<void> _openInstaller() async {
-    if (_localPath == null) return;
-    final result = await _service.openApk(_localPath!);
-    if (mounted && result.type != ResultType.done) {
-      setState(() {
-        _state = _DownloadState.error;
-        _errorMessage = 'ไม่สามารถเปิดไฟล์ติดตั้งได้ กรุณาเปิดการตั้งค่า "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก"';
-      });
+  void _cancelDownload() {
+    _pollTimer?.cancel();
+    if (_downloadId != null) {
+      _service.cancelDownload(_downloadId!);
+      _downloadId = null;
+    }
+    setState(() => _state = _DownloadState.idle);
+  }
+
+  Future<void> _openDownloadsFolder() async {
+    try {
+      await _service.openDownloadsFolder();
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _state = _DownloadState.error;
+          _errorMessage = 'ไม่สามารถเปิดโฟลเดอร์ดาวน์โหลดได้';
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final force = widget.versionInfo.forceUpdate;
-    final canDismiss = !force &&
-        _state != _DownloadState.downloading;
+    final canDismiss = !force && _state != _DownloadState.downloading;
 
     return PopScope(
       canPop: canDismiss,
@@ -258,11 +254,15 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.check_circle_outline, color: AppColors.success, size: 18),
+                    const Icon(
+                      Icons.check_circle_outline,
+                      color: AppColors.success,
+                      size: 18,
+                    ),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'ดาวน์โหลดเสร็จสิ้น พร้อมติดตั้ง',
+                        'ดาวน์โหลดเสร็จสิ้น กดติดตั้งเพื่อเปิดโฟลเดอร์ดาวน์โหลด',
                         style: GoogleFonts.googleSans(
                           fontSize: 13,
                           color: AppColors.success,
@@ -320,7 +320,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
           if (_state == _DownloadState.downloaded)
             TextButton(
-              onPressed: _openInstaller,
+              onPressed: _openDownloadsFolder,
               child: Text(
                 'ติดตั้ง',
                 style: GoogleFonts.googleSans(
