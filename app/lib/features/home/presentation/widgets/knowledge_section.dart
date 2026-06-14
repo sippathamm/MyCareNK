@@ -124,7 +124,7 @@ class _KnowledgeSectionState extends State<KnowledgeSection> {
         ),
         const SizedBox(height: 12),
         SizedBox(
-          height: 220,
+          height: 232,
           child: _loading
               ? _ShimmerList()
               : ListView.separated(
