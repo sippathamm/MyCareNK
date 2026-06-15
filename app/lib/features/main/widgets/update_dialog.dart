@@ -412,7 +412,7 @@ class _NoteSection extends StatelessWidget {
           child: Text(
             label,
             style: GoogleFonts.googleSans(
-              fontSize: 12,
+              fontSize: 14,
               fontWeight: FontWeight.bold,
               color: color,
             ),
@@ -428,7 +428,7 @@ class _NoteSection extends StatelessWidget {
                 Text(
                   '• ',
                   style: GoogleFonts.googleSans(
-                    fontSize: 13,
+                    fontSize: 15,
                     color: AppColors.textSecondary,
                   ),
                 ),
