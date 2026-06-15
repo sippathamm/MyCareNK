@@ -426,16 +426,22 @@ AS $$
 $$;
 
 
-CREATE OR REPLACE FUNCTION public.get_latest_app_version(
+DROP FUNCTION IF EXISTS public.get_latest_app_version(text);
+
+CREATE FUNCTION public.get_latest_app_version(
   p_branch text DEFAULT 'main'
 ) RETURNS TABLE(
   id            int,
   version       text,
   build_number  int,
   download_url  text,
-  release_notes text,
   force_update  boolean,
   branch        text,
+  release_date  date,
+  additions     text[],
+  fixes         text[],
+  improvements  text[],
+  others        text[],
   created_at    timestamptz
 )
 LANGUAGE plpgsql
@@ -449,9 +455,13 @@ BEGIN
     av.version,
     av.build_number,
     av.download_url,
-    av.release_notes,
     av.force_update,
     av.branch,
+    av.release_date,
+    av.additions,
+    av.fixes,
+    av.improvements,
+    av.others,
     av.created_at
   FROM app_versions av
   WHERE av.branch = p_branch
@@ -459,5 +469,7 @@ BEGIN
   LIMIT 1;
 END;
 $$;
+
+GRANT EXECUTE ON FUNCTION public.get_latest_app_version(text) TO anon, authenticated;
 
 

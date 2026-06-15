@@ -9,19 +9,36 @@ class AppVersionInfo {
   final String version;
   final int buildNumber;
   final String downloadUrl;
-  final String? releaseNotes;
   final bool forceUpdate;
   final String branch;
+  final DateTime? releaseDate;
+  final List<String> additions;
+  final List<String> fixes;
+  final List<String> improvements;
+  final List<String> others;
 
   const AppVersionInfo({
     required this.id,
     required this.version,
     required this.buildNumber,
     required this.downloadUrl,
-    this.releaseNotes,
     required this.forceUpdate,
     required this.branch,
+    this.releaseDate,
+    this.additions = const [],
+    this.fixes = const [],
+    this.improvements = const [],
+    this.others = const [],
   });
+
+  bool get hasNotes =>
+      additions.isNotEmpty ||
+      fixes.isNotEmpty ||
+      improvements.isNotEmpty ||
+      others.isNotEmpty;
+
+  static List<String> _toList(dynamic v) =>
+      (v as List?)?.map((e) => e as String).toList() ?? [];
 
   factory AppVersionInfo.fromMap(Map<String, dynamic> map) {
     return AppVersionInfo(
@@ -29,9 +46,15 @@ class AppVersionInfo {
       version: map['version'] as String,
       buildNumber: map['build_number'] as int,
       downloadUrl: map['download_url'] as String,
-      releaseNotes: map['release_notes'] as String?,
       forceUpdate: map['force_update'] as bool,
       branch: map['branch'] as String,
+      releaseDate: map['release_date'] != null
+          ? DateTime.tryParse(map['release_date'] as String)
+          : null,
+      additions: _toList(map['additions']),
+      fixes: _toList(map['fixes']),
+      improvements: _toList(map['improvements']),
+      others: _toList(map['others']),
     );
   }
 }

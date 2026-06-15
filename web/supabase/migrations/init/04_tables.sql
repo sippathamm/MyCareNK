@@ -808,10 +808,14 @@ CREATE TABLE public.app_versions (
   version       text        NOT NULL,
   build_number  int         NOT NULL,
   download_url  text        NOT NULL,
-  release_notes text,
   force_update  boolean     NOT NULL DEFAULT false,
   branch        text        NOT NULL,
-  created_at    timestamptz NOT NULL DEFAULT now()
+  created_at    timestamptz NOT NULL DEFAULT now(),
+  release_date  date        NOT NULL DEFAULT CURRENT_DATE,
+  additions     text[]      NOT NULL DEFAULT '{}',
+  fixes         text[]      NOT NULL DEFAULT '{}',
+  improvements  text[]      NOT NULL DEFAULT '{}',
+  others        text[]      NOT NULL DEFAULT '{}'
 );
 
 ALTER TABLE public.app_versions ENABLE ROW LEVEL SECURITY;

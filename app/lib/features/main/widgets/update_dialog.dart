@@ -203,26 +203,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
                 ),
               ],
             ),
-            if (widget.versionInfo.releaseNotes != null &&
-                widget.versionInfo.releaseNotes!.isNotEmpty) ...[
+            if (widget.versionInfo.hasNotes) ...[
               const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: Colors.grey.shade200),
-                ),
-                child: Text(
-                  widget.versionInfo.releaseNotes!,
-                  style: GoogleFonts.googleSans(
-                    fontSize: 15,
-                    color: AppColors.textSecondary,
-                    height: 1.5,
-                  ),
-                ),
-              ),
+              _ReleaseNotes(versionInfo: widget.versionInfo),
             ],
             const SizedBox(height: 20),
             if (_state == _DownloadState.downloading) ...[
@@ -344,6 +327,126 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
         ],
       ),
+    );
+  }
+}
+
+class _ReleaseNotes extends StatelessWidget {
+  final AppVersionInfo versionInfo;
+
+  const _ReleaseNotes({required this.versionInfo});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: Colors.grey[50],
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (versionInfo.additions.isNotEmpty)
+            _NoteSection(
+              label: 'เพิ่ม',
+              color: AppColors.success,
+              items: versionInfo.additions,
+            ),
+          if (versionInfo.fixes.isNotEmpty)
+            _NoteSection(
+              label: 'แก้ไข',
+              color: AppColors.error,
+              items: versionInfo.fixes,
+              topSpacing: versionInfo.additions.isNotEmpty,
+            ),
+          if (versionInfo.improvements.isNotEmpty)
+            _NoteSection(
+              label: 'ปรับปรุง',
+              color: AppColors.primary,
+              items: versionInfo.improvements,
+              topSpacing: versionInfo.additions.isNotEmpty || versionInfo.fixes.isNotEmpty,
+            ),
+          if (versionInfo.others.isNotEmpty)
+            _NoteSection(
+              label: 'อื่น ๆ',
+              color: AppColors.textSecondary,
+              items: versionInfo.others,
+              topSpacing: versionInfo.additions.isNotEmpty ||
+                  versionInfo.fixes.isNotEmpty ||
+                  versionInfo.improvements.isNotEmpty,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NoteSection extends StatelessWidget {
+  final String label;
+  final Color color;
+  final List<String> items;
+  final bool topSpacing;
+
+  const _NoteSection({
+    required this.label,
+    required this.color,
+    required this.items,
+    this.topSpacing = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (topSpacing) const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Text(
+            label,
+            style: GoogleFonts.googleSans(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ),
+        const SizedBox(height: 4),
+        ...items.map(
+          (item) => Padding(
+            padding: const EdgeInsets.only(left: 4, bottom: 2),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '• ',
+                  style: GoogleFonts.googleSans(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    item,
+                    style: GoogleFonts.googleSans(
+                      fontSize: 13,
+                      color: AppColors.textSecondary,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
