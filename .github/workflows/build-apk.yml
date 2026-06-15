@@ -192,7 +192,7 @@ jobs:
             MyCareNK-v${{ steps.version.outputs.semver }}.apk
           prerelease: true
 
-      - name: Update app_versions in Supabase (preview)
+      - name: Insert download_url into app_versions (preview)
         if: github.event_name == 'push'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -203,12 +203,7 @@ jobs:
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"version\": \"${{ steps.version.outputs.semver }}\",
-              \"build_number\": ${{ steps.version.outputs.build }},
-              \"download_url\": \"$APK_URL\",
-              \"branch\": \"preview\"
-            }"
+            -d "{\"download_url\": \"$APK_URL\", \"branch\": \"preview\"}"
 
   build-release:
     name: Release APK
@@ -303,7 +298,7 @@ jobs:
           files: MyCareNK-v${{ steps.version.outputs.clean_version }}.apk
           prerelease: false
 
-      - name: Update app_versions in Supabase
+      - name: Insert download_url into app_versions (main)
         if: github.event_name == 'push'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -314,9 +309,4 @@ jobs:
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -d "{
-              \"version\": \"${{ steps.version.outputs.clean_version }}\",
-              \"build_number\": ${{ steps.version.outputs.build }},
-              \"download_url\": \"$APK_URL\",
-              \"branch\": \"main\"
-            }"
+            -d "{\"download_url\": \"$APK_URL\", \"branch\": \"main\"}"

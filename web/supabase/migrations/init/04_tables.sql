@@ -805,8 +805,8 @@ CREATE POLICY "Admins can delete articles"
 -- ── App versions ──────────────────────────────────────────────
 CREATE TABLE public.app_versions (
   id            serial      PRIMARY KEY,
-  version       text        NOT NULL,
-  build_number  int         NOT NULL,
+  version       text,                                    -- NULL until Claude stamps after CI
+  build_number  int,                                     -- NULL until Claude stamps after CI
   download_url  text        NOT NULL,
   force_update  boolean     NOT NULL DEFAULT false,
   branch        text        NOT NULL,

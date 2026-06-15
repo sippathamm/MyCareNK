@@ -465,6 +465,8 @@ BEGIN
     av.created_at
   FROM app_versions av
   WHERE av.branch = p_branch
+    AND av.version IS NOT NULL
+    AND av.build_number IS NOT NULL
   ORDER BY av.created_at DESC
   LIMIT 1;
 END;
