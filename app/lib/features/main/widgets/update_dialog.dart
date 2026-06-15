@@ -262,9 +262,9 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'ดาวน์โหลดเสร็จสิ้น กดติดตั้งเพื่อเปิดโฟลเดอร์ดาวน์โหลด',
+                        'ดาวน์โหลดเสร็จสิ้น กด "ติดตั้ง" เพื่อเปิดโฟลเดอร์ดาวน์โหลด',
                         style: GoogleFonts.googleSans(
-                          fontSize: 13,
+                          fontSize: 15,
                           color: AppColors.success,
                         ),
                       ),
@@ -289,7 +289,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                       child: Text(
                         _errorMessage ?? 'เกิดข้อผิดพลาด',
                         style: GoogleFonts.googleSans(
-                          fontSize: 13,
+                          fontSize: 15,
                           color: AppColors.error,
                         ),
                       ),
