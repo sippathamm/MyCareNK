@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/constants/app_colors.dart';
+import '../../../core/l10n/app_localizations.dart';
 import '../../../core/services/app_version_service.dart';
 
 class UpdateDialog extends StatefulWidget {
@@ -70,7 +71,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
       if (mounted) {
         setState(() {
           _state = _DownloadState.error;
-          _errorMessage = 'ดาวน์โหลดล้มเหลว กรุณาลองใหม่';
+          _errorMessage = AppLocalizations.current.updateDownloadFailed;
         });
       }
     }
@@ -94,7 +95,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
           _pollTimer?.cancel();
           setState(() {
             _state = _DownloadState.error;
-            _errorMessage = 'ดาวน์โหลดล้มเหลว กรุณาลองใหม่';
+            _errorMessage = AppLocalizations.current.updateDownloadFailed;
           });
         } else {
           final total = progress['total']!;
@@ -123,7 +124,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
       if (mounted) {
         setState(() {
           _state = _DownloadState.error;
-          _errorMessage = 'ไม่สามารถเปิดโฟลเดอร์ดาวน์โหลดได้';
+          _errorMessage = AppLocalizations.current.updateCannotOpenFolder;
         });
       }
     }
@@ -131,6 +132,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final force = widget.versionInfo.forceUpdate;
     final canDismiss = !force && _state != _DownloadState.downloading;
 
@@ -159,7 +161,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'มีเวอร์ชันใหม่!',
+              l10n.updateAvailable,
               style: GoogleFonts.googleSans(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
@@ -220,7 +222,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
               ),
               const SizedBox(height: 8),
               Text(
-                'กำลังดาวน์โหลด ${(_progress * 100).toStringAsFixed(0)}%',
+                '${l10n.downloadingProgress} ${(_progress * 100).toStringAsFixed(0)}%',
                 style: GoogleFonts.googleSans(
                   fontSize: 13,
                   color: AppColors.textSecondary,
@@ -245,7 +247,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'ดาวน์โหลดเสร็จสิ้น กด "ติดตั้ง" เพื่อเปิดโฟลเดอร์ดาวน์โหลด',
+                        l10n.updateDownloadComplete,
                         style: GoogleFonts.googleSans(
                           fontSize: 15,
                           color: AppColors.success,
@@ -270,7 +272,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        _errorMessage ?? 'เกิดข้อผิดพลาด',
+                        _errorMessage ?? l10n.errorOccurred,
                         style: GoogleFonts.googleSans(
                           fontSize: 15,
                           color: AppColors.error,
@@ -289,7 +291,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             TextButton(
               onPressed: _cancelDownload,
               child: Text(
-                'ยกเลิก',
+                l10n.cancel,
                 style: GoogleFonts.googleSans(color: AppColors.textSecondary),
               ),
             )
@@ -297,7 +299,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: Text(
-                'ภายหลัง',
+                l10n.updateLater,
                 style: GoogleFonts.googleSans(color: AppColors.textSecondary),
               ),
             ),
@@ -305,7 +307,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             TextButton(
               onPressed: _openDownloadsFolder,
               child: Text(
-                'ติดตั้ง',
+                l10n.updateInstall,
                 style: GoogleFonts.googleSans(
                   color: AppColors.primary,
                   fontWeight: FontWeight.bold,
@@ -316,7 +318,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
             TextButton(
               onPressed: _state == _DownloadState.downloading ? null : _startDownload,
               child: Text(
-                _state == _DownloadState.error ? 'ลองใหม่' : 'อัปเดต',
+                _state == _DownloadState.error ? l10n.retry : l10n.updateBtn,
                 style: GoogleFonts.googleSans(
                   color: _state == _DownloadState.downloading
                       ? AppColors.textMuted
@@ -338,6 +340,7 @@ class _ReleaseNotes extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -351,27 +354,27 @@ class _ReleaseNotes extends StatelessWidget {
         children: [
           if (versionInfo.additions.isNotEmpty)
             _NoteSection(
-              label: 'เพิ่ม',
+              label: l10n.releaseNotesAdd,
               color: AppColors.success,
               items: versionInfo.additions,
             ),
           if (versionInfo.fixes.isNotEmpty)
             _NoteSection(
-              label: 'แก้ไข',
+              label: l10n.releaseNotesFix,
               color: AppColors.error,
               items: versionInfo.fixes,
               topSpacing: versionInfo.additions.isNotEmpty,
             ),
           if (versionInfo.improvements.isNotEmpty)
             _NoteSection(
-              label: 'ปรับปรุง',
+              label: l10n.releaseNotesImprove,
               color: AppColors.primary,
               items: versionInfo.improvements,
               topSpacing: versionInfo.additions.isNotEmpty || versionInfo.fixes.isNotEmpty,
             ),
           if (versionInfo.others.isNotEmpty)
             _NoteSection(
-              label: 'อื่น ๆ',
+              label: l10n.releaseNotesOther,
               color: AppColors.textSecondary,
               items: versionInfo.others,
               topSpacing: versionInfo.additions.isNotEmpty ||

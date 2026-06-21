@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
-
-const _labels = [
-  'ชื่อผู้ใช้งานและรหัสผ่าน',
-  'ข้อมูลส่วนตัว',
-  'ข้อมูลติดต่อ',
-];
+import '../l10n/app_localizations.dart';
 
 Widget buildRegisterStepIndicator(BuildContext context, int step) {
+  final l10n = AppLocalizations.of(context);
+  final labels = [l10n.registerStep1, l10n.registerStep2, l10n.registerStep3];
   const double nodeSize = 34;
   const double gap = 6;
-  final n = _labels.length;
+  final n = labels.length;
 
   final iconItems = <Widget>[];
   for (int idx = 0; idx < n; idx++) {
@@ -77,15 +74,15 @@ Widget buildRegisterStepIndicator(BuildContext context, int step) {
         return SizedBox(
           height: 16,
           child: Stack(clipBehavior: Clip.none, children: [
-            Positioned(left: 0, top: 0, child: Text(_labels[0], style: labelStyle(0))),
-            Positioned(right: 0, top: 0, child: Text(_labels[n - 1], style: labelStyle(n - 1))),
+            Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
+            Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),
             for (int i = 1; i < n - 1; i++)
               Positioned(
                 left: nodeSize / 2 + i * slotSpacing,
                 top: 0,
                 child: FractionalTranslation(
                   translation: const Offset(-0.5, 0),
-                  child: Text(_labels[i], style: labelStyle(i)),
+                  child: Text(labels[i], style: labelStyle(i)),
                 ),
               ),
           ]),

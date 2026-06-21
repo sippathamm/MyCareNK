@@ -1,3 +1,4 @@
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -41,12 +42,13 @@ class _SettingsPageState extends State<SettingsPage> {
     if (_isCheckingUpdate) return;
     setState(() => _isCheckingUpdate = true);
     try {
+      final l10n = AppLocalizations.current;
       final service = AppVersionService();
       final remote = await service.getLatestVersion();
       if (!mounted) return;
       if (remote == null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('ไม่สามารถตรวจสอบอัปเดตได้', style: GoogleFonts.googleSans()),
+          content: Text(l10n.updateCheckFailed, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ));
@@ -58,15 +60,16 @@ class _SettingsPageState extends State<SettingsPage> {
         await UpdateDialog.show(context, remote);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('แอปเป็นเวอร์ชันล่าสุดแล้ว', style: GoogleFonts.googleSans()),
+          content: Text(l10n.updateAlreadyLatest, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
         ));
       }
     } catch (_) {
       if (!mounted) return;
+      final l10n = AppLocalizations.current;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text('ไม่สามารถตรวจสอบอัปเดตได้', style: GoogleFonts.googleSans()),
+        content: Text(l10n.updateCheckFailed, style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
       ));
@@ -234,11 +237,12 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   Widget _buildCheckUpdateTile() {
+    final l10n = AppLocalizations.current;
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
       leading: const Icon(Icons.system_update_outlined, color: AppColors.primary, size: 22),
       title: Text(
-        'ตรวจสอบอัปเดต',
+        l10n.checkForUpdate,
         style: GoogleFonts.googleSans(
           fontSize: 15,
           fontWeight: FontWeight.w600,
@@ -288,12 +292,13 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget _buildLanguageTile(BuildContext context, AppLocalizations l10n) {
     final provider = LocaleProvider.of(context);
     final currentCode = provider.locale.languageCode;
-    final langLabels = {
-      'th': '🇹🇭 ไทย',
-      'lo': '🇱🇦 ລາວ',
-      'my': '🇲🇲 မြန်မာ',
+    const langNativeNames = {
+      'th': 'ไทย',
+      'lo': 'ລາວ',
+      'my': 'မြန်မာ',
+      'en': 'English',
     };
-    final currentLabel = langLabels[currentCode] ?? '🇹🇭 ไทย';
+    final currentName = langNativeNames[currentCode] ?? 'ไทย';
 
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 24),
@@ -309,8 +314,10 @@ class _SettingsPageState extends State<SettingsPage> {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          _SettingsLangIcon(code: currentCode),
+          const SizedBox(width: 8),
           Text(
-            currentLabel,
+            currentName,
             style: GoogleFonts.googleSans(
               fontSize: 14,
               color: AppColors.primary,
@@ -335,9 +342,10 @@ class _SettingsPageState extends State<SettingsPage> {
     LocaleProvider provider,
   ) {
     final langs = [
-      ('th', '🇹🇭', 'ไทย'),
-      ('lo', '🇱🇦', 'ລາວ'),
-      ('my', '🇲🇲', 'မြန်မာ'),
+      ('th', 'TH', 'ไทย'),
+      ('lo', 'LA', 'ລາວ'),
+      ('my', 'MY', 'မြန်မာ'),
+      ('en', 'EN', 'English'),
     ];
     showModalBottomSheet(
       context: context,
@@ -373,11 +381,11 @@ class _SettingsPageState extends State<SettingsPage> {
               ),
               const SizedBox(height: 8),
               ...langs.map((lang) {
-                final (code, flag, name) = lang;
+                final (code, _, name) = lang;
                 final isSelected = provider.locale.languageCode == code;
                 return ListTile(
                   contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-                  leading: Text(flag, style: const TextStyle(fontSize: 24)),
+                  leading: _SettingsLangIcon(code: code, size: 32),
                   title: Text(
                     name,
                     style: GoogleFonts.googleSans(
@@ -510,6 +518,32 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+}
+
+class _SettingsLangIcon extends StatelessWidget {
+  final String code;
+  final double size;
+
+  const _SettingsLangIcon({required this.code, this.size = 26});
+
+  static const _countryMap = {
+    'th': 'TH',
+    'lo': 'LA',
+    'my': 'MM',
+    'en': 'GB',
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final countryCode = _countryMap[code] ?? 'US';
+    return ClipOval(
+      child: CountryFlag.fromCountryCode(
+        countryCode,
+        height: size,
+        width: size,
       ),
     );
   }
