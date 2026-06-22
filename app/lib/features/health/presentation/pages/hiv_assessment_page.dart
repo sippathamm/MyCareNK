@@ -61,8 +61,8 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     }
     if (_selected == null) return;
     _answers[_step] = _selected!;
-    // Q0 "ใช่" → skip all remaining questions, jump to result with high risk
-    if (_step == 0 && _selected == 'yes') {
+    // Q0 "ใช่" (ค) → skip all remaining questions, jump to result with high risk
+    if (_step == 0 && _selected == 'ค') {
       _slide(_totalQ, 1);
       return;
     }
@@ -148,9 +148,8 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     if (_isDone) {
       final risk = calcRisk(_answers);
       final cfg = kRiskConfigs[risk]!;
-      // Lock the reason only for the urgent 72h path (PEP) and medium risk (PrEP).
-      // Normal-flow high risk keeps PEP pre-selected but changeable.
-      final reasonLocked = _answers[0] == 'yes' || risk == RiskLevel.medium;
+      // Lock the reason for all high-risk (PEP) and medium-risk (PrEP) results.
+      final reasonLocked = risk == RiskLevel.high || risk == RiskLevel.medium;
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [

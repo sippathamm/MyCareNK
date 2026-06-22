@@ -1715,34 +1715,34 @@ class AppLocalizations {
 
   // ─── HIV Assessment – Pre-screening question ─────────────────────────────
   String get q0Text => _t(
-    'ท่านมีเหตุการณ์ถุงยางอนามัยแตก/หลุด หรือเพิ่งสัมผัสความเสี่ยงสูงต่อการติดเชื้อภายใน 72 ชั่วโมงที่ผ่านมาหรือไม่?',
-    'ທ່ານມີໂຄນໂດ້ຂາດ/ຫລົ່ນ ຫຼື ຫາກໍ່ສຳຜັດຄວາມສ່ຽງສູງພາຍໃນ 72 ຊ.ມ. ທີ່ຜ່ານມາຫຼືບໍ່?',
-    'ကွန်ဒုံး ပြတ်/ကျသွားသည် သို့မဟုတ် ၇၂ နာရီအတွင်း အန္တရာယ်မြင့် ကူးစက်ခံနိုင်ခြေနှင့် ထိတွေ့ခဲ့ပါသလား?',
-    'In the past 72 hours, did you have a condom break/slip, or high-risk exposure to infection?',
+    'คุณมีถุงยางอนามัยแตก/หลุด หรือเพิ่งสัมผัสความเสี่ยงสูงภายใน 72 ชั่วโมงหรือไม่?',
+    'ທ່ານມີໂຄນໂດ້ຂາດ/ຫລົ່ນ ຫຼື ຫາກໍ່ສຳຜັດຄວາມສ່ຽງສູງພາຍໃນ 72 ຊ.ມ. ຫຼືບໍ່?',
+    'ကွန်ဒုံး ပြတ်/ကျသွား သို့မဟုတ် ၇၂ နာရီအတွင်း အန္တရာယ်မြင့် ထိတွေ့မှု ရှိပါသလား?',
+    'Did you have a condom break/slip or high-risk exposure in the past 72 hours?',
   );
-  String get q0OptNoLabel =>
+  String get q0OptALabel =>
       _t('ไม่', 'ບໍ່', 'မဟုတ်ပါ', 'No');
-  String get q0OptNoSub => _t(
+  String get q0OptASub => _t(
     'ไม่มีเหตุการณ์ดังกล่าวใน 72 ชั่วโมงที่ผ่านมา',
     'ບໍ່ມີເຫດການດັ່ງກ່າວໃນ 72 ຊ.ມ. ທີ່ຜ່ານມາ',
     '၇၂ နာရီအတွင်း ထိုသို့သော ဖြစ်ရပ်မျိုး မရှိပါ',
     'No such incident in the past 72 hours',
   );
-  String get q0OptYesLabel =>
-      _t('ใช่', 'ແມ່ນ', 'ဟုတ်ကဲ့', 'Yes');
-  String get q0OptYesSub => _t(
-    'มีถุงยางอนามัยแตก/หลุด หรือสัมผัสความเสี่ยงสูงภายใน 72 ชั่วโมง',
-    'ມີໂຄນໂດ້ຂາດ/ຫລົ່ນ ຫຼື ສຳຜັດຄວາມສ່ຽງສູງພາຍໃນ 72 ຊ.ມ.',
-    'ကွန်ဒုံး ပြတ်/ကျသွား၍ ၇၂ နာရီအတွင်း အန္တရာယ်မြင့် ထိတွေ့မှု ဖြစ်ခဲ့ပါသည်',
-    'Condom break/slip or high-risk exposure within 72 hours',
-  );
-  String get q0OptUnsureLabel =>
+  String get q0OptBLabel =>
       _t('ไม่แน่ใจ', 'ບໍ່ແນ່ໃຈ', 'မသေချာပါ', 'Not sure');
-  String get q0OptUnsureSub => _t(
+  String get q0OptBSub => _t(
     'ไม่แน่ใจว่ามีความเสี่ยงสูงหรือไม่',
     'ບໍ່ແນ່ໃຈວ່າມີຄວາມສ່ຽງສູງຫຼືບໍ່',
     'အန္တရာယ်မြင့် ထိတွေ့မှု ဖြစ်မဖြစ် မသေချာပါ',
     'Unsure if there was a high-risk exposure',
+  );
+  String get q0OptCLabel =>
+      _t('ใช่', 'ແມ່ນ', 'ဟုတ်ကဲ့', 'Yes');
+  String get q0OptCSub => _t(
+    'มีถุงยางอนามัยแตก/หลุด หรือสัมผัสความเสี่ยงสูงภายใน 72 ชั่วโมง',
+    'ມີໂຄນໂດ້ຂາດ/ຫລົ່ນ ຫຼື ສຳຜັດຄວາມສ່ຽງສູງພາຍໃນ 72 ຊ.ມ.',
+    'ကွန်ဒုံး ပြတ်/ကျသွား၍ ၇၂ နာရီအတွင်း အန္တရာယ်မြင့် ထိတွေ့မှု ဖြစ်ခဲ့ပါသည်',
+    'Condom break/slip or high-risk exposure within 72 hours',
   );
   String get sectionPreScreening => _t(
     'คัดกรองเบื้องต้น',
