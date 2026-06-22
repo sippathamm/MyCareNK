@@ -103,18 +103,18 @@ class ShortcutMenu extends StatelessWidget {
               },
               borderRadius: BorderRadius.circular(20),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Container(
-                      width: 44,
-                      height: 44,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
                         color: iconBg,
                         shape: BoxShape.circle,
                       ),
-                      child: Icon(icon, color: iconColor, size: 24),
+                      child: Icon(icon, color: iconColor, size: 22),
                     ),
                     const SizedBox(height: 10),
                     Text(
