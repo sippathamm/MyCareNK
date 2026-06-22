@@ -118,6 +118,8 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: AppColors.textMuted,
         showSelectedLabels: true,
         showUnselectedLabels: true,
+        selectedFontSize: 13,
+        unselectedFontSize: 12,
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
         items: [
@@ -159,7 +161,7 @@ class _MainScreenState extends State<MainScreen> {
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
-                child: const Icon(Icons.chat_bubble_outline),
+                child: const Icon(Icons.notifications_outlined),
               ),
             ),
             activeIcon: ValueListenableBuilder<int>(
@@ -171,7 +173,7 @@ class _MainScreenState extends State<MainScreen> {
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
-                child: const Icon(Icons.chat_bubble),
+                child: const Icon(Icons.notifications),
               ),
             ),
             label: AppLocalizations.of(context).navMessages,
