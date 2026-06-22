@@ -16,35 +16,38 @@ class ShortcutMenu extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Row(
-      children: [
-        _buildShortcutItem(
-          context: context,
-          type: _ShortcutType.serviceCenters,
-          icon: Icons.location_on_outlined,
-          label: l10n.serviceCenters,
-          iconColor: AppColors.statusReady,
-          iconBg: AppColors.statusReadyLight,
-        ),
-        const SizedBox(width: 16),
-        _buildShortcutItem(
-          context: context,
-          type: _ShortcutType.guide,
-          icon: Icons.menu_book_outlined,
-          label: l10n.guide,
-          iconColor: AppColors.lubricant,
-          iconBg: AppColors.statusPreparingLight,
-        ),
-        const SizedBox(width: 16),
-        _buildShortcutItem(
-          context: context,
-          type: _ShortcutType.requestHistory,
-          icon: Icons.receipt_long_outlined,
-          label: l10n.requestHistory,
-          iconColor: AppColors.statusCompleted,
-          iconBg: AppColors.statusCompletedLight,
-        ),
-      ],
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildShortcutItem(
+            context: context,
+            type: _ShortcutType.serviceCenters,
+            icon: Icons.location_on_outlined,
+            label: l10n.serviceCenters,
+            iconColor: AppColors.statusReady,
+            iconBg: AppColors.statusReadyLight,
+          ),
+          const SizedBox(width: 16),
+          _buildShortcutItem(
+            context: context,
+            type: _ShortcutType.guide,
+            icon: Icons.menu_book_outlined,
+            label: l10n.guide,
+            iconColor: AppColors.lubricant,
+            iconBg: AppColors.statusPreparingLight,
+          ),
+          const SizedBox(width: 16),
+          _buildShortcutItem(
+            context: context,
+            type: _ShortcutType.requestHistory,
+            icon: Icons.receipt_long_outlined,
+            label: l10n.requestHistory,
+            iconColor: AppColors.statusCompleted,
+            iconBg: AppColors.statusCompletedLight,
+          ),
+        ],
+      ),
     );
   }
 
@@ -57,79 +60,76 @@ class ShortcutMenu extends StatelessWidget {
     required Color iconBg,
   }) {
     return Expanded(
-      child: AspectRatio(
-        aspectRatio: 1.0,
-        child: Container(
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: const [
-              BoxShadow(
-                color: AppColors.cardShadow,
-                blurRadius: 10,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(20),
-            child: InkWell(
-              onTap: () {
-                switch (type) {
-                  case _ShortcutType.requestHistory:
-                    if (onNavigateToHistory != null) {
-                      onNavigateToHistory!();
-                    } else {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const RequestHistoryPage(),
-                        ),
-                      );
-                    }
-                  case _ShortcutType.serviceCenters:
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: const [
+            BoxShadow(
+              color: AppColors.cardShadow,
+              blurRadius: 10,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            onTap: () {
+              switch (type) {
+                case _ShortcutType.requestHistory:
+                  if (onNavigateToHistory != null) {
+                    onNavigateToHistory!();
+                  } else {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const ServiceCentersPage(),
+                        builder: (_) => const RequestHistoryPage(),
                       ),
                     );
-                  case _ShortcutType.guide:
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const GuidePage(),
-                      ),
-                    );
-                }
-              },
-              borderRadius: BorderRadius.circular(20),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: iconBg,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(icon, color: iconColor, size: 22),
+                  }
+                case _ShortcutType.serviceCenters:
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ServiceCentersPage(),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      label,
-                      style: GoogleFonts.googleSans(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.textPrimary,
-                      ),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
+                  );
+                case _ShortcutType.guide:
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const GuidePage(),
                     ),
-                  ],
-                ),
+                  );
+              }
+            },
+            borderRadius: BorderRadius.circular(20),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: iconBg,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: iconColor, size: 22),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    label,
+                    style: GoogleFonts.googleSans(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
             ),
           ),
