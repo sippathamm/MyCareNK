@@ -5,7 +5,7 @@ import '../../../../../core/l10n/app_localizations.dart';
 import '../widgets/service_card.dart';
 import 'condom_request_page.dart';
 import '../../../health/presentation/pages/hiv_assessment_page.dart';
-import '../../../health/presentation/pages/doctor_booking_page.dart';
+import '../../../health/presentation/pages/consultation_booking_page.dart';
 
 class ServicePage extends StatelessWidget {
   const ServicePage({super.key});
@@ -60,7 +60,7 @@ class ServicePage extends StatelessWidget {
               title: l10n.bookDoctorTitle,
               subtitle: l10n.bookDoctorSubtitle,
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const DoctorBookingPage()),
+                MaterialPageRoute(builder: (_) => const ConsultationBookingPage()),
               ),
             ),
             ServiceCard(

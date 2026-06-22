@@ -7,7 +7,7 @@ import '../../../../core/widgets/gradient_button.dart';
 import '../../../../core/widgets/section_card.dart';
 
 /// The three-node progress header (select → confirm → success) shown above
-/// every step of the doctor-booking flow. [step] is the zero-based active step.
+/// every step of the consultation booking flow. [step] is the zero-based active step.
 class BookingStepIndicator extends StatelessWidget {
   final int step;
   const BookingStepIndicator({super.key, required this.step});
@@ -76,7 +76,7 @@ class BookingStepIndicator extends StatelessWidget {
 }
 
 /// The shared [SectionCard] with the lubricant-themed gradient header used
-/// throughout the doctor-booking flow.
+/// throughout the consultation booking flow.
 class BookingSectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -228,12 +228,12 @@ class ReasonTile extends StatelessWidget {
 
 /// Selectable service-center tile (numbered + name + operating hours) in the
 /// booking form.
-class AppointmentLocationTile extends StatelessWidget {
+class ConsultationLocationTile extends StatelessWidget {
   final ServiceCenterModel center;
   final int index;
   final bool selected;
   final VoidCallback onTap;
-  const AppointmentLocationTile({
+  const ConsultationLocationTile({
     super.key,
     required this.center,
     required this.index,
@@ -309,12 +309,12 @@ class AppointmentLocationTile extends StatelessWidget {
 
 /// Horizontal date strip for the booking form. Shows a placeholder message when
 /// no center is selected or the center does not offer appointments.
-class AppointmentDateStrip extends StatelessWidget {
+class ConsultationDateStrip extends StatelessWidget {
   final ServiceCenterModel? location;
   final List<DateTime> dates;
   final String? dateKey;
   final ValueChanged<String> onSelect;
-  const AppointmentDateStrip({
+  const ConsultationDateStrip({
     super.key,
     required this.location,
     required this.dates,
@@ -408,12 +408,12 @@ class AppointmentDateStrip extends StatelessWidget {
 
 /// Morning/afternoon time-slot picker for the booking form. Shows a placeholder
 /// message when no center is selected or the center does not offer appointments.
-class AppointmentTimePicker extends StatelessWidget {
+class ConsultationTimePicker extends StatelessWidget {
   final ServiceCenterModel? location;
   final String? locationName;
   final String? selectedTime;
   final ValueChanged<String> onSelect;
-  const AppointmentTimePicker({
+  const ConsultationTimePicker({
     super.key,
     required this.location,
     required this.locationName,

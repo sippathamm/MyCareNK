@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/hiv_assessment_data.dart';
 import '../widgets/hiv_assessment_widgets.dart';
-import 'doctor_booking_page.dart';
+import 'consultation_booking_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -169,7 +169,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               label: l10n.bookDoctorTitle,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => DoctorBookingPage(
+                  builder: (_) => ConsultationBookingPage(
                     initialReason: cfg.bookingReason,
                     reasonLocked: reasonLocked,
                   ),

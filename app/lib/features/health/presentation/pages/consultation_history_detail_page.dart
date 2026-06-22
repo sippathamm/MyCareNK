@@ -4,24 +4,24 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
-import '../../data/models/doctor_appointment_model.dart';
-import '../widgets/appointment_status_visuals.dart';
+import '../../data/models/consultation_model.dart';
+import '../widgets/consultation_status_visuals.dart';
 import '../../../../core/widgets/info_row.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
-class AppointmentHistoryDetailPage extends StatefulWidget {
-  final DoctorAppointmentModel data;
-  const AppointmentHistoryDetailPage({super.key, required this.data});
+class ConsultationHistoryDetailPage extends StatefulWidget {
+  final ConsultationModel data;
+  const ConsultationHistoryDetailPage({super.key, required this.data});
 
   @override
-  State<AppointmentHistoryDetailPage> createState() =>
-      _AppointmentHistoryDetailPageState();
+  State<ConsultationHistoryDetailPage> createState() =>
+      _ConsultationHistoryDetailPageState();
 }
 
-class _AppointmentHistoryDetailPageState
-    extends State<AppointmentHistoryDetailPage> {
+class _ConsultationHistoryDetailPageState
+    extends State<ConsultationHistoryDetailPage> {
   bool _isCancelling = false;
-  late DoctorAppointmentModel _data;
+  late ConsultationModel _data;
   RealtimeChannel? _subscription;
 
   @override
@@ -72,7 +72,7 @@ class _AppointmentHistoryDetailPageState
 
       if (response != null && mounted) {
         setState(() {
-          _data = DoctorAppointmentModel.fromMap(response);
+          _data = ConsultationModel.fromMap(response);
         });
       }
     } catch (_) {
@@ -201,7 +201,7 @@ class _AppointmentHistoryDetailPageState
   // ── Widgets ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final visuals = AppointmentStatusVisuals.of(_data.appointmentStatus);
+    final visuals = ConsultationStatusVisuals.of(_data.appointmentStatus);
     final updated = _data.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
         '${updated.day} ${AppLocalizations.of(context).monthsFull[updated.month]} ${updated.year + 543} '
@@ -452,7 +452,7 @@ class _AppointmentHistoryDetailPageState
       ]),
       content: Column(
         children: [
-          InfoRow(AppLocalizations.of(context).reasonLabel, DoctorAppointmentModel.reasonLabel(_data.reason)),
+          InfoRow(AppLocalizations.of(context).reasonLabel, ConsultationModel.reasonLabel(_data.reason)),
         ],
       ),
     );

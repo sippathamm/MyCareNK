@@ -5,8 +5,8 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/models/service_center_model.dart';
 import '../../../../core/services/service_center_service.dart';
 import '../../../auth/presentation/pages/login_page.dart';
-import '../widgets/doctor_booking_widgets.dart';
-import 'appointment_history_page.dart';
+import '../widgets/consultation_booking_widgets.dart';
+import 'consultation_history_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Data ────────────────────────────────────────────────────────────────────
@@ -39,16 +39,16 @@ List<DateTime> _buildAvailableDates() {
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-class DoctorBookingPage extends StatefulWidget {
+class ConsultationBookingPage extends StatefulWidget {
   final String? initialReason;
   final bool reasonLocked;
-  const DoctorBookingPage({super.key, this.initialReason, this.reasonLocked = false});
+  const ConsultationBookingPage({super.key, this.initialReason, this.reasonLocked = false});
 
   @override
-  State<DoctorBookingPage> createState() => _DoctorBookingPageState();
+  State<ConsultationBookingPage> createState() => _ConsultationBookingPageState();
 }
 
-class _DoctorBookingPageState extends State<DoctorBookingPage> {
+class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
   final List<DateTime> _dates = _buildAvailableDates();
   String _refNum = '';
   bool _isSubmitting = false;
@@ -203,7 +203,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                 : Column(
                                     children: List.generate(
                                       _centers.length,
-                                      (i) => AppointmentLocationTile(
+                                      (i) => ConsultationLocationTile(
                                         center: _centers[i],
                                         index: i,
                                         selected: _location == _centers[i].name,
@@ -220,7 +220,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentDate,
                     icon: Icons.event_outlined,
-                    child: AppointmentDateStrip(
+                    child: ConsultationDateStrip(
                       location: _selectedLocation,
                       dates: _dates,
                       dateKey: _dateKey,
@@ -230,7 +230,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                   BookingSectionCard(
                     title: AppLocalizations.of(context).bookingAppointmentTime,
                     icon: Icons.schedule_outlined,
-                    child: AppointmentTimePicker(
+                    child: ConsultationTimePicker(
                       location: _selectedLocation,
                       locationName: _location,
                       selectedTime: _timeSlot,
@@ -654,7 +654,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
               label: AppLocalizations.of(context).appointmentHistoryTitle,
               onPressed: () => Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
-                    builder: (_) => const AppointmentHistoryPage()),
+                    builder: (_) => const ConsultationHistoryPage()),
                 (route) => route.isFirst,
               ),
             ),
@@ -692,7 +692,7 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
           icon: const Icon(Icons.history, color: AppColors.primary),
           tooltip: AppLocalizations.of(context).appointmentHistoryTitle,
           onPressed: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const AppointmentHistoryPage()),
+            MaterialPageRoute(builder: (_) => const ConsultationHistoryPage()),
           ),
         ),
       ],

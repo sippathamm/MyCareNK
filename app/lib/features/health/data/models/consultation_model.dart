@@ -1,4 +1,4 @@
-class DoctorAppointmentModel {
+class ConsultationModel {
   final String id;
   final String referenceNumber;
   final String reason;
@@ -11,7 +11,7 @@ class DoctorAppointmentModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  const DoctorAppointmentModel({
+  const ConsultationModel({
     required this.id,
     required this.referenceNumber,
     required this.reason,
@@ -25,8 +25,8 @@ class DoctorAppointmentModel {
     required this.updatedAt,
   });
 
-  factory DoctorAppointmentModel.fromMap(Map<String, dynamic> map) {
-    return DoctorAppointmentModel(
+  factory ConsultationModel.fromMap(Map<String, dynamic> map) {
+    return ConsultationModel(
       id: map['id'].toString(),
       referenceNumber: map['reference_number'] ?? '',
       reason: map['reason'] ?? '',
