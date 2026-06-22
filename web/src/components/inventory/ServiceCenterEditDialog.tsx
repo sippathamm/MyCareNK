@@ -218,7 +218,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
   const validateSchedule = (): { cleanPickup: string[]; cleanAppt: string[] } | null => {
     if (!condomEnabled && !appointmentEnabled) {
-      setError('ต้องเปิดใช้งานอย่างน้อย 1 บริการ (รับถุงยางอนามัย หรือ นัดพบแพทย์)');
+      setError('ต้องเปิดใช้งานอย่างน้อย 1 บริการ (รับถุงยางอนามัย/เจลหล่อลื่น หรือ นัดรับคำปรึกษา)');
       return null;
     }
     const dedup = (arr: string[]) => {
@@ -236,7 +236,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     if (condomEnabled) {
       if (cleanPickup.length === 0) {
         setScheduleTab('condom');
-        setError('กรุณาเพิ่มเวลารับถุงยางอนามัยอย่างน้อย 1 ช่วงเวลา');
+        setError('กรุณาเพิ่มเวลารับถุงยางอนามัย/เจลหล่อลื่นอย่างน้อย 1 ช่วงเวลา');
         return null;
       }
       for (const t of cpm) {
@@ -257,7 +257,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     if (appointmentEnabled) {
       if (cleanAppt.length === 0) {
         setScheduleTab('appointment');
-        setError('กรุณาเพิ่มเวลานัดพบแพทย์อย่างน้อย 1 ช่วงเวลา');
+        setError('กรุณาเพิ่มเวลานัดรับคำปรึกษาอย่างน้อย 1 ช่วงเวลา');
         return null;
       }
       for (const t of cam) {
@@ -458,12 +458,12 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
           TabIndicatorProps={{ style: { backgroundColor: '#FF9F6B' } }}
         >
           <Tab
-            label="รับถุงยางอนามัย"
+            label="รับถุงยางอนามัย/เจลหล่อลื่น"
             value="condom"
             sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'condom' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
           />
           <Tab
-            label="นัดพบแพทย์"
+            label="นัดรับคำปรึกษา"
             value="appointment"
             sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'appointment' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
           />

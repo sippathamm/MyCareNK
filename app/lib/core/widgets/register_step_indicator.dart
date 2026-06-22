@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
-
-const _labels = [
-  'ชื่อผู้ใช้งานและรหัสผ่าน',
-  'ข้อมูลส่วนตัว',
-  'ข้อมูลติดต่อ',
-];
+import '../l10n/app_localizations.dart';
 
 Widget buildRegisterStepIndicator(BuildContext context, int step) {
+  final l10n = AppLocalizations.of(context);
+  final labels = [l10n.registerStep1, l10n.registerStep2, l10n.registerStep3];
   const double nodeSize = 34;
   const double gap = 6;
-  final n = _labels.length;
+  final n = labels.length;
+
+  TextStyle labelStyle(int idx) {
+    final active = idx <= step;
+    return GoogleFonts.googleSans(
+      fontSize: 11,
+      fontWeight: active ? FontWeight.w700 : FontWeight.w400,
+      color: active ? AppColors.primary : AppColors.textMuted,
+    );
+  }
 
   final iconItems = <Widget>[];
   for (int idx = 0; idx < n; idx++) {
@@ -63,34 +69,26 @@ Widget buildRegisterStepIndicator(BuildContext context, int step) {
     child: Column(children: [
       Row(children: iconItems),
       const SizedBox(height: 4),
-      LayoutBuilder(builder: (context, constraints) {
-        final W = constraints.maxWidth;
-        final slotSpacing = (W - nodeSize) / (n - 1);
-        TextStyle labelStyle(int idx) {
-          final active = idx <= step;
-          return GoogleFonts.googleSans(
-            fontSize: 11,
-            fontWeight: active ? FontWeight.w700 : FontWeight.w400,
-            color: active ? AppColors.primary : AppColors.textMuted,
-          );
-        }
-        return SizedBox(
-          height: 16,
-          child: Stack(clipBehavior: Clip.none, children: [
-            Positioned(left: 0, top: 0, child: Text(_labels[0], style: labelStyle(0))),
-            Positioned(right: 0, top: 0, child: Text(_labels[n - 1], style: labelStyle(n - 1))),
-            for (int i = 1; i < n - 1; i++)
-              Positioned(
-                left: nodeSize / 2 + i * slotSpacing,
-                top: 0,
-                child: FractionalTranslation(
-                  translation: const Offset(-0.5, 0),
-                  child: Text(_labels[i], style: labelStyle(i)),
-                ),
-              ),
-          ]),
-        );
-      }),
+      Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Text(labels[0], style: labelStyle(0))),
+          Expanded(
+            child: Text(
+              labels[1],
+              style: labelStyle(1),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              labels[2],
+              style: labelStyle(2),
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
     ]),
   );
 }

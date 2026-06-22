@@ -334,7 +334,7 @@ class _MessagesPageState extends State<MessagesPage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 48, color: Colors.grey[300]),
+          Icon(Icons.notifications_none_rounded, size: 48, color: Colors.grey[300]),
           const SizedBox(height: 12),
           Text(
             AppLocalizations.of(context).noMessages,

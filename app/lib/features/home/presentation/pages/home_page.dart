@@ -5,7 +5,7 @@ import '../widgets/header_section.dart';
 import '../widgets/monthly_free_card.dart';
 import '../widgets/shortcut_menu.dart';
 import '../widgets/knowledge_section.dart';
-import '../widgets/campaign_banner.dart';
+import '../widgets/campaign_banner_slider.dart';
 
 class HomePage extends StatefulWidget {
   final ValueNotifier<int>? visibilityNotifier;
@@ -90,12 +90,9 @@ class _HomePageState extends State<HomePage> {
                 child: ShortcutMenu(onNavigateToHistory: widget.onNavigateToHistory),
               ),
               const SizedBox(height: 24),
-              KnowledgeSection(refreshKey: _cardRefreshKey),
+              const CampaignBannerSlider(),
               const SizedBox(height: 24),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: CampaignBanner(),
-              ),
+              KnowledgeSection(refreshKey: _cardRefreshKey),
               const SizedBox(height: 24),
             ],
           ),

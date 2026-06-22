@@ -5,7 +5,7 @@ import '../../../../../core/l10n/app_localizations.dart';
 import '../widgets/service_card.dart';
 import 'condom_request_page.dart';
 import '../../../health/presentation/pages/hiv_assessment_page.dart';
-import '../../../health/presentation/pages/doctor_booking_page.dart';
+import '../../../health/presentation/pages/consultation_booking_page.dart';
 
 class ServicePage extends StatelessWidget {
   const ServicePage({super.key});
@@ -35,7 +35,8 @@ class ServicePage extends StatelessWidget {
           children: [
             ServiceCard(
               icon: Icons.inventory_2_outlined,
-              iconBgColor: AppColors.primary,
+              iconBgColor: AppColors.primaryBackground,
+              iconColor: AppColors.primaryDark,
               title: l10n.getCondomsTitle,
               subtitle: l10n.getCondomsSubtitle,
               onTap: () => Navigator.of(context).push(
@@ -59,7 +60,22 @@ class ServicePage extends StatelessWidget {
               title: l10n.bookDoctorTitle,
               subtitle: l10n.bookDoctorSubtitle,
               onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const DoctorBookingPage()),
+                MaterialPageRoute(builder: (_) => const ConsultationBookingPage()),
+              ),
+            ),
+            ServiceCard(
+              icon: Icons.health_and_safety_outlined,
+              iconBgColor: AppColors.statusCompletedLight,
+              iconColor: AppColors.statusCompleted,
+              title: l10n.healthTrackerTitle,
+              subtitle: l10n.healthTrackerSubtitle,
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.comingSoon,
+                      style: GoogleFonts.googleSans()),
+                  backgroundColor: AppColors.textSecondary,
+                  behavior: SnackBarBehavior.floating,
+                ),
               ),
             ),
           ],

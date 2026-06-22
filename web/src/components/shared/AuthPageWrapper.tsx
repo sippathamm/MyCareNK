@@ -21,7 +21,7 @@ const AuthPageWrapper = ({ children, maxWidth = 'xs' }: AuthPageWrapperProps) =>
       variant="body2"
       sx={{ mb: 4, color: 'text.secondary', textAlign: 'center' }}
     >
-      ระบบจัดการคำขอถุงยางอนามัยและนัดพบแพทย์ (PEP · PrEP · ตรวจเลือด)
+      ระบบจัดการคำขอถุงยางอนามัย/เจลหล่อลื่นและนัดรับคำปรึกษา (PEP · PrEP · ตรวจเลือด)
     </Typography>
     <Container component="main" maxWidth={maxWidth}>
       <Paper elevation={3} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', borderRadius: 3 }}>

@@ -151,7 +151,7 @@ export default function AppointmentDetailDialog({
                 <Divider sx={{ my: 1 }} />
 
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เรื่องที่ต้องการพบแพทย์</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">เรื่องที่ต้องการรับคำปรึกษา</Typography>
                   <Typography variant="body1">{REASON_LABELS[appointment.reason] ?? appointment.reason}</Typography>
                 </Box>
 

@@ -28,6 +28,17 @@ class AssessmentQuestion {
 
 List<AssessmentQuestion> buildAssessmentQuestions(AppLocalizations l10n) => [
   AssessmentQuestion(
+    section: 0,
+    sectionLabel: l10n.sectionPreScreening,
+    text: l10n.q0Text,
+    icon: Icons.emergency,
+    options: [
+      AssessmentOption('ก', l10n.q0OptALabel, l10n.q0OptASub),
+      AssessmentOption('ข', l10n.q0OptBLabel, l10n.q0OptBSub),
+      AssessmentOption('ค', l10n.q0OptCLabel, l10n.q0OptCSub),
+    ],
+  ),
+  AssessmentQuestion(
     section: 1,
     sectionLabel: l10n.sectionBehavior,
     text: l10n.q1Text,
@@ -96,7 +107,8 @@ List<AssessmentQuestion> buildAssessmentQuestions(AppLocalizations l10n) => [
 ];
 
 RiskLevel calcRisk(Map<int, String> answers) {
-  final vals = answers.values.toList();
+  if (answers[0] == 'ค') return RiskLevel.high;
+  final vals = answers.entries.where((e) => e.key > 0).map((e) => e.value).toList();
   if (vals.contains('ค')) return RiskLevel.high;
   if (vals.where((v) => v == 'ข').length >= 2) return RiskLevel.medium;
   return RiskLevel.low;

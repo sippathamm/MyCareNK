@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
-import '../../data/models/doctor_appointment_model.dart';
-import '../widgets/appointment_status_visuals.dart';
-import 'appointment_history_detail_page.dart';
+import '../../data/models/consultation_model.dart';
+import '../widgets/consultation_status_visuals.dart';
+import 'consultation_history_detail_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Filter descriptor ────────────────────────────────────────────────────────
@@ -23,15 +23,15 @@ List<_Filter> _buildFilters(AppLocalizations l10n) => [
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
-class AppointmentHistoryPage extends StatefulWidget {
-  const AppointmentHistoryPage({super.key});
+class ConsultationHistoryPage extends StatefulWidget {
+  const ConsultationHistoryPage({super.key});
 
   @override
-  State<AppointmentHistoryPage> createState() => _AppointmentHistoryPageState();
+  State<ConsultationHistoryPage> createState() => _ConsultationHistoryPageState();
 }
 
-class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
-  List<DoctorAppointmentModel> _appointments = [];
+class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
+  List<ConsultationModel> _appointments = [];
   bool _isLoading = true;
   bool _isLoggedIn = true;
   String _searchQuery = '';
@@ -94,7 +94,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
           .order('created_at', ascending: false);
 
       final appointments = response
-          .map((e) => DoctorAppointmentModel.fromMap(e))
+          .map((e) => ConsultationModel.fromMap(e))
           .toList();
 
       if (mounted) {
@@ -110,7 +110,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
 
   // ── Filtered list ───────────────────────────────────────────────────────────
 
-  List<DoctorAppointmentModel> get _filtered {
+  List<ConsultationModel> get _filtered {
     return _appointments.where((a) {
       if (_selectedStatus != null) {
         if (_selectedStatus == 'cancelled') {
@@ -313,8 +313,8 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
     );
   }
 
-  Widget _buildAppointmentCard(DoctorAppointmentModel data) {
-    final visuals = AppointmentStatusVisuals.of(data.appointmentStatus);
+  Widget _buildAppointmentCard(ConsultationModel data) {
+    final visuals = ConsultationStatusVisuals.of(data.appointmentStatus);
     final statusLabel = _statusLabel(data.appointmentStatus);
     final date = data.selectedDate;
     final dateStr =
@@ -391,7 +391,7 @@ class _AppointmentHistoryPageState extends State<AppointmentHistoryPage> {
                 style: TextButton.styleFrom(overlayColor: visuals.color.withValues(alpha: 0.12)),
                 onPressed: () => Navigator.of(context).push(
                   MaterialPageRoute(
-                    builder: (_) => AppointmentHistoryDetailPage(data: data),
+                    builder: (_) => ConsultationHistoryDetailPage(data: data),
                   ),
                 ),
                 child: Row(

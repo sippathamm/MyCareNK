@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../data/models/hiv_assessment_data.dart';
 import '../widgets/hiv_assessment_widgets.dart';
-import 'doctor_booking_page.dart';
+import 'consultation_booking_page.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -22,7 +22,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
   int _animDir = 1;
   final ScrollController _scrollController = ScrollController();
 
-  static const int _totalQ = 6;
+  static const int _totalQ = 7;
 
   bool get _isDone => _step >= _totalQ;
 
@@ -61,14 +61,15 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     }
     if (_selected == null) return;
     _answers[_step] = _selected!;
+    // Q0 "ใช่" (ค) → skip all remaining questions, jump to result with high risk
+    if (_step == 0 && _selected == 'ค') {
+      _slide(_totalQ, 1);
+      return;
+    }
     _slide(_step + 1, 1);
   }
 
   void _handleBack() {
-    if (_step <= 0) {
-      Navigator.of(context).pop();
-      return;
-    }
     _slide(_step - 1, -1);
   }
 
@@ -85,7 +86,12 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     final riskCfg = risk != null ? kRiskConfigs[risk]! : null;
     final cur = _step >= 0 && _step < _totalQ ? questions[_step] : null;
 
-    return Scaffold(
+    return PopScope(
+      canPop: _step == -1 || _isDone,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -93,8 +99,13 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed:
-              _isDone ? () => Navigator.of(context).pop() : _handleBack,
+          onPressed: () {
+            if (_step > -1 && !_isDone) {
+              _handleBack();
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
         ),
         title: Text(
           AppLocalizations.of(context).hivAssessmentTitle,
@@ -141,13 +152,15 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildBottomActions(AppLocalizations l10n, List<AssessmentQuestion> questions) {
     if (_isDone) {
       final risk = calcRisk(_answers);
       final cfg = kRiskConfigs[risk]!;
+      // Lock the reason for all high-risk (PEP) and medium-risk (PrEP) results.
+      final reasonLocked = risk == RiskLevel.high || risk == RiskLevel.medium;
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -156,8 +169,10 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               label: l10n.bookDoctorTitle,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) =>
-                      DoctorBookingPage(initialReason: cfg.bookingReason),
+                  builder: (_) => ConsultationBookingPage(
+                    initialReason: cfg.bookingReason,
+                    reasonLocked: reasonLocked,
+                  ),
                 ),
               ),
             ),
@@ -170,15 +185,22 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     if (_step == -1) {
       return AssessmentPrimaryButton(label: l10n.startAssessment, onPressed: _handleNext);
     }
-    return AnimatedOpacity(
-      opacity: _selected != null ? 1.0 : 0.45,
-      duration: const Duration(milliseconds: 150),
-      child: AssessmentPrimaryButton(
-        label: _step == _totalQ - 1
-            ? l10n.viewAssessmentResult
-            : l10n.next,
-        onPressed: _selected != null ? _handleNext : null,
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedOpacity(
+          opacity: _selected != null ? 1.0 : 0.45,
+          duration: const Duration(milliseconds: 150),
+          child: AssessmentPrimaryButton(
+            label: _step == _totalQ - 1
+                ? l10n.viewAssessmentResult
+                : l10n.next,
+            onPressed: _selected != null ? _handleNext : null,
+          ),
+        ),
+        const SizedBox(height: 10),
+        AssessmentOutlinedButton(label: l10n.backLabel, onPressed: _handleBack),
+      ],
     );
   }
 
@@ -194,9 +216,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             children: [
               Flexible(
                 child: Text(
-                  cur.section == 1
-                      ? AppLocalizations.of(context).sectionBehavior
-                      : AppLocalizations.of(context).sectionHealthBehavior,
+                  cur.section == 0
+                      ? AppLocalizations.of(context).sectionPreScreening
+                      : cur.section == 1
+                          ? AppLocalizations.of(context).sectionBehavior
+                          : AppLocalizations.of(context).sectionHealthBehavior,
                   style: GoogleFonts.googleSans(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -223,7 +247,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
+          if (cur.section > 0) Row(
             children: [1, 2].map((s) {
               final active = cur.section == s;
               return Container(

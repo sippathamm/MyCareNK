@@ -7,7 +7,7 @@ import '../../../../core/widgets/gradient_button.dart';
 import '../../../../core/widgets/section_card.dart';
 
 /// The three-node progress header (select → confirm → success) shown above
-/// every step of the doctor-booking flow. [step] is the zero-based active step.
+/// every step of the consultation booking flow. [step] is the zero-based active step.
 class BookingStepIndicator extends StatelessWidget {
   final int step;
   const BookingStepIndicator({super.key, required this.step});
@@ -76,7 +76,7 @@ class BookingStepIndicator extends StatelessWidget {
 }
 
 /// The shared [SectionCard] with the lubricant-themed gradient header used
-/// throughout the doctor-booking flow.
+/// throughout the consultation booking flow.
 class BookingSectionCard extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -149,27 +149,37 @@ class ReasonTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool disabled;
   const ReasonTile({
     super.key,
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: disabled ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.statusPreparingLight : Colors.white,
+          color: disabled
+              ? const Color(0xFFF5F5F5)
+              : selected
+                  ? AppColors.statusPreparingLight
+                  : Colors.white,
           border: Border.all(
-            color: selected ? AppColors.lubricant : const Color(0xFFE8E8E8),
+            color: disabled
+                ? const Color(0xFFE0E0E0)
+                : selected
+                    ? AppColors.lubricant
+                    : const Color(0xFFE8E8E8),
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -181,11 +191,20 @@ class ReasonTile extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: selected ? AppColors.lubricant : const Color(0xFFF5F5F5),
+                color: disabled
+                    ? const Color(0xFFEAEAEA)
+                    : selected
+                        ? AppColors.lubricant
+                        : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon,
-                  color: selected ? Colors.white : AppColors.textMuted, size: 18),
+                  color: disabled
+                      ? const Color(0xFFBDBDBD)
+                      : selected
+                          ? Colors.white
+                          : AppColors.textMuted,
+                  size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -194,7 +213,7 @@ class ReasonTile extends StatelessWidget {
                 style: GoogleFonts.googleSans(
                   fontSize: 16,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.textPrimary,
+                  color: disabled ? const Color(0xFFBDBDBD) : AppColors.textPrimary,
                 ),
               ),
             ),
@@ -209,12 +228,12 @@ class ReasonTile extends StatelessWidget {
 
 /// Selectable service-center tile (numbered + name + operating hours) in the
 /// booking form.
-class AppointmentLocationTile extends StatelessWidget {
+class ConsultationLocationTile extends StatelessWidget {
   final ServiceCenterModel center;
   final int index;
   final bool selected;
   final VoidCallback onTap;
-  const AppointmentLocationTile({
+  const ConsultationLocationTile({
     super.key,
     required this.center,
     required this.index,
@@ -290,12 +309,12 @@ class AppointmentLocationTile extends StatelessWidget {
 
 /// Horizontal date strip for the booking form. Shows a placeholder message when
 /// no center is selected or the center does not offer appointments.
-class AppointmentDateStrip extends StatelessWidget {
+class ConsultationDateStrip extends StatelessWidget {
   final ServiceCenterModel? location;
   final List<DateTime> dates;
   final String? dateKey;
   final ValueChanged<String> onSelect;
-  const AppointmentDateStrip({
+  const ConsultationDateStrip({
     super.key,
     required this.location,
     required this.dates,
@@ -389,12 +408,12 @@ class AppointmentDateStrip extends StatelessWidget {
 
 /// Morning/afternoon time-slot picker for the booking form. Shows a placeholder
 /// message when no center is selected or the center does not offer appointments.
-class AppointmentTimePicker extends StatelessWidget {
+class ConsultationTimePicker extends StatelessWidget {
   final ServiceCenterModel? location;
   final String? locationName;
   final String? selectedTime;
   final ValueChanged<String> onSelect;
-  const AppointmentTimePicker({
+  const ConsultationTimePicker({
     super.key,
     required this.location,
     required this.locationName,

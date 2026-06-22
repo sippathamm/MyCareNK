@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
@@ -98,10 +99,31 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void _onAndroidBack() {
+    if (_currentIndex == 0 && (_homeNavigatorKey.currentState?.canPop() ?? false)) {
+      _homeNavigatorKey.currentState!.maybePop();
+      return;
+    }
+    if (_currentIndex == 1 && (_serviceNavigatorKey.currentState?.canPop() ?? false)) {
+      _serviceNavigatorKey.currentState!.maybePop();
+      return;
+    }
+    if (_currentIndex != 0) {
+      setState(() => _currentIndex = 0);
+      return;
+    }
+    SystemNavigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onAndroidBack();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -118,6 +140,8 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: AppColors.textMuted,
         showSelectedLabels: true,
         showUnselectedLabels: true,
+        selectedFontSize: 13,
+        unselectedFontSize: 12,
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
         items: [
@@ -159,7 +183,7 @@ class _MainScreenState extends State<MainScreen> {
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
-                child: const Icon(Icons.chat_bubble_outline),
+                child: const Icon(Icons.notifications_outlined),
               ),
             ),
             activeIcon: ValueListenableBuilder<int>(
@@ -171,7 +195,7 @@ class _MainScreenState extends State<MainScreen> {
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
-                child: const Icon(Icons.chat_bubble),
+                child: const Icon(Icons.notifications),
               ),
             ),
             label: AppLocalizations.of(context).navMessages,
@@ -181,6 +205,7 @@ class _MainScreenState extends State<MainScreen> {
             label: AppLocalizations.of(context).navSettings,
           ),
         ],
+        ),
       ),
     );
   }

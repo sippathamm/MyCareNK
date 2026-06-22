@@ -41,7 +41,7 @@ class CondomRequestPage extends StatefulWidget {
 
 class _CondomRequestPageState extends State<CondomRequestPage> {
   final Map<int, int> _quantities = {
-    for (final s in AppConstants.condomSizes) s: 0
+    for (final s in AppConstants.condomSizes) s: 0,
   };
   int _lubricantQuantity = 0;
   String? _selectedServiceCenter;
@@ -73,8 +73,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     super.initState();
     _loadCenters();
     _fetchMonthlyQuota();
-    _authSubscription =
-        Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _authSubscription = Supabase.instance.client.auth.onAuthStateChange.listen((
+      data,
+    ) {
       if (data.event == AuthChangeEvent.signedOut) {
         setState(() {
           _currentMonthlyUsed = AppConstants.maxCondomQuota;
@@ -90,13 +91,25 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
 
   Future<void> _loadCenters() async {
     if (Supabase.instance.client.auth.currentUser == null) {
-      if (mounted) setState(() { _centersLoading = false; _centersNotLoggedIn = true; });
+      if (mounted)
+        setState(() {
+          _centersLoading = false;
+          _centersNotLoggedIn = true;
+        });
       return;
     }
-    if (mounted) setState(() { _centersLoading = true; _centersNotLoggedIn = false; });
+    if (mounted)
+      setState(() {
+        _centersLoading = true;
+        _centersNotLoggedIn = false;
+      });
     try {
       final centers = await ServiceCenterService.fetchActive();
-      if (mounted) setState(() { _centers = centers; _centersLoading = false; });
+      if (mounted)
+        setState(() {
+          _centers = centers;
+          _centersLoading = false;
+        });
     } catch (_) {
       if (mounted) setState(() => _centersLoading = false);
     }
@@ -107,8 +120,11 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     if (user == null) return;
     try {
       final now = DateTime.now();
-      final monthStart =
-          DateTime(now.year, now.month, 1).toIso8601String().substring(0, 10);
+      final monthStart = DateTime(
+        now.year,
+        now.month,
+        1,
+      ).toIso8601String().substring(0, 10);
       final response = await Supabase.instance.client
           .from('user_monthly_quotas')
           .select('used_condoms, used_lubricants')
@@ -137,7 +153,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     if (_totalSelected == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(AppLocalizations.of(context).selectCondomFirst, style: GoogleFonts.googleSans()),
+          content: Text(
+            AppLocalizations.of(context).selectCondomFirst,
+            style: GoogleFonts.googleSans(),
+          ),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -221,7 +240,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   _buildLubricantCard(),
                   const SizedBox(height: 20),
                   SectionCard(
-                    title: AppLocalizations.of(context).selectServiceCenterTitle,
+                    title: AppLocalizations.of(
+                      context,
+                    ).selectServiceCenterTitle,
                     icon: Icons.local_hospital_outlined,
                     child: _centersLoading
                         ? const Center(
@@ -231,45 +252,54 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                             ),
                           )
                         : _centersNotLoggedIn
-                            ? Center(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 12),
-                                  child: Text(AppLocalizations.of(context).pleaseLogin,
-                                      style: GoogleFonts.googleSans(
-                                          fontSize: 14, color: AppColors.textHint)),
+                        ? Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              child: Text(
+                                AppLocalizations.of(context).pleaseLogin,
+                                style: GoogleFonts.googleSans(
+                                  fontSize: 14,
+                                  color: AppColors.textHint,
                                 ),
-                              )
-                            : _centers.isEmpty
-                                ? GestureDetector(
-                                    onTap: _loadCenters,
-                                    child: Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                        child: Text(AppLocalizations.of(context).cannotLoadData,
-                                            style: GoogleFonts.googleSans(
-                                                fontSize: 14, color: AppColors.textHint)),
-                                      ),
-                                    ),
-                                  )
-                                : Column(
-                                    children: List.generate(
-                                      _centers.length,
-                                      (i) => ServiceCenterPickerTile(
-                                        center: _centers[i],
-                                        index: i,
-                                        selected: _selectedServiceCenter ==
-                                            _centers[i].name,
-                                        onTap: () => setState(() {
-                                          if (_selectedServiceCenter !=
-                                              _centers[i].name) {
-                                            _selectedTime = null;
-                                          }
-                                          _selectedServiceCenter =
-                                              _centers[i].name;
-                                        }),
-                                      ),
-                                    ),
+                              ),
+                            ),
+                          )
+                        : _centers.isEmpty
+                        ? GestureDetector(
+                            onTap: _loadCenters,
+                            child: Center(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                child: Text(
+                                  AppLocalizations.of(context).cannotLoadData,
+                                  style: GoogleFonts.googleSans(
+                                    fontSize: 14,
+                                    color: AppColors.textHint,
                                   ),
+                                ),
+                              ),
+                            ),
+                          )
+                        : Column(
+                            children: List.generate(
+                              _centers.length,
+                              (i) => ServiceCenterPickerTile(
+                                center: _centers[i],
+                                index: i,
+                                selected:
+                                    _selectedServiceCenter == _centers[i].name,
+                                onTap: () => setState(() {
+                                  if (_selectedServiceCenter !=
+                                      _centers[i].name) {
+                                    _selectedTime = null;
+                                  }
+                                  _selectedServiceCenter = _centers[i].name;
+                                }),
+                              ),
+                            ),
+                          ),
                   ),
                   SectionCard(
                     title: AppLocalizations.of(context).selectDateTitle,
@@ -300,26 +330,35 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(context).addMessageHint,
                         hintStyle: GoogleFonts.googleSans(
-                            fontSize: 16, color: AppColors.textHint),
+                          fontSize: 16,
+                          color: AppColors.textHint,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
-                          borderSide:
-                              const BorderSide(color: Color(0xFFE8E8E8)),
+                          borderSide: const BorderSide(
+                            color: Color(0xFFE8E8E8),
+                          ),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                              color: Color(0xFFE8E8E8), width: 1.5),
+                            color: Color(0xFFE8E8E8),
+                            width: 1.5,
+                          ),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(10),
                           borderSide: const BorderSide(
-                              color: AppColors.primary, width: 1.5),
+                            color: AppColors.primary,
+                            width: 1.5,
+                          ),
                         ),
                         filled: true,
                         fillColor: const Color(0xFFFAFAFA),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                       ),
                     ),
                   ),
@@ -353,9 +392,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [
           BoxShadow(
-              color: AppColors.cardShadowMedium,
-              blurRadius: 10,
-              offset: Offset(0, 4)),
+            color: AppColors.cardShadowMedium,
+            blurRadius: 10,
+            offset: Offset(0, 4),
+          ),
         ],
       ),
       child: ClipRRect(
@@ -363,8 +403,7 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         child: Column(
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               width: double.infinity,
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
@@ -375,15 +414,19 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.inventory_2_outlined,
-                      color: AppColors.white, size: 18),
+                  const Icon(
+                    Icons.inventory_2_outlined,
+                    color: AppColors.white,
+                    size: 18,
+                  ),
                   const SizedBox(width: 8),
                   Text(
                     AppLocalizations.of(context).condoms,
                     style: GoogleFonts.googleSans(
-                        color: AppColors.white,
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold),
+                      color: AppColors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -394,8 +437,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                 children: _quantities.entries.map((entry) {
                   final int totalUsed = _currentMonthlyUsed + _totalSelected;
                   final int remaining =
-                      (AppConstants.maxCondomQuota - totalUsed)
-                          .clamp(0, AppConstants.maxCondomQuota);
+                      (AppConstants.maxCondomQuota - totalUsed).clamp(
+                        0,
+                        AppConstants.maxCondomQuota,
+                      );
                   final int maxAllowed = entry.value + remaining;
                   return StepperRowCondom(
                     label: '${entry.key}',
@@ -412,9 +457,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               child: Row(
                 children: [
-                  Text(AppLocalizations.of(context).total,
-                      style: GoogleFonts.googleSans(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    AppLocalizations.of(context).total,
+                    style: GoogleFonts.googleSans(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const Spacer(),
                   const SizedBox(width: 38),
                   SizedBox(
@@ -423,7 +472,9 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                       child: Text(
                         '$_totalSelected',
                         style: GoogleFonts.googleSans(
-                            fontSize: 18, fontWeight: FontWeight.bold),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
@@ -431,9 +482,13 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
                   SizedBox(
                     width: 26,
                     child: Center(
-                      child: Text(AppLocalizations.of(context).pieces,
-                      style: GoogleFonts.googleSans(
-                              fontSize: 16, fontWeight: FontWeight.bold)),
+                      child: Text(
+                        AppLocalizations.of(context).pieces,
+                        style: GoogleFonts.googleSans(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -451,8 +506,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
     final int totalLubricantUsed =
         _currentMonthlyLubricantUsed + _lubricantQuantity;
     final int remainingLubricant =
-        (AppConstants.maxLubricantQuota - totalLubricantUsed)
-            .clamp(0, AppConstants.maxLubricantQuota);
+        (AppConstants.maxLubricantQuota - totalLubricantUsed).clamp(
+          0,
+          AppConstants.maxLubricantQuota,
+        );
     final int maxLubricantAllowed = _lubricantQuantity + remainingLubricant;
     return SectionCard(
       title: AppLocalizations.of(context).extra,
