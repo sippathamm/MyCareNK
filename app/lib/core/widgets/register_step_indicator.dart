@@ -72,7 +72,7 @@ Widget buildRegisterStepIndicator(BuildContext context, int step) {
           );
         }
         return SizedBox(
-          height: 16,
+          height: 30,
           child: Stack(clipBehavior: Clip.none, children: [
             Positioned(left: 0, top: 0, child: Text(labels[0], style: labelStyle(0))),
             Positioned(right: 0, top: 0, child: Text(labels[n - 1], style: labelStyle(n - 1))),

@@ -2237,7 +2237,7 @@ class AppLocalizations {
     'ชื่อผู้ใช้งานและรหัสผ่าน',
     'ຊື່ຜູ້ໃຊ້ແລະລະຫັດຜ່ານ',
     'အသုံးပြုသူအမည်နှင့်စကားဝှက်',
-    'Username & Password',
+    'Username &\nPassword',
   );
   String get registerStep2 => _t(
     'ข้อมูลส่วนตัว',
