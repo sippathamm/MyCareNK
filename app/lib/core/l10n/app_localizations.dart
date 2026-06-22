@@ -993,6 +993,21 @@ class AppLocalizations {
     'Book in advance for PrEP/PEP medication, blood test, or health consultation',
   );
 
+  String get healthTrackerTitle => _t(
+    'บันทึกสุขภาพ',
+    'ບັນທຶກສຸຂະພາບ',
+    'ကျန်းမာရေး မှတ်တမ်း',
+    'Health Tracker',
+  );
+  String get healthTrackerSubtitle => _t(
+    'บันทึกและแจ้งเตือนการตรวจเลือดทุก 6 เดือน',
+    'ບັນທຶກ ແລະ ແຈ້ງເຕືອນການກວດເລືອດທຸກ 6 ເດືອນ',
+    '၆ လတစ်ကြိမ် သွေးစစ် မှတ်တမ်းနှင့် သတိပေးချက်',
+    'Log and get reminders for blood tests every 6 months',
+  );
+  String get comingSoon =>
+      _t('เร็ว ๆ นี้', 'ໄວໆນີ້', 'မကြာမီ', 'Coming soon');
+
   // ─── Condom Request ───────────────────────────────────────────────────────
   String get requestPageTitle => _t(
     'รับถุงยางอนามัย/เจลหล่อลื่น',

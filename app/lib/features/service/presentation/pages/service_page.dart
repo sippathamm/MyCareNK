@@ -35,7 +35,8 @@ class ServicePage extends StatelessWidget {
           children: [
             ServiceCard(
               icon: Icons.inventory_2_outlined,
-              iconBgColor: AppColors.primary,
+              iconBgColor: AppColors.primaryBackground,
+              iconColor: AppColors.primaryDark,
               title: l10n.getCondomsTitle,
               subtitle: l10n.getCondomsSubtitle,
               onTap: () => Navigator.of(context).push(
@@ -60,6 +61,21 @@ class ServicePage extends StatelessWidget {
               subtitle: l10n.bookDoctorSubtitle,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const DoctorBookingPage()),
+              ),
+            ),
+            ServiceCard(
+              icon: Icons.health_and_safety_outlined,
+              iconBgColor: AppColors.statusCompletedLight,
+              iconColor: AppColors.statusCompleted,
+              title: l10n.healthTrackerTitle,
+              subtitle: l10n.healthTrackerSubtitle,
+              onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(l10n.comingSoon,
+                      style: GoogleFonts.googleSans()),
+                  backgroundColor: AppColors.textSecondary,
+                  behavior: SnackBarBehavior.floating,
+                ),
               ),
             ),
           ],
