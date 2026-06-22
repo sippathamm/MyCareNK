@@ -2082,6 +2082,18 @@ class AppLocalizations {
     'HIV စစ်ဆေးခ အခမဲ့!',
     'Free HIV Screening!',
   );
+  String get campaignRegisterTitle => _t(
+    'สร้างบัญชีใหม่ฟรี!',
+    'ສ້າງບັນຊີໃໝ່ຟຣີ!',
+    'အခမဲ့ အကောင့်အသစ်ဖွင့်ပါ!',
+    'Register for Free!',
+  );
+  String get campaignRegisterSubtitle => _t(
+    'เข้าถึงบริการ MyCareNK ได้เลย',
+    'ເຂົ້າເຖິງບໍລິການ MyCareNK ໄດ້ທັນທີ',
+    'MyCareNK ဝန်ဆောင်မှုများ ချက်ချင်းရရှိသည်',
+    'Access MyCareNK services now',
+  );
 
   // ─── Privacy Policy ───────────────────────────────────────────────────────
   String get privacyPolicyIntro => _t(
