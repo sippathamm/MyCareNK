@@ -101,11 +101,11 @@ class _MainScreenState extends State<MainScreen> {
 
   void _onAndroidBack() {
     if (_currentIndex == 0 && (_homeNavigatorKey.currentState?.canPop() ?? false)) {
-      _homeNavigatorKey.currentState!.pop();
+      _homeNavigatorKey.currentState!.maybePop();
       return;
     }
     if (_currentIndex == 1 && (_serviceNavigatorKey.currentState?.canPop() ?? false)) {
-      _serviceNavigatorKey.currentState!.pop();
+      _serviceNavigatorKey.currentState!.maybePop();
       return;
     }
     if (_currentIndex != 0) {

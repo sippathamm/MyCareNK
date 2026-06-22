@@ -86,7 +86,12 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     final riskCfg = risk != null ? kRiskConfigs[risk]! : null;
     final cur = _step >= 0 && _step < _totalQ ? questions[_step] : null;
 
-    return Scaffold(
+    return PopScope(
+      canPop: _step == -1 || _isDone,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleBack();
+      },
+      child: Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -94,7 +99,13 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () {
+            if (_step > -1 && !_isDone) {
+              _handleBack();
+            } else {
+              Navigator.of(context).pop();
+            }
+          },
         ),
         title: Text(
           AppLocalizations.of(context).hivAssessmentTitle,
@@ -141,7 +152,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
           ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _buildBottomActions(AppLocalizations l10n, List<AssessmentQuestion> questions) {
