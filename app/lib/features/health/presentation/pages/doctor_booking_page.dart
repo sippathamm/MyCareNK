@@ -156,10 +156,12 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                                 const Icon(Icons.lock_outline,
                                     size: 13, color: AppColors.textHint),
                                 const SizedBox(width: 6),
-                                Text(
-                                  AppLocalizations.of(context).lockedReasonNote,
-                                  style: GoogleFonts.googleSans(
-                                      fontSize: 12, color: AppColors.textHint),
+                                Expanded(
+                                  child: Text(
+                                    AppLocalizations.of(context).lockedReasonNote,
+                                    style: GoogleFonts.googleSans(
+                                        fontSize: 12, color: AppColors.textHint),
+                                  ),
                                 ),
                               ],
                             ),
