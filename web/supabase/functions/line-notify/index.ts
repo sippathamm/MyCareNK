@@ -58,7 +58,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   }
 
   const typeLabel =
-    source_type === 'doctor_appointment' ? 'นัดพบแพทย์' : 'ขอถุงยางอนามัย';
+    source_type === 'doctor_appointment' ? 'นัดรับคำปรึกษา' : 'ขอถุงยางอนามัย/เจลหล่อลื่น';
   const messageText = [
     'มีรายการใหม่เข้ามา!',
     `📍 สถานบริการ: ${service_center}`,

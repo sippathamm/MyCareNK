@@ -69,7 +69,7 @@ export default function QRCodeDialog({
 
   return (
     <Dialog open={open} onClose={!isProcessing ? handleClose : undefined} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 'bold' }}>QR Code สำหรับรับถุงยางอนามัย</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 'bold' }}>QR Code สำหรับรับถุงยางอนามัย/เจลหล่อลื่น</DialogTitle>
 
       <DialogContent dividers>
         <Box display="flex" flexDirection="column" alignItems="center" py={2} gap={2}>
