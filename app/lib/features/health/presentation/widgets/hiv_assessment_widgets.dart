@@ -79,6 +79,8 @@ class AssessmentIntro extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 8),
+              _sectionEntry(l10n.questionCountLabel(1),
+                  l10n.assessmentSectionLabel(0), ''),
               _sectionEntry(l10n.questionCountLabel(4),
                   l10n.assessmentSectionLabel(1), l10n.sectionBehavior),
               _sectionEntry(l10n.questionCountLabel(2),
@@ -269,9 +271,9 @@ class _AnswerSummaryState extends State<AnswerSummary> {
   bool _expanded = false;
 
   Color _answerColor(String key) {
-    if (key == 'ก') return AppColors.success;
-    if (key == 'ข') return const Color(0xFFFF8F00);
-    return AppColors.error;
+    if (key == 'ก' || key == 'no') return AppColors.success;
+    if (key == 'ข' || key == 'unsure') return const Color(0xFFFF8F00);
+    return AppColors.error; // 'ค', 'yes', or unknown
   }
 
   @override

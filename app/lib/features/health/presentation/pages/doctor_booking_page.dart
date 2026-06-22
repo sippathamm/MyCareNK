@@ -41,7 +41,8 @@ List<DateTime> _buildAvailableDates() {
 
 class DoctorBookingPage extends StatefulWidget {
   final String? initialReason;
-  const DoctorBookingPage({super.key, this.initialReason});
+  final bool reasonLocked;
+  const DoctorBookingPage({super.key, this.initialReason, this.reasonLocked = false});
 
   @override
   State<DoctorBookingPage> createState() => _DoctorBookingPageState();
@@ -134,14 +135,36 @@ class _DoctorBookingPageState extends State<DoctorBookingPage> {
                     title: AppLocalizations.of(context).bookingServiceReason,
                     icon: Icons.medical_services_outlined,
                     child: Column(
-                      children: _buildReasons(AppLocalizations.of(context))
-                          .map((r) => ReasonTile(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ..._buildReasons(AppLocalizations.of(context))
+                            .map((r) {
+                              final isDisabled = widget.reasonLocked && r.key != _reason;
+                              return ReasonTile(
                                 icon: r.icon,
                                 label: r.label,
                                 selected: _reason == r.key,
-                                onTap: () => setState(() => _reason = r.key),
-                              ))
-                          .toList(),
+                                onTap: isDisabled ? null : () => setState(() => _reason = r.key),
+                                disabled: isDisabled,
+                              );
+                            }),
+                        if (widget.reasonLocked)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.lock_outline,
+                                    size: 13, color: AppColors.textHint),
+                                const SizedBox(width: 6),
+                                Text(
+                                  AppLocalizations.of(context).lockedReasonNote,
+                                  style: GoogleFonts.googleSans(
+                                      fontSize: 12, color: AppColors.textHint),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
                   ),
                   BookingSectionCard(

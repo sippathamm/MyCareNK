@@ -22,7 +22,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
   int _animDir = 1;
   final ScrollController _scrollController = ScrollController();
 
-  static const int _totalQ = 6;
+  static const int _totalQ = 7;
 
   bool get _isDone => _step >= _totalQ;
 
@@ -61,6 +61,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     }
     if (_selected == null) return;
     _answers[_step] = _selected!;
+    // Q0 "ใช่" → skip all remaining questions, jump to result with high risk
+    if (_step == 0 && _selected == 'yes') {
+      _slide(_totalQ, 1);
+      return;
+    }
     _slide(_step + 1, 1);
   }
 
@@ -143,6 +148,9 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     if (_isDone) {
       final risk = calcRisk(_answers);
       final cfg = kRiskConfigs[risk]!;
+      // Lock the reason only for the urgent 72h path (PEP) and medium risk (PrEP).
+      // Normal-flow high risk keeps PEP pre-selected but changeable.
+      final reasonLocked = _answers[0] == 'yes' || risk == RiskLevel.medium;
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -151,8 +159,10 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
               label: l10n.bookDoctorTitle,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) =>
-                      DoctorBookingPage(initialReason: cfg.bookingReason),
+                  builder: (_) => DoctorBookingPage(
+                    initialReason: cfg.bookingReason,
+                    reasonLocked: reasonLocked,
+                  ),
                 ),
               ),
             ),
@@ -196,9 +206,11 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             children: [
               Flexible(
                 child: Text(
-                  cur.section == 1
-                      ? AppLocalizations.of(context).sectionBehavior
-                      : AppLocalizations.of(context).sectionHealthBehavior,
+                  cur.section == 0
+                      ? AppLocalizations.of(context).sectionPreScreening
+                      : cur.section == 1
+                          ? AppLocalizations.of(context).sectionBehavior
+                          : AppLocalizations.of(context).sectionHealthBehavior,
                   style: GoogleFonts.googleSans(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -225,7 +237,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
+          if (cur.section > 0) Row(
             children: [1, 2].map((s) {
               final active = cur.section == s;
               return Container(

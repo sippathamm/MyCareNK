@@ -149,27 +149,37 @@ class ReasonTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
+  final bool disabled;
   const ReasonTile({
     super.key,
     required this.icon,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.disabled = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: disabled ? null : onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
         decoration: BoxDecoration(
-          color: selected ? AppColors.statusPreparingLight : Colors.white,
+          color: disabled
+              ? const Color(0xFFF5F5F5)
+              : selected
+                  ? AppColors.statusPreparingLight
+                  : Colors.white,
           border: Border.all(
-            color: selected ? AppColors.lubricant : const Color(0xFFE8E8E8),
+            color: disabled
+                ? const Color(0xFFE0E0E0)
+                : selected
+                    ? AppColors.lubricant
+                    : const Color(0xFFE8E8E8),
             width: 1.5,
           ),
           borderRadius: BorderRadius.circular(12),
@@ -181,11 +191,20 @@ class ReasonTile extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: selected ? AppColors.lubricant : const Color(0xFFF5F5F5),
+                color: disabled
+                    ? const Color(0xFFEAEAEA)
+                    : selected
+                        ? AppColors.lubricant
+                        : const Color(0xFFF5F5F5),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon,
-                  color: selected ? Colors.white : AppColors.textMuted, size: 18),
+                  color: disabled
+                      ? const Color(0xFFBDBDBD)
+                      : selected
+                          ? Colors.white
+                          : AppColors.textMuted,
+                  size: 18),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -194,7 +213,7 @@ class ReasonTile extends StatelessWidget {
                 style: GoogleFonts.googleSans(
                   fontSize: 16,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
-                  color: AppColors.textPrimary,
+                  color: disabled ? const Color(0xFFBDBDBD) : AppColors.textPrimary,
                 ),
               ),
             ),

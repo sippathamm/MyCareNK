@@ -1431,8 +1431,9 @@ class AppLocalizations {
     'HIV ကူးစက်ခံရနိုင်ခြေ စစ်ဆေးပုံစံ',
     'HIV Risk Assessment Form',
   );
-  String assessmentSectionLabel(int s) =>
-      _t('ส่วนที่ $s', 'ສ່ວນທີ $s', 'အပိုင်း $s', 'Section $s');
+  String assessmentSectionLabel(int s) => s == 0
+      ? sectionPreScreening
+      : _t('ส่วนที่ $s', 'ສ່ວນທີ $s', 'အပိုင်း $s', 'Section $s');
   String get sectionBehavior => _t(
     'พฤติกรรมทางเพศ',
     'ພຶດຕິກຳທາງເພດ',
@@ -1710,6 +1711,50 @@ class AppLocalizations {
     ' ແລະ ເລືອກຄຳຕອບທີ່ກົງຄວາມຈິງທີ່ສຸດ\nເພື່ອໃຫ້ໄດ້ຜົນທີ່ຖືກຕ້ອງ',
     ' ကိုသုံးသပ်ပါ မှန်ကန်ဆုံး အဖြေကို ရွေးချယ်ပါ\nသေချာသောရလဒ်ရရှိရန်',
     ' and choose the most accurate answer\nfor the most precise result',
+  );
+
+  // ─── HIV Assessment – Pre-screening question ─────────────────────────────
+  String get q0Text => _t(
+    'ท่านมีเหตุการณ์ถุงยางอนามัยแตก/หลุด หรือเพิ่งสัมผัสความเสี่ยงสูงต่อการติดเชื้อภายใน 72 ชั่วโมงที่ผ่านมาหรือไม่?',
+    'ທ່ານມີໂຄນໂດ້ຂາດ/ຫລົ່ນ ຫຼື ຫາກໍ່ສຳຜັດຄວາມສ່ຽງສູງພາຍໃນ 72 ຊ.ມ. ທີ່ຜ່ານມາຫຼືບໍ່?',
+    'ကွန်ဒုံး ပြတ်/ကျသွားသည် သို့မဟုတ် ၇၂ နာရီအတွင်း အန္တရာယ်မြင့် ကူးစက်ခံနိုင်ခြေနှင့် ထိတွေ့ခဲ့ပါသလား?',
+    'In the past 72 hours, did you have a condom break/slip, or high-risk exposure to infection?',
+  );
+  String get q0OptNoLabel =>
+      _t('ไม่', 'ບໍ່', 'မဟုတ်ပါ', 'No');
+  String get q0OptNoSub => _t(
+    'ไม่มีเหตุการณ์ดังกล่าวใน 72 ชั่วโมงที่ผ่านมา',
+    'ບໍ່ມີເຫດການດັ່ງກ່າວໃນ 72 ຊ.ມ. ທີ່ຜ່ານມາ',
+    '၇၂ နာရီအတွင်း ထိုသို့သော ဖြစ်ရပ်မျိုး မရှိပါ',
+    'No such incident in the past 72 hours',
+  );
+  String get q0OptYesLabel =>
+      _t('ใช่', 'ແມ່ນ', 'ဟုတ်ကဲ့', 'Yes');
+  String get q0OptYesSub => _t(
+    'มีถุงยางอนามัยแตก/หลุด หรือสัมผัสความเสี่ยงสูงภายใน 72 ชั่วโมง',
+    'ມີໂຄນໂດ້ຂາດ/ຫລົ່ນ ຫຼື ສຳຜັດຄວາມສ່ຽງສູງພາຍໃນ 72 ຊ.ມ.',
+    'ကွန်ဒုံး ပြတ်/ကျသွား၍ ၇၂ နာရီအတွင်း အန္တရာယ်မြင့် ထိတွေ့မှု ဖြစ်ခဲ့ပါသည်',
+    'Condom break/slip or high-risk exposure within 72 hours',
+  );
+  String get q0OptUnsureLabel =>
+      _t('ไม่แน่ใจ', 'ບໍ່ແນ່ໃຈ', 'မသေချာပါ', 'Not sure');
+  String get q0OptUnsureSub => _t(
+    'ไม่แน่ใจว่ามีความเสี่ยงสูงหรือไม่',
+    'ບໍ່ແນ່ໃຈວ່າມີຄວາມສ່ຽງສູງຫຼືບໍ່',
+    'အန္တရာယ်မြင့် ထိတွေ့မှု ဖြစ်မဖြစ် မသေချာပါ',
+    'Unsure if there was a high-risk exposure',
+  );
+  String get sectionPreScreening => _t(
+    'คัดกรองเบื้องต้น',
+    'ຄັດກອງເບື້ອງຕົ້ນ',
+    'ကနဦး စစ်ထုတ်',
+    'Pre-Screening',
+  );
+  String get lockedReasonNote => _t(
+    'กำหนดตามผลการประเมินความเสี่ยง',
+    'ກຳນົດຕາມຜົນການປະເມີນຄວາມສ່ຽງ',
+    'အန္တရာယ်အကဲဖြတ်မှု ရလဒ်အရ သတ်မှတ်ထားသည်',
+    'Pre-selected based on your risk assessment result',
   );
 
   // ─── HIV Assessment – Questions ───────────────────────────────────────────
