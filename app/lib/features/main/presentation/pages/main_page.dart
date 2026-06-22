@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
@@ -98,10 +99,31 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void _onAndroidBack() {
+    if (_currentIndex == 0 && (_homeNavigatorKey.currentState?.canPop() ?? false)) {
+      _homeNavigatorKey.currentState!.pop();
+      return;
+    }
+    if (_currentIndex == 1 && (_serviceNavigatorKey.currentState?.canPop() ?? false)) {
+      _serviceNavigatorKey.currentState!.pop();
+      return;
+    }
+    if (_currentIndex != 0) {
+      setState(() => _currentIndex = 0);
+      return;
+    }
+    SystemNavigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onAndroidBack();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: [
@@ -183,6 +205,7 @@ class _MainScreenState extends State<MainScreen> {
             label: AppLocalizations.of(context).navSettings,
           ),
         ],
+        ),
       ),
     );
   }
