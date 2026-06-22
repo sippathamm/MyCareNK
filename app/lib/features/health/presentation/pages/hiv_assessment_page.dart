@@ -65,10 +65,6 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
   }
 
   void _handleBack() {
-    if (_step <= 0) {
-      Navigator.of(context).pop();
-      return;
-    }
     _slide(_step - 1, -1);
   }
 
@@ -93,8 +89,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-          onPressed:
-              _isDone ? () => Navigator.of(context).pop() : _handleBack,
+          onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           AppLocalizations.of(context).hivAssessmentTitle,
@@ -170,15 +165,22 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
     if (_step == -1) {
       return AssessmentPrimaryButton(label: l10n.startAssessment, onPressed: _handleNext);
     }
-    return AnimatedOpacity(
-      opacity: _selected != null ? 1.0 : 0.45,
-      duration: const Duration(milliseconds: 150),
-      child: AssessmentPrimaryButton(
-        label: _step == _totalQ - 1
-            ? l10n.viewAssessmentResult
-            : l10n.next,
-        onPressed: _selected != null ? _handleNext : null,
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedOpacity(
+          opacity: _selected != null ? 1.0 : 0.45,
+          duration: const Duration(milliseconds: 150),
+          child: AssessmentPrimaryButton(
+            label: _step == _totalQ - 1
+                ? l10n.viewAssessmentResult
+                : l10n.next,
+            onPressed: _selected != null ? _handleNext : null,
+          ),
+        ),
+        const SizedBox(height: 10),
+        AssessmentOutlinedButton(label: l10n.backLabel, onPressed: _handleBack),
+      ],
     );
   }
 

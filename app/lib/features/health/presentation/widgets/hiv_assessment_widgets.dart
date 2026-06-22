@@ -111,6 +111,7 @@ class AssessmentIntro extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
@@ -128,23 +129,25 @@ class AssessmentIntro extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 10),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                name,
-                style: GoogleFonts.googleSans(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: GoogleFonts.googleSans(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-              ),
-              Text(
-                desc,
-                style: GoogleFonts.googleSans(
-                    fontSize: 13, color: AppColors.textHint),
-              ),
-            ],
+                Text(
+                  desc,
+                  style: GoogleFonts.googleSans(
+                      fontSize: 13, color: AppColors.textHint),
+                ),
+              ],
+            ),
           ),
         ],
       ),
