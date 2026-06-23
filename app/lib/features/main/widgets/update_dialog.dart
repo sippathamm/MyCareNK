@@ -207,7 +207,14 @@ class _UpdateDialogState extends State<UpdateDialog> {
             ),
             if (widget.versionInfo.hasNotes) ...[
               const SizedBox(height: 12),
-              _ReleaseNotes(versionInfo: widget.versionInfo),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: MediaQuery.sizeOf(context).height * 0.28,
+                ),
+                child: SingleChildScrollView(
+                  child: _ReleaseNotes(versionInfo: widget.versionInfo),
+                ),
+              ),
             ],
             const SizedBox(height: 20),
             if (_state == _DownloadState.downloading) ...[
