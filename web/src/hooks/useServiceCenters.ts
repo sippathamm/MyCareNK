@@ -18,6 +18,7 @@ export interface ServiceCenterRow {
   staff_count: number;
   admin_count: number;
   superadmin_count: number;
+  created_at: string;
 }
 
 export function useServiceCenters(enabled = true) {

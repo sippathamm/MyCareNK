@@ -49,7 +49,6 @@ function getFileExtension(filename: string) {
 export default function ServiceCenterEditDialog({ open, center, existingNames, isSuperadmin, onClose, onSuccess }: Props) {
   const isAddMode = open && center === null;
 
-  // ── Info fields ─────────────────────────────────────────────────
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [contacts, setContacts] = useState<ContactItem[]>([]);
@@ -59,7 +58,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [address, setAddress] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  // ── Schedule ─────────────────────────────────────────────────────
   const [scheduleTab, setScheduleTab] = useState(0);
   const [condomEnabled, setCondomEnabled] = useState(true);
   const [appointmentEnabled, setAppointmentEnabled] = useState(false);
@@ -68,7 +66,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [apptMorning, setApptMorning] = useState<string[]>(['08:00']);
   const [apptAfternoon, setApptAfternoon] = useState<string[]>([]);
 
-  // ── UI state ─────────────────────────────────────────────────────
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -88,7 +85,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setScheduleTab(0);
 
     if (center) {
-      setName('');
       setDescription(center.description ?? '');
       setAddress(center.address ?? '');
       setContacts(center.contacts.length > 0 ? [...center.contacts] : []);
@@ -124,8 +120,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     if (error) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [error]);
 
-  // ── Schedule helpers ─────────────────────────────────────────────
-
   const getScheduleTimes = (group: ScheduleGroup, period: SchedulePeriod) => {
     if (group === 'condom') return period === 'morning' ? pickupMorning : pickupAfternoon;
     return period === 'morning' ? apptMorning : apptAfternoon;
@@ -158,8 +152,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setScheduleTimes(group, period, getScheduleTimes(group, period).filter(t => t !== time));
   };
 
-  // ── Contacts ─────────────────────────────────────────────────────
-
   const handleClose = () => {
     if (saving || uploading || deleting) return;
     if (addedName) { onSuccess(); return; }
@@ -171,8 +163,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setContacts(prev => prev.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
   };
   const handleRemoveContact = (i: number) => setContacts(prev => prev.filter((_, idx) => idx !== i));
-
-  // ── Image upload ─────────────────────────────────────────────────
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -196,8 +186,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     }
   };
 
-  // ── Validation ───────────────────────────────────────────────────
-
   const validateLatLng = (): { lat: number | null; lng: number | null } | null => {
     const latStr = latitude.trim();
     const lngStr = longitude.trim();
@@ -212,15 +200,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     return { lat, lng };
   };
 
-  // ── Save ─────────────────────────────────────────────────────────
-
-  const buildSchedulePayload = () => ({
-    p_condom_service_enabled: condomEnabled,
-    p_appointment_service_enabled: appointmentEnabled,
-    p_pickup_times: [...pickupMorning, ...pickupAfternoon].sort(),
-    p_appointment_times: [...apptMorning, ...apptAfternoon].sort(),
-  });
-
   const validateSchedule = (): boolean => {
     if (condomEnabled && pickupMorning.length === 0 && pickupAfternoon.length === 0) {
       setError('กรุณาเพิ่มอย่างน้อย 1 ช่วงเวลาสำหรับบริการแจกถุงยางอนามัย/เจลหล่อลื่น');
@@ -232,6 +211,13 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     }
     return true;
   };
+
+  const buildSchedulePayload = () => ({
+    p_condom_service_enabled: condomEnabled,
+    p_appointment_service_enabled: appointmentEnabled,
+    p_pickup_times: [...pickupMorning, ...pickupAfternoon].sort(),
+    p_appointment_times: [...apptMorning, ...apptAfternoon].sort(),
+  });
 
   const handleSaveAdd = async () => {
     const trimmedName = name.trim();
@@ -317,17 +303,13 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       }
       return;
     }
-    onSuccess();
+    window.location.reload();
   };
-
-  // ── Derived ──────────────────────────────────────────────────────
 
   const lat = parseFloat(latitude.trim());
   const lng = parseFloat(longitude.trim());
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
   const hasAssignedStaff = center !== null && (center.staff_count + center.admin_count) > 0;
-
-  // ── Schedule tab panel ────────────────────────────────────────────
 
   const switchSx = {
     '& .MuiSwitch-switchBase.Mui-checked': { color: '#F97316' },
@@ -390,8 +372,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     );
   };
 
-  // ── Render ────────────────────────────────────────────────────────
-
   return (
     <>
       <Dialog open={open && !addedName} onClose={handleClose} maxWidth="sm" fullWidth>
@@ -407,7 +387,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         <Divider />
 
         <DialogContent sx={{ pt: 2.5 }}>
-          {/* Image upload */}
           <Box
             sx={{
               position: 'relative', paddingTop: '56.25%', bgcolor: 'grey.100',
@@ -457,7 +436,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             รองรับไฟล์ JPG, PNG, WEBP, GIF ขนาดไม่เกิน 5 MB
           </Typography>
 
-          {/* Name */}
           <TextField
             label="ชื่อสถานบริการ"
             value={isAddMode ? name : center?.name ?? ''}
@@ -468,7 +446,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             sx={{ mb: 2 }}
           />
 
-          {/* Description */}
           <TextField
             label="ข้อมูลทั่วไป"
             value={description}
@@ -480,7 +457,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             sx={{ mb: 2 }}
           />
 
-          {/* Schedule — directly after ข้อมูลทั่วไป */}
           <Divider sx={{ mb: 2 }} />
           <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
             กำหนดเวลา
@@ -497,7 +473,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
           <Divider sx={{ mb: 2, mt: 2.5 }} />
 
-          {/* Operating hours */}
           <TextField
             label="เวลาทำการ"
             value={operatingHours}
@@ -509,7 +484,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             sx={{ mb: 2 }}
           />
 
-          {/* Address */}
           <TextField
             label="ที่อยู่"
             value={address}
@@ -522,7 +496,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             sx={{ mb: 2.5 }}
           />
 
-          {/* Contacts */}
           <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
             ข้อมูลติดต่อ
           </Typography>
@@ -565,7 +538,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
           <Divider sx={{ mb: 2 }} />
 
-          {/* Location */}
           <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
             ตำแหน่ง
           </Typography>
@@ -638,7 +610,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         </DialogActions>
       </Dialog>
 
-      {/* Add success */}
       <Dialog open={open && !!addedName} onClose={onSuccess} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
           <CheckCircleOutlineIcon color="success" />
@@ -655,7 +626,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         </DialogActions>
       </Dialog>
 
-      {/* Confirm delete */}
       <ConfirmDialog
         open={confirmDeleteOpen}
         icon={<DeleteOutlineIcon color="error" />}
@@ -668,7 +638,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         onCancel={() => setConfirmDeleteOpen(false)}
       />
 
-      {/* Staff-assigned warning */}
       <Dialog open={staffBlockDialog} onClose={() => setStaffBlockDialog(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
           <PeopleOutlineIcon color="warning" />

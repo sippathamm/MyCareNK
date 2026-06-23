@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Chip,
   Button, Skeleton, Alert, IconButton, Tooltip, Pagination,
+  TextField, CircularProgress, Paper, Stack,
+  Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
@@ -15,6 +17,9 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import ServiceCenterEditDialog from '../../components/inventory/ServiceCenterEditDialog';
 
 const PAGE_SIZE = 6;
+
+type ServiceFilter = 'all' | 'condom' | 'appointment';
+type SortBy = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
@@ -47,7 +52,6 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
       </Box>
 
       <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Name + edit */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75, minWidth: 0 }}>
           <Typography variant="subtitle1" fontWeight="bold" noWrap sx={{ flex: 1 }}>
             {center.name}
@@ -59,9 +63,8 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
           </Tooltip>
         </Box>
 
-        {/* Service chips */}
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
-          <Chip size="small" label="แจกถุงยาง/เจล" sx={chipSx(center.condom_service_enabled)} />
+          <Chip size="small" label="แจกถุงยางอนามัย/เจลหล่อลื่น" sx={chipSx(center.condom_service_enabled)} />
           <Chip size="small" label="ให้คำปรึกษา" sx={chipSx(center.appointment_service_enabled)} />
         </Box>
 
@@ -121,13 +124,54 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
 
 export default function ServiceCentersPage() {
   const { centers, loading, error, refetch } = useServiceCenters(true);
-  const { role } = useRoleAccess();
+  const { role, loading: roleLoading } = useRoleAccess();
   const isSuperadmin = role === 'superadmin';
 
   const [editTarget, setEditTarget] = useState<ServiceCenterRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [serviceFilter, setServiceFilter] = useState<ServiceFilter>('all');
+  const [sortBy, setSortBy] = useState<SortBy>('newest');
+  const isFirstPageRender = useRef(true);
+
+  const filtered = centers
+    .filter(c => {
+      if (serviceFilter === 'condom') return c.condom_service_enabled;
+      if (serviceFilter === 'appointment') return c.appointment_service_enabled;
+      return true;
+    })
+    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    .sort((a, b) => {
+      if (sortBy === 'newest') return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      if (sortBy === 'name_asc') return a.name.localeCompare(b.name, 'th');
+      return b.name.localeCompare(a.name, 'th');
+    });
+
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginatedCenters = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    if (!loading && page > 1 && page > Math.max(1, totalPages)) {
+      setPage(Math.max(1, totalPages));
+    }
+  }, [loading, page, totalPages]);
+
+  // Smooth scroll after React renders the new page content
+  useEffect(() => {
+    if (isFirstPageRender.current) { isFirstPageRender.current = false; return; }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [page]);
+
+  if (roleLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', py: 10 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
   if (!isSuperadmin) {
     return (
@@ -137,16 +181,17 @@ export default function ServiceCentersPage() {
     );
   }
 
-  const totalPages = Math.ceil(centers.length / PAGE_SIZE);
-  const paginatedCenters = centers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
   const handleEdit = (center: ServiceCenterRow) => { setEditTarget(center); setEditOpen(true); };
   const handleClose = () => { setEditOpen(false); setAddOpen(false); setEditTarget(null); };
   const handleSuccess = () => { setEditOpen(false); setAddOpen(false); setEditTarget(null); refetch(); };
 
+  const handleSearchChange = (value: string) => { setSearch(value); setPage(1); };
+  const handleServiceFilterChange = (value: ServiceFilter) => { setServiceFilter(value); setPage(1); };
+  const handleSortChange = (value: SortBy) => { setSortBy(value); setPage(1); };
+
   return (
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Box>
           <Typography variant="h5" fontWeight="bold" gutterBottom>จัดการสถานบริการ</Typography>
           <Typography variant="body1" color="text.secondary">
@@ -157,6 +202,44 @@ export default function ServiceCentersPage() {
           เพิ่มสถานบริการ
         </Button>
       </Box>
+
+      <Paper elevation={1} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+          <TextField
+            label="ค้นหาสถานบริการ"
+            variant="outlined"
+            size="small"
+            value={search}
+            onChange={(e) => handleSearchChange(e.target.value)}
+            sx={{ flexGrow: 1 }}
+          />
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>บริการ</InputLabel>
+            <Select
+              label="บริการ"
+              value={serviceFilter}
+              onChange={(e) => handleServiceFilterChange(e.target.value as ServiceFilter)}
+            >
+              <MenuItem value="all">ทั้งหมด</MenuItem>
+              <MenuItem value="condom">แจกถุงอนามัย/เจลหล่อลื่น</MenuItem>
+              <MenuItem value="appointment">ให้คำปรึกษา</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl size="small" sx={{ minWidth: 160 }}>
+            <InputLabel>เรียงตาม</InputLabel>
+            <Select
+              label="เรียงตาม"
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value as SortBy)}
+            >
+              <MenuItem value="newest">ใหม่สุด</MenuItem>
+              <MenuItem value="oldest">เก่าสุด</MenuItem>
+              <MenuItem value="name_asc">ชื่อ ก→ฮ</MenuItem>
+              <MenuItem value="name_desc">ชื่อ ฮ→ก</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+      </Paper>
 
       {error && (
         <Alert severity="error" sx={{ mb: 2.5, borderRadius: 1.5 }}>{error}</Alert>
@@ -175,6 +258,13 @@ export default function ServiceCentersPage() {
               </Grid>
             ))
         }
+        {!loading && paginatedCenters.length === 0 && (
+          <Grid size={{ xs: 12 }}>
+            <Typography color="text.secondary" textAlign="center" sx={{ py: 6 }}>
+              {search || serviceFilter !== 'all' ? 'ไม่พบสถานบริการที่ตรงกับเงื่อนไข' : 'ยังไม่มีสถานบริการ'}
+            </Typography>
+          </Grid>
+        )}
       </Grid>
 
       {!loading && totalPages > 1 && (
@@ -182,7 +272,7 @@ export default function ServiceCentersPage() {
           <Pagination
             count={totalPages}
             page={page}
-            onChange={(_, v) => { setPage(v); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            onChange={(_, v) => setPage(v)}
             color="primary"
             shape="rounded"
           />
