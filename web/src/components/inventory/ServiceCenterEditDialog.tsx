@@ -34,6 +34,8 @@ interface ContactItem {
 type ScheduleGroup = 'condom' | 'appointment';
 type SchedulePeriod = 'morning' | 'afternoon';
 
+const SCHEDULE_TABS = ['แจกถุงยางอนามัย/เจลหล่อลื่น', 'ให้คำปรึกษา'];
+
 function generateId(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(16)))
     .map(b => b.toString(16).padStart(2, '0'))
@@ -94,7 +96,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setLongitude(center.longitude !== null ? String(center.longitude) : '');
       setOperatingHours(center.operating_hours ?? '');
       setImageUrl(center.image_url);
-      // schedule
       setCondomEnabled(center.condom_service_enabled);
       setAppointmentEnabled(center.appointment_service_enabled);
       setPickupMorning(center.pickup_times.filter(t => t < '12:00').sort());
@@ -110,7 +111,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setLongitude('');
       setOperatingHours('');
       setImageUrl(null);
-      // schedule defaults
       setCondomEnabled(true);
       setAppointmentEnabled(false);
       setPickupMorning(['08:00']);
@@ -151,13 +151,11 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   };
 
   const handleTimeChange = (group: ScheduleGroup, period: SchedulePeriod, oldTime: string, newTime: string) => {
-    const current = getScheduleTimes(group, period);
-    setScheduleTimes(group, period, current.map(t => t === oldTime ? newTime : t));
+    setScheduleTimes(group, period, getScheduleTimes(group, period).map(t => t === oldTime ? newTime : t));
   };
 
   const handleRemoveTime = (group: ScheduleGroup, period: SchedulePeriod, time: string) => {
-    const current = getScheduleTimes(group, period);
-    setScheduleTimes(group, period, current.filter(t => t !== time));
+    setScheduleTimes(group, period, getScheduleTimes(group, period).filter(t => t !== time));
   };
 
   // ── Contacts ─────────────────────────────────────────────────────
@@ -172,9 +170,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const handleContactChange = (i: number, field: 'label' | 'value', val: string) => {
     setContacts(prev => prev.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
   };
-  const handleRemoveContact = (i: number) => {
-    setContacts(prev => prev.filter((_, idx) => idx !== i));
-  };
+  const handleRemoveContact = (i: number) => setContacts(prev => prev.filter((_, idx) => idx !== i));
 
   // ── Image upload ─────────────────────────────────────────────────
 
@@ -299,7 +295,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     const { error: deleteError } = await supabase.rpc('delete_service_center', { p_name: center.name });
     setDeleting(false);
     setConfirmDeleteOpen(false);
-
     if (deleteError) {
       if (deleteError.message.includes('ยังมีเจ้าหน้าที่')) {
         setStaffBlockDialog(true);
@@ -316,15 +311,19 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const lat = parseFloat(latitude.trim());
   const lng = parseFloat(longitude.trim());
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
-  const canDelete = center !== null && !condomEnabled && !appointmentEnabled;
   const hasAssignedStaff = center !== null && (center.staff_count + center.admin_count) > 0;
 
-  // ── Schedule tab panel renderer ───────────────────────────────────
+  // ── Schedule tab panel ────────────────────────────────────────────
+
+  const switchSx = {
+    '& .MuiSwitch-switchBase.Mui-checked': { color: '#F97316' },
+    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#F97316' },
+  };
 
   const renderTimePeriod = (group: ScheduleGroup, period: SchedulePeriod, label: string) => {
     const times = getScheduleTimes(group, period);
     return (
-      <>
+      <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography variant="caption" fontWeight="bold" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
           {label}
         </Typography>
@@ -349,38 +348,30 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
           startIcon={<AddIcon />}
           onClick={() => handleAddTime(group, period)}
           disabled={saving}
-          sx={{ mb: 1.5, color: 'text.secondary', fontSize: '0.75rem' }}
+          sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
         >
           เพิ่มเวลา
         </Button>
-      </>
+      </Box>
     );
   };
 
   const renderSchedulePanel = (group: ScheduleGroup) => {
     const enabled = group === 'condom' ? condomEnabled : appointmentEnabled;
     const setEnabled = group === 'condom' ? setCondomEnabled : setAppointmentEnabled;
-
     return (
-      <Box sx={{ pt: 2 }}>
+      <Box sx={{ pt: 1.5 }}>
         <FormControlLabel
           control={
-            <Switch
-              checked={enabled}
-              onChange={(e) => setEnabled(e.target.checked)}
-              disabled={saving}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': { color: '#2E7D32' },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#2E7D32' },
-              }}
-            />
+            <Switch checked={enabled} onChange={(e) => setEnabled(e.target.checked)} disabled={saving} sx={switchSx} />
           }
           label="เปิดใช้งาน"
-          sx={{ mb: 1.5 }}
+          sx={{ mb: 1 }}
         />
-        {renderTimePeriod(group, 'morning', 'ช่วงเช้า')}
-        <Divider sx={{ mb: 1.5 }} />
-        {renderTimePeriod(group, 'afternoon', 'ช่วงบ่าย')}
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {renderTimePeriod(group, 'morning', 'ช่วงเช้า')}
+          {renderTimePeriod(group, 'afternoon', 'ช่วงบ่าย')}
+        </Box>
       </Box>
     );
   };
@@ -475,6 +466,23 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             sx={{ mb: 2 }}
           />
 
+          {/* Schedule — directly after ข้อมูลทั่วไป */}
+          <Divider sx={{ mb: 2 }} />
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+            กำหนดเวลา
+          </Typography>
+          <Tabs
+            value={scheduleTab}
+            onChange={(_, v) => setScheduleTab(v)}
+            sx={{ mb: 0, borderBottom: 1, borderColor: 'divider' }}
+          >
+            {SCHEDULE_TABS.map(label => <Tab key={label} label={label} />)}
+          </Tabs>
+          {scheduleTab === 0 && renderSchedulePanel('condom')}
+          {scheduleTab === 1 && renderSchedulePanel('appointment')}
+
+          <Divider sx={{ mb: 2, mt: 2.5 }} />
+
           {/* Operating hours */}
           <TextField
             label="เวลาทำการ"
@@ -543,23 +551,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
           <Divider sx={{ mb: 2 }} />
 
-          {/* Schedule */}
-          <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-            กำหนดเวลา
-          </Typography>
-          <Tabs
-            value={scheduleTab}
-            onChange={(_, v) => setScheduleTab(v)}
-            sx={{ mb: 0, borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab label="ถุงยางอนามัย/เจลหล่อลื่น" />
-            <Tab label="นัดรับคำปรึกษา" />
-          </Tabs>
-          {scheduleTab === 0 && renderSchedulePanel('condom')}
-          {scheduleTab === 1 && renderSchedulePanel('appointment')}
-
-          <Divider sx={{ mb: 2, mt: 2.5 }} />
-
           {/* Location */}
           <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
             ตำแหน่ง
@@ -607,19 +598,17 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
         <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
           {!isAddMode && isSuperadmin && (
-            <Tooltip title={canDelete ? '' : 'ปิดใช้งานทั้งสองบริการก่อนจึงจะลบได้'}>
-              <span style={{ marginRight: 'auto' }}>
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => hasAssignedStaff ? setStaffBlockDialog(true) : setConfirmDeleteOpen(true)}
-                  disabled={!canDelete || saving || deleting}
-                >
-                  ลบ
-                </Button>
-              </span>
-            </Tooltip>
+            <span style={{ marginRight: 'auto' }}>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => hasAssignedStaff ? setStaffBlockDialog(true) : setConfirmDeleteOpen(true)}
+                disabled={saving || deleting}
+              >
+                ลบ
+              </Button>
+            </span>
           )}
           <Button onClick={handleClose} disabled={saving || uploading || deleting} color="inherit">
             ยกเลิก

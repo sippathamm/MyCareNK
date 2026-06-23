@@ -9,7 +9,6 @@ export interface ServiceCenterRow {
   contacts: { label: string; value: string }[];
   latitude: number | null;
   longitude: number | null;
-  is_active: boolean;
   display_order: number;
   operating_hours: string | null;
   condom_service_enabled: boolean;

@@ -64,7 +64,6 @@ GRANT EXECUTE ON FUNCTION public.get_service_centers()                          
 GRANT EXECUTE ON FUNCTION public.add_service_center(text)                                       TO authenticated;
 GRANT EXECUTE ON FUNCTION public.delete_service_center(text)                                    TO authenticated;
 GRANT EXECUTE ON FUNCTION public.init_service_center_inventory(text)                            TO authenticated;
-GRANT EXECUTE ON FUNCTION public.toggle_service_center_active(text, boolean)                    TO authenticated;
 GRANT EXECUTE ON FUNCTION public.upsert_service_center(text, text, text, jsonb, double precision, double precision, smallint, text, text, boolean, boolean, text[], text[]) TO authenticated;
 
 -- Request / appointment creation

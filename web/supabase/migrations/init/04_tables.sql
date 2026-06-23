@@ -28,7 +28,6 @@ CREATE TABLE public.service_centers (
   contacts                    jsonb       NOT NULL DEFAULT '[]',
   latitude                    numeric,
   longitude                   numeric,
-  is_active                   boolean     NOT NULL DEFAULT true,
   display_order               smallint    NOT NULL DEFAULT 0,
   created_at                  timestamptz NOT NULL DEFAULT now(),
   updated_at                  timestamptz NOT NULL DEFAULT now(),

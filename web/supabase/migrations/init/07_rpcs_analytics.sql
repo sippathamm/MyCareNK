@@ -156,7 +156,6 @@ $$;
 CREATE OR REPLACE FUNCTION public.get_inventory_forecast()
 RETURNS TABLE(
   service_center      text,
-  is_active           boolean,
   condom_qty          integer,
   lubricant_qty       integer,
   condom_daily_burn   numeric,
@@ -179,7 +178,6 @@ BEGIN
     GROUP BY il.service_center
   )
   SELECT sc.name                                    AS service_center,
-    sc.is_active,
     COALESCE(sci.condom_qty, 0)                     AS condom_qty,
     COALESCE(sci.lubricant_qty, 0)                  AS lubricant_qty,
     COALESCE(b.condom_daily_burn, 0)                AS condom_daily_burn,
