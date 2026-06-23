@@ -41,9 +41,7 @@ CREATE TABLE public.service_centers (
   staff_count                 int         NOT NULL DEFAULT 0,
   admin_count                 int         NOT NULL DEFAULT 0,
   superadmin_count            int         NOT NULL DEFAULT 0,
-  CONSTRAINT service_centers_pkey            PRIMARY KEY (name),
-  CONSTRAINT service_centers_at_least_one_group
-    CHECK (condom_service_enabled = true OR appointment_service_enabled = true)
+  CONSTRAINT service_centers_pkey            PRIMARY KEY (name)
 );
 
 ALTER TABLE public.service_centers ENABLE ROW LEVEL SECURITY;
