@@ -6,7 +6,6 @@ class ServiceCenterModel {
   final List<Map<String, String>> contacts;
   final double? latitude;
   final double? longitude;
-  final bool isActive;
   final int displayOrder;
   final String? operatingHours;
   final bool condomServiceEnabled;
@@ -22,7 +21,6 @@ class ServiceCenterModel {
     required this.contacts,
     this.latitude,
     this.longitude,
-    required this.isActive,
     required this.displayOrder,
     this.operatingHours,
     this.condomServiceEnabled = true,
@@ -42,7 +40,6 @@ class ServiceCenterModel {
           .toList(),
       latitude: (map['latitude'] as num?)?.toDouble(),
       longitude: (map['longitude'] as num?)?.toDouble(),
-      isActive: map['is_active'] as bool? ?? true,
       displayOrder: map['display_order'] as int? ?? 0,
       operatingHours: map['operating_hours'] as String?,
       condomServiceEnabled: map['condom_service_enabled'] as bool? ?? true,

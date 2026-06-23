@@ -104,10 +104,10 @@ class _CondomRequestPageState extends State<CondomRequestPage> {
         _centersNotLoggedIn = false;
       });
     try {
-      final centers = await ServiceCenterService.fetchActive();
+      final centers = await ServiceCenterService.fetchAll();
       if (mounted)
         setState(() {
-          _centers = centers;
+          _centers = centers.where((c) => c.condomServiceEnabled).toList();
           _centersLoading = false;
         });
     } catch (_) {
