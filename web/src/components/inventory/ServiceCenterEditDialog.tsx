@@ -221,10 +221,23 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     p_appointment_times: [...apptMorning, ...apptAfternoon].sort(),
   });
 
+  const validateSchedule = (): boolean => {
+    if (condomEnabled && pickupMorning.length === 0 && pickupAfternoon.length === 0) {
+      setError('กรุณาเพิ่มอย่างน้อย 1 ช่วงเวลาสำหรับบริการแจกถุงยางอนามัย/เจลหล่อลื่น');
+      return false;
+    }
+    if (appointmentEnabled && apptMorning.length === 0 && apptAfternoon.length === 0) {
+      setError('กรุณาเพิ่มอย่างน้อย 1 ช่วงเวลาสำหรับบริการให้คำปรึกษา');
+      return false;
+    }
+    return true;
+  };
+
   const handleSaveAdd = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) { setError('กรุณากรอกชื่อสถานบริการ'); return; }
     if (existingNames.includes(trimmedName)) { setError('ชื่อนี้มีอยู่แล้ว'); return; }
+    if (!validateSchedule()) return;
     const coords = validateLatLng();
     if (coords === null) return;
     const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
@@ -264,6 +277,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
   const handleSaveEdit = async () => {
     if (!center) return;
+    if (!validateSchedule()) return;
     const coords = validateLatLng();
     if (coords === null) return;
     const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
@@ -633,7 +647,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
         <Divider />
         <DialogContent sx={{ pt: 2.5 }}>
           <Typography variant="body2" color="text.secondary">
-            เพิ่มสถานบริการ <strong>{addedName}</strong> เรียบร้อยแล้ว กรุณา refresh หน้า <strong>สต็อกและพยากรณ์</strong>
+            เพิ่มสถานบริการ <strong>{addedName}</strong> เรียบร้อยแล้ว
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>

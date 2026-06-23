@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   Box, Typography, Grid, Card, CardContent, Chip,
-  Button, Skeleton, Alert, IconButton, Tooltip,
+  Button, Skeleton, Alert, IconButton, Tooltip, Pagination,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
@@ -14,11 +14,21 @@ import { useServiceCenters, type ServiceCenterRow } from '../../hooks/useService
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import ServiceCenterEditDialog from '../../components/inventory/ServiceCenterEditDialog';
 
+const PAGE_SIZE = 6;
+
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
 function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdit: () => void }) {
   const firstTwoContacts = center.contacts.slice(0, 2);
   const hasLocation = center.latitude !== null && center.longitude !== null;
+
+  const chipSx = (active: boolean) => ({
+    height: 20,
+    fontSize: '0.65rem',
+    bgcolor: active ? '#FFF7ED' : '#F5F5F5',
+    color: active ? '#EA580C' : '#9E9E9E',
+    border: `1px solid ${active ? '#FDBA74' : '#E0E0E0'}`,
+  });
 
   return (
     <Card elevation={1} sx={{ borderRadius: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
@@ -37,7 +47,8 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
       </Box>
 
       <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1, minWidth: 0 }}>
+        {/* Name + edit */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.75, minWidth: 0 }}>
           <Typography variant="subtitle1" fontWeight="bold" noWrap sx={{ flex: 1 }}>
             {center.name}
           </Typography>
@@ -46,6 +57,12 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+        </Box>
+
+        {/* Service chips */}
+        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
+          <Chip size="small" label="แจกถุงยาง/เจล" sx={chipSx(center.condom_service_enabled)} />
+          <Chip size="small" label="ให้คำปรึกษา" sx={chipSx(center.appointment_service_enabled)} />
         </Box>
 
         {center.operating_hours && (
@@ -106,11 +123,22 @@ export default function ServiceCentersPage() {
   const { centers, loading, error, refetch } = useServiceCenters(true);
   const { role } = useRoleAccess();
   const isSuperadmin = role === 'superadmin';
-  const canManage = role === 'admin' || role === 'superadmin';
 
   const [editTarget, setEditTarget] = useState<ServiceCenterRow | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [page, setPage] = useState(1);
+
+  if (!isSuperadmin) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 10 }}>
+        <Typography variant="h6" color="text.secondary">ไม่มีสิทธิ์เข้าถึงหน้านี้</Typography>
+      </Box>
+    );
+  }
+
+  const totalPages = Math.ceil(centers.length / PAGE_SIZE);
+  const paginatedCenters = centers.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleEdit = (center: ServiceCenterRow) => { setEditTarget(center); setEditOpen(true); };
   const handleClose = () => { setEditOpen(false); setAddOpen(false); setEditTarget(null); };
@@ -125,11 +153,9 @@ export default function ServiceCentersPage() {
             แก้ไขรูปภาพ ข้อมูลทั่วไป ช่องทางติดต่อ และตำแหน่งของแต่ละสถานบริการ
           </Typography>
         </Box>
-        {canManage && (
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
-            เพิ่มสถานบริการ
-          </Button>
-        )}
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => setAddOpen(true)}>
+          เพิ่มสถานบริการ
+        </Button>
       </Box>
 
       {error && (
@@ -138,18 +164,30 @@ export default function ServiceCentersPage() {
 
       <Grid container spacing={2}>
         {loading
-          ? Array.from({ length: 4 }).map((_, i) => (
+          ? Array.from({ length: PAGE_SIZE }).map((_, i) => (
               <Grid key={i} size={{ xs: 12, sm: 6, md: 4 }}>
                 <Skeleton variant="rounded" height={280} />
               </Grid>
             ))
-          : centers.map((center) => (
+          : paginatedCenters.map((center) => (
               <Grid key={center.name} size={{ xs: 12, sm: 6, md: 4 }}>
                 <ServiceCenterCard center={center} onEdit={() => handleEdit(center)} />
               </Grid>
             ))
         }
       </Grid>
+
+      {!loading && totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, v) => { setPage(v); window.scrollTo({ top: 0, behavior: 'smooth' }); }}
+            color="primary"
+            shape="rounded"
+          />
+        </Box>
+      )}
 
       <ServiceCenterEditDialog
         open={editOpen || addOpen}
