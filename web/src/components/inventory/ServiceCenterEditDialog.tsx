@@ -3,7 +3,6 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, CircularProgress,
   Alert, Divider, IconButton, Tooltip, Switch, FormControlLabel,
-  Tabs, Tab,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
@@ -67,7 +66,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [address, setAddress] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>('condom');
   const [condomEnabled, setCondomEnabled] = useState(true);
   const [appointmentEnabled, setAppointmentEnabled] = useState(false);
   const [pickupMorning, setPickupMorning]     = useState<string[]>(DEFAULT_PICKUP_MORNING);
@@ -91,7 +89,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setAddedName(null);
     setConfirmDeleteOpen(false);
     setStaffBlockDialog(false);
-    setScheduleTab('condom');
     if (center) {
       setName('');
       setDescription(center.description ?? '');
@@ -235,20 +232,17 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
     if (condomEnabled) {
       if (cleanPickup.length === 0) {
-        setScheduleTab('condom');
         setError('กรุณาเพิ่มเวลารับถุงยางอนามัย/เจลหล่อลื่นอย่างน้อย 1 ช่วงเวลา');
         return null;
       }
       for (const t of cpm) {
         if (!TIME_REGEX.test(t) || hourOf(t) >= 12) {
-          setScheduleTab('condom');
           setError(`เวลาช่วงเช้า "${t}" ต้องอยู่ในรูปแบบ HH:MM และก่อน 12:00`);
           return null;
         }
       }
       for (const t of cpa) {
         if (!TIME_REGEX.test(t) || hourOf(t) < 12) {
-          setScheduleTab('condom');
           setError(`เวลาช่วงบ่าย "${t}" ต้องอยู่ในรูปแบบ HH:MM และตั้งแต่ 12:00`);
           return null;
         }
@@ -256,20 +250,17 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     }
     if (appointmentEnabled) {
       if (cleanAppt.length === 0) {
-        setScheduleTab('appointment');
         setError('กรุณาเพิ่มเวลานัดรับคำปรึกษาอย่างน้อย 1 ช่วงเวลา');
         return null;
       }
       for (const t of cam) {
         if (!TIME_REGEX.test(t) || hourOf(t) >= 12) {
-          setScheduleTab('appointment');
           setError(`เวลาช่วงเช้า "${t}" ต้องอยู่ในรูปแบบ HH:MM และก่อน 12:00`);
           return null;
         }
       }
       for (const t of caa) {
         if (!TIME_REGEX.test(t) || hourOf(t) < 12) {
-          setScheduleTab('appointment');
           setError(`เวลาช่วงบ่าย "${t}" ต้องอยู่ในรูปแบบ HH:MM และตั้งแต่ 12:00`);
           return null;
         }
@@ -380,7 +371,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
   const canDelete = center !== null && !center.is_active;
   const hasAssignedStaff = center !== null && (center.staff_count + center.admin_count) > 0;
-  const currentEnabled = scheduleTab === 'condom' ? condomEnabled : appointmentEnabled;
   const isInvalidTime = (t: string): boolean => {
     if (!TIME_REGEX.test(t)) return false;
     const [h, m] = t.split(':').map(Number);
@@ -442,61 +432,74 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     </Box>
   );
 
-  const renderScheduleSection = () => {
-    const morningTimes   = scheduleTab === 'condom' ? pickupMorning   : apptMorning;
-    const afternoonTimes = scheduleTab === 'condom' ? pickupAfternoon : apptAfternoon;
+  const renderGroupPanel = (
+    type: ScheduleTab,
+    label: string,
+    enabled: boolean,
+    onToggle: (v: boolean) => void,
+    morningTimes: string[],
+    afternoonTimes: string[],
+  ) => (
+    <Box sx={{
+      flex: 1,
+      border: '1px solid',
+      borderColor: enabled ? 'divider' : 'grey.200',
+      borderRadius: 2,
+      p: 2,
+      bgcolor: enabled ? 'background.paper' : 'grey.50',
+    }}>
+      <Typography variant="body2" fontWeight="bold" sx={{ mb: 1, color: enabled ? 'text.primary' : 'text.disabled' }}>
+        {label}
+      </Typography>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={enabled}
+            onChange={(e) => onToggle(e.target.checked)}
+            disabled={saving}
+            sx={{
+              '& .MuiSwitch-switchBase.Mui-checked': { color: '#FF9F6B' },
+              '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#FF9F6B' },
+            }}
+          />
+        }
+        label={
+          <Typography variant="body2" color={enabled ? 'text.primary' : 'text.secondary'}>
+            เปิดใช้งาน
+          </Typography>
+        }
+        sx={{ mb: enabled ? 1.5 : 0 }}
+      />
+      {enabled ? (
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {renderTimePeriod(type, 'morning', 'ช่วงเช้า', morningTimes)}
+          {renderTimePeriod(type, 'afternoon', 'ช่วงบ่าย', afternoonTimes)}
+        </Box>
+      ) : (
+        <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+          ปิดใช้งานอยู่
+        </Typography>
+      )}
+    </Box>
+  );
+
+  const renderGroupSection = () => {
+    const neitherEnabled = !condomEnabled && !appointmentEnabled;
     return (
       <>
-        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-          กำหนดเวลา
+        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+          กลุ่มบริการ
         </Typography>
 
-        <Tabs
-          value={scheduleTab}
-          onChange={(_, v: ScheduleTab) => setScheduleTab(v)}
-          sx={{ mb: 1.5, minHeight: 36 }}
-          TabIndicatorProps={{ style: { backgroundColor: '#FF9F6B' } }}
-        >
-          <Tab
-            label="รับถุงยางอนามัย/เจลหล่อลื่น"
-            value="condom"
-            sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'condom' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
-          />
-          <Tab
-            label="นัดรับคำปรึกษา"
-            value="appointment"
-            sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'appointment' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
-          />
-        </Tabs>
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, mb: neitherEnabled ? 1 : 2 }}>
+          {renderGroupPanel('condom', 'ถุงยางอนามัย/เจล', condomEnabled, setCondomEnabled, pickupMorning, pickupAfternoon)}
+          {renderGroupPanel('appointment', 'นัดรับคำปรึกษา', appointmentEnabled, setAppointmentEnabled, apptMorning, apptAfternoon)}
+        </Box>
 
-        <FormControlLabel
-          control={
-            <Switch
-              checked={currentEnabled}
-              onChange={(e) => {
-                if (scheduleTab === 'condom') setCondomEnabled(e.target.checked);
-                else setAppointmentEnabled(e.target.checked);
-              }}
-              disabled={saving}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': { color: '#FF9F6B' },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#FF9F6B' },
-              }}
-            />
-          }
-          label={
-            <Typography variant="body2" color={currentEnabled ? 'text.primary' : 'text.secondary'}>
-              เปิดใช้งาน
-            </Typography>
-          }
-          sx={{ mb: currentEnabled ? 1.5 : 2 }}
-        />
-
-        {currentEnabled && (
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            {renderTimePeriod(scheduleTab, 'morning', 'ช่วงเช้า', morningTimes)}
-            {renderTimePeriod(scheduleTab, 'afternoon', 'ช่วงบ่าย', afternoonTimes)}
-          </Box>
+        {neitherEnabled && (
+          <Typography variant="caption" color="error" sx={{ display: 'block', mb: 2 }}>
+            ⚠ ต้องเปิดใช้งานอย่างน้อย 1 กลุ่ม
+          </Typography>
         )}
 
         <Divider sx={{ mb: 2 }} />
@@ -583,8 +586,8 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
               sx={{ mb: 2 }}
             />
 
-            {/* Scheduling — both modes */}
-            {renderScheduleSection()}
+            {/* Group service panels — both modes */}
+            {renderGroupSection()}
 
             {/* Description */}
             <TextField
@@ -745,7 +748,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
           <Button
             onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
             variant="contained"
-            disabled={saving || uploading || deleting || hasRangeError}
+            disabled={saving || uploading || deleting || hasRangeError || (!condomEnabled && !appointmentEnabled)}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
           >
             {saving ? 'กำลังบันทึก...' : 'บันทึก'}

@@ -3,6 +3,7 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Button,
   Typography, Box, Grid, Card, CardContent, Chip,
   IconButton, Skeleton, Tooltip, Divider, Alert, CircularProgress,
+  Tabs, Tab,
 } from '@mui/material';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
@@ -49,7 +50,7 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
 
       <CardContent sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column' }}>
         {/* Header: name + status chip + edit icon */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 0.75 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1, mr: 1, minWidth: 0 }}>
             <Typography variant="subtitle1" fontWeight="bold" noWrap>
               {center.name}
@@ -72,6 +73,28 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
               <EditIcon fontSize="small" />
             </IconButton>
           </Tooltip>
+        </Box>
+
+        {/* Group chips */}
+        <Box sx={{ display: 'flex', gap: 0.75, mb: 1, flexWrap: 'wrap' }}>
+          <Chip
+            size="small"
+            label="ถุงยาง/เจล"
+            sx={{
+              bgcolor: center.condom_service_enabled ? '#E8F5E9' : '#F5F5F5',
+              color: center.condom_service_enabled ? '#2E7D32' : '#9E9E9E',
+              fontSize: '0.7rem',
+            }}
+          />
+          <Chip
+            size="small"
+            label="นัดรับคำปรึกษา"
+            sx={{
+              bgcolor: center.appointment_service_enabled ? '#E8F5E9' : '#F5F5F5',
+              color: center.appointment_service_enabled ? '#2E7D32' : '#9E9E9E',
+              fontSize: '0.7rem',
+            }}
+          />
         </Box>
 
         {/* Operating hours */}
@@ -159,6 +182,8 @@ function ServiceCenterCard({ center, onEdit, isSuperadmin, toggling, onToggleAct
 
 // ─── Dialog ───────────────────────────────────────────────────────────────────
 
+type FilterTab = 'all' | 'condom' | 'appointment';
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -174,6 +199,12 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
   const [editOpen, setEditOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
   const [togglingCenter, setTogglingCenter] = useState<string | null>(null);
+  const [filterTab, setFilterTab] = useState<FilterTab>('all');
+
+  const filteredCenters =
+    filterTab === 'condom'      ? centers.filter(c => c.condom_service_enabled) :
+    filterTab === 'appointment' ? centers.filter(c => c.appointment_service_enabled) :
+    centers;
 
   useEffect(() => {
     if (!open) {
@@ -181,6 +212,7 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
       setEditTarget(null);
       setEditOpen(false);
       setAddOpen(false);
+      setFilterTab('all');
     }
   }, [open]);
 
@@ -240,11 +272,37 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
 
         <Divider />
 
-        <DialogContent sx={{ pt: 2.5 }}>
+        <DialogContent sx={{ pt: 2 }}>
           {error && (
             <Alert severity="error" sx={{ mb: 2.5, borderRadius: 1.5 }}>
               {error}
             </Alert>
+          )}
+
+          {!loading && (
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              <Tabs
+                value={filterTab}
+                onChange={(_, v: FilterTab) => setFilterTab(v)}
+                TabIndicatorProps={{ style: { backgroundColor: '#FF9F6B' } }}
+              >
+                <Tab
+                  label={`ทั้งหมด (${centers.length})`}
+                  value="all"
+                  sx={{ fontSize: 13, minHeight: 40, '&.Mui-selected': { color: '#FF9F6B' } }}
+                />
+                <Tab
+                  label={`ถุงยาง/เจล (${centers.filter(c => c.condom_service_enabled).length})`}
+                  value="condom"
+                  sx={{ fontSize: 13, minHeight: 40, '&.Mui-selected': { color: '#FF9F6B' } }}
+                />
+                <Tab
+                  label={`นัดรับคำปรึกษา (${centers.filter(c => c.appointment_service_enabled).length})`}
+                  value="appointment"
+                  sx={{ fontSize: 13, minHeight: 40, '&.Mui-selected': { color: '#FF9F6B' } }}
+                />
+              </Tabs>
+            </Box>
           )}
 
           <Grid container spacing={2}>
@@ -254,7 +312,7 @@ export default function ServiceCenterManagementDialog({ open, onClose }: Props) 
                     <Skeleton variant="rounded" height={280} />
                   </Grid>
                 ))
-              : centers.map((center) => (
+              : filteredCenters.map((center) => (
                   <Grid key={center.name} size={{ xs: 12, sm: 6 }}>
                     <ServiceCenterCard
                       center={center}
