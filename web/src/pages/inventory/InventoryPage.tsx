@@ -13,7 +13,6 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import RestockModal from './RestockModal';
 import AdjustmentModal from './AdjustmentModal';
 import ConsumptionTrendChart from './ConsumptionTrendChart';
-import ServiceCenterManagementDialog from '../../components/inventory/ServiceCenterManagementDialog';
 
 const LOW_STOCK_DAYS = 7;
 
@@ -181,7 +180,6 @@ export default function InventoryPage() {
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
-  const [manageOpen, setManageOpen] = useState(false);
 
   const handleRestockSuccess = useCallback(() => {
     setRestockTarget(null);
@@ -190,11 +188,6 @@ export default function InventoryPage() {
 
   const handleAdjustmentSuccess = useCallback(() => {
     setAdjustmentTarget(null);
-    refetch();
-  }, [refetch]);
-
-  const handleManageClose = useCallback(() => {
-    setManageOpen(false);
     refetch();
   }, [refetch]);
 
@@ -238,15 +231,6 @@ export default function InventoryPage() {
             สต็อกปัจจุบันและการพยากรณ์จากอัตราการใช้
           </Typography>
         </Box>
-        {isSuperadmin && (
-          <Button
-            variant="contained"
-            startIcon={<StorefrontIcon />}
-            onClick={() => setManageOpen(true)}
-          >
-            จัดการสถานบริการ
-          </Button>
-        )}
       </Box>
 
       {/* Zero-stock warning banner */}
@@ -327,9 +311,7 @@ export default function InventoryPage() {
             ยังไม่มีสถานบริการ
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isSuperadmin
-              ? 'กดปุ่ม "จัดการสถานบริการ" ด้านบนเพื่อเพิ่มสถานบริการใหม่'
-              : 'ติดต่อผู้ดูแลระบบเพื่อเพิ่มสถานบริการ'}
+            ติดต่อผู้ดูแลระบบเพื่อเพิ่มสถานบริการ
           </Typography>
         </Paper>
       )}
@@ -398,11 +380,6 @@ export default function InventoryPage() {
         onSuccess={handleAdjustmentSuccess}
       />
 
-      {/* Service center management dialog */}
-      <ServiceCenterManagementDialog
-        open={manageOpen}
-        onClose={handleManageClose}
-      />
     </Box>
   );
 }
