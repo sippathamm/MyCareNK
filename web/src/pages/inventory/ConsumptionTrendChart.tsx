@@ -11,13 +11,11 @@ interface ConsumptionTrendChartProps {
   loading: boolean;
 }
 
-// สีสำหรับแต่ละ service center
-const CENTER_COLORS: Record<string, string> = {
-  'รพ.โพนพิสัย':  '#FF9F6B',
-  'รพ.สต.วัดหลวง': '#64B5F6',
-  'อบต.วัดหลวง':  '#BA68C8',
-  'สสจ.หนองคาย':  '#81C784',
-};
+const PALETTE = ['#FF9F6B', '#64B5F6', '#BA68C8', '#81C784', '#F06292', '#4DB6AC', '#FFD54F', '#A1887F'];
+
+function getCenterColor(index: number): string {
+  return PALETTE[index % PALETTE.length];
+}
 
 type ProductType = 'condom' | 'lubricant';
 
@@ -56,7 +54,7 @@ function TrendPanel({
       <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1}>
         {title}
       </Typography>
-      <Box sx={{ height: 220 }}>
+      <Box sx={{ height: 320 }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -82,12 +80,12 @@ function TrendPanel({
               iconType="circle"
               iconSize={8}
             />
-            {centers.map((center) => (
+            {centers.map((center, index) => (
               <Line
                 key={center}
                 type="monotone"
                 dataKey={center}
-                stroke={CENTER_COLORS[center] ?? '#BDBDBD'}
+                stroke={getCenterColor(index)}
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
@@ -117,9 +115,9 @@ export default function ConsumptionTrendChart({ trend, loading }: ConsumptionTre
         </Typography>
 
         {loading ? (
-          <Skeleton variant="rounded" height={220} />
+          <Skeleton variant="rounded" height={320} />
         ) : trend.length === 0 ? (
-          <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box sx={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography color="text.secondary" variant="body2">
               ไม่มีข้อมูลการใช้ในช่วง 30 วันที่ผ่านมา
             </Typography>
