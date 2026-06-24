@@ -78,10 +78,7 @@ BEGIN
     RAISE EXCEPTION 'ไม่สามารถลบสถานบริการที่ยังมีเจ้าหน้าที่อยู่ได้ กรุณาย้ายเจ้าหน้าที่ออกก่อน';
   END IF;
   DELETE FROM service_center_inventory WHERE service_center = p_name;
-  DELETE FROM service_centers WHERE name = p_name AND is_active = false;
-  IF NOT FOUND THEN
-    RAISE EXCEPTION 'สถานบริการต้องถูกปิดใช้งานก่อนจึงจะสามารถลบได้';
-  END IF;
+  DELETE FROM service_centers WHERE name = p_name;
 END;
 $$;
 
@@ -95,18 +92,6 @@ BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   INSERT INTO service_center_inventory (service_center, condom_qty, lubricant_qty)
     VALUES (p_name, 0, 0) ON CONFLICT DO NOTHING;
-END;
-$$;
-
-CREATE OR REPLACE FUNCTION public.toggle_service_center_active(p_name text, p_is_active boolean)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY INVOKER
-SET search_path TO 'public'
-AS $$
-BEGIN
-  IF NOT is_superadmin() THEN RAISE EXCEPTION 'Unauthorized'; END IF;
-  UPDATE service_centers SET is_active = p_is_active WHERE name = p_name;
 END;
 $$;
 

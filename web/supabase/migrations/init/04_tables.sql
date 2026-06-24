@@ -28,7 +28,6 @@ CREATE TABLE public.service_centers (
   contacts                    jsonb       NOT NULL DEFAULT '[]',
   latitude                    numeric,
   longitude                   numeric,
-  is_active                   boolean     NOT NULL DEFAULT true,
   display_order               smallint    NOT NULL DEFAULT 0,
   created_at                  timestamptz NOT NULL DEFAULT now(),
   updated_at                  timestamptz NOT NULL DEFAULT now(),
@@ -41,7 +40,7 @@ CREATE TABLE public.service_centers (
   staff_count                 int         NOT NULL DEFAULT 0,
   admin_count                 int         NOT NULL DEFAULT 0,
   superadmin_count            int         NOT NULL DEFAULT 0,
-  CONSTRAINT service_centers_pkey PRIMARY KEY (name)
+  CONSTRAINT service_centers_pkey            PRIMARY KEY (name)
 );
 
 ALTER TABLE public.service_centers ENABLE ROW LEVEL SECURITY;

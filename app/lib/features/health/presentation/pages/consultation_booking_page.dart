@@ -78,8 +78,8 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
     }
     if (mounted) setState(() { _centersLoading = true; _centersNotLoggedIn = false; });
     try {
-      final centers = await ServiceCenterService.fetchActive();
-      if (mounted) setState(() { _centers = centers; _centersLoading = false; });
+      final centers = await ServiceCenterService.fetchAll();
+      if (mounted) setState(() { _centers = centers.where((c) => c.appointmentServiceEnabled).toList(); _centersLoading = false; });
     } catch (_) {
       if (mounted) setState(() => _centersLoading = false);
     }

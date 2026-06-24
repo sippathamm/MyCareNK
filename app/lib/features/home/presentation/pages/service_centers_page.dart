@@ -30,7 +30,7 @@ class _ServiceCentersPageState extends State<ServiceCentersPage> {
       setState(() { _notLoggedIn = true; _future = Future.value([]); });
       return;
     }
-    setState(() { _notLoggedIn = false; _future = ServiceCenterService.fetchActive(); });
+    setState(() { _notLoggedIn = false; _future = ServiceCenterService.fetchAll(); });
   }
 
   @override

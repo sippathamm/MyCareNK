@@ -31,19 +31,10 @@ interface ContactItem {
   value: string;
 }
 
-type ScheduleTab = 'condom' | 'appointment';
-type Period = 'morning' | 'afternoon';
+type ScheduleGroup = 'condom' | 'appointment';
+type SchedulePeriod = 'morning' | 'afternoon';
 
-const DEFAULT_PICKUP_MORNING   = ['08:00'];
-const DEFAULT_PICKUP_AFTERNOON: string[] = [];
-const DEFAULT_APPT_MORNING     = ['08:00'];
-const DEFAULT_APPT_AFTERNOON: string[]   = [];
-
-const TIME_REGEX = /^\d{2}:\d{2}$/;
-
-function hourOf(t: string): number {
-  return parseInt(t.split(':')[0], 10);
-}
+const SCHEDULE_TABS = ['แจกถุงยางอนามัย/เจลหล่อลื่น', 'ให้คำปรึกษา'];
 
 function generateId(): string {
   return Array.from(crypto.getRandomValues(new Uint8Array(16)))
@@ -67,13 +58,13 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const [address, setAddress] = useState('');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
-  const [scheduleTab, setScheduleTab] = useState<ScheduleTab>('condom');
+  const [scheduleTab, setScheduleTab] = useState(0);
   const [condomEnabled, setCondomEnabled] = useState(true);
   const [appointmentEnabled, setAppointmentEnabled] = useState(false);
-  const [pickupMorning, setPickupMorning]     = useState<string[]>(DEFAULT_PICKUP_MORNING);
-  const [pickupAfternoon, setPickupAfternoon] = useState<string[]>(DEFAULT_PICKUP_AFTERNOON);
-  const [apptMorning, setApptMorning]         = useState<string[]>(DEFAULT_APPT_MORNING);
-  const [apptAfternoon, setApptAfternoon]     = useState<string[]>(DEFAULT_APPT_AFTERNOON);
+  const [pickupMorning, setPickupMorning] = useState<string[]>(['08:00']);
+  const [pickupAfternoon, setPickupAfternoon] = useState<string[]>([]);
+  const [apptMorning, setApptMorning] = useState<string[]>(['08:00']);
+  const [apptAfternoon, setApptAfternoon] = useState<string[]>([]);
 
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -91,9 +82,9 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setAddedName(null);
     setConfirmDeleteOpen(false);
     setStaffBlockDialog(false);
-    setScheduleTab('condom');
+    setScheduleTab(0);
+
     if (center) {
-      setName('');
       setDescription(center.description ?? '');
       setAddress(center.address ?? '');
       setContacts(center.contacts.length > 0 ? [...center.contacts] : []);
@@ -101,18 +92,12 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setLongitude(center.longitude !== null ? String(center.longitude) : '');
       setOperatingHours(center.operating_hours ?? '');
       setImageUrl(center.image_url);
-      setCondomEnabled(center.condom_service_enabled ?? true);
-      setAppointmentEnabled(center.appointment_service_enabled ?? false);
-      const pu = center.pickup_times ?? [];
-      const pm = pu.filter(t => hourOf(t) < 12);
-      const pa = pu.filter(t => hourOf(t) >= 12);
-      setPickupMorning(pu.length === 0 ? DEFAULT_PICKUP_MORNING : pm);
-      setPickupAfternoon(pu.length === 0 ? DEFAULT_PICKUP_AFTERNOON : pa);
-      const au = center.appointment_times ?? [];
-      const am = au.filter(t => hourOf(t) < 12);
-      const aa = au.filter(t => hourOf(t) >= 12);
-      setApptMorning(au.length === 0 ? DEFAULT_APPT_MORNING : am);
-      setApptAfternoon(au.length === 0 ? DEFAULT_APPT_AFTERNOON : aa);
+      setCondomEnabled(center.condom_service_enabled);
+      setAppointmentEnabled(center.appointment_service_enabled);
+      setPickupMorning(center.pickup_times.filter(t => t < '12:00').sort());
+      setPickupAfternoon(center.pickup_times.filter(t => t >= '12:00').sort());
+      setApptMorning(center.appointment_times.filter(t => t < '12:00').sort());
+      setApptAfternoon(center.appointment_times.filter(t => t >= '12:00').sort());
     } else {
       setName('');
       setDescription('');
@@ -124,18 +109,48 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setImageUrl(null);
       setCondomEnabled(true);
       setAppointmentEnabled(false);
-      setPickupMorning(DEFAULT_PICKUP_MORNING);
-      setPickupAfternoon(DEFAULT_PICKUP_AFTERNOON);
-      setApptMorning(DEFAULT_APPT_MORNING);
-      setApptAfternoon(DEFAULT_APPT_AFTERNOON);
+      setPickupMorning(['08:00']);
+      setPickupAfternoon([]);
+      setApptMorning(['08:00']);
+      setApptAfternoon([]);
     }
   }, [open, center]);
 
   useEffect(() => {
-    if (error) {
-      errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+    if (error) errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, [error]);
+
+  const getScheduleTimes = (group: ScheduleGroup, period: SchedulePeriod) => {
+    if (group === 'condom') return period === 'morning' ? pickupMorning : pickupAfternoon;
+    return period === 'morning' ? apptMorning : apptAfternoon;
+  };
+
+  const setScheduleTimes = (group: ScheduleGroup, period: SchedulePeriod, times: string[]) => {
+    if (group === 'condom') {
+      if (period === 'morning') setPickupMorning(times);
+      else setPickupAfternoon(times);
+    } else {
+      if (period === 'morning') setApptMorning(times);
+      else setApptAfternoon(times);
+    }
+  };
+
+  const handleAddTime = (group: ScheduleGroup, period: SchedulePeriod) => {
+    const candidates = period === 'morning'
+      ? ['08:00', '09:00', '10:00', '11:00']
+      : ['13:00', '14:00', '15:00', '16:00'];
+    const current = getScheduleTimes(group, period);
+    const next = candidates.find(c => !current.includes(c)) ?? (period === 'morning' ? '08:00' : '13:00');
+    setScheduleTimes(group, period, [...current, next]);
+  };
+
+  const handleTimeChange = (group: ScheduleGroup, period: SchedulePeriod, oldTime: string, newTime: string) => {
+    setScheduleTimes(group, period, getScheduleTimes(group, period).map(t => t === oldTime ? newTime : t));
+  };
+
+  const handleRemoveTime = (group: ScheduleGroup, period: SchedulePeriod, time: string) => {
+    setScheduleTimes(group, period, getScheduleTimes(group, period).filter(t => t !== time));
+  };
 
   const handleClose = () => {
     if (saving || uploading || deleting) return;
@@ -147,43 +162,12 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   const handleContactChange = (i: number, field: 'label' | 'value', val: string) => {
     setContacts(prev => prev.map((c, idx) => idx === i ? { ...c, [field]: val } : c));
   };
-  const handleRemoveContact = (i: number) => {
-    setContacts(prev => prev.filter((_, idx) => idx !== i));
-  };
-
-  const handleAddTime = (type: ScheduleTab, period: Period) => {
-    if (type === 'condom') {
-      if (period === 'morning') setPickupMorning(prev => [...prev, '']);
-      else setPickupAfternoon(prev => [...prev, '']);
-    } else {
-      if (period === 'morning') setApptMorning(prev => [...prev, '']);
-      else setApptAfternoon(prev => [...prev, '']);
-    }
-  };
-  const handleTimeChange = (type: ScheduleTab, period: Period, i: number, val: string) => {
-    if (type === 'condom') {
-      if (period === 'morning') setPickupMorning(prev => prev.map((t, idx) => idx === i ? val : t));
-      else setPickupAfternoon(prev => prev.map((t, idx) => idx === i ? val : t));
-    } else {
-      if (period === 'morning') setApptMorning(prev => prev.map((t, idx) => idx === i ? val : t));
-      else setApptAfternoon(prev => prev.map((t, idx) => idx === i ? val : t));
-    }
-  };
-  const handleRemoveTime = (type: ScheduleTab, period: Period, i: number) => {
-    if (type === 'condom') {
-      if (period === 'morning') setPickupMorning(prev => prev.filter((_, idx) => idx !== i));
-      else setPickupAfternoon(prev => prev.filter((_, idx) => idx !== i));
-    } else {
-      if (period === 'morning') setApptMorning(prev => prev.filter((_, idx) => idx !== i));
-      else setApptAfternoon(prev => prev.filter((_, idx) => idx !== i));
-    }
-  };
+  const handleRemoveContact = (i: number) => setContacts(prev => prev.filter((_, idx) => idx !== i));
 
   const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     e.target.value = '';
-
     setUploading(true);
     setError(null);
     try {
@@ -216,74 +200,30 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     return { lat, lng };
   };
 
-  const validateSchedule = (): { cleanPickup: string[]; cleanAppt: string[] } | null => {
-    if (!condomEnabled && !appointmentEnabled) {
-      setError('ต้องเปิดใช้งานอย่างน้อย 1 บริการ (รับถุงยางอนามัย/เจลหล่อลื่น หรือ นัดรับคำปรึกษา)');
-      return null;
+  const validateSchedule = (): boolean => {
+    if (condomEnabled && pickupMorning.length === 0 && pickupAfternoon.length === 0) {
+      setError('กรุณาเพิ่มอย่างน้อย 1 ช่วงเวลาสำหรับบริการแจกถุงยางอนามัย/เจลหล่อลื่น');
+      return false;
     }
-    const dedup = (arr: string[]) => {
-      const seen = new Set<string>();
-      return arr.map(t => t.trim()).filter(t => { if (!t || seen.has(t)) return false; seen.add(t); return true; });
-    };
-
-    const cpm = dedup(pickupMorning);
-    const cpa = dedup(pickupAfternoon);
-    const cam = dedup(apptMorning);
-    const caa = dedup(apptAfternoon);
-    const cleanPickup = [...cpm, ...cpa].sort();
-    const cleanAppt   = [...cam, ...caa].sort();
-
-    if (condomEnabled) {
-      if (cleanPickup.length === 0) {
-        setScheduleTab('condom');
-        setError('กรุณาเพิ่มเวลารับถุงยางอนามัย/เจลหล่อลื่นอย่างน้อย 1 ช่วงเวลา');
-        return null;
-      }
-      for (const t of cpm) {
-        if (!TIME_REGEX.test(t) || hourOf(t) >= 12) {
-          setScheduleTab('condom');
-          setError(`เวลาช่วงเช้า "${t}" ต้องอยู่ในรูปแบบ HH:MM และก่อน 12:00`);
-          return null;
-        }
-      }
-      for (const t of cpa) {
-        if (!TIME_REGEX.test(t) || hourOf(t) < 12) {
-          setScheduleTab('condom');
-          setError(`เวลาช่วงบ่าย "${t}" ต้องอยู่ในรูปแบบ HH:MM และตั้งแต่ 12:00`);
-          return null;
-        }
-      }
+    if (appointmentEnabled && apptMorning.length === 0 && apptAfternoon.length === 0) {
+      setError('กรุณาเพิ่มอย่างน้อย 1 ช่วงเวลาสำหรับบริการให้คำปรึกษา');
+      return false;
     }
-    if (appointmentEnabled) {
-      if (cleanAppt.length === 0) {
-        setScheduleTab('appointment');
-        setError('กรุณาเพิ่มเวลานัดรับคำปรึกษาอย่างน้อย 1 ช่วงเวลา');
-        return null;
-      }
-      for (const t of cam) {
-        if (!TIME_REGEX.test(t) || hourOf(t) >= 12) {
-          setScheduleTab('appointment');
-          setError(`เวลาช่วงเช้า "${t}" ต้องอยู่ในรูปแบบ HH:MM และก่อน 12:00`);
-          return null;
-        }
-      }
-      for (const t of caa) {
-        if (!TIME_REGEX.test(t) || hourOf(t) < 12) {
-          setScheduleTab('appointment');
-          setError(`เวลาช่วงบ่าย "${t}" ต้องอยู่ในรูปแบบ HH:MM และตั้งแต่ 12:00`);
-          return null;
-        }
-      }
-    }
-    return { cleanPickup, cleanAppt };
+    return true;
   };
+
+  const buildSchedulePayload = () => ({
+    p_condom_service_enabled: condomEnabled,
+    p_appointment_service_enabled: appointmentEnabled,
+    p_pickup_times: [...pickupMorning, ...pickupAfternoon].sort(),
+    p_appointment_times: [...apptMorning, ...apptAfternoon].sort(),
+  });
 
   const handleSaveAdd = async () => {
     const trimmedName = name.trim();
     if (!trimmedName) { setError('กรุณากรอกชื่อสถานบริการ'); return; }
     if (existingNames.includes(trimmedName)) { setError('ชื่อนี้มีอยู่แล้ว'); return; }
-    const schedule = validateSchedule();
-    if (schedule === null) return;
+    if (!validateSchedule()) return;
     const coords = validateLatLng();
     if (coords === null) return;
     const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
@@ -310,29 +250,24 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       p_longitude: coords.lng ?? undefined,
       p_operating_hours: operatingHours.trim().replace(/-/g, '–') || undefined,
       p_address: address.trim() || undefined,
-      p_condom_service_enabled: condomEnabled,
-      p_appointment_service_enabled: appointmentEnabled,
-      p_pickup_times: condomEnabled ? schedule.cleanPickup : [],
-      p_appointment_times: appointmentEnabled ? schedule.cleanAppt : [],
+      ...buildSchedulePayload(),
     });
 
     setSaving(false);
     if (upsertError) {
-      setError(`สถานบริการถูกเพิ่มแล้ว แต่เกิดข้อผิดพลาดในการบันทึกเวลา: ${upsertError.message}`);
+      setError(`สถานบริการถูกเพิ่มแล้ว แต่เกิดข้อผิดพลาดในการบันทึก: ${upsertError.message}`);
       return;
     }
-
     setAddedName(trimmedName);
   };
 
   const handleSaveEdit = async () => {
     if (!center) return;
+    if (!validateSchedule()) return;
     const coords = validateLatLng();
     if (coords === null) return;
-    const schedule = validateSchedule();
-    if (schedule === null) return;
-
     const cleanedContacts = contacts.filter(c => c.label.trim() || c.value.trim());
+
     setSaving(true);
     setError(null);
 
@@ -345,10 +280,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       p_longitude: coords.lng ?? undefined,
       p_operating_hours: operatingHours.trim().replace(/-/g, '–') || undefined,
       p_address: address.trim() || undefined,
-      p_condom_service_enabled: condomEnabled,
-      p_appointment_service_enabled: appointmentEnabled,
-      p_pickup_times: condomEnabled ? schedule.cleanPickup : [],
-      p_appointment_times: appointmentEnabled ? schedule.cleanAppt : [],
+      ...buildSchedulePayload(),
     });
 
     setSaving(false);
@@ -363,7 +295,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     const { error: deleteError } = await supabase.rpc('delete_service_center', { p_name: center.name });
     setDeleting(false);
     setConfirmDeleteOpen(false);
-
     if (deleteError) {
       if (deleteError.message.includes('ยังมีเจ้าหน้าที่')) {
         setStaffBlockDialog(true);
@@ -372,441 +303,363 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       }
       return;
     }
-    onSuccess();
+    window.location.reload();
   };
 
   const lat = parseFloat(latitude.trim());
   const lng = parseFloat(longitude.trim());
   const canShowMap = latitude.trim() && longitude.trim() && !isNaN(lat) && !isNaN(lng);
-  const canDelete = center !== null && !center.is_active;
   const hasAssignedStaff = center !== null && (center.staff_count + center.admin_count) > 0;
-  const currentEnabled = scheduleTab === 'condom' ? condomEnabled : appointmentEnabled;
-  const isInvalidTime = (t: string): boolean => {
-    if (!TIME_REGEX.test(t)) return false;
-    const [h, m] = t.split(':').map(Number);
-    return h > 23 || m > 59;
+
+  const switchSx = {
+    '& .MuiSwitch-switchBase.Mui-checked': { color: '#F97316' },
+    '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#F97316' },
   };
 
-  const isOutOfRange = (t: string, period: Period): boolean =>
-    TIME_REGEX.test(t) && !isInvalidTime(t) && (period === 'morning' ? hourOf(t) >= 12 : hourOf(t) < 12);
-
-  const hasRangeError =
-    (condomEnabled && (
-      pickupMorning.some(t => isInvalidTime(t) || isOutOfRange(t, 'morning')) ||
-      pickupAfternoon.some(t => isInvalidTime(t) || isOutOfRange(t, 'afternoon'))
-    )) ||
-    (appointmentEnabled && (
-      apptMorning.some(t => isInvalidTime(t) || isOutOfRange(t, 'morning')) ||
-      apptAfternoon.some(t => isInvalidTime(t) || isOutOfRange(t, 'afternoon'))
-    ));
-
-  const renderTimePeriod = (type: ScheduleTab, period: Period, label: string, times: string[]) => (
-    <Box sx={{ flex: 1 }}>
-      <Typography variant="caption" color="text.secondary" fontWeight={600} sx={{ display: 'block', mb: 1 }}>
-        {label}
-      </Typography>
-      {times.map((t, i) => (
-        <Box key={i} sx={{ display: 'flex', gap: 0.5, mb: 0.75, alignItems: 'flex-start' }}>
-          <TextField
-            type="text"
-            value={t}
-            onChange={(e) => handleTimeChange(type, period, i, e.target.value)}
-            size="small"
-            disabled={saving}
-            error={isInvalidTime(t) || isOutOfRange(t, period)}
-            helperText={
-              isInvalidTime(t) ? 'รูปแบบเวลาไม่ถูกต้อง' :
-              isOutOfRange(t, period) ? (period === 'morning' ? 'ต้องก่อน 12:00' : 'ต้องตั้งแต่ 12:00') :
-              undefined
-            }
-            placeholder="HH:MM"
-            inputProps={{ maxLength: 5 }}
-            sx={{ flex: 1 }}
-          />
-          <Tooltip title="ลบ">
-            <IconButton size="small" onClick={() => handleRemoveTime(type, period, i)} disabled={saving} color="error">
+  const renderTimePeriod = (group: ScheduleGroup, period: SchedulePeriod, label: string) => {
+    const times = getScheduleTimes(group, period);
+    return (
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography variant="caption" fontWeight="bold" color="text.secondary" display="block" sx={{ mb: 0.5 }}>
+          {label}
+        </Typography>
+        {times.map(t => (
+          <Box key={t} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+            <TextField
+              type="time"
+              value={t}
+              onChange={(e) => handleTimeChange(group, period, t, e.target.value)}
+              size="small"
+              inputProps={{ step: 300 }}
+              sx={{ flex: 1 }}
+              disabled={saving}
+            />
+            <IconButton size="small" onClick={() => handleRemoveTime(group, period, t)} color="error" disabled={saving}>
               <DeleteOutlineIcon fontSize="small" />
             </IconButton>
-          </Tooltip>
-        </Box>
-      ))}
-      <Button
-        size="small"
-        startIcon={<AddIcon />}
-        onClick={() => handleAddTime(type, period)}
-        disabled={saving}
-        sx={{ color: 'text.secondary', fontSize: 12 }}
-      >
-        เพิ่มเวลา
-      </Button>
-    </Box>
-  );
-
-  const renderScheduleSection = () => {
-    const morningTimes   = scheduleTab === 'condom' ? pickupMorning   : apptMorning;
-    const afternoonTimes = scheduleTab === 'condom' ? pickupAfternoon : apptAfternoon;
-    return (
-      <>
-        <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
-          กำหนดเวลา
-        </Typography>
-
-        <Tabs
-          value={scheduleTab}
-          onChange={(_, v: ScheduleTab) => setScheduleTab(v)}
-          sx={{ mb: 1.5, minHeight: 36 }}
-          TabIndicatorProps={{ style: { backgroundColor: '#FF9F6B' } }}
+          </Box>
+        ))}
+        <Button
+          size="small"
+          startIcon={<AddIcon />}
+          onClick={() => handleAddTime(group, period)}
+          disabled={saving}
+          sx={{ color: 'text.secondary', fontSize: '0.75rem' }}
         >
-          <Tab
-            label="รับถุงยางอนามัย/เจลหล่อลื่น"
-            value="condom"
-            sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'condom' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
-          />
-          <Tab
-            label="นัดรับคำปรึกษา"
-            value="appointment"
-            sx={{ minHeight: 36, fontSize: 13, fontWeight: 600, color: scheduleTab === 'appointment' ? '#FF9F6B' : 'text.secondary', '&.Mui-selected': { color: '#FF9F6B' } }}
-          />
-        </Tabs>
+          เพิ่มเวลา
+        </Button>
+      </Box>
+    );
+  };
 
+  const renderSchedulePanel = (group: ScheduleGroup) => {
+    const enabled = group === 'condom' ? condomEnabled : appointmentEnabled;
+    const setEnabled = group === 'condom' ? setCondomEnabled : setAppointmentEnabled;
+    return (
+      <Box sx={{ pt: 1.5 }}>
         <FormControlLabel
           control={
-            <Switch
-              checked={currentEnabled}
-              onChange={(e) => {
-                if (scheduleTab === 'condom') setCondomEnabled(e.target.checked);
-                else setAppointmentEnabled(e.target.checked);
-              }}
-              disabled={saving}
-              sx={{
-                '& .MuiSwitch-switchBase.Mui-checked': { color: '#FF9F6B' },
-                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': { backgroundColor: '#FF9F6B' },
-              }}
-            />
+            <Switch checked={enabled} onChange={(e) => setEnabled(e.target.checked)} disabled={saving} sx={switchSx} />
           }
-          label={
-            <Typography variant="body2" color={currentEnabled ? 'text.primary' : 'text.secondary'}>
-              เปิดใช้งาน
-            </Typography>
-          }
-          sx={{ mb: currentEnabled ? 1.5 : 2 }}
+          label="เปิดใช้งาน"
+          sx={{ mb: 1 }}
         />
-
-        {currentEnabled && (
-          <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-            {renderTimePeriod(scheduleTab, 'morning', 'ช่วงเช้า', morningTimes)}
-            {renderTimePeriod(scheduleTab, 'afternoon', 'ช่วงบ่าย', afternoonTimes)}
-          </Box>
-        )}
-
-        <Divider sx={{ mb: 2 }} />
-      </>
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          {renderTimePeriod(group, 'morning', 'ช่วงเช้า')}
+          {renderTimePeriod(group, 'afternoon', 'ช่วงบ่าย')}
+        </Box>
+      </Box>
     );
   };
 
   return (
     <>
-    <Dialog open={open && !addedName} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ pb: 1 }}>
-        <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
-          {isAddMode ? 'เพิ่มสถานบริการ' : 'แก้ไขสถานบริการ'}
-        </Typography>
-        {!isAddMode && center && (
-          <Typography component="div" variant="caption" color="text.secondary">
-            {center.name}
+      <Dialog open={open && !addedName} onClose={handleClose} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
+            {isAddMode ? 'เพิ่มสถานบริการ' : 'แก้ไขสถานบริการ'}
           </Typography>
-        )}
-      </DialogTitle>
+          {!isAddMode && center && (
+            <Typography component="div" variant="caption" color="text.secondary">{center.name}</Typography>
+          )}
+        </DialogTitle>
 
-      <Divider />
+        <Divider />
 
-      <DialogContent sx={{ pt: 2.5 }}>
-        <>
-            {/* Image upload — 16:9 */}
-            <Box
-              sx={{
-                position: 'relative', paddingTop: '56.25%', bgcolor: 'grey.100',
-                borderRadius: 2, overflow: 'hidden', mb: 2.5,
-                cursor: uploading ? 'not-allowed' : 'pointer',
-              }}
-              onClick={uploading ? undefined : () => imageInputRef.current?.click()}
-            >
-              {imageUrl ? (
-                <Box
-                  component="img"
-                  src={imageUrl}
-                  sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
-                />
-              ) : (
-                <Box
-                  sx={{
-                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
-                  }}
-                >
-                  <StorefrontIcon sx={{ fontSize: 40, color: 'grey.400' }} />
-                  <Typography variant="caption" color="text.secondary">คลิกเพื่ออัปโหลดรูปภาพ</Typography>
-                </Box>
-              )}
-              <Box sx={{ position: 'absolute', bottom: 8, right: 8 }}>
-                <Button
-                  size="small"
-                  variant="contained"
-                  startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <PhotoCameraIcon />}
-                  onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
-                  disabled={uploading}
-                  sx={{ bgcolor: 'rgba(0,0,0,0.55)', '&:hover': { bgcolor: 'rgba(0,0,0,0.75)' } }}
-                >
-                  {uploading ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูป'}
-                </Button>
-              </Box>
-            </Box>
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              style={{ display: 'none' }}
-              onChange={handleImageFileChange}
-            />
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: -1.5, mb: 2.5 }}>
-              รองรับไฟล์ JPG, PNG, WEBP, GIF ขนาดไม่เกิน 5 MB
-            </Typography>
-
-            {/* Name */}
-            <TextField
-              label="ชื่อสถานบริการ"
-              value={isAddMode ? name : center?.name ?? ''}
-              onChange={isAddMode ? (e) => setName(e.target.value) : undefined}
-              fullWidth
-              required={isAddMode}
-              disabled={!isAddMode || saving}
-              sx={{ mb: 2 }}
-            />
-
-            {/* Scheduling — both modes */}
-            {renderScheduleSection()}
-
-            {/* Description */}
-            <TextField
-              label="ข้อมูลทั่วไป"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              fullWidth
-              multiline
-              rows={3}
-              sx={{ mb: 2 }}
-              disabled={saving}
-            />
-
-            {/* Operating hours */}
-            <TextField
-              label="เวลาทำการ"
-              value={operatingHours}
-              onChange={(e) => setOperatingHours(e.target.value)}
-              fullWidth
-              size="small"
-              placeholder="เช่น จ–ศ 08:00–16:00"
-              disabled={saving}
-              sx={{ mb: 2 }}
-            />
-
-            {/* Address */}
-            <TextField
-              label="ที่อยู่"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              fullWidth
-              multiline
-              rows={2}
-              placeholder="เช่น 123 ถ.มิตรภาพ ต.หนองกาย อ.เมือง จ.หนองคาย 43000"
-              disabled={saving}
-              sx={{ mb: 2.5 }}
-            />
-
-            {/* Contacts */}
-            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-              ข้อมูลติดต่อ
-            </Typography>
-
-            {contacts.map((c, i) => (
-              <Box key={i} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'center' }}>
-                <TextField
-                  label="ป้ายกำกับ"
-                  value={c.label}
-                  onChange={(e) => handleContactChange(i, 'label', e.target.value)}
-                  size="small"
-                  sx={{ flex: 1 }}
-                  placeholder="เช่น โทรศัพท์"
-                  disabled={saving}
-                />
-                <TextField
-                  label="ช่องทางติดต่อ"
-                  value={c.value}
-                  onChange={(e) => handleContactChange(i, 'value', e.target.value)}
-                  size="small"
-                  sx={{ flex: 2 }}
-                  placeholder="เช่น 042-471-xxx"
-                  disabled={saving}
-                />
-                <Tooltip title="ลบ">
-                  <IconButton size="small" onClick={() => handleRemoveContact(i)} disabled={saving} color="error">
-                    <DeleteOutlineIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
-            ))}
-
-            <Button
-              size="small"
-              startIcon={<AddIcon />}
-              onClick={handleAddContact}
-              disabled={saving}
-              sx={{ mb: 2.5, color: 'text.secondary' }}
-            >
-              เพิ่มช่องทางติดต่อ
-            </Button>
-
-            <Divider sx={{ mb: 2 }} />
-
-            {/* Location */}
-            <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-              ตำแหน่ง
-            </Typography>
-
-            <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
-              <TextField
-                label="ละติจูด"
-                value={latitude}
-                onChange={(e) => setLatitude(e.target.value)}
-                fullWidth
-                size="small"
-                placeholder="เช่น 17.6830000"
-                disabled={saving}
-                inputProps={{ inputMode: 'decimal' }}
+        <DialogContent sx={{ pt: 2.5 }}>
+          <Box
+            sx={{
+              position: 'relative', paddingTop: '56.25%', bgcolor: 'grey.100',
+              borderRadius: 2, overflow: 'hidden', mb: 2.5,
+              cursor: uploading ? 'not-allowed' : 'pointer',
+            }}
+            onClick={uploading ? undefined : () => imageInputRef.current?.click()}
+          >
+            {imageUrl ? (
+              <Box
+                component="img"
+                src={imageUrl}
+                sx={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }}
               />
-              <TextField
-                label="ลองจิจูด"
-                value={longitude}
-                onChange={(e) => setLongitude(e.target.value)}
-                fullWidth
-                size="small"
-                placeholder="เช่น 102.4160000"
-                disabled={saving}
-                inputProps={{ inputMode: 'decimal' }}
-              />
-            </Box>
-
-            {canShowMap && (
-              <Button
-                variant="outlined"
-                startIcon={<MapIcon />}
-                component="a"
-                href={`https://www.google.com/maps?q=${lat},${lng}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                sx={{ mb: 1 }}
+            ) : (
+              <Box
+                sx={{
+                  position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 1,
+                }}
               >
-                ดูบน Google Maps
+                <StorefrontIcon sx={{ fontSize: 40, color: 'grey.400' }} />
+                <Typography variant="caption" color="text.secondary">คลิกเพื่ออัปโหลดรูปภาพ</Typography>
+              </Box>
+            )}
+            <Box sx={{ position: 'absolute', bottom: 8, right: 8 }}>
+              <Button
+                size="small"
+                variant="contained"
+                startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <PhotoCameraIcon />}
+                onClick={(e) => { e.stopPropagation(); imageInputRef.current?.click(); }}
+                disabled={uploading}
+                sx={{ bgcolor: 'rgba(0,0,0,0.55)', '&:hover': { bgcolor: 'rgba(0,0,0,0.75)' } }}
+              >
+                {uploading ? 'กำลังอัปโหลด...' : 'เปลี่ยนรูป'}
               </Button>
-            )}
+            </Box>
+          </Box>
+          <input
+            ref={imageInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            style={{ display: 'none' }}
+            onChange={handleImageFileChange}
+          />
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: -1.5, mb: 2.5 }}>
+            รองรับไฟล์ JPG, PNG, WEBP, GIF ขนาดไม่เกิน 5 MB
+          </Typography>
 
-            <Divider sx={{ mb: 2, mt: 1 }} />
+          <TextField
+            label="ชื่อสถานบริการ"
+            value={isAddMode ? name : center?.name ?? ''}
+            onChange={isAddMode ? (e) => setName(e.target.value) : undefined}
+            fullWidth
+            required={isAddMode}
+            disabled={!isAddMode || saving}
+            sx={{ mb: 2 }}
+          />
 
-            {error && (
-              <Alert ref={errorRef} severity="error" sx={{ mt: 2, borderRadius: 1.5 }}>
-                {error}
-              </Alert>
-            )}
-          </>
-      </DialogContent>
+          <TextField
+            label="ข้อมูลทั่วไป"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            fullWidth
+            multiline
+            rows={3}
+            disabled={saving}
+            sx={{ mb: 2 }}
+          />
 
-      <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-        <>
-          {/* Delete button — edit mode only, superadmin only, bottom-left */}
-          {!isAddMode && isSuperadmin && (
-            <Tooltip title={canDelete ? '' : 'ปิดใช้งานสถานบริการก่อนจึงจะสามารถลบได้'}>
-              <span style={{ marginRight: 'auto' }}>
-                <Button
-                  variant="contained"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => hasAssignedStaff ? setStaffBlockDialog(true) : setConfirmDeleteOpen(true)}
-                  disabled={!canDelete || saving || deleting}
-                >
-                  ลบ
-                </Button>
-              </span>
-            </Tooltip>
+          <Divider sx={{ mb: 2 }} />
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
+            กำหนดเวลา
+          </Typography>
+          <Tabs
+            value={scheduleTab}
+            onChange={(_, v) => setScheduleTab(v)}
+            sx={{ mb: 0, borderBottom: 1, borderColor: 'divider' }}
+          >
+            {SCHEDULE_TABS.map(label => <Tab key={label} label={label} />)}
+          </Tabs>
+          {scheduleTab === 0 && renderSchedulePanel('condom')}
+          {scheduleTab === 1 && renderSchedulePanel('appointment')}
+
+          <Divider sx={{ mb: 2, mt: 2.5 }} />
+
+          <TextField
+            label="เวลาทำการ"
+            value={operatingHours}
+            onChange={(e) => setOperatingHours(e.target.value)}
+            fullWidth
+            size="small"
+            placeholder="เช่น จ–ศ 08:00–16:00"
+            disabled={saving}
+            sx={{ mb: 2 }}
+          />
+
+          <TextField
+            label="ที่อยู่"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            fullWidth
+            multiline
+            rows={2}
+            placeholder="เช่น 123 ถ.มิตรภาพ ต.หนองกาย อ.เมือง จ.หนองคาย 43000"
+            disabled={saving}
+            sx={{ mb: 2.5 }}
+          />
+
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+            ข้อมูลติดต่อ
+          </Typography>
+          {contacts.map((c, i) => (
+            <Box key={i} sx={{ display: 'flex', gap: 1, mb: 2, alignItems: 'center' }}>
+              <TextField
+                label="ป้ายกำกับ"
+                value={c.label}
+                onChange={(e) => handleContactChange(i, 'label', e.target.value)}
+                size="small"
+                sx={{ flex: 1 }}
+                placeholder="เช่น โทรศัพท์"
+                disabled={saving}
+              />
+              <TextField
+                label="ช่องทางติดต่อ"
+                value={c.value}
+                onChange={(e) => handleContactChange(i, 'value', e.target.value)}
+                size="small"
+                sx={{ flex: 2 }}
+                placeholder="เช่น 042-471-xxx"
+                disabled={saving}
+              />
+              <Tooltip title="ลบ">
+                <IconButton size="small" onClick={() => handleRemoveContact(i)} disabled={saving} color="error">
+                  <DeleteOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          ))}
+          <Button
+            size="small"
+            startIcon={<AddIcon />}
+            onClick={handleAddContact}
+            disabled={saving}
+            sx={{ mb: 2.5, color: 'text.secondary' }}
+          >
+            เพิ่มช่องทางติดต่อ
+          </Button>
+
+          <Divider sx={{ mb: 2 }} />
+
+          <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+            ตำแหน่ง
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 1.5, mb: 1.5 }}>
+            <TextField
+              label="ละติจูด"
+              value={latitude}
+              onChange={(e) => setLatitude(e.target.value)}
+              fullWidth
+              size="small"
+              placeholder="เช่น 17.6830000"
+              disabled={saving}
+              inputProps={{ inputMode: 'decimal' }}
+            />
+            <TextField
+              label="ลองจิจูด"
+              value={longitude}
+              onChange={(e) => setLongitude(e.target.value)}
+              fullWidth
+              size="small"
+              placeholder="เช่น 102.4160000"
+              disabled={saving}
+              inputProps={{ inputMode: 'decimal' }}
+            />
+          </Box>
+          {canShowMap && (
+            <Button
+              variant="outlined"
+              startIcon={<MapIcon />}
+              component="a"
+              href={`https://www.google.com/maps?q=${lat},${lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              sx={{ mb: 1 }}
+            >
+              ดูบน Google Maps
+            </Button>
           )}
 
+          {error && (
+            <Alert ref={errorRef} severity="error" sx={{ mt: 2, borderRadius: 1.5 }}>{error}</Alert>
+          )}
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          {!isAddMode && isSuperadmin && (
+            <span style={{ marginRight: 'auto' }}>
+              <Button
+                variant="contained"
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={() => hasAssignedStaff ? setStaffBlockDialog(true) : setConfirmDeleteOpen(true)}
+                disabled={saving || deleting}
+              >
+                ลบ
+              </Button>
+            </span>
+          )}
           <Button onClick={handleClose} disabled={saving || uploading || deleting} color="inherit">
             ยกเลิก
           </Button>
           <Button
             onClick={isAddMode ? handleSaveAdd : handleSaveEdit}
             variant="contained"
-            disabled={saving || uploading || deleting || hasRangeError}
+            disabled={saving || uploading || deleting}
             startIcon={saving ? <CircularProgress size={16} color="inherit" /> : null}
           >
             {saving ? 'กำลังบันทึก...' : 'บันทึก'}
           </Button>
-        </>
-      </DialogActions>
-    </Dialog>
+        </DialogActions>
+      </Dialog>
 
-    {/* Add success dialog */}
-    <Dialog open={open && !!addedName} onClose={onSuccess} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
-        <CheckCircleOutlineIcon color="success" />
-        <Typography component="div" variant="h6" fontWeight="bold">เพิ่มสถานบริการสำเร็จ</Typography>
-      </DialogTitle>
-      <Divider />
-      <DialogContent sx={{ pt: 2.5 }}>
-        <Typography variant="body2" color="text.secondary">
-          เพิ่มสถานบริการ <strong>{addedName}</strong> เรียบร้อยแล้ว กรุณา refresh หน้า <strong>สต็อกและพยากรณ์</strong>
-        </Typography>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onSuccess} variant="contained">ปิด</Button>
-      </DialogActions>
-    </Dialog>
+      <Dialog open={open && !!addedName} onClose={onSuccess} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+          <CheckCircleOutlineIcon color="success" />
+          <Typography component="div" variant="h6" fontWeight="bold">เพิ่มสถานบริการสำเร็จ</Typography>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2.5 }}>
+          <Typography variant="body2" color="text.secondary">
+            เพิ่มสถานบริการ <strong>{addedName}</strong> เรียบร้อยแล้ว
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={onSuccess} variant="contained">ปิด</Button>
+        </DialogActions>
+      </Dialog>
 
-    {/* Confirm delete */}
-    <ConfirmDialog
-      open={confirmDeleteOpen}
-      icon={<DeleteOutlineIcon color="error" />}
-      title="ยืนยันการลบสถานบริการ"
-      body="คุณแน่ใจหรือไม่ว่าต้องการลบสถานบริการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
-      confirmLabel="ลบ"
-      confirmColor="error"
-      loading={deleting}
-      onConfirm={handleDeleteConfirm}
-      onCancel={() => setConfirmDeleteOpen(false)}
-    />
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        icon={<DeleteOutlineIcon color="error" />}
+        title="ยืนยันการลบสถานบริการ"
+        body="คุณแน่ใจหรือไม่ว่าต้องการลบสถานบริการนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+        confirmLabel="ลบ"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
 
-    {/* Staff-still-assigned warning dialog */}
-    <Dialog open={staffBlockDialog} onClose={() => setStaffBlockDialog(false)} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
-        <PeopleOutlineIcon color="warning" />
-        <Typography component="div" variant="h6" fontWeight="bold">ยังมีเจ้าหน้าที่อยู่</Typography>
-      </DialogTitle>
-      <Divider />
-      <DialogContent sx={{ pt: 2.5 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
-          ไม่สามารถลบสถานบริการ <strong>{center?.name}</strong> ได้ เนื่องจากยังมี
-          {center && center.staff_count > 0 && <> เจ้าหน้าที่ <strong>{center.staff_count} คน</strong></>}
-          {center && center.staff_count > 0 && center.admin_count > 0 && ' และ'}
-          {center && center.admin_count > 0 && <> ผู้ดูแล <strong>{center.admin_count} คน</strong></>}
-          {' '}ผูกกับสถานบริการนี้อยู่
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          กรุณาไปที่หน้า <strong>จัดการเจ้าหน้าที่</strong> และย้ายหรือลบเจ้าหน้าที่ทุกคนออกจากสถานบริการนี้ก่อน จึงจะสามารถลบได้
-        </Typography>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={() => setStaffBlockDialog(false)} variant="contained">รับทราบ</Button>
-      </DialogActions>
-    </Dialog>
+      <Dialog open={staffBlockDialog} onClose={() => setStaffBlockDialog(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1.5, pb: 1 }}>
+          <PeopleOutlineIcon color="warning" />
+          <Typography component="div" variant="h6" fontWeight="bold">ยังมีเจ้าหน้าที่อยู่</Typography>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ pt: 2.5 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+            ไม่สามารถลบสถานบริการ <strong>{center?.name}</strong> ได้ เนื่องจากยังมี
+            {center && center.staff_count > 0 && <> เจ้าหน้าที่ <strong>{center.staff_count} คน</strong></>}
+            {center && center.staff_count > 0 && center.admin_count > 0 && ' และ'}
+            {center && center.admin_count > 0 && <> ผู้ดูแล <strong>{center.admin_count} คน</strong></>}
+            {' '}ผูกกับสถานบริการนี้อยู่
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            กรุณาไปที่หน้า <strong>จัดการเจ้าหน้าที่</strong> และย้ายหรือลบเจ้าหน้าที่ทุกคนออกจากสถานบริการนี้ก่อน จึงจะสามารถลบได้
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setStaffBlockDialog(false)} variant="contained">รับทราบ</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

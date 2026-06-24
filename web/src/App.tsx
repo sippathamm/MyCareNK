@@ -19,6 +19,7 @@ import ArticlesPage from './pages/articles/ArticlesPage';
 import ArticleEditorPage from './pages/articles/ArticleEditorPage';
 import ProfilePage from './pages/profile/ProfilePage';
 import LineCallbackPage from './pages/line-callback/LineCallbackPage';
+import ServiceCentersPage from './pages/service-centers/ServiceCentersPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -86,6 +87,7 @@ function App() {
                   <Route path="articles" element={<ArticlesPage />} />
                   <Route path="articles/new" element={<ArticleEditorPage />} />
                   <Route path="articles/:id/edit" element={<ArticleEditorPage />} />
+                  <Route path="service-centers" element={<ServiceCentersPage />} />
                   <Route path="profile" element={<ProfilePage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>

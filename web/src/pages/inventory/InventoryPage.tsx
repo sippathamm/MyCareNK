@@ -13,7 +13,6 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import RestockModal from './RestockModal';
 import AdjustmentModal from './AdjustmentModal';
 import ConsumptionTrendChart from './ConsumptionTrendChart';
-import ServiceCenterManagementDialog from '../../components/inventory/ServiceCenterManagementDialog';
 
 const LOW_STOCK_DAYS = 7;
 
@@ -66,25 +65,11 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
       <CardContent sx={{ p: 2.5 }}>
         {/* Header */}
         <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', minWidth: 0, flex: 1, mr: 1 }}>
-            <Chip
-              size="small"
-              label={row.is_active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'}
-              sx={{
-                alignSelf: 'flex-start',
-                bgcolor: row.is_active ? '#E8F5E9' : '#F5F5F5',
-                color: row.is_active ? '#2E7D32' : '#9E9E9E',
-                fontSize: '0.65rem',
-                height: 20,
-                mb: 0.5,
-              }}
-            />
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <StorefrontIcon sx={{ color: 'info.main', fontSize: 20, flexShrink: 0 }} />
-              <Typography variant="h6" fontWeight="bold" noWrap>
-                {row.service_center}
-              </Typography>
-            </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1, mr: 1 }}>
+            <StorefrontIcon sx={{ color: 'info.main', fontSize: 20, flexShrink: 0 }} />
+            <Typography variant="h6" fontWeight="bold" noWrap>
+              {row.service_center}
+            </Typography>
           </Box>
           {isZeroStock && (
             <Chip
@@ -181,7 +166,6 @@ export default function InventoryPage() {
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
-  const [manageOpen, setManageOpen] = useState(false);
 
   const handleRestockSuccess = useCallback(() => {
     setRestockTarget(null);
@@ -190,11 +174,6 @@ export default function InventoryPage() {
 
   const handleAdjustmentSuccess = useCallback(() => {
     setAdjustmentTarget(null);
-    refetch();
-  }, [refetch]);
-
-  const handleManageClose = useCallback(() => {
-    setManageOpen(false);
     refetch();
   }, [refetch]);
 
@@ -238,15 +217,6 @@ export default function InventoryPage() {
             สต็อกปัจจุบันและการพยากรณ์จากอัตราการใช้
           </Typography>
         </Box>
-        {isSuperadmin && (
-          <Button
-            variant="contained"
-            startIcon={<StorefrontIcon />}
-            onClick={() => setManageOpen(true)}
-          >
-            จัดการสถานบริการ
-          </Button>
-        )}
       </Box>
 
       {/* Zero-stock warning banner */}
@@ -327,9 +297,7 @@ export default function InventoryPage() {
             ยังไม่มีสถานบริการ
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            {isSuperadmin
-              ? 'กดปุ่ม "จัดการสถานบริการ" ด้านบนเพื่อเพิ่มสถานบริการใหม่'
-              : 'ติดต่อผู้ดูแลระบบเพื่อเพิ่มสถานบริการ'}
+            ติดต่อผู้ดูแลระบบเพื่อเพิ่มสถานบริการ
           </Typography>
         </Paper>
       )}
@@ -398,11 +366,6 @@ export default function InventoryPage() {
         onSuccess={handleAdjustmentSuccess}
       />
 
-      {/* Service center management dialog */}
-      <ServiceCenterManagementDialog
-        open={manageOpen}
-        onClose={handleManageClose}
-      />
     </Box>
   );
 }

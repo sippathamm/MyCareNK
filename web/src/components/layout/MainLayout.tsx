@@ -15,6 +15,7 @@ import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
 import InventoryIcon from '@mui/icons-material/Inventory2';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
@@ -150,6 +151,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
     { text: 'รายการนัดหมาย', icon: <CalendarMonthIcon />, path: '/appointments', show: true },
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
+    { text: 'จัดการสถานบริการ', icon: <StorefrontIcon />, path: '/service-centers', show: role === 'superadmin' },
     { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'admin' || role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
     { text: 'บทความ', icon: <ArticleIcon />, path: '/articles', show: role === 'admin' || role === 'superadmin' },
