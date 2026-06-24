@@ -126,7 +126,7 @@ jobs:
           RAW=$(grep "^version:" pubspec.yaml | sed 's/version: //')
           SEMVER=$(echo "$RAW" | sed 's/+.*//')
           BUILD=$(echo "$RAW" | sed 's/.*+//')
-          TAG=$(echo "$RAW" | sed 's/+/-build/')
+          TAG="${SEMVER}-build$(printf '%03d' $BUILD)"
           echo "semver=$SEMVER" >> $GITHUB_OUTPUT
           echo "build=$BUILD" >> $GITHUB_OUTPUT
           echo "tag=$TAG" >> $GITHUB_OUTPUT
@@ -263,8 +263,8 @@ jobs:
         working-directory: app
         run: |
           RAW=$(grep "^version:" pubspec.yaml | sed 's/version: //')
-          TAG=$(echo "$RAW" | sed 's/+/-build/')
           BUILD=$(echo "$RAW" | sed 's/.*+//')
+          TAG="$(echo "$RAW" | sed 's/+.*//')-build$(printf '%03d' $BUILD)"
           CLEAN_VERSION=$(echo "$RAW" | sed 's/+.*//' | sed 's/-.*//')
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "raw=$RAW" >> $GITHUB_OUTPUT
