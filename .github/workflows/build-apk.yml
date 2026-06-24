@@ -29,8 +29,8 @@ jobs:
     permissions:
       contents: write
     if: >-
-      (github.event_name == 'pull_request' && github.base_ref != 'preview' && github.base_ref != 'main') ||
-      (github.event_name == 'push' && github.ref != 'refs/heads/preview' && github.ref != 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.base_ref != 'preview' && github.base_ref != 'integration' && github.base_ref != 'main') ||
+      (github.event_name == 'push' && github.ref != 'refs/heads/preview' && github.ref != 'refs/heads/integration' && github.ref != 'refs/heads/main') ||
       (github.event_name == 'workflow_dispatch' &&
         (github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both'))
     steps:
@@ -90,8 +90,8 @@ jobs:
     permissions:
       contents: write
     if: >-
-      (github.event_name == 'push' && github.ref == 'refs/heads/preview') ||
-      (github.event_name == 'pull_request' && github.base_ref == 'preview')
+      (github.event_name == 'push' && (github.ref == 'refs/heads/preview' || github.ref == 'refs/heads/integration')) ||
+      (github.event_name == 'pull_request' && (github.base_ref == 'preview' || github.base_ref == 'integration'))
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -162,14 +162,14 @@ jobs:
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: preview-debug-apk-${{ github.run_number }}
+          name: ${{ github.ref_name }}-debug-apk-${{ github.run_number }}
           path: MyCareNK-v${{ steps.version.outputs.semver }}-debug.apk
           retention-days: 14
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: preview-release-apk-${{ github.run_number }}
+          name: ${{ github.ref_name }}-release-apk-${{ github.run_number }}
           path: MyCareNK-v${{ steps.version.outputs.semver }}.apk
           retention-days: 14
 
@@ -178,21 +178,21 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.version.outputs.tag }}
-          name: MyCareNK v${{ steps.version.outputs.raw }} (preview)
+          name: MyCareNK v${{ steps.version.outputs.raw }} (${{ github.ref_name }})
           body: |
-            Preview build จาก branch `preview` — commit `${{ github.sha }}`
+            Preview build จาก branch `${{ github.ref_name }}` — commit `${{ github.sha }}`
 
             **ดาวน์โหลด:** ดู Assets ด้านล่าง
             - `MyCareNK-v${{ steps.version.outputs.semver }}.apk` — release build (แนะนำ)
             - `MyCareNK-v${{ steps.version.outputs.semver }}-debug.apk` — debug build
-            
+
             **ติดตั้ง:** ต้องเปิด "ติดตั้งแอปจากแหล่งที่ไม่รู้จัก" ในการตั้งค่า Android ก่อน
           files: |
             MyCareNK-v${{ steps.version.outputs.semver }}-debug.apk
             MyCareNK-v${{ steps.version.outputs.semver }}.apk
           prerelease: true
 
-      - name: Insert download_url into app_versions (preview)
+      - name: Insert download_url into app_versions
         if: github.event_name == 'push'
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -203,7 +203,7 @@ jobs:
             -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
             -H "Content-Type: application/json" \
-            -d "{\"download_url\": \"$APK_URL\", \"branch\": \"preview\"}"
+            -d "{\"download_url\": \"$APK_URL\", \"branch\": \"${{ github.ref_name }}\"}"
 
   build-release:
     name: Release APK
