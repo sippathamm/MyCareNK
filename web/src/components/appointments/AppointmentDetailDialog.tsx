@@ -3,6 +3,8 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography, Box, Divider, TextField, Chip, Stack,
 } from '@mui/material';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getAppointmentStatusSx } from '../../utils/statusColors';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
@@ -55,20 +57,18 @@ function formatDateTime(dateStr: string): string {
   return `${d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} น.`;
 }
 
-function StatusChip({ status }: { status: Enums<'appointment_status'> }) {
-  switch (status) {
-    case 'pending':           return <Chip label="รอยืนยัน"            size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
-    case 'confirmed':         return <Chip label="ยืนยันแล้ว"           size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
-    case 'completed':         return <Chip label="เสร็จสิ้น"            size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
-    case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้"     size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-    case 'cancelled_by_staff':return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-    default:                  return <Chip label={status} size="small" />;
-  }
-}
+const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
+  pending:            'รอยืนยัน',
+  confirmed:          'ยืนยันแล้ว',
+  completed:          'เสร็จสิ้น',
+  cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
+  cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
+};
 
 export default function AppointmentDetailDialog({
   open, appointment, onClose, onStatusChange, statusUpdating = false,
 }: AppointmentDetailDialogProps) {
+  const { mode } = useColorMode();
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -139,7 +139,11 @@ export default function AppointmentDetailDialog({
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
-                  <StatusChip status={appointment.appointment_status} />
+                  <Chip
+                    label={APPOINTMENT_STATUS_LABELS[appointment.appointment_status] ?? appointment.appointment_status}
+                    size="small"
+                    sx={getAppointmentStatusSx(appointment.appointment_status, mode)}
+                  />
                 </Box>
                 {appointment.handled_by_name && (
                   <Box display="flex" justifyContent="space-between">
@@ -217,7 +221,7 @@ export default function AppointmentDetailDialog({
         body={
           <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
             <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น</Typography>
-            <Chip label="ยืนยันแล้ว" size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />
+            <Chip label="ยืนยันแล้ว" size="small" sx={getAppointmentStatusSx('confirmed', mode)} />
             <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
           </Stack>
         }
@@ -236,7 +240,7 @@ export default function AppointmentDetailDialog({
         body={
           <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
             <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น</Typography>
-            <Chip label="เสร็จสิ้น" size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />
+            <Chip label="เสร็จสิ้น" size="small" sx={getAppointmentStatusSx('completed', mode)} />
             <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
           </Stack>
         }

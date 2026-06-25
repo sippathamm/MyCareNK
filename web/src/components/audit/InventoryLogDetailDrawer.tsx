@@ -2,6 +2,8 @@ import {
   Drawer, Box, Typography, Divider, IconButton, Chip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getDeltaChipSx } from '../../utils/statusColors';
 import type { InventoryLogRow } from '../../hooks/useInventoryLog';
 import {
   AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR, AUDIT_ACTION_LABEL,
@@ -20,13 +22,14 @@ function formatDateTime(iso: string): string {
 // ─── Qty Chip ─────────────────────────────────────────────────────────────────
 
 function QtyChip({ value }: { value: number }) {
+  const { mode } = useColorMode();
   if (value === 0) return <Typography variant="body1" color="text.disabled">—</Typography>;
   const pos = value > 0;
   return (
     <Chip
       label={`${pos ? '+' : ''}${value.toLocaleString()}`}
       size="small"
-      sx={{ bgcolor: pos ? '#EBF7EC' : '#FFF0F0', color: pos ? '#2E7D32' : '#C62828', fontWeight: 600, fontSize: '0.78rem' }}
+      sx={getDeltaChipSx(value, mode)}
     />
   );
 }

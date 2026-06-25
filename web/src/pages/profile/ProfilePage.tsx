@@ -12,6 +12,7 @@ import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useColorMode } from '../../contexts/ThemeContext';
 
 const ROLE_LABELS: Record<string, string> = {
   staff: 'เจ้าหน้าที่',
@@ -37,6 +38,7 @@ interface SnackbarState {
 export default function ProfilePage() {
   const { session } = useAuth();
   const { profile, role, serviceCenters, isSuperadmin } = useRoleAccess();
+  const { mode } = useColorMode();
   const { centers: allCenters } = useServiceCenters(isSuperadmin);
   const location = useLocation();
 
@@ -172,7 +174,7 @@ export default function ProfilePage() {
 
               {/* Notice for staff / admin */}
               {!isSuperadmin && (
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, bgcolor: 'grey.50', borderRadius: 1, p: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, bgcolor: 'action.hover', borderRadius: 1, p: 1.5 }}>
                   <InfoOutlinedIcon sx={{ fontSize: 16, color: 'text.secondary', mt: 0.25 }} />
                   <Typography variant="caption" color="text.secondary">
                     หากต้องการแก้ไขข้อมูล โปรดติดต่อผู้ดูแลสูงสุด
@@ -227,7 +229,7 @@ export default function ProfilePage() {
                   </Box>
 
                   {/* Add friend banner */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, bgcolor: '#F0FFF4', border: '1px solid #06C755', borderRadius: 2, p: 2 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, bgcolor: mode === 'dark' ? 'rgba(6,199,85,0.08)' : '#F0FFF4', border: '1px solid #06C755', borderRadius: 2, p: 2 }}>
                     <Box
                       component="img"
                       src="https://qr-official.line.me/gs/M_663mvfrd_GW.png?oat_content=qr"

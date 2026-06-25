@@ -14,8 +14,10 @@ import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContex
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
 import AppointmentDetailDialog, { REASON_LABELS } from '../../components/appointments/AppointmentDetailDialog';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getAppointmentStatusSx } from '../../utils/statusColors';
 import type { AppointmentData } from '../../components/appointments/AppointmentDetailDialog';
-import type { Enums } from '../../lib/database.types';
+
 
 const thGridLocale = createThGridLocale('ไม่มีรายการนัดหมาย');
 
@@ -25,16 +27,13 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function getStatusChip(status: Enums<'appointment_status'>) {
-  switch (status) {
-    case 'pending':           return <Chip label="รอยืนยัน"            size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
-    case 'confirmed':         return <Chip label="ยืนยันแล้ว"           size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
-    case 'completed':         return <Chip label="เสร็จสิ้น"            size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
-    case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้"      size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-    case 'cancelled_by_staff':return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-    default:                  return <Chip label={status} size="small" />;
-  }
-}
+const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
+  pending:            'รอยืนยัน',
+  confirmed:          'ยืนยันแล้ว',
+  completed:          'เสร็จสิ้น',
+  cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
+  cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
+};
 
 export default function AppointmentsPage() {
   const location = useLocation();
@@ -42,6 +41,7 @@ export default function AppointmentsPage() {
   const { appointments, setAppointments, loading } = useAppointments();
   const { role, loading: roleLoading } = useRoleAccess();
   const { selectedServiceCenter } = useServiceCenterFilter();
+  const { mode } = useColorMode();
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -143,7 +143,10 @@ export default function AppointmentsPage() {
       headerName: 'สถานะ',
       flex: 1,
       minWidth: 140,
-      renderCell: (params) => getStatusChip((params.row as AppointmentData).appointment_status),
+      renderCell: (params) => {
+        const s = (params.row as AppointmentData).appointment_status;
+        return <Chip label={APPOINTMENT_STATUS_LABELS[s] ?? s} size="small" sx={getAppointmentStatusSx(s, mode)} />;
+      },
     },
     {
       field: 'actions',
@@ -232,7 +235,7 @@ export default function AppointmentsPage() {
               disableRowSelectionOnClick
               sx={{
                 border: 'none',
-                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
               }}
             />
