@@ -9,6 +9,7 @@ import { usePeakTime } from '../../hooks/usePeakTime';
 import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
+import { getServiceCenterColor } from '../../lib/serviceCenterColor';
 
 const STATUS_COLORS = {
   pending: '#FF9F6B',
@@ -511,9 +512,10 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                   </Box>
                 </Box>
                 <Box component="tbody">
-                  {demand.map((row, idx) => {
-                    const RANK_COLORS = ['#FF9F6B', '#64B5F6', '#BA68C8', '#81C784'];
+                  {(() => {
                     const totalRequests = demand.reduce((sum, d) => sum + d.total_requests, 0);
+                    return demand.map((row, idx) => {
+                    const color = getServiceCenterColor(row.service_center);
                     const barPct = totalRequests > 0 ? (row.total_requests / totalRequests) * 100 : 0;
                     const sparkData = trend
                       .filter(t => t.service_center === row.service_center)
@@ -523,7 +525,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                         <Box component="td" sx={{ py: 1.5, pr: 2, width: 40 }}>
                           <Box sx={{
                             width: 28, height: 28, borderRadius: '50%',
-                            bgcolor: RANK_COLORS[idx] ?? '#BDBDBD',
+                            bgcolor: color,
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
                             <Typography variant="caption" fontWeight="bold" sx={{ color: '#fff', lineHeight: 1 }}>
@@ -535,7 +537,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                           <Typography variant="body2" fontWeight="medium">{row.service_center}</Typography>
                         </Box>
                         <Box component="td" sx={{ py: 1.5, pr: 3, whiteSpace: 'nowrap' }}>
-                          <Typography variant="body2" fontWeight="bold" sx={{ color: RANK_COLORS[idx] ?? '#BDBDBD' }}>
+                          <Typography variant="body2" fontWeight="bold" sx={{ color }}>
                             {row.total_requests.toLocaleString()}
                           </Typography>
                         </Box>
@@ -548,7 +550,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                         <Box component="td" sx={{ py: 1.5, pr: 3, minWidth: 200 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Box sx={{ flex: 1, bgcolor: 'grey.100', borderRadius: 1, height: 8, overflow: 'hidden' }}>
-                              <Box sx={{ width: `${barPct}%`, height: '100%', bgcolor: RANK_COLORS[idx] ?? '#BDBDBD', borderRadius: 1, transition: 'width 0.4s ease' }} />
+                              <Box sx={{ width: `${barPct}%`, height: '100%', bgcolor: color, borderRadius: 1, transition: 'width 0.4s ease' }} />
                             </Box>
                             <Typography variant="caption" color="text.secondary" sx={{ minWidth: 36, textAlign: 'right' }}>
                               {barPct.toFixed(0)}%
@@ -559,7 +561,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                           {sparkData.length > 0 ? (
                             <ResponsiveContainer width={120} height={36}>
                               <LineChart data={sparkData} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
-                                <Line type="monotone" dataKey="v" stroke={RANK_COLORS[idx] ?? '#BDBDBD'} dot={false} strokeWidth={1.5} />
+                                <Line type="monotone" dataKey="v" stroke={color} dot={false} strokeWidth={1.5} />
                               </LineChart>
                             </ResponsiveContainer>
                           ) : (
@@ -568,7 +570,8 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                         </Box>
                       </Box>
                     );
-                  })}
+                  });
+                  })()}
                 </Box>
               </Box>
             </Box>

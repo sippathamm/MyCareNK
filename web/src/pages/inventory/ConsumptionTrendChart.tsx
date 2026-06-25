@@ -5,16 +5,11 @@ import {
   CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import type { ConsumptionTrendPoint } from '../../hooks/useInventoryForecast';
+import { getServiceCenterColor } from '../../lib/serviceCenterColor';
 
 interface ConsumptionTrendChartProps {
   trend: ConsumptionTrendPoint[];
   loading: boolean;
-}
-
-const PALETTE = ['#FF9F6B', '#64B5F6', '#BA68C8', '#81C784', '#F06292', '#4DB6AC', '#FFD54F', '#A1887F'];
-
-function getCenterColor(index: number): string {
-  return PALETTE[index % PALETTE.length];
 }
 
 type ProductType = 'condom' | 'lubricant';
@@ -80,12 +75,12 @@ function TrendPanel({
               iconType="circle"
               iconSize={8}
             />
-            {centers.map((center, index) => (
+            {centers.map((center) => (
               <Line
                 key={center}
                 type="monotone"
                 dataKey={center}
-                stroke={getCenterColor(index)}
+                stroke={getServiceCenterColor(center)}
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
