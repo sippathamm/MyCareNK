@@ -50,7 +50,7 @@ interface StaffDirectoryMember {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffDirectoryPage() {
-  const { role, serviceCenters } = useRoleAccess();
+  const { role, serviceCenters, loading: roleLoading } = useRoleAccess();
   const { mode } = useColorMode();
   const { selectedServiceCenter } = useServiceCenterFilter();
   const [staff, setStaff] = useState<StaffDirectoryMember[]>([]);
@@ -58,6 +58,8 @@ export default function StaffDirectoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (roleLoading) return;
+
     const fetchStaff = async () => {
       setLoading(true);
       setError(null);
@@ -85,7 +87,7 @@ export default function StaffDirectoryPage() {
     };
 
     fetchStaff();
-  }, [role, serviceCenters, selectedServiceCenter]);
+  }, [role, serviceCenters, selectedServiceCenter, roleLoading]);
 
   const columns: GridColDef[] = [
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 120 },
