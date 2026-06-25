@@ -22,7 +22,7 @@ import ConsumptionTrendChart from './ConsumptionTrendChart';
 import { createThGridLocale } from '../../constants/datagrid';
 
 const LOW_STOCK_DAYS = 7;
-const MAX_DISPLAY_QTY = 500;
+const MAX_DISPLAY_QTY = 100;
 const PAGE_SIZE_GRID = 8;
 
 const thGridLocale = createThGridLocale('ไม่พบสถานบริการที่ตรงกับเงื่อนไข');
