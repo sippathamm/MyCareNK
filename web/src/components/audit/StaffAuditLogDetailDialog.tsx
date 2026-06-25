@@ -2,11 +2,13 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Box, Typography, Divider, Chip,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import type { StaffAuditLogRow } from '../../hooks/useStaffAuditLog';
 import {
   AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR, AUDIT_ACTION_LABEL,
 } from '../../constants/auditLogActions';
 import type { AuditAction } from '../../constants/auditLogActions';
+import { useColorMode } from '../../contexts/ThemeContext';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -46,6 +48,15 @@ const fieldLabel = (key: string) => FIELD_LABEL[key] ?? key;
 
 // ─── Field group definitions ──────────────────────────────────────────────────
 
+const AUDIT_ACTION_DARK: Record<string, { bg: string; color: string }> = {
+  staff_created:         { bg: alpha('#2E7D32', 0.2), color: '#81C784' },
+  staff_deleted:         { bg: alpha('#B71C1C', 0.2), color: '#EF9A9A' },
+  role_updated:          { bg: alpha('#7B1FA2', 0.2), color: '#CE93D8' },
+  staff_profile_updated: { bg: alpha('#E65100', 0.2), color: '#FFBE9E' },
+  email_updated:         { bg: alpha('#1565C0', 0.2), color: '#90CAF9' },
+};
+const AUDIT_ACTION_DARK_FALLBACK = { bg: alpha('#9E9E9E', 0.15), color: '#BDBDBD' };
+
 const PROFILE_FIELD_SET   = new Set(['first_name', 'last_name', 'email', 'service_centers', 'service_center']);
 const PROFILE_FIELD_ORDER = ['first_name', 'last_name', 'email', 'service_centers', 'service_center'];
 const ROLE_FIELD_SET      = new Set(['role']);
@@ -74,14 +85,16 @@ function ValueRow({ rawKey, fieldKey, value, color }: { rawKey: string; fieldKey
 }
 
 // Diff row (before → after)
-function DiffRow({ rawKey, fieldKey, oldVal, newVal }: { rawKey: string; fieldKey: string; oldVal: unknown; newVal: unknown }) {
+function DiffRow({ rawKey, fieldKey, oldVal, newVal, mode }: { rawKey: string; fieldKey: string; oldVal: unknown; newVal: unknown; mode: 'light' | 'dark' }) {
+  const oldColor = mode === 'dark' ? '#EF9A9A' : '#C62828';
+  const newColor = mode === 'dark' ? '#81C784' : '#2E7D32';
   return (
     <Box display="flex" justifyContent="space-between" alignItems="center">
       <Typography variant="body2" color="text.secondary">{fieldKey}</Typography>
       <Box display="flex" alignItems="center" gap={1}>
-        <Typography variant="body2" fontWeight="medium" sx={{ color: '#C62828' }}>{formatFieldValue(rawKey, oldVal)}</Typography>
+        <Typography variant="body2" fontWeight="medium" sx={{ color: oldColor }}>{formatFieldValue(rawKey, oldVal)}</Typography>
         <Typography variant="body2" color="text.disabled">→</Typography>
-        <Typography variant="body2" fontWeight="medium" sx={{ color: '#2E7D32' }}>{formatFieldValue(rawKey, newVal)}</Typography>
+        <Typography variant="body2" fontWeight="medium" sx={{ color: newColor }}>{formatFieldValue(rawKey, newVal)}</Typography>
       </Box>
     </Box>
   );
@@ -95,8 +108,11 @@ interface Props {
 }
 
 export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
+  const { mode } = useColorMode();
   const actionCfg = row
-    ? (AUDIT_ACTION_COLOR[row.action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR)
+    ? (mode === 'dark'
+        ? (AUDIT_ACTION_DARK[row.action] ?? AUDIT_ACTION_DARK_FALLBACK)
+        : (AUDIT_ACTION_COLOR[row.action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR))
     : null;
   const actionLabel = row
     ? (AUDIT_ACTION_LABEL[row.action as AuditAction] ?? row.action)
@@ -141,7 +157,11 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
 
   const hasData = isSingleColumn ? singleKeys.length > 0 : diffAllKeys.length > 0;
   const dataTitle = isSingleColumn ? 'ข้อมูล' : 'การเปลี่ยนแปลง';
-  const valueColor = isDeleted ? '#C62828' : isCreated ? '#2E7D32' : undefined;
+  const valueColor = isDeleted
+    ? (mode === 'dark' ? '#EF9A9A' : '#C62828')
+    : isCreated
+      ? (mode === 'dark' ? '#81C784' : '#2E7D32')
+      : undefined;
 
   return (
     <Dialog open={row !== null} onClose={onClose} maxWidth="sm" fullWidth>
@@ -191,6 +211,7 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
                         <DiffRow key={k} rawKey={k} fieldKey={fieldLabel(k)}
                           oldVal={row.old_value?.[k] ?? null}
                           newVal={row.new_value?.[k] ?? null}
+                          mode={mode}
                         />
                       ))
                   }
