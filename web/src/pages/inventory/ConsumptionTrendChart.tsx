@@ -54,7 +54,7 @@ function TrendPanel({
       <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1}>
         {title}
       </Typography>
-      <Box sx={{ height: 320 }}>
+      <Box sx={{ height: 320, '& .recharts-wrapper': { overflow: 'visible' } }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} />

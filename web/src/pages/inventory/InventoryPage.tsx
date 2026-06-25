@@ -57,11 +57,10 @@ function daysLeftLabel(days: number | null): string {
   return `เหลือประมาณ ${days} วัน`;
 }
 
-function minDaysLeft(a: number | null, b: number | null): number | null {
-  if (a === null && b === null) return null;
-  if (a === null) return b;
-  if (b === null) return a;
-  return Math.min(a, b);
+function daysLeftTextColor(days: number | null): string {
+  const c = daysLeftColor(days);
+  if (c === 'success') return '#2E7D32';
+  return `${c}.main`;
 }
 
 // ─── Inventory Card ────────────────────────────────────────────────────────────
@@ -135,7 +134,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
           />
           <Typography
             variant="caption"
-            color={row.condom_days_left === null ? 'text.secondary' : `${condomColor}.main`}
+            color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left)}
           >
             {daysLeftLabel(row.condom_days_left)}
             {row.condom_daily_burn > 0 && ` (เฉลี่ย ${row.condom_daily_burn.toFixed(1)} ชิ้น/วัน)`}
@@ -156,7 +155,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
           />
           <Typography
             variant="caption"
-            color={row.lubricant_days_left === null ? 'text.secondary' : `${lubColor}.main`}
+            color={row.lubricant_days_left === null ? 'text.secondary' : daysLeftTextColor(row.lubricant_days_left)}
           >
             {daysLeftLabel(row.lubricant_days_left)}
             {row.lubricant_daily_burn > 0 && ` (เฉลี่ย ${row.lubricant_daily_burn.toFixed(1)} ชิ้น/วัน)`}
@@ -294,7 +293,7 @@ export default function InventoryPage() {
           }
           return (
             <Chip
-              label="สต็อกเพียงพอ"
+              label="เพียงพอ"
               size="small"
               sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600, fontSize: '0.7rem' }}
             />
@@ -305,28 +304,33 @@ export default function InventoryPage() {
         field: 'condom_qty',
         headerName: 'ถุงยางอนามัย',
         flex: 1,
-        renderCell: ({ row }) => `${row.condom_qty.toLocaleString()} ชิ้น`,
+        renderCell: ({ row }) => (
+          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.2 }}>
+            <Typography variant="body2">{row.condom_qty.toLocaleString()} ชิ้น</Typography>
+            <Typography
+              variant="caption"
+              color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left)}
+            >
+              {daysLeftLabel(row.condom_days_left)}
+            </Typography>
+          </Box>
+        ),
       },
       {
         field: 'lubricant_qty',
         headerName: 'เจลหล่อลื่น',
         flex: 1,
-        renderCell: ({ row }) => `${row.lubricant_qty.toLocaleString()} ชิ้น`,
-      },
-      {
-        field: '_days_left',
-        headerName: 'คงเหลือ (วัน)',
-        flex: 1,
-        sortable: false,
-        renderCell: ({ row }) => {
-          const minDays = minDaysLeft(row.condom_days_left, row.lubricant_days_left);
-          const color = minDays === null ? 'text.secondary' : `${daysLeftColor(minDays)}.main`;
-          return (
-            <Typography variant="body2" color={color}>
-              {daysLeftLabel(minDays)}
+        renderCell: ({ row }) => (
+          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.2 }}>
+            <Typography variant="body2">{row.lubricant_qty.toLocaleString()} ชิ้น</Typography>
+            <Typography
+              variant="caption"
+              color={row.lubricant_days_left === null ? 'text.secondary' : daysLeftTextColor(row.lubricant_days_left)}
+            >
+              {daysLeftLabel(row.lubricant_days_left)}
             </Typography>
-          );
-        },
+          </Box>
+        ),
       },
     ];
 
@@ -413,7 +417,7 @@ export default function InventoryPage() {
                 onChange={(e) => handleStatusFilterChange(e.target.value as StatusFilter)}
               >
                 <MenuItem value="all">ทั้งหมด</MenuItem>
-                <MenuItem value="sufficient">สต็อกเพียงพอ</MenuItem>
+                <MenuItem value="sufficient">เพียงพอ</MenuItem>
                 <MenuItem value="restock">ต้องเติม</MenuItem>
               </Select>
             </FormControl>
@@ -576,6 +580,7 @@ export default function InventoryPage() {
                   rows={filteredForecast}
                   columns={columns}
                   getRowId={(row) => row.service_center}
+                  rowHeight={64}
                   loading={loading}
                   localeText={thGridLocale}
                   initialState={{
