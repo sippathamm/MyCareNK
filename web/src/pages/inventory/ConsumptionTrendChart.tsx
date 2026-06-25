@@ -6,6 +6,7 @@ import {
 } from 'recharts';
 import type { ConsumptionTrendPoint } from '../../hooks/useInventoryForecast';
 import { getServiceCenterColor } from '../../lib/serviceCenterColor';
+import { useColorMode } from '../../contexts/ThemeContext';
 
 interface ConsumptionTrendChartProps {
   trend: ConsumptionTrendPoint[];
@@ -44,6 +45,13 @@ function TrendPanel({
   data: Record<string, unknown>[];
   centers: string[];
 }) {
+  const { mode } = useColorMode();
+  const tick       = mode === 'dark' ? '#A0AEC0' : '#666666';
+  const grid       = mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const tooltipBg  = mode === 'dark' ? '#1E2433' : '#ffffff';
+  const tooltipBorder = mode === 'dark' ? '#2D3748' : '#e0e0e0';
+  const tooltipText = mode === 'dark' ? '#E2E8F0' : '#000000';
+
   return (
     <Box>
       <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1}>
@@ -52,26 +60,26 @@ function TrendPanel({
       <Box sx={{ height: 320, '& .recharts-wrapper': { overflow: 'visible' } }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={grid} />
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: tick }}
               interval={4}
               tickLine={false}
             />
             <YAxis
               allowDecimals={false}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: tick }}
               tickLine={false}
               axisLine={false}
               width={32}
             />
             <Tooltip
-              cursor={{ stroke: 'rgba(0,0,0,0.08)', strokeWidth: 2 }}
-              contentStyle={{ borderRadius: 8, fontSize: 12 }}
+              cursor={{ stroke: mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', strokeWidth: 2 }}
+              contentStyle={{ borderRadius: 8, fontSize: 12, background: tooltipBg, border: `1px solid ${tooltipBorder}`, color: tooltipText }}
             />
             <Legend
-              wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+              wrapperStyle={{ fontSize: 12, paddingTop: 8, color: tick }}
               iconType="circle"
               iconSize={8}
             />
