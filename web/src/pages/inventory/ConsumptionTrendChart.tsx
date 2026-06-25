@@ -108,7 +108,7 @@ export default function ConsumptionTrendChart({ trend, loading }: ConsumptionTre
   const lubricantData = useMemo(() => buildChartData(trend, 'lubricant'), [trend]);
 
   return (
-    <Card elevation={1} sx={{ borderRadius: 2 }}>
+    <Card elevation={1} sx={{ borderRadius: 2, overflow: 'visible' }}>
       <CardContent sx={{ p: 2.5 }}>
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
           อัตราการใช้ 30 วันย้อนหลัง
