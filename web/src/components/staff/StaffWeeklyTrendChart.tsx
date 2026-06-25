@@ -4,6 +4,7 @@ import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis,
   CartesianGrid, Tooltip,
 } from 'recharts';
+import { useColorMode } from '../../contexts/ThemeContext';
 import type { WorkloadTrendRow } from '../../hooks/useStaffWorkloadTrend';
 
 const LINE_COLOR = '#66BB6A';
@@ -23,6 +24,13 @@ function formatWeek(isoDate: string): string {
 }
 
 export default function StaffWeeklyTrendChart({ data, loading, error }: Props) {
+  const { mode } = useColorMode();
+  const tick          = mode === 'dark' ? '#A0AEC0' : '#666666';
+  const grid          = mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#F0F0F0';
+  const tooltipBg     = mode === 'dark' ? '#1E2433' : '#ffffff';
+  const tooltipBorder = mode === 'dark' ? '#2D3748' : '#e0e0e0';
+  const tooltipText   = mode === 'dark' ? '#E2E8F0' : '#000000';
+
   // Pivot data: [{ week, จำนวนคำขอ: count }]
   const chartData = useMemo(() => {
     const byWeek = new Map<string, number>();
@@ -62,23 +70,23 @@ export default function StaffWeeklyTrendChart({ data, loading, error }: Props) {
   return (
     <ResponsiveContainer width="100%" height={220}>
       <LineChart data={chartData} margin={{ top: 4, right: 16, left: -8, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#F0F0F0" />
+        <CartesianGrid strokeDasharray="3 3" stroke={grid} />
         <XAxis
           dataKey="week"
           tickFormatter={formatWeek}
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: tick }}
           tickLine={false}
         />
         <YAxis
           allowDecimals={false}
-          tick={{ fontSize: 11 }}
+          tick={{ fontSize: 11, fill: tick }}
           tickLine={false}
           axisLine={false}
         />
         <Tooltip
           formatter={(value, name) => [value, name]}
           labelFormatter={(label) => `สัปดาห์ ${formatWeek(String(label))}`}
-          contentStyle={{ fontSize: 12, borderRadius: 8 }}
+          contentStyle={{ fontSize: 12, borderRadius: 8, background: tooltipBg, border: `1px solid ${tooltipBorder}`, color: tooltipText }}
         />
         <Line
           type="monotone"

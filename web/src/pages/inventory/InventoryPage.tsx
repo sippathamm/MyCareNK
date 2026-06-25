@@ -14,8 +14,10 @@ import GridViewIcon from '@mui/icons-material/GridView';
 import TableRowsIcon from '@mui/icons-material/TableRows';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
+import { alpha } from '@mui/material/styles';
 import { useInventoryForecast, type InventoryForecastRow } from '../../hooks/useInventoryForecast';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useColorMode } from '../../contexts/ThemeContext';
 import RestockModal from './RestockModal';
 import AdjustmentModal from './AdjustmentModal';
 import ConsumptionTrendChart from './ConsumptionTrendChart';
@@ -57,9 +59,9 @@ function daysLeftLabel(days: number | null): string {
   return `เหลือประมาณ ${days} วัน`;
 }
 
-function daysLeftTextColor(days: number | null): string {
+function daysLeftTextColor(days: number | null, mode: 'light' | 'dark'): string {
   const c = daysLeftColor(days);
-  if (c === 'success') return '#2E7D32';
+  if (c === 'success') return mode === 'dark' ? '#81C784' : '#2E7D32';
   return `${c}.main`;
 }
 
@@ -73,6 +75,7 @@ interface InventoryCardProps {
 }
 
 function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardProps) {
+  const { mode } = useColorMode();
   const condomPct = Math.min((row.condom_qty / MAX_DISPLAY_QTY) * 100, 100);
   const lubPct = Math.min((row.lubricant_qty / MAX_DISPLAY_QTY) * 100, 100);
   const condomColor = daysLeftColor(row.condom_days_left);
@@ -105,7 +108,9 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               label="ยังไม่ได้เติมสต็อก"
               size="small"
               icon={<WarningAmberIcon />}
-              sx={{ bgcolor: '#FFF7E6', color: '#FF9F6B', fontWeight: 600, fontSize: '0.7rem' }}
+              sx={mode === 'dark'
+                ? { bgcolor: alpha('#FF9F6B', 0.15), color: '#FFBE9E', fontWeight: 600, fontSize: '0.7rem' }
+                : { bgcolor: '#FFF7E6', color: '#FF9F6B', fontWeight: 600, fontSize: '0.7rem' }}
             />
           )}
           {!isZeroStock && isLowStock && (
@@ -113,7 +118,9 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               label="สต็อกต่ำ"
               size="small"
               icon={<WarningAmberIcon />}
-              sx={{ bgcolor: '#FFF0F0', color: '#EF7070', fontWeight: 600, fontSize: '0.7rem' }}
+              sx={mode === 'dark'
+                ? { bgcolor: alpha('#EF7070', 0.15), color: '#FC9E9E', fontWeight: 600, fontSize: '0.7rem' }
+                : { bgcolor: '#FFF0F0', color: '#EF7070', fontWeight: 600, fontSize: '0.7rem' }}
             />
           )}
         </Box>
@@ -130,11 +137,11 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
             variant="determinate"
             value={condomPct}
             color={condomColor}
-            sx={{ height: 8, borderRadius: 4, mb: 0.5, bgcolor: 'grey.100' }}
+            sx={{ height: 8, borderRadius: 4, mb: 0.5, bgcolor: 'action.hover' }}
           />
           <Typography
             variant="caption"
-            color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left)}
+            color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left, mode)}
           >
             {daysLeftLabel(row.condom_days_left)}
             {row.condom_daily_burn > 0 && ` (เฉลี่ย ${row.condom_daily_burn.toFixed(1)} ชิ้น/วัน)`}
@@ -151,11 +158,11 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
             variant="determinate"
             value={lubPct}
             color={lubColor}
-            sx={{ height: 8, borderRadius: 4, mb: 0.5, bgcolor: 'grey.100' }}
+            sx={{ height: 8, borderRadius: 4, mb: 0.5, bgcolor: 'action.hover' }}
           />
           <Typography
             variant="caption"
-            color={row.lubricant_days_left === null ? 'text.secondary' : daysLeftTextColor(row.lubricant_days_left)}
+            color={row.lubricant_days_left === null ? 'text.secondary' : daysLeftTextColor(row.lubricant_days_left, mode)}
           >
             {daysLeftLabel(row.lubricant_days_left)}
             {row.lubricant_daily_burn > 0 && ` (เฉลี่ย ${row.lubricant_daily_burn.toFixed(1)} ชิ้น/วัน)`}
@@ -195,6 +202,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 export default function InventoryPage() {
   const { forecast, trend, loading, error, refetch } = useInventoryForecast();
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
+  const { mode } = useColorMode();
   const [restockTarget, setRestockTarget] = useState<InventoryForecastRow | null>(null);
   const [adjustmentTarget, setAdjustmentTarget] = useState<InventoryForecastRow | null>(null);
 
@@ -278,7 +286,9 @@ export default function InventoryPage() {
               <Chip
                 label="ยังไม่ได้เติมสต็อก"
                 size="small"
-                sx={{ bgcolor: '#FFF7E6', color: '#FF9F6B', fontWeight: 600, fontSize: '0.7rem' }}
+                sx={mode === 'dark'
+                  ? { bgcolor: alpha('#FF9F6B', 0.15), color: '#FFBE9E', fontWeight: 600, fontSize: '0.7rem' }
+                  : { bgcolor: '#FFF7E6', color: '#FF9F6B', fontWeight: 600, fontSize: '0.7rem' }}
               />
             );
           }
@@ -287,7 +297,9 @@ export default function InventoryPage() {
               <Chip
                 label="สต็อกต่ำ"
                 size="small"
-                sx={{ bgcolor: '#FFF0F0', color: '#EF7070', fontWeight: 600, fontSize: '0.7rem' }}
+                sx={mode === 'dark'
+                  ? { bgcolor: alpha('#EF7070', 0.15), color: '#FC9E9E', fontWeight: 600, fontSize: '0.7rem' }
+                  : { bgcolor: '#FFF0F0', color: '#EF7070', fontWeight: 600, fontSize: '0.7rem' }}
               />
             );
           }
@@ -295,7 +307,9 @@ export default function InventoryPage() {
             <Chip
               label="เพียงพอ"
               size="small"
-              sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600, fontSize: '0.7rem' }}
+              sx={mode === 'dark'
+                ? { bgcolor: alpha('#66BB6A', 0.15), color: '#81C784', fontWeight: 600, fontSize: '0.7rem' }
+                : { bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600, fontSize: '0.7rem' }}
             />
           );
         },
@@ -309,7 +323,7 @@ export default function InventoryPage() {
             <Typography variant="body2">{row.condom_qty.toLocaleString()} ชิ้น</Typography>
             <Typography
               variant="caption"
-              color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left)}
+              color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left, mode)}
             >
               {daysLeftLabel(row.condom_days_left)}
             </Typography>
@@ -325,7 +339,7 @@ export default function InventoryPage() {
             <Typography variant="body2">{row.lubricant_qty.toLocaleString()} ชิ้น</Typography>
             <Typography
               variant="caption"
-              color={row.lubricant_days_left === null ? 'text.secondary' : daysLeftTextColor(row.lubricant_days_left)}
+              color={row.lubricant_days_left === null ? 'text.secondary' : daysLeftTextColor(row.lubricant_days_left, mode)}
             >
               {daysLeftLabel(row.lubricant_days_left)}
             </Typography>
@@ -358,7 +372,7 @@ export default function InventoryPage() {
     }
 
     return cols;
-  }, [canRestock]);
+  }, [canRestock, mode]);
 
   if (roleLoading) return null;
 
@@ -592,7 +606,7 @@ export default function InventoryPage() {
                   disableRowSelectionOnClick
                   sx={{
                     border: 'none',
-                    '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                    '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                     '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
                   }}
                 />

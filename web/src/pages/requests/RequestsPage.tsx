@@ -14,6 +14,8 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getRequestStatusSx } from '../../utils/statusColors';
 
 const thGridLocale = createThGridLocale('ไม่มีรายการคำขอ');
 
@@ -23,6 +25,7 @@ export default function RequestsPage() {
   const { requests, setRequests, loading } = useRequests();
   const { role, loading: roleLoading } = useRoleAccess();
   const { selectedServiceCenter } = useServiceCenterFilter();
+  const { mode } = useColorMode();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
@@ -43,16 +46,18 @@ export default function RequestsPage() {
     }
   }, [loading, openRequestId, requests, navigate, location.pathname]);
 
+  const STATUS_LABELS: Record<string, string> = {
+    pending:            'รอดำเนินการ',
+    preparing:          'กำลังเตรียม',
+    ready:              'รอรับ',
+    completed:          'เสร็จสิ้น',
+    cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
+    cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
+  };
+
   const getStatusChip = (status: string) => {
-    switch (status) {
-      case 'pending':            return <Chip label="รอดำเนินการ"        size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
-      case 'preparing':          return <Chip label="กำลังเตรียม"        size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
-      case 'ready':              return <Chip label="รอรับ"              size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
-      case 'completed':          return <Chip label="เสร็จสิ้น"          size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
-      case 'cancelled_by_user':  return <Chip label="ยกเลิกโดยผู้ใช้"    size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-      default: return <Chip label={status} size="small" />;
-    }
+    const label = STATUS_LABELS[status] ?? status;
+    return <Chip label={label} size="small" sx={getRequestStatusSx(status, mode)} />;
   };
 
   const handleOpenDialog = (req: RequestData) => {
@@ -246,7 +251,7 @@ export default function RequestsPage() {
               disableRowSelectionOnClick
               sx={{
                 border: 'none',
-                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
               }}
             />

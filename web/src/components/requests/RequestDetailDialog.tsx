@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, Tooltip, Stack } from '@mui/material';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getRequestStatusSx } from '../../utils/statusColors';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import MoveToInboxOutlinedIcon from '@mui/icons-material/MoveToInboxOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -48,6 +50,7 @@ interface QRDialogState {
 }
 
 export default function RequestDetailDialog({ open, request, onClose, onStatusChange, statusUpdating = false }: RequestDetailDialogProps) {
+  const { mode } = useColorMode();
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [isConfirmingPrepare, setIsConfirmingPrepare] = useState(false);
@@ -152,14 +155,11 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
               <Box display="flex" justifyContent="space-between" alignItems="center">
                 <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
                 {(() => {
-                  switch (request.request_status) {
-                    case 'pending':            return <Chip label="รอดำเนินการ"        size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
-                    case 'preparing':          return <Chip label="กำลังเตรียม"        size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
-                    case 'ready':              return <Chip label="รอรับ"              size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
-                    case 'completed':          return <Chip label="เสร็จสิ้น"          size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
-                    case 'cancelled_by_user':  return <Chip label="ยกเลิกโดยผู้ใช้"    size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-                    case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-                  }
+                  const labels: Record<string, string> = {
+                    pending: 'รอดำเนินการ', preparing: 'กำลังเตรียม', ready: 'รอรับ',
+                    completed: 'เสร็จสิ้น', cancelled_by_user: 'ยกเลิกโดยผู้ใช้', cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
+                  };
+                  return <Chip label={labels[request.request_status] ?? request.request_status} size="small" sx={getRequestStatusSx(request.request_status, mode)} />;
                 })()}
               </Box>
               {request.handled_by_name && (
@@ -294,7 +294,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         body={
           <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
             <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น</Typography>
-            <Chip label="กำลังเตรียม" size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />
+            <Chip label="กำลังเตรียม" size="small" sx={getRequestStatusSx('preparing', mode)} />
             <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
           </Stack>
         }
@@ -313,7 +313,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         body={
           <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
             <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น</Typography>
-            <Chip label="รอรับ" size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />
+            <Chip label="รอรับ" size="small" sx={getRequestStatusSx('ready', mode)} />
             <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
           </Stack>
         }
@@ -332,7 +332,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
         body={
           <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
             <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น</Typography>
-            <Chip label="เสร็จสิ้น" size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />
+            <Chip label="เสร็จสิ้น" size="small" sx={getRequestStatusSx('completed', mode)} />
             <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
           </Stack>
         }

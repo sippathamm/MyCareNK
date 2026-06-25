@@ -121,7 +121,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
         {/* Current → After preview */}
         <Box
           sx={{
-            bgcolor: 'grey.50',
+            bgcolor: 'action.hover',
             borderRadius: 1.5,
             p: 1.5,
             mb: 2.5,

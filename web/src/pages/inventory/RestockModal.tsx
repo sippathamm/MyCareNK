@@ -90,7 +90,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
         {/* Current stock info */}
         <Box
           sx={{
-            bgcolor: 'grey.50',
+            bgcolor: 'action.hover',
             borderRadius: 1.5,
             p: 1.5,
             mb: 2.5,

@@ -15,6 +15,8 @@ import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import { useServiceCenters, type ServiceCenterRow } from '../../hooks/useServiceCenters';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import ServiceCenterEditDialog from '../../components/inventory/ServiceCenterEditDialog';
+import { alpha } from '@mui/material/styles';
+import { useColorMode } from '../../contexts/ThemeContext';
 
 const PAGE_SIZE = 6;
 
@@ -24,15 +26,20 @@ type SortBy = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
 function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdit: () => void }) {
+  const { mode } = useColorMode();
   const firstTwoContacts = center.contacts.slice(0, 2);
   const hasLocation = center.latitude !== null && center.longitude !== null;
 
   const chipSx = (active: boolean) => ({
     height: 20,
     fontSize: '0.65rem',
-    bgcolor: active ? '#FFF7ED' : '#F5F5F5',
+    bgcolor: active
+      ? mode === 'dark' ? alpha('#EA580C', 0.15) : '#FFF7ED'
+      : mode === 'dark' ? alpha('#9E9E9E', 0.12) : '#F5F5F5',
     color: active ? '#EA580C' : '#9E9E9E',
-    border: `1px solid ${active ? '#FDBA74' : '#E0E0E0'}`,
+    border: `1px solid ${active
+      ? mode === 'dark' ? alpha('#EA580C', 0.4) : '#FDBA74'
+      : mode === 'dark' ? alpha('#9E9E9E', 0.3) : '#E0E0E0'}`,
   });
 
   return (
@@ -108,10 +115,12 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
             icon={<LocationOnIcon />}
             label={hasLocation ? `${center.latitude!.toFixed(4)}, ${center.longitude!.toFixed(4)}` : 'ยังไม่มีตำแหน่ง'}
             sx={{
-              bgcolor: hasLocation ? '#E8F5E9' : '#F5F5F5',
-              color: hasLocation ? '#2E7D32' : '#9E9E9E',
+              bgcolor: hasLocation
+                ? mode === 'dark' ? alpha('#81C784', 0.2) : '#E8F5E9'
+                : mode === 'dark' ? alpha('#9E9E9E', 0.12) : '#F5F5F5',
+              color: hasLocation ? (mode === 'dark' ? '#81C784' : '#2E7D32') : '#9E9E9E',
               fontSize: '0.7rem',
-              '& .MuiChip-icon': { color: hasLocation ? '#2E7D32' : '#9E9E9E', fontSize: 14 },
+              '& .MuiChip-icon': { color: hasLocation ? (mode === 'dark' ? '#81C784' : '#2E7D32') : '#9E9E9E', fontSize: 14 },
             }}
           />
         </Box>

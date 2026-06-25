@@ -14,8 +14,10 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { alpha } from '@mui/material/styles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useAuth } from '../../hooks/useAuth';
+import { useColorMode } from '../../contexts/ThemeContext';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
@@ -32,11 +34,22 @@ const ROLE_OPTIONS = [
   { value: 'superadmin', label: 'ผู้ดูแลสูงสุด' },
 ] as const;
 
-const ROLE_CHIP_SX: Record<string, { bgcolor: string; color: string }> = {
-  superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
-  admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
-  staff:      { bgcolor: '#F5F5F5', color: '#616161' },
-};
+function getRoleChipSx(role: string, mode: 'light' | 'dark'): { bgcolor: string; color: string } {
+  if (mode === 'dark') {
+    const dark: Record<string, { bgcolor: string; color: string }> = {
+      superadmin: { bgcolor: alpha('#EF5350', 0.15), color: '#EF9A9A' },
+      admin:      { bgcolor: alpha('#FF9F6B', 0.15), color: '#FFBE9E' },
+      staff:      { bgcolor: alpha('#9E9E9E', 0.15), color: '#BDBDBD' },
+    };
+    return dark[role] ?? dark.staff;
+  }
+  const light: Record<string, { bgcolor: string; color: string }> = {
+    superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
+    admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
+    staff:      { bgcolor: '#F5F5F5', color: '#616161' },
+  };
+  return light[role] ?? light.staff;
+}
 
 const ROLE_LABEL: Record<string, string> = {
   staff: 'เจ้าหน้าที่',
@@ -81,6 +94,7 @@ interface AddStaffDialogProps {
 }
 
 function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
+  const { mode } = useColorMode();
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -190,7 +204,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
               รหัสผ่านนี้จะแสดงเพียงครั้งเดียว กรุณาคัดลอกและแจ้งให้เจ้าหน้าที่ทราบ
             </Alert>
             {error && <Alert severity="error">{error}</Alert>}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'grey.100', borderRadius: 2, px: 2, py: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'action.hover', borderRadius: 2, px: 2, py: 1.5 }}>
               <Typography fontFamily="monospace" fontWeight="bold" sx={{ flex: 1, wordBreak: 'break-all' }}>
                 {password}
               </Typography>
@@ -218,7 +232,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle2" color="text.secondary">ระดับสิทธิ์</Typography>
-                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...(ROLE_CHIP_SX[role] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }} />
+                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...getRoleChipSx(role, mode), fontWeight: 600 }} />
               </Box>
             </Box>
           </Box>
@@ -260,6 +274,7 @@ interface EditStaffDialogProps {
 }
 
 function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
+  const { mode } = useColorMode();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -470,9 +485,9 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
               <Typography variant="body2" color="text.secondary">คุณกำลังลดระดับสิทธิ์จาก</Typography>
-              <Chip label={ROLE_LABEL[staff?.role ?? '']} size="small" sx={{ fontWeight: 600, ...(ROLE_CHIP_SX[staff?.role ?? ''] ?? {}) }} />
+              <Chip label={ROLE_LABEL[staff?.role ?? '']} size="small" sx={{ fontWeight: 600, ...getRoleChipSx(staff?.role ?? '', mode) }} />
               <Typography variant="body2" color="text.secondary">เป็น</Typography>
-              <Chip label={ROLE_LABEL[role]} size="small" sx={{ fontWeight: 600, ...(ROLE_CHIP_SX[role] ?? {}) }} />
+              <Chip label={ROLE_LABEL[role]} size="small" sx={{ fontWeight: 600, ...getRoleChipSx(role, mode) }} />
             </Stack>
             <Typography variant="body2" color="text.secondary">การดำเนินการนี้อาจส่งผลต่อการเข้าถึงระบบของเจ้าหน้าที่</Typography>
           </Box>
@@ -492,6 +507,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 export default function StaffManagementPage() {
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { session } = useAuth();
+  const { mode } = useColorMode();
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
   const { centers } = useServiceCenters();
@@ -540,7 +556,7 @@ export default function StaffManagementPage() {
         <Chip
           label={ROLE_LABEL[params.value as string] ?? params.value}
           size="small"
-          sx={{ ...(ROLE_CHIP_SX[params.value as string] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }}
+          sx={{ ...getRoleChipSx(params.value as string, mode), fontWeight: 600 }}
         />
       ),
     },
@@ -614,7 +630,7 @@ export default function StaffManagementPage() {
             getRowHeight={() => 56}
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />

@@ -14,6 +14,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import NotificationsIcon from '@mui/icons-material/Notifications';
 import MenuIcon from '@mui/icons-material/Menu';
 import MenuOpenIcon from '@mui/icons-material/MenuOpen';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LightModeIcon from '@mui/icons-material/LightMode';
 import InventoryIcon from '@mui/icons-material/Inventory2';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -37,6 +39,7 @@ declare const __APP_VERSION__: string;
 const getWebBranch = (v: string): string =>
   v.includes('-preview') ? 'preview' : v.includes('-dev') ? 'dev' : 'main';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useColorMode } from '../../contexts/ThemeContext';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useNotification, STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, STOCK_OPERATION_CONFIG, STAFF_MANAGEMENT_CONFIG, type RequestStatus, type AppointmentEventType } from '../../contexts/NotificationContext';
 import { ServiceCenterFilterContext } from '../../contexts/ServiceCenterFilterContext';
@@ -59,6 +62,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const { mode, toggleMode } = useColorMode();
   const { role, profile, loading, serviceCenters, isSuperadmin } = useRoleAccess();
   const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, closeToast } = useNotification();
   const toastCfg = toastIsAppointment
@@ -175,7 +179,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
         sx={{
           width: `calc(100% - ${drawerWidth}px)`,
           ml: `${drawerWidth}px`,
-          backgroundColor: 'white',
+          bgcolor: 'background.paper',
           color: 'text.primary',
           boxShadow: 1,
           transition: 'width 0.3s ease, margin-left 0.3s ease',
@@ -192,6 +196,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
           </IconButton>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {/* Dark / Light mode toggle */}
+            <IconButton
+              onClick={toggleMode}
+              size="large"
+              color="inherit"
+              aria-label={mode === 'dark' ? 'สลับโหมดสว่าง' : 'สลับโหมดมืด'}
+            >
+              {mode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+            </IconButton>
+
             {/* Notification Bell */}
             <IconButton
               ref={bellRef}

@@ -10,6 +10,19 @@ import { useServiceCenterDemand } from '../../hooks/useServiceCenterDemand';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
 import { getServiceCenterColor } from '../../lib/serviceCenterColor';
+import { useColorMode } from '../../contexts/ThemeContext';
+
+function useChartColors() {
+  const { mode } = useColorMode();
+  return {
+    tick:        mode === 'dark' ? '#A0AEC0' : '#666666',
+    grid:        mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+    tooltipBg:   mode === 'dark' ? '#1E2433' : '#ffffff',
+    tooltipBorder: mode === 'dark' ? '#2D3748' : '#e0e0e0',
+    tooltipText: mode === 'dark' ? '#E2E8F0' : '#000000',
+    barCursor:   mode === 'dark' ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+  };
+}
 
 const STATUS_COLORS = {
   pending: '#FF9F6B',
@@ -52,14 +65,15 @@ function ColoredYTick({ x, y, payload, index }: { x?: number; y?: number; payloa
 }
 
 function BarTooltip({ active, payload, label }: TooltipContentProps) {
+  const c = useChartColors();
   if (!active || !payload?.length) return null;
   return (
-    <Box sx={{ bgcolor: 'white', border: 'none', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5, minWidth: 140 }}>
-      <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>{label}</Typography>
+    <Box sx={{ bgcolor: c.tooltipBg, border: `1px solid ${c.tooltipBorder}`, color: c.tooltipText, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', p: 1.5, minWidth: 140 }}>
+      <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5, color: 'inherit' }}>{label}</Typography>
       {payload.map((entry, i) => (
         <Box key={i} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
           <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: entry.fill }} />
-          <Typography variant="caption">{entry.name}: {entry.value}</Typography>
+          <Typography variant="caption" sx={{ color: 'inherit' }}>{entry.name}: {entry.value}</Typography>
         </Box>
       ))}
     </Box>
@@ -81,13 +95,14 @@ function formatLeadTime(minutes: number | null | undefined): string {
 }
 
 function LeadTimeBarTooltip({ active, payload }: TooltipContentProps) {
+  const c = useChartColors();
   if (!active || !payload?.length) return null;
   return (
-    <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
-      <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
+    <Box sx={{ bgcolor: c.tooltipBg, border: `1px solid ${c.tooltipBorder}`, color: c.tooltipText, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', p: 1.5 }}>
+      <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5, color: 'inherit' }}>
         {payload[0]?.payload?.name}
       </Typography>
-      <Typography variant="caption">{formatLeadTime(payload[0]?.value as number)}</Typography>
+      <Typography variant="caption" sx={{ color: 'inherit' }}>{formatLeadTime(payload[0]?.value as number)}</Typography>
     </Box>
   );
 }
@@ -119,6 +134,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
   const { profile, role, isSuperadmin } = useRoleAccess();
   const displayName = profile?.first_name || session?.user?.email?.split('@')[0] || 'เจ้าหน้าที่';
   const { selectedServiceCenter } = useServiceCenterFilter();
+  const c = useChartColors();
   const { statusCounts, monthlyStatusCounts, weeklyData, loading } = useDashboard(selectedServiceCenter);
 
   const isAdmin = role === 'admin';
@@ -214,11 +230,11 @@ export default function DashboardPage({ session }: DashboardPageProps) {
               </Typography>
               <ResponsiveContainer width="100%" height="85%">
                 <BarChart data={weeklyData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} />
-                  <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: 'rgba(0,0,0,0.05)' }} content={BarTooltip} />
-                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} iconType="circle" />
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={c.grid} />
+                  <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: c.tick }} />
+                  <YAxis tickLine={false} axisLine={false} allowDecimals={false} tick={{ fill: c.tick }} />
+                  <Tooltip cursor={{ fill: c.barCursor }} content={BarTooltip} />
+                  <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px', color: c.tick }} iconType="circle" />
                   {BAR_STATUS_ITEMS.map(({ key, name }, idx) => (
                     <Bar
                       key={key}
@@ -258,7 +274,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                     ))}
                   </Pie>
                   <Tooltip
-                    contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
+                    contentStyle={{ borderRadius: 8, border: `1px solid ${c.tooltipBorder}`, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', background: c.tooltipBg, color: c.tooltipText }}
                   />
                   <Legend
                     layout="horizontal"
@@ -266,7 +282,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                     align="center"
                     height={72}
                     iconType="circle"
-                    wrapperStyle={{ fontSize: '13px', paddingTop: '10px' }}
+                    wrapperStyle={{ fontSize: '13px', paddingTop: '10px', color: c.tick }}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -365,11 +381,11 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                     data={breakdownData}
                     margin={{ top: 4, right: 120, left: 8, bottom: 4 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} unit=" นาที" />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke={c.grid} />
+                    <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} unit=" นาที" tick={{ fill: c.tick }} />
                     <YAxis type="category" dataKey="name" tickLine={false} axisLine={false} width={180} tick={<ColoredYTick />} />
-                    <Tooltip content={LeadTimeBarTooltip} cursor={{ fill: 'rgba(0,0,0,0.05)' }} />
-                    <Bar dataKey="minutes" radius={[0, 4, 4, 0]} minPointSize={4} label={{ position: 'right', fontSize: 11, fill: '#666', formatter: (v: unknown) => typeof v === 'number' ? formatLeadTime(v) : String(v) }}>
+                    <Tooltip content={LeadTimeBarTooltip} cursor={{ fill: c.barCursor }} />
+                    <Bar dataKey="minutes" radius={[0, 4, 4, 0]} minPointSize={4} label={{ position: 'right', fontSize: 11, fill: c.tick, formatter: (v: unknown) => typeof v === 'number' ? formatLeadTime(v) : String(v) }}>
                       {breakdownData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={entry.fill} />
                       ))}
@@ -402,22 +418,22 @@ export default function DashboardPage({ session }: DashboardPageProps) {
               ) : (
                 <ResponsiveContainer width="100%" height="85%">
                   <BarChart data={hourlyChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} interval={1} />
-                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={c.grid} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 11, fill: c.tick }} interval={1} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} tick={{ fill: c.tick }} />
                     <Tooltip
-                      cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                      cursor={{ fill: c.barCursor }}
                       content={({ active, payload }) => {
                         if (!active || !payload?.length) return null;
                         const d = payload[0].payload;
                         const h = d.bucket;
                         const hNext = String(Number(h) + 1).padStart(2, '0');
                         return (
-                          <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
-                            <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
+                          <Box sx={{ bgcolor: c.tooltipBg, border: `1px solid ${c.tooltipBorder}`, color: c.tooltipText, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', p: 1.5 }}>
+                            <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5, color: 'inherit' }}>
                               {h}:00 น. – {hNext}:00 น.
                             </Typography>
-                            <Typography variant="caption">{d.count} คำขอ</Typography>
+                            <Typography variant="caption" sx={{ color: 'inherit' }}>{d.count} คำขอ</Typography>
                           </Box>
                         );
                       }}
@@ -455,20 +471,20 @@ export default function DashboardPage({ session }: DashboardPageProps) {
               ) : (
                 <ResponsiveContainer width="100%" height="85%">
                   <BarChart data={dailyChartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={c.grid} />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12, fill: c.tick }} />
+                    <YAxis tickLine={false} axisLine={false} allowDecimals={false} tick={{ fill: c.tick }} />
                     <Tooltip
-                      cursor={{ fill: 'rgba(0,0,0,0.05)' }}
+                      cursor={{ fill: c.barCursor }}
                       content={({ active, payload }) => {
                         if (!active || !payload?.length) return null;
                         const d = payload[0].payload;
                         return (
-                          <Box sx={{ bgcolor: 'white', borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.1)', p: 1.5 }}>
-                            <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5 }}>
+                          <Box sx={{ bgcolor: c.tooltipBg, border: `1px solid ${c.tooltipBorder}`, color: c.tooltipText, borderRadius: 2, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', p: 1.5 }}>
+                            <Typography variant="caption" fontWeight="bold" display="block" sx={{ mb: 0.5, color: 'inherit' }}>
                               {d.label}
                             </Typography>
-                            <Typography variant="caption">{d.count} คำขอ</Typography>
+                            <Typography variant="caption" sx={{ color: 'inherit' }}>{d.count} คำขอ</Typography>
                           </Box>
                         );
                       }}
@@ -549,7 +565,7 @@ export default function DashboardPage({ session }: DashboardPageProps) {
                         </Box>
                         <Box component="td" sx={{ py: 1.5, pr: 3, minWidth: 200 }}>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Box sx={{ flex: 1, bgcolor: 'grey.100', borderRadius: 1, height: 8, overflow: 'hidden' }}>
+                            <Box sx={{ flex: 1, bgcolor: 'action.selected', borderRadius: 1, height: 8, overflow: 'hidden' }}>
                               <Box sx={{ width: `${barPct}%`, height: '100%', bgcolor: color, borderRadius: 1, transition: 'width 0.4s ease' }} />
                             </Box>
                             <Typography variant="caption" color="text.secondary" sx={{ minWidth: 36, textAlign: 'right' }}>

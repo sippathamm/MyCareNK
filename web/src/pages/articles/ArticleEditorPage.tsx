@@ -42,6 +42,8 @@ import CharacterCount from '@tiptap/extension-character-count';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import { formatDateTime } from '../../utils/requestUtils';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getArticleStatusSx, ARTICLE_STATUS_LABELS } from '../../utils/statusColors';
 import {
   type ArticleStatus, type ArticleDetail, type ContentPayload,
   fetchArticleDetail, createArticle,
@@ -149,6 +151,7 @@ export default function ArticleEditorPage() {
   const isEditMode = !!articleId;
   const { session } = useAuth();
   const { role, loading: roleLoading } = useRoleAccess();
+  const { mode } = useColorMode();
 
   const userId = session?.user?.id ?? '';
 
@@ -636,14 +639,14 @@ export default function ArticleEditorPage() {
   // ─── Status chip label ─────────────────────────────────────────────────────
 
   function statusChip() {
-    const map: Record<string, { label: string; color: 'warning' | 'success' | 'default' }> = {
-      draft:     { label: 'ร่าง',         color: 'warning' },
-      published: { label: 'เผยแพร่แล้ว',  color: 'success' },
-      hidden:    { label: 'ซ่อน',          color: 'default' },
-    };
-    const cfg = articleStatus ? map[articleStatus] : null;
-    if (!cfg) return null;
-    return <Chip label={cfg.label} color={cfg.color} size="small" />;
+    if (!articleStatus) return null;
+    return (
+      <Chip
+        label={ARTICLE_STATUS_LABELS[articleStatus] ?? articleStatus}
+        size="small"
+        sx={getArticleStatusSx(articleStatus, mode)}
+      />
+    );
   }
 
   // ─── Action buttons by scenario ────────────────────────────────────────────
@@ -938,9 +941,16 @@ export default function ArticleEditorPage() {
               {/* Status + unpublished badge */}
               {(!isEditMode || !!articleStatus) && (
                 <Stack direction="row" spacing={1} alignItems="center" mb={1.5} flexWrap="wrap">
-                  {isEditMode ? statusChip() : <Chip label="ร่าง" color="warning" size="small" />}
+                  {isEditMode ? statusChip() : <Chip label={ARTICLE_STATUS_LABELS.draft} size="small" sx={getArticleStatusSx('draft', mode)} />}
                   {hasDraft && articleStatus === 'published' && (
-                    <Chip label="มีการแก้ไขที่ยังไม่ได้เผยแพร่" size="small" color="warning" variant="outlined" />
+                    <Chip
+                      label="มีการแก้ไขที่ยังไม่ได้เผยแพร่"
+                      size="small"
+                      variant="outlined"
+                      sx={mode === 'dark'
+                        ? { borderColor: '#FF8A50', color: '#FF8A50', fontWeight: 600 }
+                        : { borderColor: '#E65100', color: '#E65100', fontWeight: 600 }}
+                    />
                   )}
                 </Stack>
               )}
