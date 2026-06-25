@@ -20,11 +20,12 @@ function formatDateTime(iso: string): string {
 // ─── Field display name map ───────────────────────────────────────────────────
 
 const FIELD_LABEL: Record<string, string> = {
-  first_name:     'ชื่อ',
-  last_name:      'นามสกุล',
-  email:          'อีเมล',
-  service_center: 'สถานบริการ',
-  role:           'ระดับสิทธิ์',
+  first_name:      'ชื่อ',
+  last_name:       'นามสกุล',
+  email:           'อีเมล',
+  service_centers: 'สถานบริการ',
+  service_center:  'สถานบริการ',
+  role:            'ระดับสิทธิ์',
 };
 
 const ROLE_LABEL: Record<string, string> = {
@@ -35,16 +36,18 @@ const ROLE_LABEL: Record<string, string> = {
 
 const formatFieldValue = (key: string, value: unknown): string => {
   if (value === null || value === undefined) return '—';
+  if (Array.isArray(value)) return value.length === 0 ? '—' : value.join(', ');
   if (key === 'role') return ROLE_LABEL[String(value)] ?? String(value);
-  return String(value);
+  const str = String(value);
+  return str === '' ? '—' : str;
 };
 
 const fieldLabel = (key: string) => FIELD_LABEL[key] ?? key;
 
 // ─── Field group definitions ──────────────────────────────────────────────────
 
-const PROFILE_FIELD_SET   = new Set(['first_name', 'last_name', 'email', 'service_center']);
-const PROFILE_FIELD_ORDER = ['first_name', 'last_name', 'email', 'service_center'];
+const PROFILE_FIELD_SET   = new Set(['first_name', 'last_name', 'email', 'service_centers', 'service_center']);
+const PROFILE_FIELD_ORDER = ['first_name', 'last_name', 'email', 'service_centers', 'service_center'];
 const ROLE_FIELD_SET      = new Set(['role']);
 
 // ─── Data rows ────────────────────────────────────────────────────────────────
