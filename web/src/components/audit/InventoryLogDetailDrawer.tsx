@@ -5,10 +5,18 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useColorMode } from '../../contexts/ThemeContext';
 import { getDeltaChipSx } from '../../utils/statusColors';
 import type { InventoryLogRow } from '../../hooks/useInventoryLog';
+import { alpha } from '@mui/material/styles';
 import {
   AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR, AUDIT_ACTION_LABEL,
 } from '../../constants/auditLogActions';
 import type { AuditAction } from '../../constants/auditLogActions';
+
+const AUDIT_ACTION_DARK: Record<string, { bg: string; color: string }> = {
+  restock:    { bg: alpha('#2E7D32', 0.2), color: '#81C784' },
+  fulfillment: { bg: alpha('#1565C0', 0.2), color: '#90CAF9' },
+  adjustment: { bg: alpha('#E65100', 0.2), color: '#FFBE9E' },
+};
+const AUDIT_ACTION_DARK_FALLBACK = { bg: alpha('#9E9E9E', 0.15), color: '#BDBDBD' };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -42,8 +50,11 @@ interface Props {
 }
 
 export default function InventoryLogDetailDrawer({ row, onClose }: Props) {
+  const { mode } = useColorMode();
   const actionCfg = row
-    ? (AUDIT_ACTION_COLOR[row.action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR)
+    ? (mode === 'dark'
+        ? (AUDIT_ACTION_DARK[row.action] ?? AUDIT_ACTION_DARK_FALLBACK)
+        : (AUDIT_ACTION_COLOR[row.action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR))
     : null;
   const actionLabel = row
     ? (AUDIT_ACTION_LABEL[row.action as AuditAction] ?? row.action)
