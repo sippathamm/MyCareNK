@@ -10,6 +10,7 @@ import UpdatePasswordPage from './pages/auth/UpdatePasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import RequestsPage from './pages/requests/RequestsPage';
 import StaffManagementPage from './pages/staff/StaffManagementPage';
+import StaffDirectoryPage from './pages/staff/StaffDirectoryPage';
 import StaffWorkloadPage from './pages/staff/StaffWorkloadPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
@@ -80,6 +81,7 @@ function App() {
                   <Route path="requests" element={<RequestsPage />} />
                   <Route path="appointments" element={<AppointmentsPage />} />
                   <Route path="staff" element={<StaffManagementPage />} />
+                  <Route path="staff-directory" element={<StaffDirectoryPage />} />
                   <Route path="staff-workload" element={<StaffWorkloadPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
