@@ -116,9 +116,9 @@ export default function StaffDirectoryPage() {
 
   return (
     <Box>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h5" fontWeight="bold">เจ้าหน้าที่</Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+      <Box mb={4}>
+        <Typography variant="h5" fontWeight="bold" gutterBottom>เจ้าหน้าที่</Typography>
+        <Typography variant="body1" color="text.secondary">
           รายชื่อเจ้าหน้าที่ในสถานบริการของคุณ
         </Typography>
       </Box>
