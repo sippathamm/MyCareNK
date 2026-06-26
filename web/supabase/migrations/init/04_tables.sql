@@ -271,13 +271,22 @@ CREATE TABLE public.staff_notifications (
 
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
--- staff: own SC; admin: own SC; superadmin: all — each filtered by notify_* flag
+-- staff: own SC; admin: own SC; superadmin: all — each filtered by notify_* flag and join date cutoff
 CREATE POLICY "Staff can read their own notifications"
   ON public.staff_notifications FOR SELECT TO authenticated
   USING (
-    (is_superadmin() AND notify_superadmin)
-    OR (is_admin() AND NOT is_superadmin() AND notify_admin AND service_center = ANY(get_my_service_centers()))
-    OR (NOT is_admin() AND NOT is_superadmin() AND notify_staff AND service_center = ANY(get_my_service_centers()))
+    staff_notifications.created_at >= (
+      SELECT COALESCE(sp.created_at, '-infinity'::timestamptz)
+      FROM public.staff_profiles sp
+      WHERE sp.staff_user_id = (SELECT auth.uid())
+    )
+    AND (
+      (is_superadmin() AND notify_superadmin)
+      OR (is_admin() AND NOT is_superadmin() AND notify_admin
+          AND service_center = ANY(get_my_service_centers()))
+      OR (NOT is_admin() AND NOT is_superadmin() AND notify_staff
+          AND service_center = ANY(get_my_service_centers()))
+    )
   );
 
 CREATE POLICY "Staff can delete their own notifications"
