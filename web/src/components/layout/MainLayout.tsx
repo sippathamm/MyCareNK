@@ -155,6 +155,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
     { text: 'รายการคำขอ', icon: <ReceiptIcon />, path: '/requests', show: true },
     { text: 'รายการนัดหมาย', icon: <CalendarMonthIcon />, path: '/appointments', show: true },
     { text: 'สต็อกและพยากรณ์', icon: <InventoryIcon />, path: '/inventory', show: true },
+    { text: 'เจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff-directory', show: role === 'staff' },
     { text: 'จัดการสถานบริการ', icon: <StorefrontIcon />, path: '/service-centers', show: role === 'superadmin' },
     { text: 'ภาระงานเจ้าหน้าที่', icon: <AssessmentIcon />, path: '/staff-workload', show: role === 'admin' || role === 'superadmin' },
     { text: 'จัดการเจ้าหน้าที่', icon: <PeopleIcon />, path: '/staff', show: role === 'admin' || role === 'superadmin' },
