@@ -127,17 +127,24 @@ export default function StaffDirectoryPage() {
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
-      <Paper elevation={1} sx={{ borderRadius: 2, overflow: 'hidden' }}>
-        <DataGrid
-          rows={staff}
-          columns={columns}
-          loading={loading}
-          sx={{ height: 500, border: 0 }}
-          initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
-          pageSizeOptions={[10]}
-          localeText={thGridLocale}
-          disableRowSelectionOnClick
-        />
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+        <Box sx={{ height: 500, width: '100%' }}>
+          <DataGrid
+            rows={staff}
+            columns={columns}
+            loading={loading}
+            initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
+            pageSizeOptions={[10]}
+            localeText={thGridLocale}
+            disableRowSelectionOnClick
+            getRowHeight={() => 56}
+            sx={{
+              border: 'none',
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
+              '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
+            }}
+          />
+        </Box>
       </Paper>
     </Box>
   );
