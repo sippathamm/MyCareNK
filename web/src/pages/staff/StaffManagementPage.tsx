@@ -133,9 +133,7 @@ function NotificationSettingsSection() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [sectionOpen, setSectionOpen] = useState(false);
-  const [openGroups, setOpenGroups] = useState<Set<string>>(
-    () => new Set(NOTIF_GROUPS.map(g => g.source_type))
-  );
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
   useEffect(() => { setDraft(settings); }, [settings]);
 
