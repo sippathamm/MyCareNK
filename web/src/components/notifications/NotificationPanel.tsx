@@ -17,11 +17,14 @@ import {
   APPOINTMENT_STATUS_CONFIG,
   STOCK_OPERATION_CONFIG,
   STAFF_MANAGEMENT_CONFIG,
+  SERVICE_CENTER_MANAGEMENT_CONFIG,
   isAppointmentNotification,
   isStockNotification,
   isStaffManagementNotification,
+  isServiceCenterManagementNotification,
   renderStockMessageJSX,
   renderStaffManagementMessageJSX,
+  renderServiceCenterManagementMessageJSX,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -37,6 +40,9 @@ function getNotifConfig(item: NotificationItem) {
   }
   if (isStaffManagementNotification(item)) {
     return STAFF_MANAGEMENT_CONFIG;
+  }
+  if (isServiceCenterManagementNotification(item)) {
+    return SERVICE_CENTER_MANAGEMENT_CONFIG;
   }
   return STATUS_CONFIG[item.event_type as RequestStatus];
 }
@@ -79,6 +85,8 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
       navigate('/inventory');
     } else if (isStaffManagementNotification(item)) {
       navigate('/staff');
+    } else if (isServiceCenterManagementNotification(item)) {
+      navigate('/service-centers');
     } else {
       navigate('/requests', { state: { openRequestId: item.source_id } });
     }
@@ -128,7 +136,8 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
               const cfg = getNotifConfig(item);
               const isStock = isStockNotification(item);
               const isStaffMgmt = isStaffManagementNotification(item);
-              const isSystem = isStock || isStaffMgmt;
+              const isSCMgmt = isServiceCenterManagementNotification(item);
+              const isSystem = isStock || isStaffMgmt || isSCMgmt;
               const jsxMessage = isStock
                 ? renderStockMessageJSX(
                     item.metadata as { actor_name: string; service_center_name: string; action_type: string },
@@ -136,7 +145,9 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                   )
                 : isStaffMgmt
                   ? renderStaffManagementMessageJSX(item.metadata as { actor_name: string; target_name: string; action_type: string })
-                  : null;
+                  : isSCMgmt
+                    ? renderServiceCenterManagementMessageJSX(item.metadata as { actor_name: string; action_type: string; service_center_name: string })
+                    : null;
               return (
                 <Box key={item.id}>
                   <ListItemButton
