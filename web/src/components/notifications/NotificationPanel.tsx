@@ -25,6 +25,7 @@ import {
   renderStockMessageJSX,
   renderStaffManagementMessageJSX,
   renderServiceCenterManagementMessageJSX,
+  getNotifTitle,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -172,7 +173,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                           sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
                           noWrap
                         >
-                          {isSystem ? 'ระบบ' : cfg.label}
+                          {getNotifTitle(item)}
                         </Typography>
                         {!item.is_read && (
                           <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
@@ -188,8 +189,8 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                         </Typography>
                       )}
                       {!isSystem && (
-                        <Typography variant="caption" color="text.primary" fontWeight="bold" sx={{ display: 'block' }} noWrap>
-                          {(item.metadata as { reference_number?: string })?.reference_number}
+                        <Typography variant="caption" color="text.primary" sx={{ display: 'block' }} noWrap>
+                          {cfg?.label}
                         </Typography>
                       )}
                       <Typography variant="caption" color="text.disabled">

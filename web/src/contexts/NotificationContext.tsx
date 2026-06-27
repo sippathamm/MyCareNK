@@ -482,6 +482,27 @@ export function renderStaffManagementMessageJSX(
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function getNotifTitle(item: NotificationItem): string {
+  if (isStockNotification(item)) {
+    return item.event_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  }
+  if (isStaffManagementNotification(item)) {
+    const titles: Record<string, string> = {
+      add:          'เพิ่มเจ้าหน้าที่',
+      remove:       'ลบเจ้าหน้าที่',
+      edit_profile: 'แก้ไขโปรไฟล์เจ้าหน้าที่',
+      edit_email:   'แก้ไขอีเมลเจ้าหน้าที่',
+      edit_role:    'แก้ไขระดับสิทธิ์',
+    };
+    return titles[item.event_type] ?? item.event_type;
+  }
+  if (isServiceCenterManagementNotification(item)) {
+    return item.event_type === 'add' ? 'เพิ่มสถานบริการ' : 'ลบสถานบริการ';
+  }
+  return (item.metadata as { reference_number?: string })?.reference_number ?? '';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export function buildServiceCenterManagementMessage(
   metadata: { actor_name: string; action_type: string; service_center_name: string },
 ): string {

@@ -16,6 +16,7 @@ import {
   renderStockMessageJSX,
   renderStaffManagementMessageJSX,
   renderServiceCenterManagementMessageJSX,
+  getNotifTitle,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -105,7 +106,7 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
             fontWeight={item.is_read ? 400 : 600}
             sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
           >
-            {isSystem ? 'ระบบ' : cfg.label}
+            {getNotifTitle(item)}
           </Typography>
           {!item.is_read && (
             <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
@@ -117,8 +118,8 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
           </Typography>
         )}
         {!isSystem && (
-          <Typography variant="body2" color="text.primary" fontWeight="bold">
-            {(item.metadata as { reference_number?: string })?.reference_number}
+          <Typography variant="body2" color="text.primary">
+            {cfg?.label}
           </Typography>
         )}
         <Typography variant="caption" color="text.disabled">
