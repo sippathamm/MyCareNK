@@ -4,7 +4,6 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
   TextField, MenuItem, CircularProgress, Alert,
   Select, Checkbox, ListItemText, OutlinedInput, InputLabel, FormControl,
-  Table, TableBody, TableCell, TableHead, TableRow,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -151,90 +150,111 @@ function NotificationSettingsSection() {
     if (err) setSaveError(err);
   };
 
-  const cellSx = { width: 100, textAlign: 'center' as const, px: 1 };
-
   return (
-    <Paper elevation={1} sx={{ p: 3, borderRadius: 2, mt: 3 }}>
+    <Box sx={{ mt: 4 }}>
       <Typography variant="h6" fontWeight="bold" gutterBottom>ตั้งค่าการแจ้งเตือน</Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         กำหนดว่าแต่ละระดับสิทธิ์จะได้รับการแจ้งเตือนสำหรับกิจกรรมใดบ้าง
       </Typography>
 
-      {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+      <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
+        {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={28} />
-        </Box>
-      ) : (
-        <>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 'bold' }}>การดำเนินการ</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: 'bold' }}>เจ้าหน้าที่</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: 'bold' }}>ผู้ดูแล</TableCell>
-                <TableCell sx={{ ...cellSx, fontWeight: 'bold' }}>ผู้ดูแลสูงสุด</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {NOTIF_GROUPS.map(group => (
-                <Fragment key={group.source_type}>
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      sx={{ bgcolor: 'grey.50', fontWeight: 'bold', py: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}
-                    >
-                      {group.label}
-                    </TableCell>
-                  </TableRow>
-                  {group.rows.map(row => {
-                    const s = draft.find(d => d.source_type === group.source_type && d.event_type === row.event_type);
-                    return (
-                      <TableRow key={`${group.source_type}-${row.event_type}`}>
-                        <TableCell sx={{ pl: 3 }}>{row.label}</TableCell>
-                        <TableCell sx={cellSx}>
-                          <Checkbox
-                            checked={s?.notify_staff ?? false}
-                            onChange={() => toggle(group.source_type, row.event_type, 'notify_staff')}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell sx={cellSx}>
-                          <Checkbox
-                            checked={s?.notify_admin ?? false}
-                            onChange={() => toggle(group.source_type, row.event_type, 'notify_admin')}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell sx={cellSx}>
-                          <Checkbox
-                            checked={s?.notify_superadmin ?? false}
-                            onChange={() => toggle(group.source_type, row.event_type, 'notify_superadmin')}
-                            size="small"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </Fragment>
-              ))}
-            </TableBody>
-          </Table>
-
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
-            <Button
-              variant="contained"
-              disabled={!isDirty || saving}
-              onClick={handleSave}
-              endIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
-            >
-              บันทึก
-            </Button>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
           </Box>
-        </>
-      )}
-    </Paper>
+        ) : (
+          <>
+            <Box sx={{ overflowX: 'auto' }}>
+              <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                <Box component="thead">
+                  <Box component="tr">
+                    {(['การดำเนินการ', 'เจ้าหน้าที่', 'ผู้ดูแล', 'ผู้ดูแลสูงสุด'] as const).map((h, i) => (
+                      <Box
+                        component="th"
+                        key={h}
+                        sx={{
+                          textAlign: i === 0 ? 'left' : 'center',
+                          pb: 1.5,
+                          pr: 2,
+                          fontSize: 12,
+                          color: 'text.secondary',
+                          fontWeight: 'medium',
+                          whiteSpace: 'nowrap',
+                          ...(i > 0 && { width: 100 }),
+                        }}
+                      >
+                        {h}
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+                <Box component="tbody">
+                  {NOTIF_GROUPS.map(group => (
+                    <Fragment key={group.source_type}>
+                      <Box component="tr">
+                        <Box
+                          component="td"
+                          colSpan={4}
+                          sx={{
+                            py: 1,
+                            pl: 0,
+                            pr: 2,
+                            bgcolor: 'action.hover',
+                            fontWeight: 'bold',
+                            fontSize: 12,
+                            color: 'text.secondary',
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          {group.label}
+                        </Box>
+                      </Box>
+                      {group.rows.map(row => {
+                        const s = draft.find(d => d.source_type === group.source_type && d.event_type === row.event_type);
+                        return (
+                          <Box
+                            component="tr"
+                            key={`${group.source_type}-${row.event_type}`}
+                            sx={{ borderTop: '1px solid', borderColor: 'divider' }}
+                          >
+                            <Box component="td" sx={{ py: 1.5, pl: 2, pr: 2 }}>
+                              <Typography variant="body2">{row.label}</Typography>
+                            </Box>
+                            {(['notify_staff', 'notify_admin', 'notify_superadmin'] as const).map(field => (
+                              <Box component="td" key={field} sx={{ py: 1.5, textAlign: 'center', width: 100 }}>
+                                <Checkbox
+                                  checked={s?.[field] ?? false}
+                                  onChange={() => toggle(group.source_type, row.event_type, field)}
+                                  size="small"
+                                />
+                              </Box>
+                            ))}
+                          </Box>
+                        );
+                      })}
+                    </Fragment>
+                  ))}
+                </Box>
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+              <Button
+                variant="contained"
+                disabled={!isDirty || saving}
+                onClick={handleSave}
+                endIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
+              >
+                บันทึก
+              </Button>
+            </Box>
+          </>
+        )}
+      </Paper>
+    </Box>
   );
 }
 
