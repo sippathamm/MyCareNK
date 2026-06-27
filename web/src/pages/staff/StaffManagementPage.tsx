@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
-  TextField, MenuItem, CircularProgress, Alert, Collapse,
+  TextField, MenuItem, CircularProgress, Alert, Collapse, Snackbar,
   Select, Checkbox, ListItemText, OutlinedInput, InputLabel, FormControl,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -130,8 +130,8 @@ const NOTIF_GROUPS: Array<{
 function NotificationSettingsSection() {
   const { settings, loading, save } = useNotificationSettings();
   const [draft, setDraft] = useState<NotificationSetting[]>([]);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
   const [sectionOpen, setSectionOpen] = useState(false);
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
 
@@ -163,10 +163,9 @@ function NotificationSettingsSection() {
 
   const handleSave = async () => {
     setSaving(true);
-    setSaveError(null);
     const err = await save(draft);
     setSaving(false);
-    if (err) setSaveError(err);
+    setSnackbar({ open: true, message: err ? `บันทึกไม่สำเร็จ: ${err}` : 'บันทึกการตั้งค่าเรียบร้อยแล้ว', severity: err ? 'error' : 'success' });
   };
 
   return (
@@ -183,8 +182,6 @@ function NotificationSettingsSection() {
         <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           กำหนดว่าแต่ละระดับสิทธิ์จะได้รับการแจ้งเตือนสำหรับกิจกรรมใดบ้าง
         </Typography>
-
-        {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
 
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -273,6 +270,17 @@ function NotificationSettingsSection() {
           </>
         )}
       </Collapse>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar(s => ({ ...s, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }
