@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
-  TextField, MenuItem, CircularProgress, Alert,
+  TextField, MenuItem, CircularProgress, Alert, Collapse,
   Select, Checkbox, ListItemText, OutlinedInput, InputLabel, FormControl,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -14,6 +14,7 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { alpha } from '@mui/material/styles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useAuth } from '../../hooks/useAuth';
@@ -131,6 +132,10 @@ function NotificationSettingsSection() {
   const [draft, setDraft] = useState<NotificationSetting[]>([]);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sectionOpen, setSectionOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(
+    () => new Set(NOTIF_GROUPS.map(g => g.source_type))
+  );
 
   useEffect(() => { setDraft(settings); }, [settings]);
 
@@ -150,6 +155,14 @@ function NotificationSettingsSection() {
     ));
   };
 
+  const toggleGroup = (sourceType: string) => {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(sourceType)) next.delete(sourceType); else next.add(sourceType);
+      return next;
+    });
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setSaveError(null);
@@ -160,90 +173,108 @@ function NotificationSettingsSection() {
 
   return (
     <Box sx={{ mt: 4 }}>
-      <Typography variant="h5" fontWeight="bold" gutterBottom>ตั้งค่าการแจ้งเตือน</Typography>
-      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-        กำหนดว่าแต่ละระดับสิทธิ์จะได้รับการแจ้งเตือนสำหรับกิจกรรมใดบ้าง
-      </Typography>
+      <Box
+        onClick={() => setSectionOpen(o => !o)}
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', mb: sectionOpen ? 0.5 : 0 }}
+      >
+        <Typography variant="h6" fontWeight="bold">ตั้งค่าการแจ้งเตือน</Typography>
+        <ExpandMoreIcon sx={{ color: 'text.secondary', transition: 'transform 0.2s', transform: sectionOpen ? 'rotate(180deg)' : 'none' }} />
+      </Box>
 
-      {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+      <Collapse in={sectionOpen}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          กำหนดว่าแต่ละระดับสิทธิ์จะได้รับการแจ้งเตือนสำหรับกิจกรรมใดบ้าง
+        </Typography>
 
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress size={28} />
-        </Box>
-      ) : (
-        <>
-          {NOTIF_GROUPS.map(group => (
-            <Paper key={group.source_type} elevation={1} sx={{ p: 3, borderRadius: 2, mb: 2 }}>
-              <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 1.5 }}>
-                {group.label}
-              </Typography>
-              <Box sx={{ overflowX: 'auto' }}>
-                <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <Box component="thead">
-                    <Box component="tr">
-                      {(['การดำเนินการ', 'เจ้าหน้าที่', 'ผู้ดูแล', 'ผู้ดูแลสูงสุด'] as const).map((h, i) => (
-                        <Box
-                          component="th"
-                          key={h}
-                          sx={{
-                            textAlign: i === 0 ? 'left' : 'center',
-                            pb: 1.5,
-                            pr: 2,
-                            fontSize: 12,
-                            color: 'text.secondary',
-                            fontWeight: 'medium',
-                            whiteSpace: 'nowrap',
-                            ...(i > 0 && { width: 100 }),
-                          }}
-                        >
-                          {h}
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                  <Box component="tbody">
-                    {group.rows.map(row => {
-                      const s = draft.find(d => d.source_type === group.source_type && d.event_type === row.event_type);
-                      return (
-                        <Box
-                          component="tr"
-                          key={row.event_type}
-                          sx={{ borderTop: '1px solid', borderColor: 'divider' }}
-                        >
-                          <Box component="td" sx={{ py: 1.5, pr: 2 }}>
-                            <Typography variant="body2">{row.label}</Typography>
-                          </Box>
-                          {(['notify_staff', 'notify_admin', 'notify_superadmin'] as const).map(field => (
-                            <Box component="td" key={field} sx={{ py: 1.5, textAlign: 'center', width: 100 }}>
-                              <Checkbox
-                                checked={s?.[field] ?? false}
-                                onChange={() => toggle(group.source_type, row.event_type, field)}
-                                size="small"
-                              />
-                            </Box>
-                          ))}
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </Box>
-              </Box>
-            </Paper>
-          ))}
+        {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-            <Button
-              variant="contained"
-              disabled={!isDirty || saving}
-              onClick={handleSave}
-              endIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
-            >
-              บันทึก
-            </Button>
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
           </Box>
-        </>
-      )}
+        ) : (
+          <>
+            {NOTIF_GROUPS.map(group => {
+              const isGroupOpen = openGroups.has(group.source_type);
+              return (
+                <Paper key={group.source_type} elevation={1} sx={{ borderRadius: 2, mb: 2, overflow: 'hidden' }}>
+                  <Box
+                    onClick={() => toggleGroup(group.source_type)}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <Typography variant="subtitle1" fontWeight="bold">{group.label}</Typography>
+                    <ExpandMoreIcon sx={{ color: 'text.secondary', fontSize: 20, transition: 'transform 0.2s', transform: isGroupOpen ? 'rotate(180deg)' : 'none' }} />
+                  </Box>
+                  <Collapse in={isGroupOpen}>
+                    <Box sx={{ px: 3, pb: 2, overflowX: 'auto' }}>
+                      <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <Box component="thead">
+                          <Box component="tr">
+                            {(['การดำเนินการ', 'เจ้าหน้าที่', 'ผู้ดูแล', 'ผู้ดูแลสูงสุด'] as const).map((h, i) => (
+                              <Box
+                                component="th"
+                                key={h}
+                                sx={{
+                                  textAlign: i === 0 ? 'left' : 'center',
+                                  pb: 1.5,
+                                  pr: 2,
+                                  fontSize: 12,
+                                  color: 'text.secondary',
+                                  fontWeight: 'medium',
+                                  whiteSpace: 'nowrap',
+                                  ...(i > 0 && { width: 100 }),
+                                }}
+                              >
+                                {h}
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                        <Box component="tbody">
+                          {group.rows.map(row => {
+                            const s = draft.find(d => d.source_type === group.source_type && d.event_type === row.event_type);
+                            return (
+                              <Box
+                                component="tr"
+                                key={row.event_type}
+                                sx={{ borderTop: '1px solid', borderColor: 'divider' }}
+                              >
+                                <Box component="td" sx={{ py: 1.5, pr: 2 }}>
+                                  <Typography variant="body2">{row.label}</Typography>
+                                </Box>
+                                {(['notify_staff', 'notify_admin', 'notify_superadmin'] as const).map(field => (
+                                  <Box component="td" key={field} sx={{ py: 1.5, textAlign: 'center', width: 100 }}>
+                                    <Checkbox
+                                      checked={s?.[field] ?? false}
+                                      onChange={() => toggle(group.source_type, row.event_type, field)}
+                                      size="small"
+                                    />
+                                  </Box>
+                                ))}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Collapse>
+                </Paper>
+              );
+            })}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button
+                variant="contained"
+                disabled={!isDirty || saving}
+                onClick={handleSave}
+                endIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
+              >
+                บันทึก
+              </Button>
+            </Box>
+          </>
+        )}
+      </Collapse>
     </Box>
   );
 }
