@@ -852,6 +852,53 @@ CREATE POLICY "Authenticated users can read web changelogs"
   ON public.web_changelogs FOR SELECT TO authenticated USING (true);
 
 
+-- ── notification_settings ──────────────────────────────────
+CREATE TABLE public.notification_settings (
+  source_type       text        NOT NULL,
+  event_type        text        NOT NULL,
+  notify_staff      boolean     NOT NULL DEFAULT true,
+  notify_admin      boolean     NOT NULL DEFAULT true,
+  notify_superadmin boolean     NOT NULL DEFAULT true,
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT notification_settings_pkey PRIMARY KEY (source_type, event_type)
+);
+
+ALTER TABLE public.notification_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Superadmin can read notification settings"
+  ON public.notification_settings FOR SELECT
+  TO authenticated USING (is_superadmin());
+
+-- Seed: 18 rows — mirrors current hardcoded behavior
+-- condom_request (6 rows)
+INSERT INTO public.notification_settings (source_type, event_type, notify_staff, notify_admin, notify_superadmin) VALUES
+  ('condom_request', 'pending',            true,  true,  true),
+  ('condom_request', 'preparing',          true,  true,  true),
+  ('condom_request', 'ready',              true,  true,  true),
+  ('condom_request', 'completed',          true,  true,  true),
+  ('condom_request', 'cancelled_by_user',  true,  true,  true),
+  ('condom_request', 'cancelled_by_staff', true,  true,  true),
+-- doctor_appointment (5 rows)
+  ('doctor_appointment', 'pending',            true,  true,  true),
+  ('doctor_appointment', 'confirmed',          true,  true,  true),
+  ('doctor_appointment', 'completed',          true,  true,  true),
+  ('doctor_appointment', 'cancelled_by_user',  true,  true,  true),
+  ('doctor_appointment', 'cancelled_by_staff', true,  true,  true),
+-- stock_operation (2 rows)
+  ('stock_operation', 'restock',     true,  true,  true),
+  ('stock_operation', 'adjustment',  true,  true,  true),
+-- staff_management (5 rows) — staff does not receive these notifications by default
+  ('staff_management', 'add',          false, true,  true),
+  ('staff_management', 'remove',       false, true,  true),
+  ('staff_management', 'edit_profile', false, true,  true),
+  ('staff_management', 'edit_email',   false, true,  true),
+  ('staff_management', 'edit_role',    false, true,  true);
+
+CREATE TRIGGER trigger_update_updated_at_column_notification_settings
+  BEFORE UPDATE ON public.notification_settings
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+
 -- ── Cascade delete trigger on auth.users ───────────────────
 CREATE TRIGGER trigger_handle_user_deleted
   BEFORE DELETE ON auth.users

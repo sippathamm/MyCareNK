@@ -78,6 +78,9 @@ GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestam
 
 GRANT EXECUTE ON FUNCTION public.get_my_service_centers()                                         TO authenticated;
 
+-- Notification settings RPC (superadmin only — enforced inside the function)
+GRANT EXECUTE ON FUNCTION public.update_notification_settings(jsonb) TO authenticated;
+
 -- write_staff_change_log: intentionally NOT granted to anon/authenticated
 -- (service_role access only — used by Edge Functions)
 

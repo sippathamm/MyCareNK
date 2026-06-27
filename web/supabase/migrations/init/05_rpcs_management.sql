@@ -48,6 +48,32 @@ END;
 $$;
 
 
+-- ── Notification settings ───────────────────────────────────
+CREATE OR REPLACE FUNCTION public.update_notification_settings(
+  p_settings jsonb
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NOT is_superadmin() THEN
+    RAISE EXCEPTION 'permission denied';
+  END IF;
+  UPDATE notification_settings ns
+  SET
+    notify_staff      = (s->>'notify_staff')::boolean,
+    notify_admin      = (s->>'notify_admin')::boolean,
+    notify_superadmin = (s->>'notify_superadmin')::boolean,
+    updated_at        = now()
+  FROM jsonb_array_elements(p_settings) s
+  WHERE ns.source_type = s->>'source_type'
+    AND ns.event_type  = s->>'event_type';
+END;
+$$;
+
+
 -- ── Service center management ───────────────────────────────
 CREATE OR REPLACE FUNCTION public.add_service_center(p_name text)
 RETURNS void
