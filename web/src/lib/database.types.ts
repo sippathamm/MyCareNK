@@ -560,6 +560,33 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          event_type: string
+          notify_admin: boolean
+          notify_staff: boolean
+          notify_superadmin: boolean
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          event_type: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type: string
+          updated_at?: string
+        }
+        Update: {
+          event_type?: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_notifications: {
         Row: {
           created_at: string
@@ -1138,6 +1165,10 @@ export type Database = {
       }
       toggle_service_center_active: {
         Args: { p_is_active: boolean; p_name: string }
+        Returns: undefined
+      }
+      update_notification_settings: {
+        Args: { p_settings: Json }
         Returns: undefined
       }
       upsert_service_center: {

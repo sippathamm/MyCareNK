@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
   TextField, MenuItem, CircularProgress, Alert,
   Select, Checkbox, ListItemText, OutlinedInput, InputLabel, FormControl,
+  Table, TableBody, TableCell, TableHead, TableRow,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
@@ -25,6 +26,8 @@ import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 import type { Enums } from '../../lib/database.types';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
+import { useNotificationSettings, type NotificationSetting } from '../../hooks/useNotificationSettings';
+import { STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, STOCK_OPERATION_CONFIG } from '../../contexts/NotificationContext';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -77,6 +80,162 @@ function generatePassword(): string {
   ];
   const rest = Array.from({ length: 12 }, () => all[Math.floor(Math.random() * all.length)]);
   return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
+}
+
+// ─── Notification Settings Labels ────────────────────────────────────────────
+
+const NOTIF_GROUPS: Array<{
+  source_type: string;
+  label: string;
+  rows: Array<{ event_type: string; label: string }>;
+}> = [
+  {
+    source_type: 'condom_request',
+    label: 'คำขอถุงยางอนามัย',
+    rows: (Object.entries(STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'doctor_appointment',
+    label: 'นัดรับคำปรึกษา',
+    rows: (Object.entries(APPOINTMENT_STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'stock_operation',
+    label: 'การจัดการสต็อก',
+    rows: (Object.entries(STOCK_OPERATION_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'staff_management',
+    label: 'การจัดการเจ้าหน้าที่',
+    rows: [
+      { event_type: 'add',          label: 'เพิ่มเจ้าหน้าที่' },
+      { event_type: 'remove',       label: 'ลบเจ้าหน้าที่' },
+      { event_type: 'edit_profile', label: 'แก้ไขโปรไฟล์' },
+      { event_type: 'edit_email',   label: 'แก้ไขอีเมล' },
+      { event_type: 'edit_role',    label: 'แก้ไขระดับสิทธิ์' },
+    ],
+  },
+];
+
+// ─── Notification Settings Section ───────────────────────────────────────────
+
+function NotificationSettingsSection() {
+  const { settings, loading, save } = useNotificationSettings();
+  const [draft, setDraft] = useState<NotificationSetting[]>([]);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => { setDraft(settings); }, [settings]);
+
+  const isDirty = useMemo(() => {
+    if (draft.length !== settings.length) return false;
+    return draft.some(d => {
+      const orig = settings.find(s => s.source_type === d.source_type && s.event_type === d.event_type);
+      return orig && (d.notify_staff !== orig.notify_staff || d.notify_admin !== orig.notify_admin || d.notify_superadmin !== orig.notify_superadmin);
+    });
+  }, [draft, settings]);
+
+  const toggle = (source_type: string, event_type: string, field: 'notify_staff' | 'notify_admin' | 'notify_superadmin') => {
+    setDraft(prev => prev.map(s =>
+      s.source_type === source_type && s.event_type === event_type
+        ? { ...s, [field]: !s[field] }
+        : s
+    ));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    const err = await save(draft);
+    setSaving(false);
+    if (err) setSaveError(err);
+  };
+
+  const cellSx = { width: 100, textAlign: 'center' as const, px: 1 };
+
+  return (
+    <Paper elevation={1} sx={{ p: 3, borderRadius: 2, mt: 3 }}>
+      <Typography variant="h6" fontWeight="bold" gutterBottom>ตั้งค่าการแจ้งเตือน</Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        กำหนดว่าแต่ละระดับสิทธิ์จะได้รับการแจ้งเตือนสำหรับกิจกรรมใดบ้าง
+      </Typography>
+
+      {saveError && <Alert severity="error" sx={{ mb: 2 }}>{saveError}</Alert>}
+
+      {loading ? (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+          <CircularProgress size={28} />
+        </Box>
+      ) : (
+        <>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 'bold' }}>การดำเนินการ</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: 'bold' }}>เจ้าหน้าที่</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: 'bold' }}>ผู้ดูแล</TableCell>
+                <TableCell sx={{ ...cellSx, fontWeight: 'bold' }}>ผู้ดูแลสูงสุด</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {NOTIF_GROUPS.map(group => (
+                <>
+                  <TableRow key={`group-${group.source_type}`}>
+                    <TableCell
+                      colSpan={4}
+                      sx={{ bgcolor: 'grey.50', fontWeight: 'bold', py: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}
+                    >
+                      {group.label}
+                    </TableCell>
+                  </TableRow>
+                  {group.rows.map(row => {
+                    const s = draft.find(d => d.source_type === group.source_type && d.event_type === row.event_type);
+                    return (
+                      <TableRow key={`${group.source_type}-${row.event_type}`}>
+                        <TableCell sx={{ pl: 3 }}>{row.label}</TableCell>
+                        <TableCell sx={cellSx}>
+                          <Checkbox
+                            checked={s?.notify_staff ?? false}
+                            onChange={() => toggle(group.source_type, row.event_type, 'notify_staff')}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell sx={cellSx}>
+                          <Checkbox
+                            checked={s?.notify_admin ?? false}
+                            onChange={() => toggle(group.source_type, row.event_type, 'notify_admin')}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell sx={cellSx}>
+                          <Checkbox
+                            checked={s?.notify_superadmin ?? false}
+                            onChange={() => toggle(group.source_type, row.event_type, 'notify_superadmin')}
+                            size="small"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </>
+              ))}
+            </TableBody>
+          </Table>
+
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2 }}>
+            <Button
+              variant="contained"
+              disabled={!isDirty || saving}
+              onClick={handleSave}
+              endIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
+            >
+              บันทึก
+            </Button>
+          </Box>
+        </>
+      )}
+    </Paper>
+  );
 }
 
 // ─── Add Staff Dialog ─────────────────────────────────────────────────────────
@@ -636,6 +795,8 @@ export default function StaffManagementPage() {
           />
         </Box>
       </Paper>
+
+      {isSuperadmin && <NotificationSettingsSection />}
 
       <AddStaffDialog
         open={addOpen}

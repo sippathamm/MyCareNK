@@ -48,6 +48,15 @@ Deno.serve(async (req: Request): Promise<Response> => {
   const isAdmin = callerProfile.role === 'admin';
   const callerName = `${callerProfile.first_name ?? ''} ${callerProfile.last_name ?? ''}`.trim();
 
+  // Fetch notification settings for all staff_management event types once
+  const { data: nsMgmtRows } = await serviceClient
+    .from('notification_settings')
+    .select('event_type, notify_staff, notify_admin, notify_superadmin')
+    .eq('source_type', 'staff_management');
+  const nsMgmt = new Map(
+    (nsMgmtRows ?? []).map(r => [r.event_type, { notify_staff: r.notify_staff, notify_admin: r.notify_admin, notify_superadmin: r.notify_superadmin }])
+  );
+
   const insertStaffManagementNotif = (
     profileId: string,
     eventType: string,
@@ -55,15 +64,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     targetSCs: string[],
   ) => {
     if (targetSCs.length === 0) return Promise.resolve();
+    const ns = nsMgmt.get(eventType) ?? { notify_staff: false, notify_admin: true, notify_superadmin: true };
     return serviceClient.from('staff_notifications').insert(
       targetSCs.map(sc => ({
         source_type: 'staff_management',
         source_id: profileId,
         event_type: eventType,
         service_center: sc,
-        notify_staff: false,
-        notify_admin: true,
-        notify_superadmin: isAdmin,
+        notify_staff: ns.notify_staff,
+        notify_admin: ns.notify_admin,
+        notify_superadmin: ns.notify_superadmin,
         metadata: { actor_name: callerName, target_name: targetName, action_type: eventType },
       }))
     );
