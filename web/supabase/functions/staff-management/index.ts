@@ -65,18 +65,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
   ) => {
     if (targetSCs.length === 0) return Promise.resolve();
     const ns = nsMgmt.get(eventType) ?? { notify_staff: false, notify_admin: true, notify_superadmin: true };
-    return serviceClient.from('staff_notifications').insert(
-      targetSCs.map(sc => ({
-        source_type: 'staff_management',
-        source_id: profileId,
-        event_type: eventType,
-        service_center: sc,
-        notify_staff: ns.notify_staff,
-        notify_admin: ns.notify_admin,
-        notify_superadmin: ns.notify_superadmin,
-        metadata: { actor_name: callerName, target_name: targetName, action_type: eventType },
-      }))
-    );
+    return serviceClient.from('staff_notifications').insert({
+      source_type: 'staff_management',
+      source_id: profileId,
+      event_type: eventType,
+      service_centers: targetSCs,
+      notify_staff: ns.notify_staff,
+      notify_admin: ns.notify_admin,
+      notify_superadmin: ns.notify_superadmin,
+      metadata: { actor_name: callerName, target_name: targetName, action_type: eventType },
+    });
   };
 
   let body: { action?: unknown; [key: string]: unknown };

@@ -95,9 +95,9 @@ BEGIN
   SELECT notify_staff, notify_admin, notify_superadmin INTO v_ns
     FROM notification_settings
     WHERE source_type = 'service_center_management' AND event_type = 'add';
-  INSERT INTO staff_notifications (source_type, source_id, event_type, service_center, notify_staff, notify_admin, notify_superadmin, metadata)
+  INSERT INTO staff_notifications (source_type, source_id, event_type, service_centers, notify_staff, notify_admin, notify_superadmin, metadata)
     VALUES (
-      'service_center_management', NULL, 'add', p_name,
+      'service_center_management', NULL, 'add', ARRAY[p_name],
       COALESCE(v_ns.notify_staff, false),
       COALESCE(v_ns.notify_admin, true),
       COALESCE(v_ns.notify_superadmin, true),
@@ -130,9 +130,9 @@ BEGIN
   DELETE FROM service_center_inventory WHERE service_center = p_name;
   DELETE FROM service_centers WHERE name = p_name;
   IF FOUND THEN
-    INSERT INTO staff_notifications (source_type, source_id, event_type, service_center, notify_staff, notify_admin, notify_superadmin, metadata)
+    INSERT INTO staff_notifications (source_type, source_id, event_type, service_centers, notify_staff, notify_admin, notify_superadmin, metadata)
       VALUES (
-        'service_center_management', NULL, 'remove', p_name,
+        'service_center_management', NULL, 'remove', ARRAY[p_name],
         COALESCE(v_ns.notify_staff, false),
         COALESCE(v_ns.notify_admin, true),
         COALESCE(v_ns.notify_superadmin, true),

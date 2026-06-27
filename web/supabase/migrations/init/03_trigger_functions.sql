@@ -217,13 +217,13 @@ BEGIN
      WHERE source_type = 'condom_request' AND event_type = NEW.request_status::text;
 
     INSERT INTO staff_notifications
-      (source_type, source_id, event_type, service_center,
+      (source_type, source_id, event_type, service_centers,
        notify_staff, notify_admin, notify_superadmin, metadata)
     VALUES (
       'condom_request',
       NEW.id,
       NEW.request_status::text,
-      NEW.selected_service_center,
+      ARRAY[NEW.selected_service_center],
       COALESCE(v_ns.notify_staff,      true),
       COALESCE(v_ns.notify_admin,      true),
       COALESCE(v_ns.notify_superadmin, true),
@@ -323,13 +323,13 @@ BEGIN
    WHERE source_type = 'stock_operation' AND event_type = NEW.action::text;
 
   INSERT INTO public.staff_notifications
-    (source_type, source_id, event_type, service_center,
+    (source_type, source_id, event_type, service_centers,
      notify_staff, notify_admin, notify_superadmin, metadata)
   VALUES (
     'stock_operation',
     NEW.id,
     NEW.action::text,
-    NEW.service_center,
+    ARRAY[NEW.service_center],
     COALESCE(v_ns.notify_staff,      true),
     COALESCE(v_ns.notify_admin,      true),
     COALESCE(v_ns.notify_superadmin, true),
@@ -360,13 +360,13 @@ BEGIN
      WHERE source_type = 'doctor_appointment' AND event_type = NEW.appointment_status::text;
 
     INSERT INTO staff_notifications
-      (source_type, source_id, event_type, service_center,
+      (source_type, source_id, event_type, service_centers,
        notify_staff, notify_admin, notify_superadmin, metadata)
     VALUES (
       'doctor_appointment',
       NEW.id,
       NEW.appointment_status::text,
-      NEW.selected_service_center,
+      ARRAY[NEW.selected_service_center],
       COALESCE(v_ns.notify_staff,      true),
       COALESCE(v_ns.notify_admin,      true),
       COALESCE(v_ns.notify_superadmin, true),
@@ -525,7 +525,7 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NEW.event_type <> 'pending' OR NEW.service_center IS NULL THEN
+  IF NEW.event_type <> 'pending' OR cardinality(NEW.service_centers) = 0 THEN
     RETURN NEW;
   END IF;
 

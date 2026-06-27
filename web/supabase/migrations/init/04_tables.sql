@@ -262,16 +262,19 @@ CREATE TABLE public.staff_notifications (
   source_type       text        NOT NULL,
   source_id         uuid,
   metadata          jsonb       NOT NULL DEFAULT '{}',
-  service_center    text,
+  service_centers   text[]      NOT NULL DEFAULT '{}',
   notify_staff      boolean     NOT NULL DEFAULT true,
   notify_admin      boolean     NOT NULL DEFAULT true,
   notify_superadmin boolean     NOT NULL DEFAULT true,
   CONSTRAINT staff_notifications_pkey PRIMARY KEY (id)
 );
 
+CREATE INDEX idx_staff_notifications_service_centers
+  ON public.staff_notifications USING GIN(service_centers);
+
 ALTER TABLE public.staff_notifications ENABLE ROW LEVEL SECURITY;
 
--- staff: own SC; admin: own SC; superadmin: all — each filtered by notify_* flag and join date cutoff
+-- staff: own SCs overlap; admin: own SCs overlap; superadmin: all — each filtered by notify_* flag and join date cutoff
 CREATE POLICY "Staff can read their own notifications"
   ON public.staff_notifications FOR SELECT TO authenticated
   USING (
@@ -283,9 +286,9 @@ CREATE POLICY "Staff can read their own notifications"
     AND (
       (is_superadmin() AND notify_superadmin)
       OR (is_admin() AND NOT is_superadmin() AND notify_admin
-          AND service_center = ANY(get_my_service_centers()))
+          AND service_centers && get_my_service_centers())
       OR (NOT is_admin() AND NOT is_superadmin() AND notify_staff
-          AND service_center = ANY(get_my_service_centers()))
+          AND service_centers && get_my_service_centers())
     )
   );
 
@@ -293,7 +296,7 @@ CREATE POLICY "Staff can delete their own notifications"
   ON public.staff_notifications FOR DELETE TO authenticated
   USING (
     is_staff() AND (NOT is_admin()) AND (NOT is_superadmin())
-    AND service_center = ANY(get_my_service_centers())
+    AND service_centers && get_my_service_centers()
   );
 
 CREATE TRIGGER trigger_notify_line_on_staff_notification

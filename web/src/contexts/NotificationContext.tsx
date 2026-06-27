@@ -134,7 +134,7 @@ const MAX_NOTIFICATIONS = 50;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user?.id ?? '';
-  const { role, loading: roleLoading, serviceCenters, isSuperadmin, isAdmin } = useRoleAccess();
+  const { role, loading: roleLoading, isSuperadmin, isAdmin } = useRoleAccess();
 
   const readIdsRef = useRef<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -193,7 +193,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .eq('staff_user_id', userId),
         supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, event_type, service_center, metadata, created_at')
+          .select('id, source_type, source_id, event_type, service_centers, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
@@ -214,16 +214,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [userId, roleLoading]);
 
   // Realtime: new notification inserted
-  // staff → server-side filter by service_center; RLS enforces own SC
-  // admin/superadmin → no filter, receive all events
+  // RLS (service_centers && get_my_service_centers()) handles filtering for all roles.
+  // No channel filter needed — 1 row per event, RLS scopes correctly.
   useEffect(() => {
     if (!userId || roleLoading) return;
-
-    // staff: filter by own SC; admin: filter by their SCs array; superadmin: no filter
-    const scFilter = isSuperadmin ? undefined
-      : serviceCenters.length === 1 ? `service_center=eq.${serviceCenters[0]}`
-      : serviceCenters.length > 1 ? `service_center=in.(${serviceCenters.join(',')})`
-      : undefined;
 
     const channel = supabase
       .channel('notification-inserts')
@@ -233,7 +227,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           event: 'INSERT',
           schema: 'public',
           table: 'staff_notifications',
-          ...(scFilter ? { filter: scFilter } : {}),
         },
         (payload) => {
           const row = payload.new as Tables<'staff_notifications'>;
@@ -271,7 +264,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userId, role, serviceCenters, isSuperadmin, isAdmin, roleLoading]);
+  }, [userId, role, isSuperadmin, isAdmin, roleLoading]);
 
   // Realtime: soft-delete hidden row inserted on another device → hide locally
   useEffect(() => {

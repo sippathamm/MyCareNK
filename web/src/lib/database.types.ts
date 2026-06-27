@@ -593,7 +593,7 @@ export type Database = {
           event_type: string
           id: string
           metadata: Json
-          service_center: string | null
+          service_centers: string[]
           source_id: string | null
           source_type: string
         }
@@ -602,7 +602,7 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
-          service_center?: string | null
+          service_centers?: string[]
           source_id?: string | null
           source_type: string
         }
@@ -611,7 +611,7 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
-          service_center?: string | null
+          service_centers?: string[]
           source_id?: string
           source_type?: string
         }
