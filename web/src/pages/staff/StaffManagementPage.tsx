@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Fragment, useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
@@ -179,8 +179,8 @@ function NotificationSettingsSection() {
             </TableHead>
             <TableBody>
               {NOTIF_GROUPS.map(group => (
-                <>
-                  <TableRow key={`group-${group.source_type}`}>
+                <Fragment key={group.source_type}>
+                  <TableRow>
                     <TableCell
                       colSpan={4}
                       sx={{ bgcolor: 'grey.50', fontWeight: 'bold', py: 0.75, borderBottom: '1px solid', borderColor: 'divider' }}
@@ -217,7 +217,7 @@ function NotificationSettingsSection() {
                       </TableRow>
                     );
                   })}
-                </>
+                </Fragment>
               ))}
             </TableBody>
           </Table>
