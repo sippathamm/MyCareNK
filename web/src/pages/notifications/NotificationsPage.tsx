@@ -8,11 +8,14 @@ import {
   APPOINTMENT_STATUS_CONFIG,
   STOCK_OPERATION_CONFIG,
   STAFF_MANAGEMENT_CONFIG,
+  SERVICE_CENTER_MANAGEMENT_CONFIG,
   isAppointmentNotification,
   isStockNotification,
   isStaffManagementNotification,
+  isServiceCenterManagementNotification,
   renderStockMessageJSX,
   renderStaffManagementMessageJSX,
+  renderServiceCenterManagementMessageJSX,
   type NotificationItem,
   type RequestStatus,
   type AppointmentEventType,
@@ -28,6 +31,9 @@ function getNotifConfig(item: NotificationItem) {
   }
   if (isStaffManagementNotification(item)) {
     return STAFF_MANAGEMENT_CONFIG;
+  }
+  if (isServiceCenterManagementNotification(item)) {
+    return SERVICE_CENTER_MANAGEMENT_CONFIG;
   }
   return STATUS_CONFIG[item.event_type as RequestStatus];
 }
@@ -65,7 +71,8 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
   const cfg = getNotifConfig(item);
   const isStock = isStockNotification(item);
   const isStaffMgmt = isStaffManagementNotification(item);
-  const isSystem = isStock || isStaffMgmt;
+  const isSCMgmt = isServiceCenterManagementNotification(item);
+  const isSystem = isStock || isStaffMgmt || isSCMgmt;
 
   const jsxMessage = isStock
     ? renderStockMessageJSX(
@@ -74,7 +81,9 @@ function NotificationRow({ item, isViewerStaff, onItemClick, onDelete }: {
       )
     : isStaffMgmt
       ? renderStaffManagementMessageJSX(item.metadata as { actor_name: string; target_name: string; action_type: string })
-      : null;
+      : isSCMgmt
+        ? renderServiceCenterManagementMessageJSX(item.metadata as { actor_name: string; action_type: string; service_center_name: string })
+        : null;
 
   return (
     <ListItemButton
@@ -142,6 +151,8 @@ export default function NotificationsPage() {
       navigate('/inventory');
     } else if (isStaffManagementNotification(item)) {
       navigate('/staff');
+    } else if (isServiceCenterManagementNotification(item)) {
+      navigate('/service-centers');
     } else {
       navigate('/requests', { state: { openRequestId: item.source_id } });
     }

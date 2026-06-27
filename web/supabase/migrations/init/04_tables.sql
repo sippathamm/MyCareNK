@@ -260,7 +260,7 @@ CREATE TABLE public.staff_notifications (
   created_at        timestamptz NOT NULL DEFAULT timezone('utc', now()),
   event_type        text        NOT NULL,
   source_type       text        NOT NULL,
-  source_id         uuid        NOT NULL,
+  source_id         uuid,
   metadata          jsonb       NOT NULL DEFAULT '{}',
   service_center    text,
   notify_staff      boolean     NOT NULL DEFAULT true,
@@ -892,7 +892,10 @@ INSERT INTO public.notification_settings (source_type, event_type, notify_staff,
   ('staff_management', 'remove',       false, true,  true),
   ('staff_management', 'edit_profile', false, true,  true),
   ('staff_management', 'edit_email',   false, true,  true),
-  ('staff_management', 'edit_role',    false, true,  true);
+  ('staff_management', 'edit_role',    false, true,  true),
+-- service_center_management (2 rows) — staff does not receive; only superadmin effectively sees these
+  ('service_center_management', 'add',    false, true, true),
+  ('service_center_management', 'remove', false, true, true);
 
 CREATE TRIGGER trigger_update_updated_at_column_notification_settings
   BEFORE UPDATE ON public.notification_settings

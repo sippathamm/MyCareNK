@@ -26,7 +26,7 @@ import { createThGridLocale } from '../../constants/datagrid';
 import type { Enums } from '../../lib/database.types';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { useNotificationSettings, type NotificationSetting } from '../../hooks/useNotificationSettings';
-import { STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, STOCK_OPERATION_CONFIG } from '../../contexts/NotificationContext';
+import { STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, STOCK_OPERATION_CONFIG, SERVICE_CENTER_MANAGEMENT_CONFIG } from '../../contexts/NotificationContext';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -102,6 +102,14 @@ const NOTIF_GROUPS: Array<{
     source_type: 'stock_operation',
     label: 'การจัดการสต็อก',
     rows: (Object.entries(STOCK_OPERATION_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'service_center_management',
+    label: SERVICE_CENTER_MANAGEMENT_CONFIG.label,
+    rows: [
+      { event_type: 'add',    label: 'เพิ่มสถานบริการ' },
+      { event_type: 'remove', label: 'ลบสถานบริการ' },
+    ],
   },
   {
     source_type: 'staff_management',

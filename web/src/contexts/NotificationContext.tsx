@@ -37,6 +37,11 @@ export function isStaffManagementNotification(item: NotificationItem): boolean {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function isServiceCenterManagementNotification(item: NotificationItem): boolean {
+  return item.source_type === 'service_center_management';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export const STOCK_OPERATION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   restock:    { label: 'เติมสต็อก', color: '#4CAF50', bg: '#EBF7EC' },
   adjustment: { label: 'ปรับสต็อก', color: '#FF9800', bg: '#FFF3E0' },
@@ -47,6 +52,13 @@ export const STAFF_MANAGEMENT_CONFIG: { label: string; color: string; bg: string
   label: 'การจัดการเจ้าหน้าที่',
   color: '#5C6BC0',
   bg: '#EDE7F6',
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const SERVICE_CENTER_MANAGEMENT_CONFIG: { label: string; color: string; bg: string } = {
+  label: 'การจัดการสถานบริการ',
+  color: '#0288D1',
+  bg: '#E3F2FD',
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -68,6 +80,7 @@ interface NotificationContextValue {
   toastAppointmentEventType: AppointmentEventType | null;
   toastIsStock: boolean;
   toastIsStaffManagement: boolean;
+  toastIsServiceCenterManagement: boolean;
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -133,6 +146,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
   const [toastIsStock, setToastIsStock] = useState(false);
   const [toastIsStaffManagement, setToastIsStaffManagement] = useState(false);
+  const [toastIsServiceCenterManagement, setToastIsServiceCenterManagement] = useState(false);
 
   // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
@@ -226,6 +240,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           const isAppointment = row.source_type === 'doctor_appointment';
           const isStock = row.source_type === 'stock_operation';
           const isStaffMgmt = row.source_type === 'staff_management';
+          const isSCMgmt = row.source_type === 'service_center_management';
           const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
           const message = isStock
@@ -235,13 +250,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               )
             : isStaffMgmt
               ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
-              : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isAppointment, aptEventType);
+              : isSCMgmt
+                ? buildServiceCenterManagementMessage(row.metadata as { actor_name: string; action_type: string; service_center_name: string })
+                : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
           setToastIsStock(isStock);
           setToastIsStaffManagement(isStaffMgmt);
+          setToastIsServiceCenterManagement(isSCMgmt);
           setToastAppointmentEventType(aptEventType);
-          setToastEventType(isAppointment || isStock || isStaffMgmt ? null : row.event_type as RequestStatus);
+          setToastEventType(isAppointment || isStock || isStaffMgmt || isSCMgmt ? null : row.event_type as RequestStatus);
           setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
@@ -347,6 +365,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setToastIsAppointment(false);
     setToastIsStock(false);
     setToastIsStaffManagement(false);
+    setToastIsServiceCenterManagement(false);
     setToastAppointmentEventType(null);
   }, []);
 
@@ -366,7 +385,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, toastIsServiceCenterManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -460,4 +479,26 @@ export function renderStaffManagementMessageJSX(
     case 'edit_role':    return <>{actor} แก้ไขระดับสิทธิ์ {target}</>;
     default:             return <>{actor} แก้ไข {target}</>;
   }
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildServiceCenterManagementMessage(
+  metadata: { actor_name: string; action_type: string; service_center_name: string },
+): string {
+  const { actor_name, action_type, service_center_name } = metadata;
+  return action_type === 'add'
+    ? `${actor_name} เพิ่มสถานบริการ ${service_center_name}`
+    : `${actor_name} ลบสถานบริการ ${service_center_name}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderServiceCenterManagementMessageJSX(
+  metadata: { actor_name: string; action_type: string; service_center_name: string },
+): ReactNode {
+  const { actor_name, action_type, service_center_name } = metadata;
+  const actor = <strong>{actor_name}</strong>;
+  const sc = <strong>{service_center_name}</strong>;
+  return action_type === 'add'
+    ? <>{actor} เพิ่มสถานบริการ {sc}</>
+    : <>{actor} ลบสถานบริการ {sc}</>;
 }

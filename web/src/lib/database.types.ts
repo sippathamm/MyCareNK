@@ -594,7 +594,7 @@ export type Database = {
           id: string
           metadata: Json
           service_center: string | null
-          source_id: string
+          source_id: string | null
           source_type: string
         }
         Insert: {
@@ -603,7 +603,7 @@ export type Database = {
           id?: string
           metadata?: Json
           service_center?: string | null
-          source_id: string
+          source_id?: string | null
           source_type: string
         }
         Update: {
