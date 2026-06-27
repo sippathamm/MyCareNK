@@ -449,13 +449,14 @@ Deno.serve(async (req: Request): Promise<Response> => {
     const targetNameForNotif = targetName ?? '';
     const sourceIdForNotif = profileBefore.data?.id ?? '';
 
-    if (hasActualProfileChange) notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_profile', targetNameForNotif, oldSCsForNotif));
+    if (hasActualProfileChange || hasActualServiceCentersChange) {
+      const notifSCs = hasActualServiceCentersChange
+        ? [...new Set([...oldSCsForNotif, ...effectiveSCs])]
+        : oldSCsForNotif;
+      notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_profile', targetNameForNotif, notifSCs));
+    }
     if (hasActualEmailChange) notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_email', targetNameForNotif, oldSCsForNotif));
     if (hasActualRoleChange) notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_role', targetNameForNotif, oldSCsForNotif));
-    if (hasActualServiceCentersChange) {
-      const mergedSCs = [...new Set([...oldSCsForNotif, ...effectiveSCs])];
-      notifTasks.push(insertStaffManagementNotif(sourceIdForNotif, 'edit_profile', targetNameForNotif, mergedSCs));
-    }
 
     await Promise.all([...auditTasks, ...notifTasks]);
 
