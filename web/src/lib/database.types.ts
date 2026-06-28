@@ -560,14 +560,41 @@ export type Database = {
           },
         ]
       }
+      notification_settings: {
+        Row: {
+          event_type: string
+          notify_admin: boolean
+          notify_staff: boolean
+          notify_superadmin: boolean
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          event_type: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type: string
+          updated_at?: string
+        }
+        Update: {
+          event_type?: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       staff_notifications: {
         Row: {
           created_at: string
           event_type: string
           id: string
           metadata: Json
-          service_center: string | null
-          source_id: string
+          service_centers: string[]
+          source_id: string | null
           source_type: string
         }
         Insert: {
@@ -575,8 +602,8 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
-          service_center?: string | null
-          source_id: string
+          service_centers?: string[]
+          source_id?: string | null
           source_type: string
         }
         Update: {
@@ -584,7 +611,7 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
-          service_center?: string | null
+          service_centers?: string[]
           source_id?: string
           source_type?: string
         }
@@ -1138,6 +1165,10 @@ export type Database = {
       }
       toggle_service_center_active: {
         Args: { p_is_active: boolean; p_name: string }
+        Returns: undefined
+      }
+      update_notification_settings: {
+        Args: { p_settings: Json }
         Returns: undefined
       }
       upsert_service_center: {

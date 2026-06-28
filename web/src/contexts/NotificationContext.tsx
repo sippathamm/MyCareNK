@@ -37,6 +37,11 @@ export function isStaffManagementNotification(item: NotificationItem): boolean {
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
+export function isServiceCenterManagementNotification(item: NotificationItem): boolean {
+  return item.source_type === 'service_center_management';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
 export const STOCK_OPERATION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   restock:    { label: 'เติมสต็อก', color: '#4CAF50', bg: '#EBF7EC' },
   adjustment: { label: 'ปรับสต็อก', color: '#FF9800', bg: '#FFF3E0' },
@@ -47,6 +52,13 @@ export const STAFF_MANAGEMENT_CONFIG: { label: string; color: string; bg: string
   label: 'การจัดการเจ้าหน้าที่',
   color: '#5C6BC0',
   bg: '#EDE7F6',
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const SERVICE_CENTER_MANAGEMENT_CONFIG: { label: string; color: string; bg: string } = {
+  label: 'การจัดการสถานบริการ',
+  color: '#0288D1',
+  bg: '#E3F2FD',
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -68,6 +80,7 @@ interface NotificationContextValue {
   toastAppointmentEventType: AppointmentEventType | null;
   toastIsStock: boolean;
   toastIsStaffManagement: boolean;
+  toastIsServiceCenterManagement: boolean;
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -121,7 +134,7 @@ const MAX_NOTIFICATIONS = 50;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user?.id ?? '';
-  const { role, loading: roleLoading, serviceCenters, isSuperadmin, isAdmin } = useRoleAccess();
+  const { role, loading: roleLoading, isSuperadmin, isAdmin } = useRoleAccess();
 
   const readIdsRef = useRef<Set<string>>(new Set());
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
@@ -133,6 +146,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
   const [toastIsStock, setToastIsStock] = useState(false);
   const [toastIsStaffManagement, setToastIsStaffManagement] = useState(false);
+  const [toastIsServiceCenterManagement, setToastIsServiceCenterManagement] = useState(false);
 
   // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
@@ -179,7 +193,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .eq('staff_user_id', userId),
         supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, event_type, service_center, metadata, created_at')
+          .select('id, source_type, source_id, event_type, service_centers, metadata, created_at')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
@@ -200,16 +214,10 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   }, [userId, roleLoading]);
 
   // Realtime: new notification inserted
-  // staff → server-side filter by service_center; RLS enforces own SC
-  // admin/superadmin → no filter, receive all events
+  // RLS (service_centers && get_my_service_centers()) handles filtering for all roles.
+  // No channel filter needed — 1 row per event, RLS scopes correctly.
   useEffect(() => {
     if (!userId || roleLoading) return;
-
-    // staff: filter by own SC; admin: filter by their SCs array; superadmin: no filter
-    const scFilter = isSuperadmin ? undefined
-      : serviceCenters.length === 1 ? `service_center=eq.${serviceCenters[0]}`
-      : serviceCenters.length > 1 ? `service_center=in.(${serviceCenters.join(',')})`
-      : undefined;
 
     const channel = supabase
       .channel('notification-inserts')
@@ -219,13 +227,13 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           event: 'INSERT',
           schema: 'public',
           table: 'staff_notifications',
-          ...(scFilter ? { filter: scFilter } : {}),
         },
         (payload) => {
           const row = payload.new as Tables<'staff_notifications'>;
           const isAppointment = row.source_type === 'doctor_appointment';
           const isStock = row.source_type === 'stock_operation';
           const isStaffMgmt = row.source_type === 'staff_management';
+          const isSCMgmt = row.source_type === 'service_center_management';
           const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
           const message = isStock
@@ -235,13 +243,16 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               )
             : isStaffMgmt
               ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
-              : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isAppointment, aptEventType);
+              : isSCMgmt
+                ? buildServiceCenterManagementMessage(row.metadata as { actor_name: string; action_type: string; service_center_name: string })
+                : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isAppointment, aptEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
           setToastIsAppointment(isAppointment);
           setToastIsStock(isStock);
           setToastIsStaffManagement(isStaffMgmt);
+          setToastIsServiceCenterManagement(isSCMgmt);
           setToastAppointmentEventType(aptEventType);
-          setToastEventType(isAppointment || isStock || isStaffMgmt ? null : row.event_type as RequestStatus);
+          setToastEventType(isAppointment || isStock || isStaffMgmt || isSCMgmt ? null : row.event_type as RequestStatus);
           setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
@@ -253,7 +264,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userId, role, serviceCenters, isSuperadmin, isAdmin, roleLoading]);
+  }, [userId, role, isSuperadmin, isAdmin, roleLoading]);
 
   // Realtime: soft-delete hidden row inserted on another device → hide locally
   useEffect(() => {
@@ -347,6 +358,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     setToastIsAppointment(false);
     setToastIsStock(false);
     setToastIsStaffManagement(false);
+    setToastIsServiceCenterManagement(false);
     setToastAppointmentEventType(null);
   }, []);
 
@@ -366,7 +378,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, toastIsServiceCenterManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -460,4 +472,47 @@ export function renderStaffManagementMessageJSX(
     case 'edit_role':    return <>{actor} แก้ไขระดับสิทธิ์ {target}</>;
     default:             return <>{actor} แก้ไข {target}</>;
   }
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function getNotifTitle(item: NotificationItem): string {
+  if (isStockNotification(item)) {
+    return item.event_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  }
+  if (isStaffManagementNotification(item)) {
+    const titles: Record<string, string> = {
+      add:          'เพิ่มเจ้าหน้าที่',
+      remove:       'ลบเจ้าหน้าที่',
+      edit_profile: 'แก้ไขโปรไฟล์เจ้าหน้าที่',
+      edit_email:   'แก้ไขอีเมลเจ้าหน้าที่',
+      edit_role:    'แก้ไขระดับสิทธิ์',
+    };
+    return titles[item.event_type] ?? item.event_type;
+  }
+  if (isServiceCenterManagementNotification(item)) {
+    return item.event_type === 'add' ? 'เพิ่มสถานบริการ' : 'ลบสถานบริการ';
+  }
+  return (item.metadata as { reference_number?: string })?.reference_number ?? '';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildServiceCenterManagementMessage(
+  metadata: { actor_name: string; action_type: string; service_center_name: string },
+): string {
+  const { actor_name, action_type, service_center_name } = metadata;
+  return action_type === 'add'
+    ? `${actor_name} เพิ่มสถานบริการ ${service_center_name}`
+    : `${actor_name} ลบสถานบริการ ${service_center_name}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderServiceCenterManagementMessageJSX(
+  metadata: { actor_name: string; action_type: string; service_center_name: string },
+): ReactNode {
+  const { actor_name, action_type, service_center_name } = metadata;
+  const actor = <strong>{actor_name}</strong>;
+  const sc = <strong>{service_center_name}</strong>;
+  return action_type === 'add'
+    ? <>{actor} เพิ่มสถานบริการ {sc}</>
+    : <>{actor} ลบสถานบริการ {sc}</>;
 }
