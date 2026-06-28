@@ -370,31 +370,25 @@ export type Database = {
           condom_qty: number
           condom_quantities: Json
           id: string
-          last_restocked_at: string | null
           lubricant_qty: number
           service_center: string
           updated_at: string
-          updated_by: string | null
         }
         Insert: {
           condom_qty?: number
           condom_quantities?: Json
           id?: string
-          last_restocked_at?: string | null
           lubricant_qty?: number
           service_center: string
           updated_at?: string
-          updated_by?: string | null
         }
         Update: {
           condom_qty?: number
           condom_quantities?: Json
           id?: string
-          last_restocked_at?: string | null
           lubricant_qty?: number
           service_center?: string
           updated_at?: string
-          updated_by?: string | null
         }
         Relationships: [
           {
@@ -1165,12 +1159,12 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
-      save_recovery_codes: {
-        Args: { secret_codes: string[] }
+      rename_service_center: {
+        Args: { p_new: string; p_old: string }
         Returns: undefined
       }
-      toggle_service_center_active: {
-        Args: { p_is_active: boolean; p_name: string }
+      save_recovery_codes: {
+        Args: { secret_codes: string[] }
         Returns: undefined
       }
       update_notification_settings: {
