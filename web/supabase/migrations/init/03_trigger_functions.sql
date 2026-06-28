@@ -16,6 +16,7 @@
 --                      handle_staff_request_notification,
 --                      handle_user_request_notification
 --   inventory_logs   — apply_inventory_adjustment, notify_staff_on_stock_operation
+--   service_center_inventory — sync_inventory_condom_qty
 --   doctor_appts     — handle_staff_appointment_notification,
 --                      handle_user_appointment_notification,
 --                      track_appointment_status
@@ -132,44 +133,73 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 DECLARE
-  v_condom_total      int;
-  v_current_condom    int;
-  v_current_lubricant int;
+  v_condom_total        int;
+  v_current_lubricant   int;
+  v_current_condom_qtys jsonb;
+  v_size                text;
+  v_req_qty             int;
+  v_inv_qty             int;
 BEGIN
   IF NEW.request_status = 'completed' AND OLD.request_status <> 'completed' THEN
     SELECT COALESCE(SUM(value::int), 0)
       INTO v_condom_total
       FROM jsonb_each_text(NEW.condom_quantities);
 
-    SELECT condom_qty, lubricant_qty
-      INTO v_current_condom, v_current_lubricant
+    SELECT condom_quantities, lubricant_qty
+      INTO v_current_condom_qtys, v_current_lubricant
       FROM public.service_center_inventory
      WHERE service_center = NEW.selected_service_center;
 
-    IF v_current_condom IS NULL THEN
+    IF v_current_condom_qtys IS NULL THEN
       RAISE EXCEPTION 'ไม่พบข้อมูลสต็อกของสถานบริการนี้';
     END IF;
 
-    IF v_current_condom < v_condom_total THEN
-      RAISE EXCEPTION 'สต็อกถุงยางอนามัยไม่เพียงพอ (มี % ชิ้น ต้องใช้ % ชิ้น) กรุณาไปที่หน้า "สต็อกและพยากรณ์" เพื่อเติมสต็อกก่อน',
-        v_current_condom, v_condom_total;
-    END IF;
+    -- Per-size availability check (block if any requested size is insufficient)
+    FOREACH v_size IN ARRAY ARRAY['49','52','54','56']
+    LOOP
+      v_req_qty := COALESCE((NEW.condom_quantities->>v_size)::int, 0);
+      IF v_req_qty > 0 THEN
+        v_inv_qty := COALESCE((v_current_condom_qtys->>v_size)::int, 0);
+        IF v_inv_qty < v_req_qty THEN
+          RAISE EXCEPTION 'สต็อกถุงยางอนามัยขนาด %mm ไม่เพียงพอ (มี % ชิ้น ต้องใช้ % ชิ้น) กรุณาเติมสต็อกขนาด %mm ก่อน',
+            v_size, v_inv_qty, v_req_qty, v_size;
+        END IF;
+      END IF;
+    END LOOP;
 
     IF v_current_lubricant < NEW.lubricant_quantity THEN
       RAISE EXCEPTION 'สต็อกเจลหล่อลื่นไม่เพียงพอ (มี % ชิ้น ต้องใช้ % ชิ้น) กรุณาไปที่หน้า "สต็อกและพยากรณ์" เพื่อเติมสต็อกก่อน',
         v_current_lubricant, NEW.lubricant_quantity;
     END IF;
 
+    -- Deduct per-size (trigger_sync_condom_qty_from_quantities auto-updates condom_qty total)
     UPDATE public.service_center_inventory
-       SET condom_qty    = condom_qty    - v_condom_total,
+       SET condom_quantities = jsonb_build_object(
+             '49', GREATEST(0, COALESCE((condom_quantities->>'49')::int, 0) - COALESCE((NEW.condom_quantities->>'49')::int, 0)),
+             '52', GREATEST(0, COALESCE((condom_quantities->>'52')::int, 0) - COALESCE((NEW.condom_quantities->>'52')::int, 0)),
+             '54', GREATEST(0, COALESCE((condom_quantities->>'54')::int, 0) - COALESCE((NEW.condom_quantities->>'54')::int, 0)),
+             '56', GREATEST(0, COALESCE((condom_quantities->>'56')::int, 0) - COALESCE((NEW.condom_quantities->>'56')::int, 0))
+           ),
            lubricant_qty = lubricant_qty - NEW.lubricant_quantity,
            updated_at    = now()
      WHERE service_center = NEW.selected_service_center;
 
     INSERT INTO public.inventory_logs
-      (service_center, action, condom_delta, lubricant_delta, reference_request_id, performed_by)
-    VALUES
-      (NEW.selected_service_center, 'fulfillment', -v_condom_total, -NEW.lubricant_quantity, NEW.id, NEW.handled_by);
+      (service_center, action, condom_delta, lubricant_delta, condom_quantities, reference_request_id, performed_by)
+    VALUES (
+      NEW.selected_service_center,
+      'fulfillment',
+      -v_condom_total,
+      -NEW.lubricant_quantity,
+      jsonb_build_object(
+        '49', -COALESCE((NEW.condom_quantities->>'49')::int, 0),
+        '52', -COALESCE((NEW.condom_quantities->>'52')::int, 0),
+        '54', -COALESCE((NEW.condom_quantities->>'54')::int, 0),
+        '56', -COALESCE((NEW.condom_quantities->>'56')::int, 0)
+      ),
+      NEW.id,
+      NEW.handled_by
+    );
   END IF;
   RETURN NEW;
 END;
@@ -279,7 +309,12 @@ AS $$
 BEGIN
   IF NEW.action = 'restock' THEN
     UPDATE public.service_center_inventory
-    SET condom_qty        = GREATEST(0, condom_qty    + NEW.condom_delta),
+    SET condom_quantities = jsonb_build_object(
+          '49', GREATEST(0, COALESCE((condom_quantities->>'49')::int, 0) + COALESCE((NEW.condom_quantities->>'49')::int, 0)),
+          '52', GREATEST(0, COALESCE((condom_quantities->>'52')::int, 0) + COALESCE((NEW.condom_quantities->>'52')::int, 0)),
+          '54', GREATEST(0, COALESCE((condom_quantities->>'54')::int, 0) + COALESCE((NEW.condom_quantities->>'54')::int, 0)),
+          '56', GREATEST(0, COALESCE((condom_quantities->>'56')::int, 0) + COALESCE((NEW.condom_quantities->>'56')::int, 0))
+        ),
         lubricant_qty     = GREATEST(0, lubricant_qty + NEW.lubricant_delta),
         last_restocked_at = NOW(),
         updated_at        = NOW(),
@@ -287,11 +322,32 @@ BEGIN
     WHERE service_center = NEW.service_center;
   ELSIF NEW.action = 'adjustment' THEN
     UPDATE public.service_center_inventory
-    SET condom_qty    = GREATEST(0, condom_qty    + NEW.condom_delta),
+    SET condom_quantities = jsonb_build_object(
+          '49', GREATEST(0, COALESCE((condom_quantities->>'49')::int, 0) + COALESCE((NEW.condom_quantities->>'49')::int, 0)),
+          '52', GREATEST(0, COALESCE((condom_quantities->>'52')::int, 0) + COALESCE((NEW.condom_quantities->>'52')::int, 0)),
+          '54', GREATEST(0, COALESCE((condom_quantities->>'54')::int, 0) + COALESCE((NEW.condom_quantities->>'54')::int, 0)),
+          '56', GREATEST(0, COALESCE((condom_quantities->>'56')::int, 0) + COALESCE((NEW.condom_quantities->>'56')::int, 0))
+        ),
         lubricant_qty = GREATEST(0, lubricant_qty + NEW.lubricant_delta),
         updated_at    = NOW()
     WHERE service_center = NEW.service_center;
   END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- ── service_center_inventory ─────────────────────────────────
+CREATE OR REPLACE FUNCTION public.sync_inventory_condom_qty()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO 'public'
+AS $$
+BEGIN
+  NEW.condom_qty :=
+      COALESCE((NEW.condom_quantities->>'49')::int, 0)
+    + COALESCE((NEW.condom_quantities->>'52')::int, 0)
+    + COALESCE((NEW.condom_quantities->>'54')::int, 0)
+    + COALESCE((NEW.condom_quantities->>'56')::int, 0);
   RETURN NEW;
 END;
 $$;

@@ -257,6 +257,7 @@ export type Database = {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
           condom_delta: number
+          condom_quantities: Json | null
           created_at: string
           id: string
           lubricant_delta: number
@@ -270,6 +271,7 @@ export type Database = {
         Insert: {
           action: Database["public"]["Enums"]["audit_action"]
           condom_delta?: number
+          condom_quantities?: Json | null
           created_at?: string
           id?: string
           lubricant_delta?: number
@@ -283,6 +285,7 @@ export type Database = {
         Update: {
           action?: Database["public"]["Enums"]["audit_action"]
           condom_delta?: number
+          condom_quantities?: Json | null
           created_at?: string
           id?: string
           lubricant_delta?: number
@@ -365,6 +368,7 @@ export type Database = {
       service_center_inventory: {
         Row: {
           condom_qty: number
+          condom_quantities: Json
           id: string
           last_restocked_at: string | null
           lubricant_qty: number
@@ -374,6 +378,7 @@ export type Database = {
         }
         Insert: {
           condom_qty?: number
+          condom_quantities?: Json
           id?: string
           last_restocked_at?: string | null
           lubricant_qty?: number
@@ -383,6 +388,7 @@ export type Database = {
         }
         Update: {
           condom_qty?: number
+          condom_quantities?: Json
           id?: string
           last_restocked_at?: string | null
           lubricant_qty?: number

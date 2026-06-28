@@ -396,6 +396,7 @@ CREATE TABLE public.service_center_inventory (
   id                uuid        NOT NULL DEFAULT gen_random_uuid(),
   service_center    text        NOT NULL,
   condom_qty        integer     NOT NULL DEFAULT 0,
+  condom_quantities jsonb       NOT NULL DEFAULT '{"49":0,"52":0,"54":0,"56":0}'::jsonb,
   lubricant_qty     integer     NOT NULL DEFAULT 0,
   last_restocked_at timestamptz,
   updated_at        timestamptz NOT NULL DEFAULT now(),
@@ -428,6 +429,10 @@ CREATE POLICY "Admins can update inventory"
 CREATE POLICY "No one can delete inventory directly"
   ON public.service_center_inventory FOR DELETE
   TO authenticated USING (false);
+
+CREATE TRIGGER trigger_sync_condom_qty_from_quantities
+  BEFORE UPDATE OF condom_quantities ON public.service_center_inventory
+  FOR EACH ROW EXECUTE FUNCTION sync_inventory_condom_qty();
 
 CREATE TRIGGER trigger_update_updated_at_column_service_center_inventory
   BEFORE UPDATE ON public.service_center_inventory
@@ -593,6 +598,7 @@ CREATE TABLE public.inventory_logs (
   action               public.audit_action NOT NULL,
   service_center       text                NOT NULL,
   condom_delta         integer             NOT NULL DEFAULT 0,
+  condom_quantities    jsonb,
   lubricant_delta      integer             NOT NULL DEFAULT 0,
   reason               text,
   created_at           timestamptz         NOT NULL DEFAULT now(),

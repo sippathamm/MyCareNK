@@ -2,11 +2,13 @@ import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, CircularProgress,
-  Alert, Divider,
+  Alert, Divider, Grid,
 } from '@mui/material';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';
+
+const CONDOM_SIZES = ['49', '52', '54', '56'] as const;
 
 interface RestockModalProps {
   open: boolean;
@@ -15,9 +17,13 @@ interface RestockModalProps {
   onSuccess: () => void;
 }
 
+type SizeMap = Record<string, string>;
+
+const emptySizes = (): SizeMap => ({ '49': '', '52': '', '54': '', '56': '' });
+
 export default function RestockModal({ open, target, onClose, onSuccess }: RestockModalProps) {
   const { session } = useAuth();
-  const [condomAdd, setCondomAdd] = useState('');
+  const [condomSizes, setCondomSizes] = useState<SizeMap>(emptySizes);
   const [lubricantAdd, setLubricantAdd] = useState('');
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
@@ -25,7 +31,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
 
   const handleClose = () => {
     if (loading) return;
-    setCondomAdd('');
+    setCondomSizes(emptySizes());
     setLubricantAdd('');
     setReason('');
     setError(null);
@@ -35,27 +41,35 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
   const handleSubmit = async () => {
     if (!target || !session?.user) return;
 
-    const condomDelta = parseInt(condomAdd, 10) || 0;
+    const condomQuantities: Record<string, number> = {};
+    let hasCondom = false;
+    for (const size of CONDOM_SIZES) {
+      const v = parseInt(condomSizes[size], 10) || 0;
+      condomQuantities[size] = v;
+      if (v > 0) hasCondom = true;
+    }
     const lubricantDelta = parseInt(lubricantAdd, 10) || 0;
 
-    if (condomDelta <= 0 && lubricantDelta <= 0) {
-      setError('กรุณากรอกจำนวนถุงยางอนามัย/เจลหล่อลื่นที่ต้องการเติมอย่างน้อย 1 รายการ');
+    if (!hasCondom && lubricantDelta <= 0) {
+      setError('กรุณากรอกจำนวนที่ต้องการเติมอย่างน้อย 1 รายการ');
       return;
     }
 
     setLoading(true);
     setError(null);
 
-    // DB trigger on_inventory_log_insert → apply_inventory_adjustment() อัปเดต service_center_inventory อัตโนมัติ
+    const condomDelta = Object.values(condomQuantities).reduce((a, b) => a + b, 0);
+
     const { error: insertError } = await supabase
       .from('inventory_logs')
       .insert({
-        service_center: target.service_center,
-        action: 'restock',
-        condom_delta: condomDelta,
-        lubricant_delta: lubricantDelta,
-        reason: reason.trim() || null,
-        performed_by: session.user.id,
+        service_center:   target.service_center,
+        action:           'restock',
+        condom_delta:     condomDelta,
+        condom_quantities: condomQuantities,
+        lubricant_delta:  lubricantDelta,
+        reason:           reason.trim() || null,
+        performed_by:     session.user.id,
       });
 
     if (insertError) {
@@ -65,7 +79,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
     }
 
     setLoading(false);
-    setCondomAdd('');
+    setCondomSizes(emptySizes());
     setLubricantAdd('');
     setReason('');
     onSuccess();
@@ -88,29 +102,32 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
 
       <DialogContent sx={{ pt: 2.5 }}>
         {/* Current stock info */}
-        <Box
-          sx={{
-            bgcolor: 'action.hover',
-            borderRadius: 1.5,
-            p: 1.5,
-            mb: 2.5,
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 1.5,
-          }}
-        >
-          {[
-            { label: 'ถุงยางอนามัย', qty: target.condom_qty },
-            { label: 'เจลหล่อลื่น', qty: target.lubricant_qty },
-          ].map(({ label, qty }) => (
-            <Box key={label}>
-              <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
+        <Box sx={{ bgcolor: 'action.hover', borderRadius: 1.5, p: 1.5, mb: 2.5 }}>
+          <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
+            สต็อกปัจจุบัน
+          </Typography>
+          <Grid container spacing={1.5}>
+            {CONDOM_SIZES.map((size) => (
+              <Grid key={size} size={6}>
+                <Typography variant="caption" color="text.secondary" display="block">
+                  ถุงยาง {size}mm
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <Typography variant="body2" fontWeight={600}>
+                    {(target.condom_quantities?.[size] ?? 0).toLocaleString()}
+                  </Typography>
+                  <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
+                </Box>
+              </Grid>
+            ))}
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary" display="block">เจลหล่อลื่น</Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="body2" fontWeight={600}>{qty.toLocaleString()}</Typography>
+                <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
                 <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
               </Box>
-            </Box>
-          ))}
+            </Grid>
+          </Grid>
         </Box>
 
         {error && (
@@ -119,16 +136,27 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
           </Alert>
         )}
 
-        <TextField
-          label="จำนวนถุงยางอนามัยที่เติม (ชิ้น)"
-          value={condomAdd}
-          onChange={(e) => setCondomAdd(e.target.value.replace(/\D/g, ''))}
-          fullWidth
-          type="number"
-          inputProps={{ min: 0 }}
-          sx={{ mb: 2 }}
-          disabled={loading}
-        />
+        <Typography variant="subtitle2" color="text.secondary" mb={1.5}>
+          จำนวนถุงยางอนามัยที่เติม (ชิ้น)
+        </Typography>
+        <Grid container spacing={1.5} mb={2}>
+          {CONDOM_SIZES.map((size) => (
+            <Grid key={size} size={6}>
+              <TextField
+                label={`ขนาด ${size}mm`}
+                value={condomSizes[size]}
+                onChange={(e) =>
+                  setCondomSizes((prev) => ({ ...prev, [size]: e.target.value.replace(/\D/g, '') }))
+                }
+                fullWidth
+                type="number"
+                inputProps={{ min: 0 }}
+                size="small"
+                disabled={loading}
+              />
+            </Grid>
+          ))}
+        </Grid>
 
         <TextField
           label="จำนวนเจลหล่อลื่นที่เติม (ชิ้น)"

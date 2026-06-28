@@ -26,6 +26,7 @@ import { createThGridLocale } from '../../constants/datagrid';
 const LOW_STOCK_DAYS = 7;
 const MAX_DISPLAY_QTY = 100;
 const PAGE_SIZE_GRID = 8;
+const CONDOM_SIZES = ['49', '52', '54', '56'] as const;
 
 const thGridLocale = createThGridLocale('ไม่พบสถานบริการที่ตรงกับเงื่อนไข');
 
@@ -127,7 +128,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 
         <Divider sx={{ mb: 2 }} />
 
-        {/* Condom */}
+        {/* Condom total + per-size */}
         <Box sx={{ mb: 2 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
             <Typography variant="body2" color="text.secondary">ถุงยางอนามัย</Typography>
@@ -137,8 +138,22 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
             variant="determinate"
             value={condomPct}
             color={condomColor}
-            sx={{ height: 8, borderRadius: 4, mb: 0.5, bgcolor: 'action.hover' }}
+            sx={{ height: 8, borderRadius: 4, mb: 0.75, bgcolor: 'action.hover' }}
           />
+          {/* Per-size breakdown */}
+          <Grid container spacing={0.5} mb={0.75}>
+            {CONDOM_SIZES.map((size) => {
+              const qty = row.condom_quantities?.[size] ?? 0;
+              return (
+                <Grid key={size} size={6}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 0.25 }}>
+                    <Typography variant="caption" color="text.disabled">{size}mm</Typography>
+                    <Typography variant="caption" fontWeight={600}>{qty.toLocaleString()}</Typography>
+                  </Box>
+                </Grid>
+              );
+            })}
+          </Grid>
           <Typography
             variant="caption"
             color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left, mode)}
@@ -317,10 +332,13 @@ export default function InventoryPage() {
       {
         field: 'condom_qty',
         headerName: 'ถุงยางอนามัย',
-        flex: 1,
+        flex: 1.5,
         renderCell: ({ row }) => (
-          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.15 }}>
             <Typography variant="body2">{row.condom_qty.toLocaleString()} ชิ้น</Typography>
+            <Typography variant="caption" color="text.disabled">
+              {CONDOM_SIZES.map((s) => `${s}:${(row.condom_quantities?.[s] ?? 0).toLocaleString()}`).join(' / ')}
+            </Typography>
             <Typography
               variant="caption"
               color={row.condom_days_left === null ? 'text.secondary' : daysLeftTextColor(row.condom_days_left, mode)}
@@ -594,7 +612,7 @@ export default function InventoryPage() {
                   rows={filteredForecast}
                   columns={columns}
                   getRowId={(row) => row.service_center}
-                  rowHeight={64}
+                  rowHeight={80}
                   loading={loading}
                   localeText={thGridLocale}
                   initialState={{

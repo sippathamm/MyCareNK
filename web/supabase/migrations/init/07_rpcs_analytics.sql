@@ -155,13 +155,14 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.get_inventory_forecast()
 RETURNS TABLE(
-  service_center      text,
-  condom_qty          integer,
-  lubricant_qty       integer,
-  condom_daily_burn   numeric,
+  service_center       text,
+  condom_qty           integer,
+  condom_quantities    jsonb,
+  lubricant_qty        integer,
+  condom_daily_burn    numeric,
   lubricant_daily_burn numeric,
-  condom_days_left    numeric,
-  lubricant_days_left numeric
+  condom_days_left     numeric,
+  lubricant_days_left  numeric
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -177,15 +178,18 @@ BEGIN
     WHERE il.action = 'fulfillment' AND il.created_at >= NOW() - INTERVAL '30 days'
     GROUP BY il.service_center
   )
-  SELECT sc.name                                    AS service_center,
-    COALESCE(sci.condom_qty, 0)                     AS condom_qty,
-    COALESCE(sci.lubricant_qty, 0)                  AS lubricant_qty,
-    COALESCE(b.condom_daily_burn, 0)                AS condom_daily_burn,
-    COALESCE(b.lubricant_daily_burn, 0)             AS lubricant_daily_burn,
+  SELECT sc.name                                                             AS service_center,
+    COALESCE(sci.condom_qty, 0)                                              AS condom_qty,
+    COALESCE(sci.condom_quantities, '{"49":0,"52":0,"54":0,"56":0}'::jsonb) AS condom_quantities,
+    COALESCE(sci.lubricant_qty, 0)                                           AS lubricant_qty,
+    COALESCE(b.condom_daily_burn, 0)                                         AS condom_daily_burn,
+    COALESCE(b.lubricant_daily_burn, 0)                                      AS lubricant_daily_burn,
     CASE WHEN COALESCE(b.condom_daily_burn, 0) = 0 THEN NULL
-         ELSE ROUND(COALESCE(sci.condom_qty, 0)::numeric / b.condom_daily_burn, 1) END AS condom_days_left,
+         ELSE ROUND(COALESCE(sci.condom_qty, 0)::numeric / b.condom_daily_burn, 1)
+    END AS condom_days_left,
     CASE WHEN COALESCE(b.lubricant_daily_burn, 0) = 0 THEN NULL
-         ELSE ROUND(COALESCE(sci.lubricant_qty, 0)::numeric / b.lubricant_daily_burn, 1) END AS lubricant_days_left
+         ELSE ROUND(COALESCE(sci.lubricant_qty, 0)::numeric / b.lubricant_daily_burn, 1)
+    END AS lubricant_days_left
   FROM service_centers sc
   LEFT JOIN service_center_inventory sci ON sci.service_center = sc.name
   LEFT JOIN burn b ON b.service_center = sc.name
@@ -470,16 +474,17 @@ CREATE OR REPLACE FUNCTION public.get_inventory_log(
   p_limit          integer     DEFAULT 50,
   p_offset         integer     DEFAULT 0
 ) RETURNS TABLE(
-  id              uuid,
-  performed_by    uuid,
-  full_name       text,
-  action          public.audit_action,
-  service_center  text,
-  condom_delta    integer,
-  lubricant_delta integer,
-  reason          text,
-  note            text,
-  created_at      timestamptz
+  id                uuid,
+  performed_by      uuid,
+  full_name         text,
+  action            public.audit_action,
+  service_center    text,
+  condom_delta      integer,
+  condom_quantities jsonb,
+  lubricant_delta   integer,
+  reason            text,
+  note              text,
+  created_at        timestamptz
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -492,7 +497,8 @@ BEGIN
   RETURN QUERY
   SELECT il.id, il.performed_by,
     COALESCE(il.performed_by_name, sp.first_name || ' ' || sp.last_name, 'ระบบ') AS full_name,
-    il.action, il.service_center, il.condom_delta, il.lubricant_delta, il.reason, il.note, il.created_at
+    il.action, il.service_center, il.condom_delta, il.condom_quantities,
+    il.lubricant_delta, il.reason, il.note, il.created_at
   FROM public.inventory_logs il
   LEFT JOIN staff_profiles sp ON sp.staff_user_id = il.performed_by
   WHERE (p_action         IS NULL OR il.action::text      = p_action)
