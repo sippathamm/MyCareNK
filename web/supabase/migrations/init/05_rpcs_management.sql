@@ -228,7 +228,7 @@ BEGIN
   -- Update operational tables (no FK)
   UPDATE condom_requests SET selected_service_center = p_new WHERE selected_service_center = p_old;
   UPDATE doctor_appointments SET selected_service_center = p_new WHERE selected_service_center = p_old;
-  UPDATE staff_notifications SET service_center = p_new WHERE service_center = p_old;
+  UPDATE staff_notifications SET service_centers = p_new WHERE service_centers = p_old;
   UPDATE inventory_logs SET service_center = p_new WHERE service_center = p_old;
 
   -- Rename PK — ON UPDATE CASCADE handles service_center_inventory automatically
