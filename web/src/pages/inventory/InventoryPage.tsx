@@ -106,7 +106,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
           </Box>
           {isZeroStock && (
             <Chip
-              label="ยังไม่ได้เติมสต็อก"
+              label="ต้องเติม"
               size="small"
               icon={<WarningAmberIcon />}
               sx={mode === 'dark'
@@ -299,7 +299,7 @@ export default function InventoryPage() {
           if (rowIsZeroStock(row)) {
             return (
               <Chip
-                label="ยังไม่ได้เติมสต็อก"
+                label="ต้องเติม"
                 size="small"
                 sx={mode === 'dark'
                   ? { bgcolor: alpha('#FF9F6B', 0.15), color: '#FFBE9E', fontWeight: 600, fontSize: '0.7rem' }
