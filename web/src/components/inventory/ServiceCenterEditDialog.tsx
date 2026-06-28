@@ -85,6 +85,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setScheduleTab(0);
 
     if (center) {
+      setName(center.name);
       setDescription(center.description ?? '');
       setAddress(center.address ?? '');
       setContacts(center.contacts.length > 0 ? [...center.contacts] : []);
@@ -263,6 +264,10 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
   const handleSaveEdit = async () => {
     if (!center) return;
+    const trimmedName = name.trim();
+    if (!trimmedName) { setError('กรุณากรอกชื่อสถานบริการ'); return; }
+    const otherNames = existingNames.filter(n => n !== center.name);
+    if (otherNames.includes(trimmedName)) { setError('ชื่อนี้มีอยู่แล้ว'); return; }
     if (!validateSchedule()) return;
     const coords = validateLatLng();
     if (coords === null) return;
@@ -271,8 +276,16 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setSaving(true);
     setError(null);
 
+    if (trimmedName !== center.name) {
+      const { error: renameError } = await supabase.rpc('rename_service_center', {
+        p_old: center.name,
+        p_new: trimmedName,
+      });
+      if (renameError) { setError(renameError.message); setSaving(false); return; }
+    }
+
     const { error: saveError } = await supabase.rpc('upsert_service_center', {
-      p_name: center.name,
+      p_name: trimmedName,
       p_image_url: imageUrl ?? undefined,
       p_description: description.trim() || undefined,
       p_contacts: cleanedContacts as unknown as never,
@@ -379,9 +392,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
           <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
             {isAddMode ? 'เพิ่มสถานบริการ' : 'แก้ไขสถานบริการ'}
           </Typography>
-          {!isAddMode && center && (
-            <Typography component="div" variant="caption" color="text.secondary">{center.name}</Typography>
-          )}
         </DialogTitle>
 
         <Divider />
@@ -438,11 +448,11 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
           <TextField
             label="ชื่อสถานบริการ"
-            value={isAddMode ? name : center?.name ?? ''}
-            onChange={isAddMode ? (e) => setName(e.target.value) : undefined}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             fullWidth
-            required={isAddMode}
-            disabled={!isAddMode || saving}
+            required
+            disabled={saving}
             sx={{ mb: 2 }}
           />
 
