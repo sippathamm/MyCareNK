@@ -403,7 +403,7 @@ CREATE TABLE public.service_center_inventory (
   CONSTRAINT service_center_inventory_pkey                PRIMARY KEY (id),
   CONSTRAINT service_center_inventory_service_center_key  UNIQUE (service_center),
   CONSTRAINT service_center_inventory_service_center_fkey FOREIGN KEY (service_center)
-    REFERENCES public.service_centers(name),
+    REFERENCES public.service_centers(name) ON UPDATE CASCADE,
   CONSTRAINT service_center_inventory_updated_by_fkey FOREIGN KEY (updated_by)
     REFERENCES auth.users(id)
 );

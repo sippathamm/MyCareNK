@@ -199,8 +199,8 @@ $$;
 
 -- ── rename_service_center ──────────────────────────────────────
 -- Renames a service center PK and cascades to all referencing columns
--- in a single transaction. service_center_inventory has NO ACTION FK
--- so it must be updated before the PK.
+-- in a single transaction. service_center_inventory uses ON UPDATE CASCADE
+-- so it is handled automatically when the PK is renamed.
 CREATE OR REPLACE FUNCTION public.rename_service_center(p_old text, p_new text)
 RETURNS void
 LANGUAGE plpgsql
@@ -220,21 +220,18 @@ BEGIN
     RAISE EXCEPTION 'ชื่อนี้มีอยู่แล้ว';
   END IF;
 
-  -- Update FK child first (NO ACTION constraint)
-  UPDATE service_center_inventory SET service_center = p_new WHERE service_center = p_old;
-
   -- Update staff_profiles array (no FK — must sync manually)
   UPDATE staff_profiles
   SET service_centers = array_replace(service_centers, p_old, p_new)
   WHERE p_old = ANY(service_centers);
 
-  -- Update operational tables
+  -- Update operational tables (no FK)
   UPDATE condom_requests SET selected_service_center = p_new WHERE selected_service_center = p_old;
   UPDATE doctor_appointments SET selected_service_center = p_new WHERE selected_service_center = p_old;
   UPDATE staff_notifications SET service_center = p_new WHERE service_center = p_old;
   UPDATE inventory_logs SET service_center = p_new WHERE service_center = p_old;
 
-  -- Finally rename the PK
+  -- Rename PK — ON UPDATE CASCADE handles service_center_inventory automatically
   UPDATE service_centers SET name = p_new WHERE name = p_old;
 END;
 $$;
