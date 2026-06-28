@@ -149,7 +149,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
               return (
                 <Grid key={size} size={6}>
                   <Typography variant="caption" color="text.secondary" display="block">
-                    ถุงยาง {size}mm
+                    ถุงยางอนามัย {size}mm
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
                     <Typography variant="body2" fontWeight={600}>{current.toLocaleString()}</Typography>
@@ -226,7 +226,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
 
         <TextField
           label="ปรับจำนวนเจลหล่อลื่น (ชิ้น)"
-          helperText="ค่าบวก = เพิ่ม  |  ค่าลบ = ลด"
+          helperText="+ เพิ่ม / - ลด"
           value={lubricantDelta}
           onChange={(e) => setLubricantDelta(e.target.value.replace(/[^0-9-]/g, ''))}
           fullWidth

@@ -110,7 +110,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
             {CONDOM_SIZES.map((size) => (
               <Grid key={size} size={6}>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  ถุงยาง {size}mm
+                  ถุงยางอนามัย {size}mm
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="body2" fontWeight={600}>
