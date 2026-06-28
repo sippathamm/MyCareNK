@@ -147,7 +147,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               return (
                 <Grid key={size} size={6}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 0.25 }}>
-                    <Typography variant="caption" color="text.disabled">{size}mm</Typography>
+                    <Typography variant="caption" color="text.disabled">ขนาด {size}mm</Typography>
                     <Typography variant="caption" fontWeight={600}>{qty.toLocaleString()}</Typography>
                   </Box>
                 </Grid>
