@@ -38,7 +38,7 @@ CREATE TYPE public.audit_action AS ENUM (
   'email_updated'
 );
 
-CREATE TYPE public.appointment_status AS ENUM (
+CREATE TYPE public.consultation_status AS ENUM (
   'pending',
   'confirmed',
   'completed',

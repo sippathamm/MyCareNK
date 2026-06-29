@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
-/// Label/value row with a hairline divider, used in request and appointment
+/// Label/value row with a hairline divider, used in request and consultation
 /// summary/detail cards.
 class InfoRow extends StatelessWidget {
   final String label;

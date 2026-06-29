@@ -270,13 +270,13 @@ class AppLocalizations {
   );
   String get statusCancelledByUser =>
       _t('ยกเลิกโดยคุณ', 'ຍົກເລີກໂດຍທ່ານ', 'သင်မှ ပယ်ဖျက်', 'Cancelled by You');
-  String get statusPendingAppt => _t(
+  String get statusPendingConsultation => _t(
     'รอยืนยัน',
     'ລໍຖ້າການຢືນຢັນ',
     'အတည်ပြုရန်စောင့်',
     'Pending Confirmation',
   );
-  String get statusConfirmedAppt =>
+  String get statusConfirmedConsultation =>
       _t('ยืนยันแล้ว', 'ຢືນຢັນແລ້ວ', 'အတည်ပြုပြီး', 'Confirmed');
 
   // ─── Auth – Login ─────────────────────────────────────────────────────────
@@ -451,10 +451,10 @@ class AppLocalizations {
     'Health Coverage',
   );
   String get healthCoverageHelper => _t(
-    'สิทธิ์ที่คุณใช้รับบริการทางการแพทย์',
-    'ສິດທິທີ່ທ່ານໃຊ້ຮັບບໍລິການທາງການແພດ',
-    'သင်ဆေးကုသမှုဝန်ဆောင်မှုရရှိရာတွင် အသုံးပြုသော အခွင့်အရေး',
-    'The coverage you use for medical services',
+    'สิทธิ์ที่คุณใช้รับบริการสุขภาพ',
+    'ສິດທິທີ່ທ່ານໃຊ້ຮັບບໍລິການສຸຂະພາບ',
+    'သင်ကျန်းမာရေးဝန်ဆောင်မှုရရှိရာတွင် အသုံးပြုသော အခွင့်အရေး',
+    'The coverage you use for health services',
   );
   String get selectHealthCoverage => _t(
     'กรุณาเลือกสิทธิ์การรักษา',
@@ -760,12 +760,6 @@ class AppLocalizations {
       _t('คู่มือการใช้', 'ຄູ່ມືການໃຊ້', 'သုံးစွဲနည်း', 'User Guide');
   String get serviceCenters =>
       _t('สถานบริการ', 'ສູນບໍລິການ', 'ဝန်ဆောင်မှုဌာန', 'Service Centers');
-  String get emergencyCall => _t(
-    'เจ็บป่วยฉุกเฉิน',
-    'ເຈັບເປັນສຸກເສີນ',
-    'အရေးပေါ် ဆေးကု',
-    'Medical Emergency',
-  );
   String get assessRisk => _t(
     'ทำแบบประเมินความเสี่ยง',
     'ທຳແບບປະເມີນຄວາມສ່ຽງ',
@@ -850,7 +844,7 @@ class AppLocalizations {
     'ไม่สามารถลบบัญชีได้ เนื่องจากคุณยังมีคำขอหรือนัดรับคำปรึกษาที่ยังไม่เสร็จสิ้น กรุณารอให้เสร็จสิ้นหรือยกเลิกก่อน',
     'ບໍ່ສາມາດລຶບບັນຊີໄດ້ ເນື່ອງຈາກທ່ານຍັງມີຄຳຂໍຫຼືນັດຮັບຄຳປຶກສາທີ່ຍັງບໍ່ສຳເລັດ ກະລຸນາລໍຖ້າໃຫ້ສຳເລັດ ຫຼື ຍົກເລີກກ່ອນ',
     'သင့်တွင် ပြီးဆုံးခြင်းမရှိသေးသော တောင်းဆိုမှု သို့မဟုတ် တိုင်ပင်ချိန်းဆိုမှု ရှိနေသဖြင့် အကောင့်ဖျက်၍မရပါ ပြီးဆုံးအောင် စောင့်ပါ သို့မဟုတ် အရင်ပယ်ဖျက်ပါ',
-    'Cannot delete account. You have unfinished requests or appointments. Please wait for them to complete or cancel them first',
+    'Cannot delete account. You have unfinished requests or consultations. Please wait for them to complete or cancel them first',
   );
   String get recoveryCodesManageTitle => _t(
     'รหัสกู้คืนบัญชี',
@@ -946,7 +940,7 @@ class AppLocalizations {
     'ကွန်ဒုံး/လူဘရီကင်ရယူချိန်',
     'Condom/Lubricant Pickup Hours',
   );
-  String get appointmentTimeLabel => _t(
+  String get consultationTimeLabel => _t(
     'เวลานัดรับคำปรึกษา',
     'ເວລານັດຮັບຄຳປຶກສາ',
     'တိုင်ပင်ချိန်းချိန်',
@@ -980,13 +974,13 @@ class AppLocalizations {
     'HIV အန္တရာယ်အကဲဖြတ်ရန် စစ်ဆေးပါ',
     'Take a test to assess your HIV infection risk',
   );
-  String get bookDoctorTitle => _t(
+  String get bookConsultationTitle => _t(
     'นัดรับคำปรึกษา',
     'ນັດຮັບຄຳປຶກສາ',
     'တိုင်ပင်ချိန်းဆို',
     'Book a Consultation',
   );
-  String get bookDoctorSubtitle => _t(
+  String get bookConsultationSubtitle => _t(
     'จองคิวล่วงหน้าเพื่อรับยา PrEP/PEP ตรวจเลือด หรือปรึกษาสุขภาพ',
     'ຈອງຄິວລ່ວງໜ້າເພື່ອຮັບຢາ PrEP/PEP ກວດເລືອດ ຫຼື ປຶກສາສຸຂະພາບ',
     'PrEP/PEP ဆေးရယူ၊ သွေးစစ် သို့မဟုတ် ကျန်းမာရေးတိုင်ပင်ရန် ကြိုတင်ချိန်းဆို',
@@ -1315,23 +1309,23 @@ class AppLocalizations {
     'အကြောင်းကြားချက် မရှိသေးပါ',
     'No notifications yet',
   );
-  String get msgApptPending => _t(
-    'ระบบได้รับการนัดหมายของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน',
-    'ລະບົບໄດ້ຮັບການນັດໝາຍຂອງທ່ານ ລໍຖ້າເຈົ້າໜ້າທີ່ຢືນຢັນ',
-    'သင်၏ ချိန်းဆိုမှု လက်ခံပြီးပါပြီ ဝန်ထမ်းအတည်ပြုရန် စောင့်ဆိုင်း',
-    'Your appointment has been received. Waiting for staff confirmation',
+  String get msgConsultationPending => _t(
+    'ระบบได้รับการนัดรับคำปรึกษาของคุณเรียบร้อย รอเจ้าหน้าที่ยืนยัน',
+    'ລະບົບໄດ້ຮັບການນັດຮັບຄຳປຶກສາຂອງທ່ານ ລໍຖ້າເຈົ້າໜ້າທີ່ຢືນຢັນ',
+    'သင်၏ တိုင်ပင်ချိန်းဆိုမှု လက်ခံပြီးပါပြီ ဝန်ထမ်းအတည်ပြုရန် စောင့်ဆိုင်း',
+    'Your consultation has been received. Waiting for staff confirmation',
   );
-  String get msgApptCompleted => _t(
-    'การนัดหมายของคุณเสร็จสิ้นแล้ว',
-    'ການນັດໝາຍຂອງທ່ານສຳເລັດແລ້ວ',
-    'သင်၏ ချိန်းဆိုမှု ပြီးဆုံးပါပြီ',
-    'Your appointment has been completed',
+  String get msgConsultationCompleted => _t(
+    'การนัดรับคำปรึกษาของคุณเสร็จสิ้นแล้ว',
+    'ການນັດຮັບຄຳປຶກສາຂອງທ່ານສຳເລັດແລ້ວ',
+    'သင်၏ တိုင်ပင်ချိန်းဆိုမှု ပြီးဆုံးပါပြီ',
+    'Your consultation has been completed',
   );
-  String get msgApptCancelledByUser => _t(
-    'คุณได้ยกเลิกการนัดหมายนี้แล้ว',
-    'ທ່ານໄດ້ຍົກເລີກການນັດໝາຍນີ້ແລ້ວ',
-    'သင် ဤချိန်းဆိုမှုကို ပယ်ဖျက်ပြီးပါပြီ',
-    'You have cancelled this appointment',
+  String get msgConsultationCancelledByUser => _t(
+    'คุณได้ยกเลิกการนัดรับคำปรึกษานี้แล้ว',
+    'ທ່ານໄດ້ຍົກເລີກການນັດຮັບຄຳປຶກສານີ້ແລ້ວ',
+    'သင် ဤတိုင်ပင်ချိန်းဆိုမှုကို ပယ်ဖျက်ပြီးပါပြီ',
+    'You have cancelled this consultation',
   );
   String get msgCondomPreparing => _t(
     'เจ้าหน้าที่กำลังเตรียมถุงยางอนามัยให้คุณ',
@@ -1358,18 +1352,18 @@ class AppLocalizations {
     'Your request has been received. Waiting for staff action',
   );
 
-  String msgApptConfirmed(String serviceCenter, String dateTime) => _t(
-    'การนัดหมายของคุณได้รับการยืนยันแล้ว กรุณามาที่ $serviceCenter ภายในวันที่ $dateTime',
-    'ການນັດໝາຍຂອງທ່ານໄດ້ຮັບການຢືນຢັນ ກະລຸນາມາທີ່ $serviceCenter ກ່ອນ $dateTime',
-    'သင်၏ ချိန်းဆိုမှု အတည်ပြုပြီးပါပြီ $dateTime မတိုင်မီ $serviceCenter သို့ လာပါ',
-    'Your appointment is confirmed. Please come to $serviceCenter by $dateTime',
+  String msgConsultationConfirmed(String serviceCenter, String dateTime) => _t(
+    'การนัดรับคำปรึกษาของคุณได้รับการยืนยันแล้ว กรุณามาที่ $serviceCenter ภายในวันที่ $dateTime',
+    'ການນັດຮັບຄຳປຶກສາຂອງທ່ານໄດ້ຮັບການຢືນຢັນ ກະລຸນາມາທີ່ $serviceCenter ກ່ອນ $dateTime',
+    'သင်၏ တိုင်ပင်ချိန်းဆိုမှု အတည်ပြုပြီးပါပြီ $dateTime မတိုင်မီ $serviceCenter သို့ လာပါ',
+    'Your consultation is confirmed. Please come to $serviceCenter by $dateTime',
   );
 
-  String msgApptCancelledByStaff(String path) => _t(
-    'การนัดหมายนี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ $path',
-    'ການນັດໝາຍນີ້ຖືກຍົກເລີກໂດຍເຈົ້າໜ້າທີ່ ລາຍລະອຽດ: $path',
-    'ဝန်ထမ်းမှ ဤချိန်းဆိုမှုကို ပယ်ဖျက်သည် အသေးစိတ်: $path',
-    'This appointment was cancelled by staff. Details: $path',
+  String msgConsultationCancelledByStaff(String path) => _t(
+    'การนัดรับคำปรึกษานี้ถูกยกเลิกโดยเจ้าหน้าที่ คุณสามารถดูรายละเอียดได้ที่ $path',
+    'ການນັດຮັບຄຳປຶກສານີ້ຖືກຍົກເລີກໂດຍເຈົ້າໜ້າທີ່ ລາຍລະອຽດ: $path',
+    'ဝန်ထမ်းမှ ဤတိုင်ပင်ချိန်းဆိုမှုကို ပယ်ဖျက်သည် အသေးစိတ်: $path',
+    'This consultation was cancelled by staff. Details: $path',
   );
 
   String msgCondomReady(String serviceCenter, String dateTime) => _t(
@@ -1386,7 +1380,7 @@ class AppLocalizations {
     'This request was cancelled by staff. Details: $path',
   );
 
-  String get msgApptCancelledByStaffPath => _t(
+  String get msgConsultationCancelledByStaffPath => _t(
     'บริการ > นัดรับคำปรึกษา > ประวัติการนัด > รายละเอียด > เหตุผล',
     'ບໍລິການ > ນັດຮັບຄຳປຶກສາ > ປະຫວັດ > ລາຍລະອຽດ > ເຫດຜົນ',
     'ဝန်ဆောင်မှု > တိုင်ပင်ချိန်း > မှတ်တမ်း > အသေးစိတ် > အကြောင်းပြချက်',
@@ -1476,10 +1470,10 @@ class AppLocalizations {
   String get riskMediumHeadline =>
       _t('ควรเฝ้าระวัง', 'ຄວນລະວັງ', 'သတိထားရမည်', 'Stay Vigilant');
   String get riskHighHeadline => _t(
-    'เร่งด่วน — ควรพบแพทย์ทันที',
-    'ຮີບດ່ວນ — ຄວນພົບໝໍທັນທີ',
-    'အရေးပေါ် — ဆရာဝန်နှင့် ချက်ချင်းတွေ့ပါ',
-    'Urgent — See a Doctor Immediately',
+    'เร่งด่วน — ควรพบเจ้าหน้าที่ทันที',
+    'ຮີບດ່ວນ — ຄວນພົບເຈົ້າໜ້າທີ່ທັນທີ',
+    'အရေးပေါ် — ဝန်ထမ်းနှင့် ချက်ချင်းတွေ့ပါ',
+    'Urgent — Contact Staff Immediately',
   );
   String get startAssessment => _t(
     'เริ่มทำแบบประเมิน',
@@ -1520,7 +1514,7 @@ class AppLocalizations {
   String questionCountLabel(int n) =>
       _t('$n ข้อ', '$n ຂໍ້', 'မေးခွန်း $n ခု', '$n questions');
 
-  // ─── Doctor Booking ───────────────────────────────────────────────────────
+  // ─── Consultation Booking ───────────────────────────────────────────────────────
   String get bookingTitle => _t(
     'นัดรับคำปรึกษา',
     'ນັດຮັບຄຳປຶກສາ',
@@ -1555,10 +1549,10 @@ class AppLocalizations {
     'တိုင်ပင်ချင်သည့် အကြောင်း',
     'Reason for Consultation',
   );
-  String get bookingAppointmentDate =>
-      _t('วันที่นัด', 'ວັນທີ່ນັດ', 'ချိန်းဆိုသည့် ရက်', 'Appointment Date');
-  String get bookingAppointmentTime =>
-      _t('เวลานัด', 'ເວລານັດ', 'ချိန်းဆိုသည့် အချိန်', 'Appointment Time');
+  String get bookingConsultationDate =>
+      _t('วันที่นัด', 'ວັນທີ່ນັດ', 'ချိန်းဆိုသည့် ရက်', 'Consultation Date');
+  String get bookingConsultationTime =>
+      _t('เวลานัด', 'ເວລານັດ', 'ချိန်းဆိုသည့် အချိန်', 'Consultation Time');
   String get bookingAdditionalNotes => _t(
     'บันทึกเพิ่มเติม (ไม่ระบุได้)',
     'ບັນທຶກເພີ່ມເຕີມ (ຖ້ຢາກ)',
@@ -1571,17 +1565,17 @@ class AppLocalizations {
     'ဥပမာ ရောဂါလက္ခဏာ သို့မဟုတ် သောက်နေသောဆေး...',
     'E.g. symptoms or current medications...',
   );
-  String get noAppointmentService => _t(
+  String get noConsultationService => _t(
     'สถานบริการนี้ไม่เปิดให้นัดรับคำปรึกษา',
     'ສູນບໍລິການນີ້ບໍ່ໄດ້ເປີດນັດຮັບຄຳປຶກສາ',
     'ဤဝန်ဆောင်မှုဌာနသည် တိုင်ပင်ချိန်းဆိုမှု မပေးပါ',
-    'This service center does not offer consultation appointments',
+    'This service center does not offer consultations',
   );
-  String get bookingAppointmentSummary => _t(
-    'สรุปการนัดหมาย',
-    'ສະຫຼຸບການນັດໝາຍ',
+  String get bookingConsultationSummary => _t(
+    'สรุปการนัด',
+    'ສະຫຼຸບການນັດ',
     'ချိန်းဆိုမှု အကျဉ်းချုပ်',
-    'Appointment Summary',
+    'Consultation Summary',
   );
   String get bookingNoteLabel =>
       _t('บันทึกเพิ่มเติม', 'ບັນທຶກເພີ່ມເຕີມ', 'မှတ်ချက်', 'Additional Notes');
@@ -1589,103 +1583,103 @@ class AppLocalizations {
     'หากต้องการยกเลิกหรือเปลี่ยนแปลงนัด โปรดติดต่อสถานบริการล่วงหน้าอย่างน้อย 24 ชม.',
     'ຫາກຕ້ອງການຍົກເລີກ ຫຼື ປ່ຽນນັດ ໂປດຕິດຕໍ່ລ່ວງໜ້າ 24 ຊ.ມ.',
     'ပယ်ဖျက်/ပြောင်းလဲလိုပါက အနည်းဆုံး ၂၄ နာရီ ကြိုတင်အကြောင်းကြားပါ',
-    'To cancel or change your appointment, please contact the service center at least 24 hrs in advance.',
+    'To cancel or change your consultation, please contact the service center at least 24 hrs in advance.',
   );
-  String get confirmAppointment => _t(
-    'ยืนยันการนัดหมาย',
-    'ຢືນຢັນການນັດໝາຍ',
+  String get confirmConsultation => _t(
+    'ยืนยันการนัด',
+    'ຢືນຢັນການນັດ',
     'ချိန်းဆိုမှု အတည်ပြု',
-    'Confirm Appointment',
+    'Confirm Consultation',
   );
-  String get loginToBookDoctor => _t(
+  String get loginToBookConsultation => _t(
     'คุณต้องเข้าสู่ระบบก่อนจึงจะนัดรับคำปรึกษาได้',
     'ທ່ານຕ້ອງເຂົ້າສູ່ລະບົບກ່ອນຈຶ່ງຈະນັດຮັບຄຳປຶກສາໄດ້',
     'တိုင်ပင်ချိန်းဆိုရန် အရင်ဝင်ရောက်ပါ',
     'You must be logged in to book a consultation',
   );
   String get bookingSuccess => _t(
-    'นัดหมายสำเร็จ!',
-    'ນັດໝາຍສຳເລັດ!',
+    'นัดสำเร็จ!',
+    'ນັດສຳເລັດ!',
     'ချိန်းဆိုမှု အောင်မြင်!',
-    'Appointment Booked!',
+    'Consultation Booked!',
   );
   String get bookingSuccessMessage => _t(
-    'เราได้รับคำขอนัดหมายของคุณแล้ว',
-    'ພວກເຮົາໄດ້ຮັບຄຳຮ້ອງນັດໝາຍຂອງທ່ານ',
-    'သင်၏ ချိန်းဆိုမှု လက်ခံပြီးပါပြီ',
-    'We have received your appointment request',
+    'เราได้รับคำขอนัดรับคำปรึกษาของคุณแล้ว',
+    'ພວກເຮົາໄດ້ຮັບຄຳຮ້ອງນັດຮັບຄຳປຶກສາຂອງທ່ານ',
+    'သင်၏ တိုင်ပင်ချိန်းဆိုမှု လက်ခံပြီးပါပြီ',
+    'We have received your consultation request',
   );
-  String get appointmentDetailsTitle => _t(
-    'รายละเอียดการนัดหมาย',
-    'ລາຍລະອຽດການນັດໝາຍ',
+  String get consultationDetailsTitle => _t(
+    'รายละเอียดการนัด',
+    'ລາຍລະອຽດການນັດ',
     'ချိန်းဆိုမှု အသေးစိတ်',
-    'Appointment Details',
+    'Consultation Details',
   );
   String get preTodoTitle => _t(
     'สิ่งที่ควรทำก่อนวันนัด',
     'ສິ່ງທີ່ຄວນເຮັດກ່ອນວັນນັດ',
     'ချိန်းဆိုသည့်ရက် မတိုင်မီ ပြင်ဆင်ရမည်',
-    'Before Your Appointment',
+    'Before Your Consultation',
   );
   String get reasonLabel => _t('เรื่อง', 'ສິ່ງ', 'အကြောင်း', 'Reason');
   String get timeWithUnit => _t('น.', 'ໂມງ', 'နာရီ', '');
 
-  // ─── Appointment History ──────────────────────────────────────────────────
-  String get appointmentHistoryTitle => _t(
+  // ─── Consultation History ──────────────────────────────────────────────────
+  String get consultationHistoryTitle => _t(
     'ประวัติการนัด',
     'ປະຫວັດການນັດ',
-    'ချိန်းဆိုမှုမှတ်တမ်း',
-    'Appointment History',
+    'တိုင်ပင်ချိန်းဆိုမှုမှတ်တမ်း',
+    'Consultation History',
   );
-  String get noAppointments => _t(
-    'ยังไม่มีการนัดหมาย',
-    'ຍັງບໍ່ມີການນັດໝາຍ',
-    'ချိန်းဆိုမှု မရှိသေးပါ',
-    'No appointments yet',
+  String get noConsultations => _t(
+    'ยังไม่มีการนัดรับคำปรึกษา',
+    'ຍັງບໍ່ມີການນັດຮັບຄຳປຶກສາ',
+    'တိုင်ပင်ချိန်းဆိုမှု မရှိသေးပါ',
+    'No consultations yet',
   );
-  String get cancelAppointmentTitle => _t(
-    'ยืนยันการยกเลิกนัดหมาย',
-    'ຢືນຢັນການຍົກເລີກນັດໝາຍ',
+  String get cancelConsultationTitle => _t(
+    'ยืนยันการยกเลิกนัด',
+    'ຢືນຢັນການຍົກເລີກນັດ',
     'ချိန်းဆိုမှုပယ်ဖျက်ခြင်း အတည်ပြု',
     'Confirm Cancellation',
   );
-  String get cancelAppointmentMessage => _t(
-    'คุณต้องการยกเลิกการนัดหมายนี้ใช่หรือไม่?\nการยกเลิกไม่สามารถเปลี่ยนแปลงได้',
-    'ທ່ານຕ້ອງການຍົກເລີກນັດໝາຍນີ້ໃຊ່ໄຫມ?\nການຍົກເລີກບໍ່ສາມາດປ່ຽນໄດ້',
-    'ဤချိန်းဆိုမှုကို ပယ်ဖျက်လိုသလား?\nပယ်ဖျက်ပြီးနောက် ပြောင်းလဲ၍မရပါ',
-    'Cancel this appointment?\nThis action cannot be undone',
+  String get cancelConsultationMessage => _t(
+    'คุณต้องการยกเลิกการนัดรับคำปรึกษานี้ใช่หรือไม่?\nการยกเลิกไม่สามารถเปลี่ยนแปลงได้',
+    'ທ່ານຕ້ອງການຍົກເລີກນັດຮັບຄຳປຶກສານີ້ໃຊ່ໄຫມ?\nການຍົກເລີກບໍ່ສາມາດປ່ຽນໄດ້',
+    'ဤတိုင်ပင်ချိန်းဆိုမှုကို ပယ်ဖျက်လိုသလား?\nပယ်ဖျက်ပြီးနောက် ပြောင်းလဲ၍မရပါ',
+    'Cancel this consultation?\nThis action cannot be undone',
   );
-  String get cancelApptSuccess => _t(
-    'ยกเลิกนัดหมายเรียบร้อยแล้ว',
-    'ຍົກເລີກນັດໝາຍສຳເລັດ',
-    'ချိန်းဆိုမှု ပယ်ဖျက်ပြီး',
-    'Appointment cancelled',
+  String get cancelConsultationSuccess => _t(
+    'ยกเลิกนัดรับคำปรึกษาเรียบร้อยแล้ว',
+    'ຍົກເລີກນັດຮັບຄຳປຶກສາສຳເລັດ',
+    'တိုင်ပင်ချိန်းဆိုမှု ပယ်ဖျက်ပြီး',
+    'Consultation cancelled',
   );
-  String get cancelApptError => _t(
-    'เกิดข้อผิดพลาดในการยกเลิกนัดหมาย',
+  String get cancelConsultationError => _t(
+    'เกิดข้อผิดพลาดในการยกเลิกนัดรับคำปรึกษา',
     'ເກີດຂໍ້ຜິດພາດໃນການຍົກເລີກ',
-    'ချိန်းဆိုမှုပယ်ဖျက်ရာတွင် အမှားဖြစ်သည်',
-    'Failed to cancel appointment',
+    'တိုင်ပင်ချိန်းဆိုမှုပယ်ဖျက်ရာတွင် အမှားဖြစ်သည်',
+    'Failed to cancel consultation',
   );
-  String get cancelApptBtn => _t(
+  String get cancelConsultationBtn => _t(
     'ยกเลิกนัด',
     'ຍົກເລີກນັດ',
-    'ချိန်းဆိုမှု ပယ်ဖျက်',
-    'Cancel Appointment',
+    'တိုင်ပင်ချိန်းဆိုမှု ပယ်ဖျက်',
+    'Cancel Consultation',
   );
-  String get copiedApptRefCode => _t(
+  String get copiedConsultationRefCode => _t(
     'คัดลอกรหัสอ้างอิงแล้ว',
     'ຄັດລອກລະຫັດອ້າງອີງແລ້ວ',
     'ကိုးကားနံပါတ် ကူးယူပြီး',
     'Reference code copied',
   );
-  String get apptSubjectSection => _t(
+  String get consultationSubjectSection => _t(
     'เรื่องที่ต้องการรับคำปรึกษา',
     'ສິ່ງທີ່ຕ້ອງການຮັບຄຳປຶກສາ',
     'တိုင်ပင်ချင်သည့် အကြောင်း',
     'Reason for Consultation',
   );
-  String get apptServiceDateTime => _t(
+  String get consultationServiceDateTime => _t(
     'สถานบริการ วันที่ และเวลารับ',
     'ສູນບໍລິການ ວັນທີ ແລະ ເວລາ',
     'ဝန်ဆောင်မှုဌာနနှင့် ချိန်းဆိုသည့် ရက်/အချိန်',
@@ -1699,13 +1693,13 @@ class AppLocalizations {
     'ပယ်ဖျက်သည့် အကြောင်းပြချက်',
     'Cancellation Reason',
   );
-  String get searchApptRefCode => _t(
+  String get searchConsultationRefCode => _t(
     'ค้นหารหัสอ้างอิง',
     'ຄົ້ນຫາລະຫັດອ້າງອີງ',
     'ကိုးကားနံပါတ် ရှာ',
     'Search reference code',
   );
-  String get noMatchingAppts =>
+  String get noMatchingConsultations =>
       _t('ไม่พบรายการ', 'ບໍ່ພົບລາຍການ', 'မှတ်တမ်းမတွေ့ပါ', 'No results found');
 
   // ─── HIV Assessment – Intro ───────────────────────────────────────────────
@@ -2018,17 +2012,17 @@ class AppLocalizations {
     ),
   ];
   String get riskMediumAdvice => _t(
-    'เริ่มมีความเสี่ยงในการรับเชื้อ แนะนำให้ปรึกษาแพทย์เพื่อพิจารณาการใช้ยา PrEP และตรวจหาเชื้อทุก 3 เดือน',
-    'ເລີ່ມມີຄວາມສ່ຽງ ແນະນຳໃຫ້ປຶກສາໝໍ ພິຈາລະນາ PrEP ແລະ ກວດຫາເຊື້ອທຸກ 3 ເດືອນ',
-    'ကူးစက်ခံနိုင်ခြေ စတင်ရှိသည် ဆရာဝန်ပြပြီး PrEP ဆေးစဉ်းစားကာ ၃ လတစ်ကြိမ် စစ်ဆေးပါ',
-    'Some infection risk detected. Consult a doctor about PrEP and get tested every 3 months',
+    'เริ่มมีความเสี่ยงในการรับเชื้อ แนะนำให้ปรึกษาเจ้าหน้าที่เพื่อพิจารณาการใช้ยา PrEP และตรวจหาเชื้อทุก 3 เดือน',
+    'ເລີ່ມມີຄວາມສ່ຽງ ແນະນຳໃຫ້ປຶກສາເຈົ້າໜ້າທີ່ ພິຈາລະນາ PrEP ແລະ ກວດຫາເຊື້ອທຸກ 3 ເດືອນ',
+    'ကူးစက်ခံနိုင်ခြေ စတင်ရှိသည် ဝန်ထမ်းနှင့်တွေ့ပြီး PrEP ဆေးစဉ်းစားကာ ၃ လတစ်ကြိမ် စစ်ဆေးပါ',
+    'Some infection risk detected. Consult staff about PrEP and get tested every 3 months',
   );
   List<String> get riskMediumPills => [
     _t(
-      'ปรึกษาแพทย์เรื่อง PrEP',
-      'ປຶກສາໝໍ PrEP',
-      'ဆရာဝန်ပြ PrEP',
-      'Consult doctor about PrEP',
+      'ปรึกษาเจ้าหน้าที่เรื่อง PrEP',
+      'ປຶກສາເຈົ້າໜ້າທີ່ PrEP',
+      'ဝန်ထမ်းနှင့်တွေ့ PrEP',
+      'Consult staff about PrEP',
     ),
     _t(
       'ตรวจหาเชื้อทุก 3 เดือน',
@@ -2038,17 +2032,17 @@ class AppLocalizations {
     ),
   ];
   String get riskHighAdvice => _t(
-    'มีความเสี่ยงสูงในการรับเชื้อ ควรพบแพทย์เพื่อตรวจเลือดโดยเร็ว หรือหากเพิ่งเสี่ยงมาไม่เกิน 72 ชั่วโมง ให้ขอรับยา PEP ทันที',
-    'ມີຄວາມສ່ຽງສູງ ຄວນພົບໝໍເພື່ອກວດເລືອດ ຫຼື ຮັບຢາ PEP ພາຍໃນ 72 ຊ.ມ.',
-    'ကူးစက်ခံနိုင်ခြေ မြင့်မားသည် ဆရာဝန်နှင့် ချက်ချင်းတွေ့ပြီး သွေးစစ်ပါ သို့မဟုတ် ၇၂ နာရီအတွင်း PEP ဆေးတောင်းပါ',
-    'High infection risk. See a doctor for a blood test soon, or if exposed within 72 hours, request PEP immediately',
+    'มีความเสี่ยงสูงในการรับเชื้อ ควรพบเจ้าหน้าที่เพื่อตรวจเลือดโดยเร็ว หรือหากเพิ่งเสี่ยงมาไม่เกิน 72 ชั่วโมง ให้ขอรับยา PEP ทันที',
+    'ມີຄວາມສ່ຽງສູງ ຄວນພົບເຈົ້າໜ້າທີ່ເພື່ອກວດເລືອດ ຫຼື ຮັບຢາ PEP ພາຍໃນ 72 ຊ.ມ.',
+    'ကူးစက်ခံနိုင်ခြေ မြင့်မားသည် ဝန်ထမ်းနှင့် ချက်ချင်းတွေ့ပြီး သွေးစစ်ပါ သို့မဟုတ် ၇၂ နာရီအတွင်း PEP ဆေးတောင်းပါ',
+    'High infection risk. Contact staff for a blood test soon, or if exposed within 72 hours, request PEP immediately',
   );
   List<String> get riskHighPills => [
     _t(
-      'พบแพทย์เพื่อตรวจเลือด',
-      'ພົບໝໍກວດເລືອດ',
-      'ဆရာဝန်ပြ သွေးစစ်',
-      'See a doctor for blood test',
+      'พบเจ้าหน้าที่เพื่อตรวจเลือด',
+      'ພົບເຈົ້າໜ້າທີ່ກວດເລືອດ',
+      'ဝန်ထမ်းနှင့်တွေ့ သွေးစစ်',
+      'Contact staff for blood test',
     ),
     _t(
       'ขอรับยา PEP ภายใน 72 ชม.',
@@ -2117,7 +2111,7 @@ class AppLocalizations {
     'Invalid QR Code',
   );
 
-  // ─── Doctor Booking ───────────────────────────────────────────────────────
+  // ─── Consultation Booking ───────────────────────────────────────────────────────
   String get bookingInstruction1 => _t(
     'งดอาหาร 4–6 ชม. ก่อนตรวจเลือด (ถ้ามี)',
     'ງົດອາຫານ 4–6 ຊ.ມ. ກ່ອນກວດເລືອດ (ຖ້າມີ)',
@@ -2134,7 +2128,7 @@ class AppLocalizations {
     'มาก่อนเวลานัด 15 นาที',
     'ມາກ່ອນເວລານັດ 15 ນາທີ',
     'ချိန်းဆိုချိန်ထက် မိနစ် ၁၅ စောပါ',
-    'Arrive 15 minutes before your appointment',
+    'Arrive 15 minutes before your consultation',
   );
 
   // ─── Recovery ─────────────────────────────────────────────────────────────
@@ -2186,10 +2180,10 @@ class AppLocalizations {
     'Information We Collect',
   );
   String get privacySection1Body => _t(
-    'เมื่อท่านสร้างบัญชีและใช้งาน MyCareNK เราจะเก็บรวบรวมเฉพาะข้อมูลที่จำเป็นต่อการให้บริการเท่านั้น ได้แก่ ชื่อผู้ใช้งาน เพศ วันเกิด และสัญชาติที่ท่านกรอกในขั้นตอนการสมัคร รวมถึงข้อมูลการใช้บริการ เช่น ประวัติคำขอรับอุปกรณ์ป้องกัน สถานที่รับบริการ วันเวลานัดหมาย และข้อความที่ท่านฝากไว้ นอกจากนี้ ท่านอาจให้หมายเลขโทรศัพท์ไว้โดยสมัครใจ เพื่อให้เจ้าหน้าที่สามารถติดต่อนัดรับอุปกรณ์ป้องกัน นัดรับคำปรึกษา หรือในกรณีที่มีเหตุจำเป็นเร่งด่วน\n\nทั้งนี้ เราไม่เก็บชื่อ-นามสกุลจริง หมายเลขบัตรประชาชน หรือข้อมูลที่สามารถระบุตัวตนของท่านได้โดยตรงแต่อย่างใด',
-    'ເມື່ອທ່ານສ້າງບັນຊີ ແລະ ນໍາໃຊ້ MyCareNK ເຮົາຈະເກັບກໍາສະເພາະຂໍ້ມູນທີ່ຈໍາເປັນຕໍ່ການໃຫ້ບໍລິການເທົ່ານັ້ນ ໄດ້ແກ່ ຊື່ຜູ້ໃຊ້ ເພດ ວັນເດືອນປີເກີດ ແລະ ສັນຊາດ ລວມທັງຂໍ້ມູນການໃຊ້ບໍລິການ ເຊັ່ນ ປະຫວັດຄໍາຂໍ ສະຖານທີ່ ວັນທີ ແລະ ເວລານັດໝາຍ ຂໍ້ຄວາມທີ່ທ່ານຝາກໄວ້\n\nທັງນີ້ ເຮົາບໍ່ໄດ້ເກັບຊື່-ນາມສະກຸນຈິງ ເລກບັດປະຊາຊົນ ຫຼື ຂໍ້ມູນທີ່ສາມາດລະບຸຕົວຕົນຂອງທ່ານໄດ້ໂດຍກົງ',
-    'သင် MyCareNK တွင် အကောင့်ဖန်တီးပြီး အသုံးပြုသောအခါ ဝန်ဆောင်မှုအတွက် လိုအပ်သော အချက်အလက်များကိုသာ စုဆောင်းပါသည် ၎င်းတို့မှာ အသုံးပြုသူအမည် လိင် မွေးသက္ကရာဇ် နှင့် နိုင်ငံသား ဝန်ဆောင်မှုမှတ်တမ်းများ ဆေးရုံချိန်းဆိုချက်များ နှင့် သင်ချန်ထားသော မက်ဆေ့ချ်များ ဖြစ်သည်\n\nကျွန်ုပ်တို့သည် အမည်၊ နိုင်ငံသားကတ်နံပါတ် သို့မဟုတ် တိုက်ရိုက်သတ်မှတ်နိုင်သော အချက်အလက်များကို မစုဆောင်းပါ',
-    'When you create an account and use MyCareNK, we collect only the information necessary to provide the service: username, gender, date of birth, and nationality entered during registration, along with service usage data such as request history, service center, appointment dates and times, and any messages you leave. You may also voluntarily provide a phone number so staff can contact you.\n\nWe do not collect your full name, ID card number, or any information that can directly identify you.',
+    'เมื่อท่านสร้างบัญชีและใช้งาน MyCareNK เราจะเก็บรวบรวมเฉพาะข้อมูลที่จำเป็นต่อการให้บริการเท่านั้น ได้แก่ ชื่อผู้ใช้งาน เพศ วันเกิด และสัญชาติที่ท่านกรอกในขั้นตอนการสมัคร รวมถึงข้อมูลการใช้บริการ เช่น ประวัติคำขอรับอุปกรณ์ป้องกัน สถานที่รับบริการ วันเวลานัด และข้อความที่ท่านฝากไว้ นอกจากนี้ ท่านอาจให้หมายเลขโทรศัพท์ไว้โดยสมัครใจ เพื่อให้เจ้าหน้าที่สามารถติดต่อนัดรับอุปกรณ์ป้องกัน นัดรับคำปรึกษา หรือในกรณีที่มีเหตุจำเป็นเร่งด่วน\n\nทั้งนี้ เราไม่เก็บชื่อ-นามสกุลจริง หมายเลขบัตรประชาชน หรือข้อมูลที่สามารถระบุตัวตนของท่านได้โดยตรงแต่อย่างใด',
+    'ເມື່ອທ່ານສ້າງບັນຊີ ແລະ ນໍາໃຊ້ MyCareNK ເຮົາຈະເກັບກໍາສະເພາະຂໍ້ມູນທີ່ຈໍາເປັນຕໍ່ການໃຫ້ບໍລິການເທົ່ານັ້ນ ໄດ້ແກ່ ຊື່ຜູ້ໃຊ້ ເພດ ວັນເດືອນປີເກີດ ແລະ ສັນຊາດ ລວມທັງຂໍ້ມູນການໃຊ້ບໍລິການ ເຊັ່ນ ປະຫວັດຄໍາຂໍ ສະຖານທີ່ ວັນທີ ແລະ ເວລານັດ ຂໍ້ຄວາມທີ່ທ່ານຝາກໄວ້\n\nທັງນີ້ ເຮົາບໍ່ໄດ້ເກັບຊື່-ນາມສະກຸນຈິງ ເລກບັດປະຊາຊົນ ຫຼື ຂໍ້ມູນທີ່ສາມາດລະບຸຕົວຕົນຂອງທ່ານໄດ້ໂດຍກົງ',
+    'သင် MyCareNK တွင် အကောင့်ဖန်တီးပြီး အသုံးပြုသောအခါ ဝန်ဆောင်မှုအတွက် လိုအပ်သော အချက်အလက်များကိုသာ စုဆောင်းပါသည် ၎င်းတို့မှာ အသုံးပြုသူအမည် လိင် မွေးသက္ကရာဇ် နှင့် နိုင်ငံသား ဝန်ဆောင်မှုမှတ်တမ်းများ တိုင်ပင်ချိန်းဆိုချက်များ နှင့် သင်ချန်ထားသော မက်ဆေ့ချ်များ ဖြစ်သည်\n\nကျွန်ုပ်တို့သည် အမည်၊ နိုင်ငံသားကတ်နံပါတ် သို့မဟုတ် တိုက်ရိုက်သတ်မှတ်နိုင်သော အချက်အလက်များကို မစုဆောင်းပါ',
+    'When you create an account and use MyCareNK, we collect only the information necessary to provide the service: username, gender, date of birth, and nationality entered during registration, along with service usage data such as request history, service center, consultation dates and times, and any messages you leave. You may also voluntarily provide a phone number so staff can contact you.\n\nWe do not collect your full name, ID card number, or any information that can directly identify you.',
   );
 
   String get privacySection2Title => _t(
@@ -2212,10 +2206,10 @@ class AppLocalizations {
     'Confidentiality',
   );
   String get privacySection3Body => _t(
-    'เราจำกัดการเข้าถึงข้อมูลของท่านเฉพาะเจ้าหน้าที่ของสถานบริการที่ท่านเลือกและผู้ดูแลระบบที่ได้รับอนุญาตอย่างเป็นทางการเท่านั้น โดยเจ้าหน้าที่จะสามารถมองเห็นได้เพียงข้อมูลที่จำเป็นต่อการจัดเตรียมและส่งมอบบริการให้ท่าน ได้แก่ ชื่อผู้ใช้งาน รายการและจำนวนอุปกรณ์ที่ขอ วันเวลานัดหมาย และสถานะคำขอเท่านั้น\n\nข้อมูลของท่านจะถูกเก็บรักษาตลอดระยะเวลาที่บัญชียังคงเปิดใช้งาน และจะถูกดำเนินการตามที่ท่านร้องขอในกรณีที่ต้องการลบหรือโอนย้ายข้อมูล',
+    'เราจำกัดการเข้าถึงข้อมูลของท่านเฉพาะเจ้าหน้าที่ของสถานบริการที่ท่านเลือกและผู้ดูแลระบบที่ได้รับอนุญาตอย่างเป็นทางการเท่านั้น โดยเจ้าหน้าที่จะสามารถมองเห็นได้เพียงข้อมูลที่จำเป็นต่อการจัดเตรียมและส่งมอบบริการให้ท่าน ได้แก่ ชื่อผู้ใช้งาน รายการและจำนวนอุปกรณ์ที่ขอ วันเวลานัด และสถานะคำขอเท่านั้น\n\nข้อมูลของท่านจะถูกเก็บรักษาตลอดระยะเวลาที่บัญชียังคงเปิดใช้งาน และจะถูกดำเนินการตามที่ท่านร้องขอในกรณีที่ต้องการลบหรือโอนย้ายข้อมูล',
     'ເຮົາຈໍາກັດການເຂົ້າເຖິງຂໍ້ມູນຂອງທ່ານສະເພາະເຈົ້າໜ້າທີ່ທີ່ໄດ້ຮັບອະນຸຍາດເທົ່ານັ້ນ ໂດຍເຈົ້າໜ້າທີ່ຈະເຫັນໄດ້ສະເພາະຂໍ້ມູນທີ່ຈໍາເປັນຕໍ່ການຈັດກຽມ ແລະ ສົ່ງມອບບໍລິການ ໄດ້ແກ່ ຊື່ຜູ້ໃຊ້ ລາຍການ ແລະ ຈໍານວນ ວັນທີ ແລະ ເວລານັດ ແລະ ສະຖານະຄໍາຂໍ\n\nຂໍ້ມູນຂອງທ່ານຈະຖືກເກັບຮັກສາຕະຫຼອດລະຫວ່າງທີ່ບັນຊີຍັງໃຊ້ງານຢູ່ ແລະ ຈະດໍາເນີນການຕາມທີ່ທ່ານຮ້ອງຂໍ',
-    'သင်၏ အချက်အလက်များကို ခွင့်ပြုထားသော ဝန်ထမ်းများသာ ဝင်ကြည့်နိုင်သည် ၎င်းတို့သည် ဝန်ဆောင်မှုပေးရန် လိုအပ်သော အချက်အလက်များကိုသာ မြင်နိုင်သည် ၎င်းတို့မှာ အသုံးပြုသူအမည် တောင်းဆိုသော ပစ္စည်းများ ချိန်းဆိုချက် ရက်နှင့်အချိန် နှင့် တောင်းဆိုချက်အခြေအနေ တို့ဖြစ်သည်\n\nသင်၏ အချက်အလက်များကို အကောင့်ဖွင့်ထားသမျှ သိမ်းဆည်းထားပြီး သင်တောင်းဆိုပါက ဖျက်သိမ်းပေးမည် ဖြစ်သည်',
-    'We limit access to your information to authorized staff at your chosen service center and system administrators only. Staff can view only the information necessary to prepare and deliver services: username, items requested, appointment date and time, and request status.\n\nYour data is retained while your account is active and will be handled as you request if you wish to delete or transfer it.',
+    'သင်၏ အချက်အလက်များကို ခွင့်ပြုထားသော ဝန်ထမ်းများသာ ဝင်ကြည့်နိုင်သည် ၎င်းတို့သည် ဝန်ဆောင်မှုပေးရန် လိုအပ်သော အချက်အလက်များကိုသာ မြင်နိုင်သည် ၎င်းတို့မှာ အသုံးပြုသူအမည် တောင်းဆိုသော ပစ္စည်းများ တိုင်ပင်ချိန်းဆိုချက် ရက်နှင့်အချိန် နှင့် တောင်းဆိုချက်အခြေအနေ တို့ဖြစ်သည်\n\nသင်၏ အချက်အလက်များကို အကောင့်ဖွင့်ထားသမျှ သိမ်းဆည်းထားပြီး သင်တောင်းဆိုပါက ဖျက်သိမ်းပေးမည် ဖြစ်သည်',
+    'We limit access to your information to authorized staff at your chosen service center and system administrators only. Staff can view only the information necessary to prepare and deliver services: username, items requested, consultation date and time, and request status.\n\nYour data is retained while your account is active and will be handled as you request if you wish to delete or transfer it.',
   );
 
   String get privacySection4Title =>

@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
-import type { AppointmentData } from '../components/appointments/AppointmentDetailDialog';
+import type { ConsultationData } from '../components/consultations/ConsultationDetailDialog';
 
 async function fetchStaffName(staffUserId: string): Promise<string | null> {
   const { data } = await supabase
@@ -11,19 +11,19 @@ async function fetchStaffName(staffUserId: string): Promise<string | null> {
   return data ? `${data.first_name} ${data.last_name}` : null;
 }
 
-export function useAppointments() {
-  const [appointments, setAppointments] = useState<AppointmentData[]>([]);
+export function useConsultations() {
+  const [consultations, setConsultations] = useState<ConsultationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAppointments = useCallback(async () => {
+  const fetchConsultations = useCallback(async () => {
     setLoading(true);
     setError(null);
     const { data, error } = await supabase
-      .from('doctor_appointments')
+      .from('consultations')
       .select(
         'id, reference_number, user_id, reason, selected_service_center, ' +
-        'selected_date, selected_time, note, appointment_status, cancel_reason, ' +
+        'selected_date, selected_time, note, consultation_status, cancel_reason, ' +
         'handled_by, created_at, updated_at'
       )
       .order('created_at', { ascending: false });
@@ -34,7 +34,7 @@ export function useAppointments() {
       return;
     }
 
-    const rows = (data ?? []) as unknown as AppointmentData[];
+    const rows = (data ?? []) as unknown as ConsultationData[];
 
     const userIds = [...new Set(rows.map(a => a.user_id).filter((id): id is string => Boolean(id)))];
     let contactMap: Record<string, { phone_number: string | null; nickname: string | null }> = {};
@@ -60,7 +60,7 @@ export function useAppointments() {
       }
     }
 
-    setAppointments(rows.map(a => ({
+    setConsultations(rows.map(a => ({
       ...a,
       phone_number: (a.user_id ? contactMap[a.user_id]?.phone_number : null) ?? null,
       nickname: (a.user_id ? contactMap[a.user_id]?.nickname : null) ?? null,
@@ -71,18 +71,18 @@ export function useAppointments() {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchAppointments();
-  }, [fetchAppointments]);
+    fetchConsultations();
+  }, [fetchConsultations]);
 
   useEffect(() => {
     const channel = supabase
-      .channel('appointments-doctor-appointments')
+      .channel('consultations-consultations')
       .on(
         'postgres_changes',
-        { event: '*', schema: 'public', table: 'doctor_appointments' },
+        { event: '*', schema: 'public', table: 'consultations' },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            const newRow = payload.new as unknown as AppointmentData;
+            const newRow = payload.new as unknown as ConsultationData;
             (newRow.user_id
               ? supabase
                   .from('user_profiles')
@@ -92,7 +92,7 @@ export function useAppointments() {
               : Promise.resolve({ data: null })
             )
               .then(({ data: profile }) => {
-                setAppointments(prev => [{
+                setConsultations(prev => [{
                   ...newRow,
                   phone_number: profile?.phone_number ?? null,
                   nickname: profile?.nickname ?? null,
@@ -100,12 +100,12 @@ export function useAppointments() {
                 }, ...prev]);
               });
           } else if (payload.eventType === 'UPDATE') {
-            const updated = payload.new as unknown as AppointmentData;
+            const updated = payload.new as unknown as ConsultationData;
             const namePromise = updated.handled_by
               ? fetchStaffName(updated.handled_by)
               : Promise.resolve(null);
             namePromise.then(handled_by_name => {
-              setAppointments(prev =>
+              setConsultations(prev =>
                 prev.map(a => a.id === updated.id
                   ? {
                       ...updated,
@@ -118,7 +118,7 @@ export function useAppointments() {
             });
           } else if (payload.eventType === 'DELETE') {
             const deletedId = (payload.old as { id?: string }).id;
-            if (deletedId) setAppointments(prev => prev.filter(a => a.id !== deletedId));
+            if (deletedId) setConsultations(prev => prev.filter(a => a.id !== deletedId));
           }
         }
       )
@@ -127,5 +127,5 @@ export function useAppointments() {
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  return { appointments, setAppointments, loading, error, refetch: fetchAppointments };
+  return { consultations, setConsultations, loading, error, refetch: fetchConsultations };
 }

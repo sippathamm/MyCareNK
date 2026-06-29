@@ -79,7 +79,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
     if (mounted) setState(() { _centersLoading = true; _centersNotLoggedIn = false; });
     try {
       final centers = await ServiceCenterService.fetchAll();
-      if (mounted) setState(() { _centers = centers.where((c) => c.appointmentServiceEnabled).toList(); _centersLoading = false; });
+      if (mounted) setState(() { _centers = centers.where((c) => c.consultationServiceEnabled).toList(); _centersLoading = false; });
     } catch (_) {
       if (mounted) setState(() => _centersLoading = false);
     }
@@ -218,7 +218,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
                                   ),
                   ),
                   BookingSectionCard(
-                    title: AppLocalizations.of(context).bookingAppointmentDate,
+                    title: AppLocalizations.of(context).bookingConsultationDate,
                     icon: Icons.event_outlined,
                     child: ConsultationDateStrip(
                       location: _selectedLocation,
@@ -228,7 +228,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
                     ),
                   ),
                   BookingSectionCard(
-                    title: AppLocalizations.of(context).bookingAppointmentTime,
+                    title: AppLocalizations.of(context).bookingConsultationTime,
                     icon: Icons.schedule_outlined,
                     child: ConsultationTimePicker(
                       location: _selectedLocation,
@@ -319,7 +319,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
               child: Column(
                 children: [
                   BookingSectionCard(
-                    title: AppLocalizations.of(context).bookingAppointmentSummary,
+                    title: AppLocalizations.of(context).bookingConsultationSummary,
                     icon: Icons.event_note_outlined,
                     child: Column(
                       children: [
@@ -413,7 +413,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
                   ),
                   const SizedBox(height: 12),
                   BookingPrimaryButton(
-                    label: AppLocalizations.of(context).confirmAppointment,
+                    label: AppLocalizations.of(context).confirmConsultation,
                     onPressed: _isSubmitting ? null : _submitBooking,
                     isLoading: _isSubmitting,
                   ),
@@ -445,7 +445,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
           title: Text(AppLocalizations.of(context).pleaseLogin,
               style: GoogleFonts.googleSans(
                   fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
-          content: Text(AppLocalizations.of(context).loginToBookDoctor,
+          content: Text(AppLocalizations.of(context).loginToBookConsultation,
               style: GoogleFonts.googleSans(color: AppColors.textSecondary)),
           actions: [
             TextButton(
@@ -473,7 +473,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
     setState(() => _isSubmitting = true);
     try {
       final ref = await Supabase.instance.client.rpc(
-        'create_doctor_appointment',
+        'create_consultation',
         params: {
           'p_user_id': userId,
           'p_reason': _reason,
@@ -555,7 +555,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
             ),
             const SizedBox(height: 24),
             BookingSectionCard(
-              title: AppLocalizations.of(context).appointmentDetailsTitle,
+              title: AppLocalizations.of(context).consultationDetailsTitle,
               icon: Icons.event_note_outlined,
               child: Column(
                 children: infoRows
@@ -651,7 +651,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
             ),
             const SizedBox(height: 10),
             BookingOutlinedButton(
-              label: AppLocalizations.of(context).appointmentHistoryTitle,
+              label: AppLocalizations.of(context).consultationHistoryTitle,
               onPressed: () => Navigator.of(context).pushAndRemoveUntil(
                 MaterialPageRoute(
                     builder: (_) => const ConsultationHistoryPage()),
@@ -690,7 +690,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
       actions: [
         IconButton(
           icon: const Icon(Icons.history, color: AppColors.primary),
-          tooltip: AppLocalizations.of(context).appointmentHistoryTitle,
+          tooltip: AppLocalizations.of(context).consultationHistoryTitle,
           onPressed: () => Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const ConsultationHistoryPage()),
           ),

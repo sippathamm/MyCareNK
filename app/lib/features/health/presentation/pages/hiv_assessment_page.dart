@@ -166,7 +166,7 @@ class _HivAssessmentPageState extends State<HivAssessmentPage> {
         children: [
           if (cfg.hasCta) ...[
             AssessmentPrimaryButton(
-              label: l10n.bookDoctorTitle,
+              label: l10n.bookConsultationTitle,
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => ConsultationBookingPage(

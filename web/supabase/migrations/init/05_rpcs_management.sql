@@ -167,9 +167,9 @@ CREATE OR REPLACE FUNCTION public.upsert_service_center(
   p_operating_hours             text             DEFAULT NULL,
   p_address                     text             DEFAULT NULL,
   p_condom_service_enabled      boolean          DEFAULT NULL,
-  p_appointment_service_enabled boolean          DEFAULT NULL,
+  p_consultation_service_enabled boolean         DEFAULT NULL,
   p_pickup_times                text[]           DEFAULT NULL,
-  p_appointment_times           text[]           DEFAULT NULL
+  p_consultation_times          text[]           DEFAULT NULL
 ) RETURNS void
 LANGUAGE plpgsql
 SECURITY INVOKER
@@ -178,19 +178,19 @@ AS $$
 BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   UPDATE public.service_centers SET
-    image_url                   = COALESCE(p_image_url,                   image_url),
-    description                 = COALESCE(p_description,                 description),
-    contacts                    = COALESCE(p_contacts,                    contacts),
-    latitude                    = p_latitude,
-    longitude                   = p_longitude,
-    display_order               = COALESCE(p_display_order,               display_order),
-    operating_hours             = p_operating_hours,
-    address                     = p_address,
-    condom_service_enabled      = COALESCE(p_condom_service_enabled,      condom_service_enabled),
-    appointment_service_enabled = COALESCE(p_appointment_service_enabled, appointment_service_enabled),
-    pickup_times                = COALESCE(p_pickup_times,                pickup_times),
-    appointment_times           = COALESCE(p_appointment_times,           appointment_times),
-    updated_at                  = now()
+    image_url                    = COALESCE(p_image_url,                    image_url),
+    description                  = COALESCE(p_description,                  description),
+    contacts                     = COALESCE(p_contacts,                     contacts),
+    latitude                     = p_latitude,
+    longitude                    = p_longitude,
+    display_order                = COALESCE(p_display_order,                display_order),
+    operating_hours              = p_operating_hours,
+    address                      = p_address,
+    condom_service_enabled       = COALESCE(p_condom_service_enabled,       condom_service_enabled),
+    consultation_service_enabled = COALESCE(p_consultation_service_enabled, consultation_service_enabled),
+    pickup_times                 = COALESCE(p_pickup_times,                 pickup_times),
+    consultation_times           = COALESCE(p_consultation_times,           consultation_times),
+    updated_at                   = now()
   WHERE name = p_name;
   IF NOT FOUND THEN RAISE EXCEPTION 'สถานบริการไม่พบ: %', p_name; END IF;
 END;
@@ -227,7 +227,7 @@ BEGIN
 
   -- Update operational tables (no FK)
   UPDATE condom_requests SET selected_service_center = p_new WHERE selected_service_center = p_old;
-  UPDATE doctor_appointments SET selected_service_center = p_new WHERE selected_service_center = p_old;
+  UPDATE consultations SET selected_service_center = p_new WHERE selected_service_center = p_old;
   UPDATE staff_notifications
   SET service_centers = array_replace(service_centers, p_old, p_new)
   WHERE p_old = ANY(service_centers);

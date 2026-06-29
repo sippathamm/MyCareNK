@@ -17,13 +17,13 @@ import type { Enums, Tables } from '../lib/database.types';
 // ---------------------------------------------------------------------------
 
 export type RequestStatus = Enums<'request_status'>;
-export type AppointmentEventType = Enums<'appointment_status'>;
+export type ConsultationEventType = Enums<'consultation_status'>;
 
 export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolean };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function isAppointmentNotification(item: NotificationItem): boolean {
-  return item.source_type === 'doctor_appointment';
+export function isConsultationNotification(item: NotificationItem): boolean {
+  return item.source_type === 'consultation';
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -62,12 +62,12 @@ export const SERVICE_CENTER_MANAGEMENT_CONFIG: { label: string; color: string; b
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
-  pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
-  confirmed:          { label: 'ยืนยันนัดหมาย',           color: '#BA68C8', bg: '#F5EAF9' },
-  completed:          { label: 'นัดหมายเสร็จสิ้น',        color: '#81C784', bg: '#EBF7EC' },
-  cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',        color: '#9E9E9E', bg: '#F5F5F5' },
-  cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่',   color: '#9E9E9E', bg: '#F5F5F5' },
+export const CONSULTATION_STATUS_CONFIG: Record<ConsultationEventType, { label: string; color: string; bg: string }> = {
+  pending:            { label: 'นัดรับคำปรึกษาใหม่',              color: '#FF9F6B', bg: '#FFF0E6' },
+  confirmed:          { label: 'ยืนยันการนัดรับคำปรึกษา',         color: '#BA68C8', bg: '#F5EAF9' },
+  completed:          { label: 'การนัดรับคำปรึกษาเสร็จสิ้น',      color: '#81C784', bg: '#EBF7EC' },
+  cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',                 color: '#9E9E9E', bg: '#F5F5F5' },
+  cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่',            color: '#9E9E9E', bg: '#F5F5F5' },
 };
 
 interface NotificationContextValue {
@@ -76,8 +76,8 @@ interface NotificationContextValue {
   toastOpen: boolean;
   toastMessage: string;
   toastEventType: RequestStatus | null;
-  toastIsAppointment: boolean;
-  toastAppointmentEventType: AppointmentEventType | null;
+  toastIsConsultation: boolean;
+  toastConsultationEventType: ConsultationEventType | null;
   toastIsStock: boolean;
   toastIsStaffManagement: boolean;
   toastIsServiceCenterManagement: boolean;
@@ -142,8 +142,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastEventType, setToastEventType] = useState<RequestStatus | null>(null);
-  const [toastIsAppointment, setToastIsAppointment] = useState(false);
-  const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
+  const [toastIsConsultation, setToastIsConsultation] = useState(false);
+  const [toastConsultationEventType, setToastConsultationEventType] = useState<ConsultationEventType | null>(null);
   const [toastIsStock, setToastIsStock] = useState(false);
   const [toastIsStaffManagement, setToastIsStaffManagement] = useState(false);
   const [toastIsServiceCenterManagement, setToastIsServiceCenterManagement] = useState(false);
@@ -193,7 +193,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .eq('staff_user_id', userId),
         supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, event_type, service_centers, metadata, created_at')
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
@@ -230,11 +230,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         },
         (payload) => {
           const row = payload.new as Tables<'staff_notifications'>;
-          const isAppointment = row.source_type === 'doctor_appointment';
+          const isConsultation = row.source_type === 'consultation';
           const isStock = row.source_type === 'stock_operation';
           const isStaffMgmt = row.source_type === 'staff_management';
           const isSCMgmt = row.source_type === 'service_center_management';
-          const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
+          const consultEventType = isConsultation ? (row.event_type as ConsultationEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
           const message = isStock
             ? buildStockMessage(
@@ -245,14 +245,14 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
               : isSCMgmt
                 ? buildServiceCenterManagementMessage(row.metadata as { actor_name: string; action_type: string; service_center_name: string })
-                : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isAppointment, aptEventType);
+                : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isConsultation, consultEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
-          setToastIsAppointment(isAppointment);
+          setToastIsConsultation(isConsultation);
           setToastIsStock(isStock);
           setToastIsStaffManagement(isStaffMgmt);
           setToastIsServiceCenterManagement(isSCMgmt);
-          setToastAppointmentEventType(aptEventType);
-          setToastEventType(isAppointment || isStock || isStaffMgmt || isSCMgmt ? null : row.event_type as RequestStatus);
+          setToastConsultationEventType(consultEventType);
+          setToastEventType(isConsultation || isStock || isStaffMgmt || isSCMgmt ? null : row.event_type as RequestStatus);
           setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
@@ -355,11 +355,11 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const closeToast = useCallback(() => {
     setToastOpen(false);
-    setToastIsAppointment(false);
+    setToastIsConsultation(false);
     setToastIsStock(false);
     setToastIsStaffManagement(false);
     setToastIsServiceCenterManagement(false);
-    setToastAppointmentEventType(null);
+    setToastConsultationEventType(null);
   }, []);
 
   const deleteNotification = useCallback(async (id: string) => {
@@ -378,7 +378,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, toastIsStock, toastIsStaffManagement, toastIsServiceCenterManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsConsultation, toastConsultationEventType, toastIsStock, toastIsStaffManagement, toastIsServiceCenterManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -409,11 +409,11 @@ export const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string
 function buildToastMessage(
   eventType: RequestStatus,
   referenceNumber: string,
-  isAppointment = false,
-  appointmentEventType: AppointmentEventType | null = null,
+  isConsultation = false,
+  consultationEventType: ConsultationEventType | null = null,
 ): string {
-  const label = isAppointment
-    ? (APPOINTMENT_STATUS_CONFIG[appointmentEventType ?? 'pending']?.label ?? 'นัดหมาย')
+  const label = isConsultation
+    ? (CONSULTATION_STATUS_CONFIG[consultationEventType ?? 'pending']?.label ?? 'นัดรับคำปรึกษา')
     : (STATUS_CONFIG[eventType]?.label ?? eventType);
   return `${label}: ${referenceNumber}`;
 }

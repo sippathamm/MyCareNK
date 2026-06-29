@@ -12,9 +12,9 @@ export interface ServiceCenterRow {
   display_order: number;
   operating_hours: string | null;
   condom_service_enabled: boolean;
-  appointment_service_enabled: boolean;
+  consultation_service_enabled: boolean;
   pickup_times: string[];
-  appointment_times: string[];
+  consultation_times: string[];
   staff_count: number;
   admin_count: number;
   superadmin_count: number;

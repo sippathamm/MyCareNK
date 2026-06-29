@@ -6,7 +6,7 @@ class ConsultationModel {
   final DateTime selectedDate;
   final String selectedTime;
   final String? note;
-  final String appointmentStatus;
+  final String consultationStatus;
   final String? cancelReason;
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -19,7 +19,7 @@ class ConsultationModel {
     required this.selectedDate,
     required this.selectedTime,
     this.note,
-    required this.appointmentStatus,
+    required this.consultationStatus,
     this.cancelReason,
     required this.createdAt,
     required this.updatedAt,
@@ -34,7 +34,7 @@ class ConsultationModel {
       selectedDate: DateTime.parse(map['selected_date']),
       selectedTime: map['selected_time'] ?? '',
       note: map['note'] as String?,
-      appointmentStatus: map['appointment_status'] ?? '',
+      consultationStatus: map['consultation_status'] ?? '',
       cancelReason: map['cancel_reason'] as String?,
       createdAt: map['created_at'] != null
           ? DateTime.parse(map['created_at'])

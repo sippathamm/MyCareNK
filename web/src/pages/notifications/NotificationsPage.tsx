@@ -5,11 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   useNotification,
   STATUS_CONFIG,
-  APPOINTMENT_STATUS_CONFIG,
+  CONSULTATION_STATUS_CONFIG,
   STOCK_OPERATION_CONFIG,
   STAFF_MANAGEMENT_CONFIG,
   SERVICE_CENTER_MANAGEMENT_CONFIG,
-  isAppointmentNotification,
+  isConsultationNotification,
   isStockNotification,
   isStaffManagementNotification,
   isServiceCenterManagementNotification,
@@ -19,13 +19,13 @@ import {
   getNotifTitle,
   type NotificationItem,
   type RequestStatus,
-  type AppointmentEventType,
+  type ConsultationEventType,
 } from '../../contexts/NotificationContext';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 function getNotifConfig(item: NotificationItem) {
-  if (isAppointmentNotification(item)) {
-    return APPOINTMENT_STATUS_CONFIG[item.event_type as AppointmentEventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  if (isConsultationNotification(item)) {
+    return CONSULTATION_STATUS_CONFIG[item.event_type as ConsultationEventType] ?? CONSULTATION_STATUS_CONFIG.pending;
   }
   if (isStockNotification(item)) {
     return STOCK_OPERATION_CONFIG[item.event_type] ?? STOCK_OPERATION_CONFIG.restock;
@@ -146,8 +146,8 @@ export default function NotificationsPage() {
 
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
-    if (isAppointmentNotification(item)) {
-      navigate('/appointments', { state: { openAppointmentId: item.source_id } });
+    if (isConsultationNotification(item)) {
+      navigate('/consultations', { state: { openConsultationId: item.source_id } });
     } else if (isStockNotification(item)) {
       navigate('/inventory');
     } else if (isStaffManagementNotification(item)) {

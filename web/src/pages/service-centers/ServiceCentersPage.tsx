@@ -20,7 +20,7 @@ import { useColorMode } from '../../contexts/ThemeContext';
 
 const PAGE_SIZE = 6;
 
-type ServiceFilter = 'all' | 'condom' | 'appointment';
+type ServiceFilter = 'all' | 'condom' | 'consultation';
 type SortBy = 'newest' | 'oldest' | 'name_asc' | 'name_desc';
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
@@ -72,7 +72,7 @@ function ServiceCenterCard({ center, onEdit }: { center: ServiceCenterRow; onEdi
 
         <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
           <Chip size="small" label="แจกถุงยางอนามัย/เจลหล่อลื่น" sx={chipSx(center.condom_service_enabled)} />
-          <Chip size="small" label="ให้คำปรึกษา" sx={chipSx(center.appointment_service_enabled)} />
+          <Chip size="small" label="ให้คำปรึกษา" sx={chipSx(center.consultation_service_enabled)} />
         </Box>
 
         {center.operating_hours && (
@@ -148,7 +148,7 @@ export default function ServiceCentersPage() {
   const filtered = centers
     .filter(c => {
       if (serviceFilter === 'condom') return c.condom_service_enabled;
-      if (serviceFilter === 'appointment') return c.appointment_service_enabled;
+      if (serviceFilter === 'consultation') return c.consultation_service_enabled;
       return true;
     })
     .filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
@@ -231,7 +231,7 @@ export default function ServiceCentersPage() {
             >
               <MenuItem value="all">ทั้งหมด</MenuItem>
               <MenuItem value="condom">แจกถุงอนามัย/เจลหล่อลื่น</MenuItem>
-              <MenuItem value="appointment">ให้คำปรึกษา</MenuItem>
+              <MenuItem value="consultation">ให้คำปรึกษา</MenuItem>
             </Select>
           </FormControl>
           <FormControl size="small" sx={{ minWidth: 160 }}>

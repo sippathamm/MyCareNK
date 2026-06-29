@@ -15,7 +15,7 @@ import StaffWorkloadPage from './pages/staff/StaffWorkloadPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import AuditLogPage from './pages/audit/AuditLogPage';
-import AppointmentsPage from './pages/appointments/AppointmentsPage';
+import ConsultationsPage from './pages/consultations/ConsultationsPage';
 import ArticlesPage from './pages/articles/ArticlesPage';
 import ArticleEditorPage from './pages/articles/ArticleEditorPage';
 import ProfilePage from './pages/profile/ProfilePage';
@@ -79,7 +79,7 @@ function App() {
                 <Routes>
                   <Route path="dashboard" element={<DashboardPage session={session!} />} />
                   <Route path="requests" element={<RequestsPage />} />
-                  <Route path="appointments" element={<AppointmentsPage />} />
+                  <Route path="consultations" element={<ConsultationsPage />} />
                   <Route path="staff" element={<StaffManagementPage />} />
                   <Route path="staff-directory" element={<StaffDirectoryPage />} />
                   <Route path="staff-workload" element={<StaffWorkloadPage />} />

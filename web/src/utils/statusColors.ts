@@ -20,9 +20,9 @@ export function getRequestStatusSx(status: string, mode: ColorMode): object {
   return { bgcolor: alpha(cfg.darkBase, 0.2), color: cfg.darkText, fontWeight: 600 };
 }
 
-// ─── Appointment Status ───────────────────────────────────────────────────────
+// ─── Consultation Status ──────────────────────────────────────────────────────
 
-const APPOINTMENT_STATUS: Record<string, { lightBg: string; lightColor: string; darkBase: string; darkText: string }> = {
+const CONSULTATION_STATUS: Record<string, { lightBg: string; lightColor: string; darkBase: string; darkText: string }> = {
   pending:            { lightBg: '#FFF3E0', lightColor: '#E65100', darkBase: '#E65100', darkText: '#FF8A50' },
   confirmed:          { lightBg: '#F3E5F5', lightColor: '#7B1FA2', darkBase: '#BA68C8', darkText: '#CE93D8' },
   completed:          { lightBg: '#E8F5E9', lightColor: '#2E7D32', darkBase: '#81C784', darkText: '#81C784' },
@@ -30,8 +30,8 @@ const APPOINTMENT_STATUS: Record<string, { lightBg: string; lightColor: string; 
   cancelled_by_staff: { lightBg: '#F5F5F5', lightColor: '#616161', darkBase: '#9E9E9E', darkText: '#BDBDBD' },
 };
 
-export function getAppointmentStatusSx(status: string, mode: ColorMode): object {
-  const cfg = APPOINTMENT_STATUS[status];
+export function getConsultationStatusSx(status: string, mode: ColorMode): object {
+  const cfg = CONSULTATION_STATUS[status];
   if (!cfg) return { fontWeight: 600 };
   if (mode === 'light') return { bgcolor: cfg.lightBg, color: cfg.lightColor, fontWeight: 600 };
   return { bgcolor: alpha(cfg.darkBase, 0.2), color: cfg.darkText, fontWeight: 600 };

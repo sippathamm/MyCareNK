@@ -13,8 +13,8 @@
 --   9.  staff_notification_reads   10. user_notifications
 --   11. user_notification_reads    12. service_center_inventory
 --   13. condom_requests            14. request_status_logs
---   15. inventory_logs             16. doctor_appointments
---   17. appointment_status_logs    18. articles
+--   15. inventory_logs             16. consultations
+--   17. consultation_status_logs   18. articles
 --   19. app_versions               20. web_changelogs
 --       + auth.users cascade trigger
 -- ============================================================
@@ -34,9 +34,9 @@ CREATE TABLE public.service_centers (
   operating_hours             text,
   address                     text,
   condom_service_enabled      boolean     NOT NULL DEFAULT true,
-  appointment_service_enabled boolean     NOT NULL DEFAULT false,
-  pickup_times                text[]      NOT NULL DEFAULT '{08:00}',
-  appointment_times           text[]      NOT NULL DEFAULT '{08:00}',
+  consultation_service_enabled boolean     NOT NULL DEFAULT false,
+  pickup_times                 text[]      NOT NULL DEFAULT '{08:00}',
+  consultation_times           text[]      NOT NULL DEFAULT '{08:00}',
   staff_count                 int         NOT NULL DEFAULT 0,
   admin_count                 int         NOT NULL DEFAULT 0,
   superadmin_count            int         NOT NULL DEFAULT 0,
@@ -640,37 +640,37 @@ CREATE TRIGGER trigger_notify_staff_on_stock_operation
   FOR EACH ROW EXECUTE FUNCTION notify_staff_on_stock_operation();
 
 
--- ── 16. doctor_appointments ────────────────────────────────
-CREATE TABLE public.doctor_appointments (
-  id                      uuid                      NOT NULL DEFAULT gen_random_uuid(),
+-- ── 16. consultations ──────────────────────────────────────
+CREATE TABLE public.consultations (
+  id                      uuid                         NOT NULL DEFAULT gen_random_uuid(),
   user_id                 uuid,
-  reference_number        text                      NOT NULL,
-  reason                  text                      NOT NULL,
-  selected_service_center text                      NOT NULL,
-  selected_date           date                      NOT NULL,
-  selected_time           text                      NOT NULL,
+  reference_number        text                         NOT NULL,
+  reason                  text                         NOT NULL,
+  selected_service_center text                         NOT NULL,
+  selected_date           date                         NOT NULL,
+  selected_time           text                         NOT NULL,
   note                    text,
-  appointment_status      public.appointment_status NOT NULL DEFAULT 'pending',
+  consultation_status     public.consultation_status   NOT NULL DEFAULT 'pending',
   cancel_reason           text,
   handled_by              uuid,
-  created_at              timestamptz               NOT NULL DEFAULT timezone('utc', now()),
-  updated_at              timestamptz               NOT NULL DEFAULT timezone('utc', now()),
-  CONSTRAINT doctor_appointments_pkey                  PRIMARY KEY (id),
-  CONSTRAINT doctor_appointments_reference_number_key  UNIQUE (reference_number),
-  CONSTRAINT doctor_appointments_user_id_fkey FOREIGN KEY (user_id)
+  created_at              timestamptz                  NOT NULL DEFAULT timezone('utc', now()),
+  updated_at              timestamptz                  NOT NULL DEFAULT timezone('utc', now()),
+  CONSTRAINT consultations_pkey                  PRIMARY KEY (id),
+  CONSTRAINT consultations_reference_number_key  UNIQUE (reference_number),
+  CONSTRAINT consultations_user_id_fkey FOREIGN KEY (user_id)
     REFERENCES auth.users(id) ON DELETE SET NULL,
-  CONSTRAINT doctor_appointments_handled_by_fkey FOREIGN KEY (handled_by)
+  CONSTRAINT consultations_handled_by_fkey FOREIGN KEY (handled_by)
     REFERENCES auth.users(id)
 );
 
-ALTER TABLE public.doctor_appointments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultations ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Users can insert their own appointments"
-  ON public.doctor_appointments FOR INSERT
+CREATE POLICY "Users can insert their own consultations"
+  ON public.consultations FOR INSERT
   TO authenticated WITH CHECK ((SELECT auth.uid()) = user_id);
 
-CREATE POLICY "Users and staff can read appointments"
-  ON public.doctor_appointments FOR SELECT
+CREATE POLICY "Users and staff can read consultations"
+  ON public.consultations FOR SELECT
   TO authenticated USING (
     is_superadmin()
     OR (
@@ -683,8 +683,8 @@ CREATE POLICY "Users and staff can read appointments"
     OR (SELECT auth.uid()) = user_id
   );
 
-CREATE POLICY "Users and staff can update appointments"
-  ON public.doctor_appointments FOR UPDATE
+CREATE POLICY "Users and staff can update consultations"
+  ON public.consultations FOR UPDATE
   TO authenticated
   USING (
     is_superadmin()
@@ -708,49 +708,49 @@ CREATE POLICY "Users and staff can update appointments"
     )
     OR (
       (SELECT auth.uid()) = user_id
-      AND appointment_status = 'cancelled_by_user'::public.appointment_status
+      AND consultation_status = 'cancelled_by_user'::public.consultation_status
     )
   );
 
-CREATE TRIGGER trigger_update_updated_at_column_doctor_appointments
-  BEFORE UPDATE ON public.doctor_appointments
+CREATE TRIGGER trigger_update_updated_at_column_consultations
+  BEFORE UPDATE ON public.consultations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER trigger_set_appointment_handled_by
-  BEFORE UPDATE OF appointment_status ON public.doctor_appointments
-  FOR EACH ROW EXECUTE FUNCTION set_appointment_handled_by();
+CREATE TRIGGER trigger_set_consultation_handled_by
+  BEFORE UPDATE OF consultation_status ON public.consultations
+  FOR EACH ROW EXECUTE FUNCTION set_consultation_handled_by();
 
-CREATE TRIGGER trigger_track_appointment_status
-  AFTER UPDATE OF appointment_status ON public.doctor_appointments
-  FOR EACH ROW EXECUTE FUNCTION track_appointment_status();
+CREATE TRIGGER trigger_track_consultation_status
+  AFTER UPDATE OF consultation_status ON public.consultations
+  FOR EACH ROW EXECUTE FUNCTION track_consultation_status();
 
-CREATE TRIGGER trigger_handle_staff_appointment_notification
-  AFTER INSERT OR UPDATE OF appointment_status ON public.doctor_appointments
-  FOR EACH ROW EXECUTE FUNCTION handle_staff_appointment_notification();
+CREATE TRIGGER trigger_handle_staff_consultation_notification
+  AFTER INSERT OR UPDATE OF consultation_status ON public.consultations
+  FOR EACH ROW EXECUTE FUNCTION handle_staff_consultation_notification();
 
-CREATE TRIGGER trigger_handle_user_appointment_notification
-  AFTER INSERT OR UPDATE ON public.doctor_appointments
-  FOR EACH ROW EXECUTE FUNCTION handle_user_appointment_notification();
+CREATE TRIGGER trigger_handle_user_consultation_notification
+  AFTER INSERT OR UPDATE ON public.consultations
+  FOR EACH ROW EXECUTE FUNCTION handle_user_consultation_notification();
 
 
--- ── 17. appointment_status_logs ────────────────────────────
-CREATE TABLE public.appointment_status_logs (
-  id              uuid                      NOT NULL DEFAULT gen_random_uuid(),
-  appointment_id  uuid                      NOT NULL,
-  from_status     public.appointment_status,
-  to_status       public.appointment_status NOT NULL,
+-- ── 17. consultation_status_logs ───────────────────────────
+CREATE TABLE public.consultation_status_logs (
+  id              uuid                         NOT NULL DEFAULT gen_random_uuid(),
+  consultation_id uuid                         NOT NULL,
+  from_status     public.consultation_status,
+  to_status       public.consultation_status   NOT NULL,
   changed_by      uuid,
   changed_by_name text,
-  changed_at      timestamptz               NOT NULL DEFAULT now(),
-  CONSTRAINT appointment_status_logs_pkey                PRIMARY KEY (id),
-  CONSTRAINT appointment_status_logs_appointment_id_fkey FOREIGN KEY (appointment_id)
-    REFERENCES public.doctor_appointments(id) ON DELETE CASCADE
+  changed_at      timestamptz                  NOT NULL DEFAULT now(),
+  CONSTRAINT consultation_status_logs_pkey                 PRIMARY KEY (id),
+  CONSTRAINT consultation_status_logs_consultation_id_fkey FOREIGN KEY (consultation_id)
+    REFERENCES public.consultations(id) ON DELETE CASCADE
 );
 
-ALTER TABLE public.appointment_status_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.consultation_status_logs ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Staff can read appointment status logs"
-  ON public.appointment_status_logs FOR SELECT
+CREATE POLICY "Staff can read consultation status logs"
+  ON public.consultation_status_logs FOR SELECT
   TO authenticated USING (
     EXISTS (
       SELECT 1 FROM staff_profiles
@@ -887,12 +887,12 @@ INSERT INTO public.notification_settings (source_type, event_type, notify_staff,
   ('condom_request', 'completed',          true,  true,  true),
   ('condom_request', 'cancelled_by_user',  true,  true,  true),
   ('condom_request', 'cancelled_by_staff', true,  true,  true),
--- doctor_appointment (5 rows)
-  ('doctor_appointment', 'pending',            true,  true,  true),
-  ('doctor_appointment', 'confirmed',          true,  true,  true),
-  ('doctor_appointment', 'completed',          true,  true,  true),
-  ('doctor_appointment', 'cancelled_by_user',  true,  true,  true),
-  ('doctor_appointment', 'cancelled_by_staff', true,  true,  true),
+-- consultation (5 rows)
+  ('consultation', 'pending',            true,  true,  true),
+  ('consultation', 'confirmed',          true,  true,  true),
+  ('consultation', 'completed',          true,  true,  true),
+  ('consultation', 'cancelled_by_user',  true,  true,  true),
+  ('consultation', 'cancelled_by_staff', true,  true,  true),
 -- stock_operation (2 rows)
   ('stock_operation', 'restock',     true,  true,  true),
   ('stock_operation', 'adjustment',  true,  true,  true),
