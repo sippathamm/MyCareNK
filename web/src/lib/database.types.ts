@@ -16,74 +16,48 @@ export type Database = {
     Tables: {
       app_versions: {
         Row: {
+          additions: string[]
           branch: string
-          build_number: number
+          build_number: number | null
           created_at: string
           download_url: string
+          fixes: string[]
           force_update: boolean
           id: number
-          release_notes: string | null
-          version: string
+          improvements: string[]
+          others: string[]
+          release_date: string
+          version: string | null
         }
         Insert: {
+          additions?: string[]
           branch: string
-          build_number: number
+          build_number?: number | null
           created_at?: string
           download_url: string
+          fixes?: string[]
           force_update?: boolean
           id?: number
-          release_notes?: string | null
-          version: string
+          improvements?: string[]
+          others?: string[]
+          release_date?: string
+          version?: string | null
         }
         Update: {
+          additions?: string[]
           branch?: string
-          build_number?: number
+          build_number?: number | null
           created_at?: string
           download_url?: string
+          fixes?: string[]
           force_update?: boolean
           id?: number
-          release_notes?: string | null
-          version?: string
+          improvements?: string[]
+          others?: string[]
+          release_date?: string
+          version?: string | null
         }
         Relationships: []
-      }
-      appointment_status_logs: {
-        Row: {
-          appointment_id: string
-          changed_at: string
-          changed_by: string | null
-          changed_by_name: string | null
-          from_status: Database["public"]["Enums"]["appointment_status"] | null
-          id: string
-          to_status: Database["public"]["Enums"]["appointment_status"]
-        }
-        Insert: {
-          appointment_id: string
-          changed_at?: string
-          changed_by?: string | null
-          changed_by_name?: string | null
-          from_status?: Database["public"]["Enums"]["appointment_status"] | null
-          id?: string
-          to_status: Database["public"]["Enums"]["appointment_status"]
-        }
-        Update: {
-          appointment_id?: string
-          changed_at?: string
-          changed_by?: string | null
-          changed_by_name?: string | null
-          from_status?: Database["public"]["Enums"]["appointment_status"] | null
-          id?: string
-          to_status?: Database["public"]["Enums"]["appointment_status"]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "appointment_status_logs_appointment_id_fkey"
-            columns: ["appointment_id"]
-            isOneToOne: false
-            referencedRelation: "doctor_appointments"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       articles: {
         Row: {
@@ -205,10 +179,52 @@ export type Database = {
         }
         Relationships: []
       }
-      doctor_appointments: {
+      consultation_status_logs: {
         Row: {
-          appointment_status: Database["public"]["Enums"]["appointment_status"]
+          changed_at: string
+          changed_by: string | null
+          changed_by_name: string | null
+          consultation_id: string
+          from_status: Database["public"]["Enums"]["consultation_status"] | null
+          id: string
+          to_status: Database["public"]["Enums"]["consultation_status"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          consultation_id: string
+          from_status?:
+            | Database["public"]["Enums"]["consultation_status"]
+            | null
+          id?: string
+          to_status: Database["public"]["Enums"]["consultation_status"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          consultation_id?: string
+          from_status?:
+            | Database["public"]["Enums"]["consultation_status"]
+            | null
+          id?: string
+          to_status?: Database["public"]["Enums"]["consultation_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consultation_status_logs_consultation_id_fkey"
+            columns: ["consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consultations: {
+        Row: {
           cancel_reason: string | null
+          consultation_status: Database["public"]["Enums"]["consultation_status"]
           created_at: string
           handled_by: string | null
           id: string
@@ -222,8 +238,8 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
-          appointment_status?: Database["public"]["Enums"]["appointment_status"]
           cancel_reason?: string | null
+          consultation_status?: Database["public"]["Enums"]["consultation_status"]
           created_at?: string
           handled_by?: string | null
           id?: string
@@ -237,8 +253,8 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
-          appointment_status?: Database["public"]["Enums"]["appointment_status"]
           cancel_reason?: string | null
+          consultation_status?: Database["public"]["Enums"]["consultation_status"]
           created_at?: string
           handled_by?: string | null
           id?: string
@@ -305,6 +321,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_settings: {
+        Row: {
+          event_type: string
+          notify_admin: boolean
+          notify_staff: boolean
+          notify_superadmin: boolean
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          event_type: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type: string
+          updated_at?: string
+        }
+        Update: {
+          event_type?: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       recovery_attempts: {
         Row: {
@@ -404,15 +447,14 @@ export type Database = {
         Row: {
           address: string | null
           admin_count: number
-          appointment_service_enabled: boolean
-          appointment_times: string[]
           condom_service_enabled: boolean
+          consultation_service_enabled: boolean
+          consultation_times: string[]
           contacts: Json
           created_at: string
           description: string | null
           display_order: number
           image_url: string | null
-          is_active: boolean
           latitude: number | null
           longitude: number | null
           name: string
@@ -425,15 +467,14 @@ export type Database = {
         Insert: {
           address?: string | null
           admin_count?: number
-          appointment_service_enabled?: boolean
-          appointment_times?: string[]
           condom_service_enabled?: boolean
+          consultation_service_enabled?: boolean
+          consultation_times?: string[]
           contacts?: Json
           created_at?: string
           description?: string | null
           display_order?: number
           image_url?: string | null
-          is_active?: boolean
           latitude?: number | null
           longitude?: number | null
           name: string
@@ -446,15 +487,14 @@ export type Database = {
         Update: {
           address?: string | null
           admin_count?: number
-          appointment_service_enabled?: boolean
-          appointment_times?: string[]
           condom_service_enabled?: boolean
+          consultation_service_enabled?: boolean
+          consultation_times?: string[]
           contacts?: Json
           created_at?: string
           description?: string | null
           display_order?: number
           image_url?: string | null
-          is_active?: boolean
           latitude?: number | null
           longitude?: number | null
           name?: string
@@ -560,39 +600,15 @@ export type Database = {
           },
         ]
       }
-      notification_settings: {
-        Row: {
-          event_type: string
-          notify_admin: boolean
-          notify_staff: boolean
-          notify_superadmin: boolean
-          source_type: string
-          updated_at: string
-        }
-        Insert: {
-          event_type: string
-          notify_admin?: boolean
-          notify_staff?: boolean
-          notify_superadmin?: boolean
-          source_type: string
-          updated_at?: string
-        }
-        Update: {
-          event_type?: string
-          notify_admin?: boolean
-          notify_staff?: boolean
-          notify_superadmin?: boolean
-          source_type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       staff_notifications: {
         Row: {
           created_at: string
           event_type: string
           id: string
           metadata: Json
+          notify_admin: boolean
+          notify_staff: boolean
+          notify_superadmin: boolean
           service_centers: string[]
           source_id: string | null
           source_type: string
@@ -602,6 +618,9 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
           service_centers?: string[]
           source_id?: string | null
           source_type: string
@@ -611,8 +630,11 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
           service_centers?: string[]
-          source_id?: string
+          source_id?: string | null
           source_type?: string
         }
         Relationships: []
@@ -868,7 +890,7 @@ export type Database = {
         }
         Returns: string
       }
-      create_doctor_appointment: {
+      create_consultation: {
         Args: {
           p_date: string
           p_note?: string
@@ -881,29 +903,6 @@ export type Database = {
       }
       delete_own_account: { Args: never; Returns: undefined }
       delete_service_center: { Args: { p_name: string }; Returns: undefined }
-      get_appointment_status_log: {
-        Args: {
-          p_date_from?: string
-          p_date_to?: string
-          p_from_status?: string
-          p_limit?: number
-          p_offset?: number
-          p_performed_by?: string
-          p_reference_number?: string
-          p_service_center?: string
-          p_to_status?: string
-        }
-        Returns: {
-          appointment_id: string
-          changed_at: string
-          from_status: string
-          full_name: string
-          id: string
-          performed_by: string
-          reference_number: string
-          to_status: string
-        }[]
-      }
       get_article_detail: {
         Args: { p_article_id: string }
         Returns: {
@@ -929,6 +928,29 @@ export type Database = {
           ready_to_completed: number
         }[]
       }
+      get_consultation_status_log: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_from_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_reference_number?: string
+          p_service_center?: string
+          p_to_status?: string
+        }
+        Returns: {
+          changed_at: string
+          consultation_id: string
+          from_status: string
+          full_name: string
+          id: string
+          performed_by: string
+          reference_number: string
+          to_status: string
+        }[]
+      }
       get_consumption_trend: {
         Args: never
         Returns: {
@@ -945,7 +967,7 @@ export type Database = {
           condom_daily_burn: number
           condom_days_left: number
           condom_qty: number
-          is_active: boolean
+          condom_quantities: Json
           lubricant_daily_burn: number
           lubricant_days_left: number
           lubricant_qty: number
@@ -964,6 +986,7 @@ export type Database = {
         Returns: {
           action: Database["public"]["Enums"]["audit_action"]
           condom_delta: number
+          condom_quantities: Json
           created_at: string
           full_name: string
           id: string
@@ -977,13 +1000,17 @@ export type Database = {
       get_latest_app_version: {
         Args: { p_branch?: string }
         Returns: {
+          additions: string[]
           branch: string
           build_number: number
           created_at: string
           download_url: string
+          fixes: string[]
           force_update: boolean
           id: number
-          release_notes: string
+          improvements: string[]
+          others: string[]
+          release_date: string
           version: string
         }[]
       }
@@ -1071,15 +1098,14 @@ export type Database = {
         Returns: {
           address: string | null
           admin_count: number
-          appointment_service_enabled: boolean
-          appointment_times: string[]
           condom_service_enabled: boolean
+          consultation_service_enabled: boolean
+          consultation_times: string[]
           contacts: Json
           created_at: string
           description: string | null
           display_order: number
           image_url: string | null
-          is_active: boolean
           latitude: number | null
           longitude: number | null
           name: string
@@ -1089,12 +1115,6 @@ export type Database = {
           superadmin_count: number
           updated_at: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "service_centers"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
       get_staff_change_log: {
         Args: {
@@ -1174,9 +1194,9 @@ export type Database = {
       upsert_service_center: {
         Args: {
           p_address?: string
-          p_appointment_service_enabled?: boolean
-          p_appointment_times?: string[]
           p_condom_service_enabled?: boolean
+          p_consultation_service_enabled?: boolean
+          p_consultation_times?: string[]
           p_contacts?: Json
           p_description?: string
           p_display_order?: number
@@ -1216,12 +1236,6 @@ export type Database = {
       }
     }
     Enums: {
-      appointment_status:
-        | "pending"
-        | "confirmed"
-        | "completed"
-        | "cancelled_by_user"
-        | "cancelled_by_staff"
       article_status: "draft" | "published" | "hidden"
       audit_action:
         | "role_updated"
@@ -1232,6 +1246,12 @@ export type Database = {
         | "staff_created"
         | "staff_deleted"
         | "email_updated"
+      consultation_status:
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "cancelled_by_user"
+        | "cancelled_by_staff"
       request_status:
         | "pending"
         | "preparing"
@@ -1368,13 +1388,6 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      appointment_status: [
-        "pending",
-        "confirmed",
-        "completed",
-        "cancelled_by_user",
-        "cancelled_by_staff",
-      ],
       article_status: ["draft", "published", "hidden"],
       audit_action: [
         "role_updated",
@@ -1385,6 +1398,13 @@ export const Constants = {
         "staff_created",
         "staff_deleted",
         "email_updated",
+      ],
+      consultation_status: [
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled_by_user",
+        "cancelled_by_staff",
       ],
       request_status: [
         "pending",

@@ -5,8 +5,8 @@
 -- ============================================================
 --
 -- Covers:
---   Request / appointment creation
---     — create_condom_request, create_doctor_appointment
+--   Request / consultation creation
+--     — create_condom_request, create_consultation
 --   Recovery codes + account management
 --     — get_days_until_reset, save_recovery_codes,
 --       verify_recovery_code,
@@ -18,7 +18,7 @@
 --     — get_latest_web_changelog, get_latest_app_version
 -- ============================================================
 
--- ── Request / appointment creation ─────────────────────────
+-- ── Request / consultation creation ────────────────────────
 CREATE OR REPLACE FUNCTION public.create_condom_request(
   p_user_id                 uuid,
   p_condom_quantities       jsonb,
@@ -59,7 +59,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.create_doctor_appointment(
+CREATE OR REPLACE FUNCTION public.create_consultation(
   p_user_id        uuid,
   p_reason         text,
   p_service_center text,
@@ -78,7 +78,7 @@ BEGIN
   LOOP
     v_ref_number := 'NK-APT-' || LPAD((10000 + floor(random() * 90000)::int)::text, 5, '0');
     BEGIN
-      INSERT INTO doctor_appointments (
+      INSERT INTO consultations (
         user_id, reference_number, reason,
         selected_service_center, selected_date, selected_time, note
       ) VALUES (p_user_id, v_ref_number, p_reason, p_service_center, p_date, p_time, p_note);
@@ -289,7 +289,7 @@ $function$;
 -- ── Self-service account deletion ───────────────────────────
 -- End-users (@mycarenk.local) delete their own account.
 -- Blocks deletion while the user still has unfinished condom requests
--- (pending/preparing/ready) or doctor appointments (pending/confirmed) so
+-- (pending/preparing/ready) or consultations (pending/confirmed) so
 -- staff are not left handling records whose user_id will be SET NULL.
 CREATE OR REPLACE FUNCTION public.delete_own_account()
 RETURNS void
@@ -316,9 +316,9 @@ BEGIN
     WHERE user_id = v_user_id
       AND request_status IN ('pending', 'preparing', 'ready')
   ) OR EXISTS (
-    SELECT 1 FROM public.doctor_appointments
+    SELECT 1 FROM public.consultations
     WHERE user_id = v_user_id
-      AND appointment_status IN ('pending', 'confirmed')
+      AND consultation_status IN ('pending', 'confirmed')
   ) THEN
     RAISE EXCEPTION 'ACTIVE_RECORDS_EXIST';
   END IF;

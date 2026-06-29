@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '../lib/supabase';
 
-export interface AppointmentStatusLogRow {
+export interface ConsultationStatusLogRow {
   id:               string;
-  appointment_id:   string;
+  consultation_id:  string;
   reference_number: string | null;
   performed_by:     string | null;
   full_name:        string;
@@ -12,7 +12,7 @@ export interface AppointmentStatusLogRow {
   changed_at:       string;
 }
 
-export interface AppointmentStatusLogFilters {
+export interface ConsultationStatusLogFilters {
   performedBy:     string | null;
   fromStatus:      string | null;
   toStatus:        string | null;
@@ -27,12 +27,12 @@ function parseError(e: unknown): string {
   return (e as { message?: string })?.message ?? String(e);
 }
 
-export function useAppointmentStatusLog(
-  filters:  AppointmentStatusLogFilters,
+export function useConsultationStatusLog(
+  filters:  ConsultationStatusLogFilters,
   page:     number,
   pageSize: number,
 ) {
-  const [rows, setRows]       = useState<AppointmentStatusLogRow[]>([]);
+  const [rows, setRows]       = useState<ConsultationStatusLogRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError]     = useState<string | null>(null);
 
@@ -47,7 +47,7 @@ export function useAppointmentStatusLog(
         dateTo = d.toISOString();
       }
 
-      const { data, error: rpcError } = await supabase.rpc('get_appointment_status_log', {
+      const { data, error: rpcError } = await supabase.rpc('get_consultation_status_log', {
         p_performed_by:     filters.performedBy     ?? undefined,
         p_from_status:      filters.fromStatus      ?? undefined,
         p_to_status:        filters.toStatus        ?? undefined,
@@ -60,7 +60,7 @@ export function useAppointmentStatusLog(
       });
 
       if (rpcError) throw rpcError;
-      setRows((data as AppointmentStatusLogRow[]) ?? []);
+      setRows((data as ConsultationStatusLogRow[]) ?? []);
     } catch (e) {
       setError(parseError(e));
     } finally {

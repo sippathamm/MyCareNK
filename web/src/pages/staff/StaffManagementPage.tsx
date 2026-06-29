@@ -27,7 +27,7 @@ import { createThGridLocale } from '../../constants/datagrid';
 import type { Enums } from '../../lib/database.types';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
 import { useNotificationSettings, type NotificationSetting } from '../../hooks/useNotificationSettings';
-import { STATUS_CONFIG, APPOINTMENT_STATUS_CONFIG, STOCK_OPERATION_CONFIG, SERVICE_CENTER_MANAGEMENT_CONFIG } from '../../contexts/NotificationContext';
+import { STATUS_CONFIG, CONSULTATION_STATUS_CONFIG, STOCK_OPERATION_CONFIG, SERVICE_CENTER_MANAGEMENT_CONFIG } from '../../contexts/NotificationContext';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -95,9 +95,9 @@ const NOTIF_GROUPS: Array<{
     rows: (Object.entries(STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
   },
   {
-    source_type: 'doctor_appointment',
+    source_type: 'consultation',
     label: 'นัดรับคำปรึกษา',
-    rows: (Object.entries(APPOINTMENT_STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+    rows: (Object.entries(CONSULTATION_STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
   },
   {
     source_type: 'stock_operation',

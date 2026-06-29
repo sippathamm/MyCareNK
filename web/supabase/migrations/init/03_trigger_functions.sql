@@ -17,9 +17,9 @@
 --                      handle_user_request_notification
 --   inventory_logs   — apply_inventory_adjustment, notify_staff_on_stock_operation
 --   service_center_inventory — sync_inventory_condom_qty
---   doctor_appts     — handle_staff_appointment_notification,
---                      handle_user_appointment_notification,
---                      track_appointment_status
+--   consultations    — handle_staff_consultation_notification,
+--                      handle_user_consultation_notification,
+--                      track_consultation_status
 --   auth.users       — handle_user_deleted (cascade nullify)
 -- ============================================================
 
@@ -400,8 +400,8 @@ BEGIN
 END;
 $$;
 
--- ── doctor_appointments ─────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.handle_staff_appointment_notification()
+-- ── consultations ───────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.handle_staff_consultation_notification()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -410,18 +410,18 @@ AS $$
 DECLARE
   v_ns RECORD;
 BEGIN
-  IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
+  IF TG_OP = 'INSERT' OR OLD.consultation_status IS DISTINCT FROM NEW.consultation_status THEN
     SELECT notify_staff, notify_admin, notify_superadmin INTO v_ns
       FROM notification_settings
-     WHERE source_type = 'doctor_appointment' AND event_type = NEW.appointment_status::text;
+     WHERE source_type = 'consultation' AND event_type = NEW.consultation_status::text;
 
     INSERT INTO staff_notifications
       (source_type, source_id, event_type, service_centers,
        notify_staff, notify_admin, notify_superadmin, metadata)
     VALUES (
-      'doctor_appointment',
+      'consultation',
       NEW.id,
-      NEW.appointment_status::text,
+      NEW.consultation_status::text,
       ARRAY[NEW.selected_service_center],
       COALESCE(v_ns.notify_staff,      true),
       COALESCE(v_ns.notify_admin,      true),
@@ -433,7 +433,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.handle_user_appointment_notification()
+CREATE OR REPLACE FUNCTION public.handle_user_consultation_notification()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -449,12 +449,12 @@ BEGIN
 
   IF TG_OP = 'INSERT' THEN
     INSERT INTO user_notifications (user_id, source_type, source_id, reference_number, event_type, metadata)
-    VALUES (NEW.user_id, 'doctor_appointment', NEW.id, NEW.reference_number, NEW.appointment_status::text, '{}'::jsonb);
+    VALUES (NEW.user_id, 'consultation', NEW.id, NEW.reference_number, NEW.consultation_status::text, '{}'::jsonb);
     RETURN NEW;
   END IF;
 
-  IF TG_OP = 'UPDATE' AND OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    IF NEW.appointment_status::text = 'confirmed' THEN
+  IF TG_OP = 'UPDATE' AND OLD.consultation_status IS DISTINCT FROM NEW.consultation_status THEN
+    IF NEW.consultation_status::text = 'confirmed' THEN
       v_metadata := jsonb_build_object(
         'selected_date',           NEW.selected_date,
         'selected_time',           NEW.selected_time,
@@ -463,25 +463,25 @@ BEGIN
       );
     END IF;
     INSERT INTO user_notifications (user_id, source_type, source_id, reference_number, event_type, metadata)
-    VALUES (NEW.user_id, 'doctor_appointment', NEW.id, NEW.reference_number, NEW.appointment_status::text, v_metadata);
+    VALUES (NEW.user_id, 'consultation', NEW.id, NEW.reference_number, NEW.consultation_status::text, v_metadata);
   END IF;
   RETURN NEW;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.track_appointment_status()
+CREATE OR REPLACE FUNCTION public.track_consultation_status()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    INSERT INTO appointment_status_logs (appointment_id, from_status, to_status, changed_by, changed_by_name, changed_at)
+  IF OLD.consultation_status IS DISTINCT FROM NEW.consultation_status THEN
+    INSERT INTO consultation_status_logs (consultation_id, from_status, to_status, changed_by, changed_by_name, changed_at)
     VALUES (
       NEW.id,
-      OLD.appointment_status,
-      NEW.appointment_status,
+      OLD.consultation_status,
+      NEW.consultation_status,
       auth.uid(),
       (SELECT first_name || ' ' || last_name FROM public.staff_profiles WHERE staff_user_id = auth.uid()),
       now()
@@ -511,7 +511,7 @@ $$;
 -- ── auth.users cascade ─────────────────────────────────────
 -- Fires BEFORE DELETE on auth.users.
 -- Nullifies audit/history references so records are preserved.
--- condom_requests and doctor_appointments are NOT deleted here;
+-- condom_requests and consultations are NOT deleted here;
 -- their user_id FKs use ON DELETE SET NULL, which fires after this trigger.
 CREATE OR REPLACE FUNCTION public.handle_user_deleted()
 RETURNS TRIGGER
@@ -521,10 +521,10 @@ SET search_path = public
 AS $$
 BEGIN
   -- Nullify staff audit/log references to preserve history
-  UPDATE public.condom_requests         SET handled_by   = NULL WHERE handled_by   = OLD.id;
-  UPDATE public.doctor_appointments     SET handled_by   = NULL WHERE handled_by   = OLD.id;
-  UPDATE public.request_status_logs     SET changed_by   = NULL WHERE changed_by   = OLD.id;
-  UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.condom_requests            SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.consultations              SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.request_status_logs        SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.consultation_status_logs   SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.inventory_logs           SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.service_center_inventory SET updated_by   = NULL WHERE updated_by   = OLD.id;
   UPDATE public.staff_change_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
@@ -545,7 +545,7 @@ BEGIN
   DELETE FROM public.user_monthly_quotas     WHERE user_id = OLD.id;
 
   -- Delete user profile
-  -- condom_requests, doctor_appointments and their logs are preserved;
+  -- condom_requests, consultations and their logs are preserved;
   -- user_id will be SET NULL by FK after this trigger returns.
   DELETE FROM public.user_profiles WHERE user_id = OLD.id;
 
@@ -553,19 +553,19 @@ BEGIN
 END;
 $$;
 
--- ── doctor_appointments ─────────────────────────────────────
--- Mirrors set_handled_by_and_completed_at for appointments:
+-- ── consultations ───────────────────────────────────────────
+-- Mirrors set_handled_by_and_completed_at for consultations:
 -- sets handled_by = auth.uid() on first pending→confirmed transition.
-CREATE OR REPLACE FUNCTION public.set_appointment_handled_by()
+CREATE OR REPLACE FUNCTION public.set_consultation_handled_by()
 RETURNS trigger
 LANGUAGE plpgsql
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NEW.appointment_status = 'confirmed' AND OLD.handled_by IS NULL THEN
+  IF NEW.consultation_status = 'confirmed' AND OLD.handled_by IS NULL THEN
     NEW.handled_by = auth.uid();
   END IF;
-  IF NEW.appointment_status = 'cancelled_by_staff' THEN
+  IF NEW.consultation_status = 'cancelled_by_staff' THEN
     NEW.handled_by = auth.uid();
   END IF;
   RETURN NEW;
