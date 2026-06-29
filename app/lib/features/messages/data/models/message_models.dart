@@ -8,17 +8,17 @@ import '../../../../core/l10n/app_localizations.dart';
 
 enum MsgType {
   submitted, preparing, ready, completed, cancelled,
-  apptPending, apptConfirmed, apptCompleted, apptCancelled,
+  consultationPending, consultationConfirmed, consultationCompleted, consultationCancelled,
 }
 
 MsgType parseMsgType(String? sourceType, String? eventType) {
   if (sourceType == 'consultation') {
     switch (eventType) {
-      case 'confirmed':          return MsgType.apptConfirmed;
-      case 'completed':          return MsgType.apptCompleted;
+      case 'confirmed':          return MsgType.consultationConfirmed;
+      case 'completed':          return MsgType.consultationCompleted;
       case 'cancelled_by_user':
-      case 'cancelled_by_staff': return MsgType.apptCancelled;
-      default:                   return MsgType.apptPending;
+      case 'cancelled_by_staff': return MsgType.consultationCancelled;
+      default:                   return MsgType.consultationPending;
     }
   }
   switch (eventType) {
@@ -133,25 +133,25 @@ Map<MsgType, TypeConfig> buildTypeConfigs(AppLocalizations l10n) => {
     iconBg: const Color(0xFFEEEEEE),
     label: l10n.statusCancelled,
   ),
-  MsgType.apptPending: TypeConfig(
+  MsgType.consultationPending: TypeConfig(
     icon: Icons.calendar_today_outlined,
     iconColor: AppColors.primary,
     iconBg: AppColors.statusPendingLight,
-    label: l10n.statusPendingAppt,
+    label: l10n.statusPendingConsultation,
   ),
-  MsgType.apptConfirmed: TypeConfig(
+  MsgType.consultationConfirmed: TypeConfig(
     icon: Icons.event_available_outlined,
     iconColor: AppColors.statusReady,
     iconBg: AppColors.statusReadyLight,
-    label: l10n.statusConfirmedAppt,
+    label: l10n.statusConfirmedConsultation,
   ),
-  MsgType.apptCompleted: TypeConfig(
+  MsgType.consultationCompleted: TypeConfig(
     icon: Icons.check_circle_outline,
     iconColor: AppColors.statusCompleted,
     iconBg: AppColors.statusCompletedLight,
     label: l10n.statusCompleted,
   ),
-  MsgType.apptCancelled: TypeConfig(
+  MsgType.consultationCancelled: TypeConfig(
     icon: Icons.cancel_outlined,
     iconColor: Colors.grey,
     iconBg: const Color(0xFFEEEEEE),
@@ -180,7 +180,7 @@ List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
   return spans;
 }
 
-(String, List<InlineSpan>?) _buildAppointmentMessage(
+(String, List<InlineSpan>?) _buildConsultationMessage(
   String eventType,
   Map<String, dynamic> metadata,
   AppLocalizations l10n,
@@ -199,18 +199,18 @@ List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
       final dateTimeLabel = '$datePart ${l10n.timeLabel} $timePart ${l10n.timeWithUnit}';
-      final full = l10n.msgApptConfirmed(serviceCenter, dateTimeLabel);
+      final full = l10n.msgConsultationConfirmed(serviceCenter, dateTimeLabel);
       return (full, _buildBoldSpans(full, [serviceCenter, dateTimeLabel]));
     case 'completed':
-      return (l10n.msgApptCompleted, null);
+      return (l10n.msgConsultationCompleted, null);
     case 'cancelled_by_user':
-      return (l10n.msgApptCancelledByUser, null);
+      return (l10n.msgConsultationCancelledByUser, null);
     case 'cancelled_by_staff':
-      final path = l10n.msgApptCancelledByStaffPath;
-      final full = l10n.msgApptCancelledByStaff(path);
+      final path = l10n.msgConsultationCancelledByStaffPath;
+      final full = l10n.msgConsultationCancelledByStaff(path);
       return (full, _buildBoldSpans(full, [path]));
     default: // pending
-      return (l10n.msgApptPending, null);
+      return (l10n.msgConsultationPending, null);
   }
 }
 
@@ -221,7 +221,7 @@ List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
   AppLocalizations l10n,
 ) {
   if (sourceType == 'consultation') {
-    return _buildAppointmentMessage(eventType, metadata, l10n);
+    return _buildConsultationMessage(eventType, metadata, l10n);
   }
   switch (eventType) {
     case 'preparing':

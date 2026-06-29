@@ -308,7 +308,7 @@ class ConsultationLocationTile extends StatelessWidget {
 }
 
 /// Horizontal date strip for the booking form. Shows a placeholder message when
-/// no center is selected or the center does not offer appointments.
+/// no center is selected or the center does not offer consultations.
 class ConsultationDateStrip extends StatelessWidget {
   final ServiceCenterModel? location;
   final List<DateTime> dates;
@@ -330,7 +330,7 @@ class ConsultationDateStrip extends StatelessWidget {
       return _placeholder(l10n.selectServiceCenterFirst);
     }
     if (!loc.consultationServiceEnabled) {
-      return _placeholder(l10n.noAppointmentService);
+      return _placeholder(l10n.noConsultationService);
     }
     return SizedBox(
       height: 84,
@@ -407,7 +407,7 @@ class ConsultationDateStrip extends StatelessWidget {
 }
 
 /// Morning/afternoon time-slot picker for the booking form. Shows a placeholder
-/// message when no center is selected or the center does not offer appointments.
+/// message when no center is selected or the center does not offer consultations.
 class ConsultationTimePicker extends StatelessWidget {
   final ServiceCenterModel? location;
   final String? locationName;
@@ -435,7 +435,7 @@ class ConsultationTimePicker extends StatelessWidget {
           child: Text(
             locationName == null
                 ? l10n.selectServiceCenterFirst
-                : l10n.noAppointmentService,
+                : l10n.noConsultationService,
             style:
                 GoogleFonts.googleSans(fontSize: 14, color: AppColors.textHint),
           ),

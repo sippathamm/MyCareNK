@@ -57,8 +57,8 @@ class ServicePage extends StatelessWidget {
               icon: Icons.calendar_month_outlined,
               iconBgColor: AppColors.statusPreparingLight,
               iconColor: AppColors.lubricant,
-              title: l10n.bookDoctorTitle,
-              subtitle: l10n.bookDoctorSubtitle,
+              title: l10n.bookConsultationTitle,
+              subtitle: l10n.bookConsultationSubtitle,
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const ConsultationBookingPage()),
               ),

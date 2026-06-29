@@ -130,7 +130,7 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                     const SizedBox(height: 20),
                     _buildTimesSection(
                       icon: Icons.event_outlined,
-                      title: l10n.appointmentTimeLabel,
+                      title: l10n.consultationTimeLabel,
                       times: center.consultationTimes,
                     ),
                   ],
