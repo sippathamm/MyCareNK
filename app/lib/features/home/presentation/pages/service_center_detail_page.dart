@@ -126,12 +126,12 @@ class _ServiceCenterDetailPageState extends State<ServiceCenterDetailPage> {
                       times: center.pickupTimes,
                     ),
                   ],
-                  if (center.appointmentServiceEnabled) ...[
+                  if (center.consultationServiceEnabled) ...[
                     const SizedBox(height: 20),
                     _buildTimesSection(
                       icon: Icons.event_outlined,
                       title: l10n.appointmentTimeLabel,
-                      times: center.appointmentTimes,
+                      times: center.consultationTimes,
                     ),
                   ],
                   const SizedBox(height: 20),

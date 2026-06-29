@@ -12,7 +12,7 @@ enum MsgType {
 }
 
 MsgType parseMsgType(String? sourceType, String? eventType) {
-  if (sourceType == 'doctor_appointment') {
+  if (sourceType == 'consultation') {
     switch (eventType) {
       case 'confirmed':          return MsgType.apptConfirmed;
       case 'completed':          return MsgType.apptCompleted;
@@ -220,7 +220,7 @@ List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
   Map<String, dynamic> metadata,
   AppLocalizations l10n,
 ) {
-  if (sourceType == 'doctor_appointment') {
+  if (sourceType == 'consultation') {
     return _buildAppointmentMessage(eventType, metadata, l10n);
   }
   switch (eventType) {

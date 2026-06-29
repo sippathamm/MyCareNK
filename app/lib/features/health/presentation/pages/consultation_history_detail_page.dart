@@ -41,11 +41,11 @@ class _ConsultationHistoryDetailPageState
 
   void _setupRealtime() {
     _subscription = Supabase.instance.client
-        .channel('public:doctor_appointments:${_data.id}')
+        .channel('public:consultations:${_data.id}')
         .onPostgresChanges(
           event: PostgresChangeEvent.update,
           schema: 'public',
-          table: 'doctor_appointments',
+          table: 'consultations',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'id',
@@ -65,7 +65,7 @@ class _ConsultationHistoryDetailPageState
   Future<void> _fetchData() async {
     try {
       final response = await Supabase.instance.client
-          .from('doctor_appointments')
+          .from('consultations')
           .select()
           .eq('id', _data.id)
           .maybeSingle();
@@ -117,8 +117,8 @@ class _ConsultationHistoryDetailPageState
     setState(() => _isCancelling = true);
     try {
       await Supabase.instance.client
-          .from('doctor_appointments')
-          .update({'appointment_status': 'cancelled_by_user'})
+          .from('consultations')
+          .update({'consultation_status': 'cancelled_by_user'})
           .eq('id', _data.id);
 
       if (!mounted) return;
@@ -183,7 +183,7 @@ class _ConsultationHistoryDetailPageState
                 _buildLocationCard(),
                 if (_data.note != null && _data.note!.isNotEmpty)
                   _buildNoteCard(),
-                if ((_data.appointmentStatus == 'cancelled_by_staff') &&
+                if ((_data.consultationStatus == 'cancelled_by_staff') &&
                     _data.cancelReason != null &&
                     _data.cancelReason!.isNotEmpty)
                   _buildCancelReasonCard(),
@@ -201,7 +201,7 @@ class _ConsultationHistoryDetailPageState
   // ── Widgets ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final visuals = ConsultationStatusVisuals.of(_data.appointmentStatus);
+    final visuals = ConsultationStatusVisuals.of(_data.consultationStatus);
     final updated = _data.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
         '${updated.day} ${AppLocalizations.of(context).monthsFull[updated.month]} ${updated.year + 543} '
@@ -269,7 +269,7 @@ class _ConsultationHistoryDetailPageState
   }
 
   Widget _buildStatusTracker() {
-    final status = _data.appointmentStatus;
+    final status = _data.consultationStatus;
     final isCancelled =
         status == 'cancelled_by_user' || status == 'cancelled_by_staff';
     const double nodeSize = 28;
@@ -519,7 +519,7 @@ class _ConsultationHistoryDetailPageState
   }
 
   Widget _buildBottomButtons() {
-    final canCancel = _data.appointmentStatus == 'pending';
+    final canCancel = _data.consultationStatus == 'pending';
 
     return Column(
       children: [

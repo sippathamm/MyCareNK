@@ -79,7 +79,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
     if (mounted) setState(() { _centersLoading = true; _centersNotLoggedIn = false; });
     try {
       final centers = await ServiceCenterService.fetchAll();
-      if (mounted) setState(() { _centers = centers.where((c) => c.appointmentServiceEnabled).toList(); _centersLoading = false; });
+      if (mounted) setState(() { _centers = centers.where((c) => c.consultationServiceEnabled).toList(); _centersLoading = false; });
     } catch (_) {
       if (mounted) setState(() => _centersLoading = false);
     }
@@ -473,7 +473,7 @@ class _ConsultationBookingPageState extends State<ConsultationBookingPage> {
     setState(() => _isSubmitting = true);
     try {
       final ref = await Supabase.instance.client.rpc(
-        'create_doctor_appointment',
+        'create_consultation',
         params: {
           'p_user_id': userId,
           'p_reason': _reason,

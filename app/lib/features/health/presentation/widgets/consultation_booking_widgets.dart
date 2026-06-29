@@ -329,7 +329,7 @@ class ConsultationDateStrip extends StatelessWidget {
     if (loc == null) {
       return _placeholder(l10n.selectServiceCenterFirst);
     }
-    if (!loc.appointmentServiceEnabled) {
+    if (!loc.consultationServiceEnabled) {
       return _placeholder(l10n.noAppointmentService);
     }
     return SizedBox(
@@ -427,8 +427,8 @@ class ConsultationTimePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final loc = location;
-    final times = loc?.appointmentTimes ?? [];
-    if (loc == null || !loc.appointmentServiceEnabled || times.isEmpty) {
+    final times = loc?.consultationTimes ?? [];
+    if (loc == null || !loc.consultationServiceEnabled || times.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 8),

@@ -58,11 +58,11 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
     if (session == null) return;
 
     _subscription = Supabase.instance.client
-        .channel('public:doctor_appointments:user_id=eq.${session.user.id}')
+        .channel('public:consultations:user_id=eq.${session.user.id}')
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
-          table: 'doctor_appointments',
+          table: 'consultations',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'user_id',
@@ -88,7 +88,7 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
 
     try {
       final response = await Supabase.instance.client
-          .from('doctor_appointments')
+          .from('consultations')
           .select()
           .eq('user_id', session.user.id)
           .order('created_at', ascending: false);
@@ -114,12 +114,12 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
     return _appointments.where((a) {
       if (_selectedStatus != null) {
         if (_selectedStatus == 'cancelled') {
-          if (a.appointmentStatus != 'cancelled_by_user' &&
-              a.appointmentStatus != 'cancelled_by_staff') {
+          if (a.consultationStatus != 'cancelled_by_user' &&
+              a.consultationStatus != 'cancelled_by_staff') {
             return false;
           }
         } else {
-          if (a.appointmentStatus != _selectedStatus) { return false; }
+          if (a.consultationStatus != _selectedStatus) { return false; }
         }
       }
       if (_searchQuery.isNotEmpty &&
@@ -314,8 +314,8 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
   }
 
   Widget _buildAppointmentCard(ConsultationModel data) {
-    final visuals = ConsultationStatusVisuals.of(data.appointmentStatus);
-    final statusLabel = _statusLabel(data.appointmentStatus);
+    final visuals = ConsultationStatusVisuals.of(data.consultationStatus);
+    final statusLabel = _statusLabel(data.consultationStatus);
     final date = data.selectedDate;
     final dateStr =
         '${date.day} ${AppLocalizations.of(context).monthsFull[date.month]} ${date.year + 543}, ${data.selectedTime} ${AppLocalizations.of(context).timeWithUnit}';
