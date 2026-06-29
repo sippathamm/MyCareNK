@@ -13,7 +13,7 @@
 --       get_service_center_demand, get_service_center_demand_trend,
 --       get_staff_workload, get_staff_workload_trend
 --   Log queries
---     — get_request_status_log, get_appointment_status_log,
+--     — get_request_status_log, get_consultation_status_log,
 --       get_inventory_log, get_staff_change_log
 -- ============================================================
 
@@ -155,13 +155,14 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.get_inventory_forecast()
 RETURNS TABLE(
-  service_center      text,
-  condom_qty          integer,
-  lubricant_qty       integer,
-  condom_daily_burn   numeric,
+  service_center       text,
+  condom_qty           integer,
+  condom_quantities    jsonb,
+  lubricant_qty        integer,
+  condom_daily_burn    numeric,
   lubricant_daily_burn numeric,
-  condom_days_left    numeric,
-  lubricant_days_left numeric
+  condom_days_left     numeric,
+  lubricant_days_left  numeric
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -177,15 +178,18 @@ BEGIN
     WHERE il.action = 'fulfillment' AND il.created_at >= NOW() - INTERVAL '30 days'
     GROUP BY il.service_center
   )
-  SELECT sc.name                                    AS service_center,
-    COALESCE(sci.condom_qty, 0)                     AS condom_qty,
-    COALESCE(sci.lubricant_qty, 0)                  AS lubricant_qty,
-    COALESCE(b.condom_daily_burn, 0)                AS condom_daily_burn,
-    COALESCE(b.lubricant_daily_burn, 0)             AS lubricant_daily_burn,
+  SELECT sc.name                                                             AS service_center,
+    COALESCE(sci.condom_qty, 0)                                              AS condom_qty,
+    COALESCE(sci.condom_quantities, '{"49":0,"52":0,"54":0,"56":0}'::jsonb) AS condom_quantities,
+    COALESCE(sci.lubricant_qty, 0)                                           AS lubricant_qty,
+    COALESCE(b.condom_daily_burn, 0)                                         AS condom_daily_burn,
+    COALESCE(b.lubricant_daily_burn, 0)                                      AS lubricant_daily_burn,
     CASE WHEN COALESCE(b.condom_daily_burn, 0) = 0 THEN NULL
-         ELSE ROUND(COALESCE(sci.condom_qty, 0)::numeric / b.condom_daily_burn, 1) END AS condom_days_left,
+         ELSE ROUND(COALESCE(sci.condom_qty, 0)::numeric / b.condom_daily_burn, 1)
+    END AS condom_days_left,
     CASE WHEN COALESCE(b.lubricant_daily_burn, 0) = 0 THEN NULL
-         ELSE ROUND(COALESCE(sci.lubricant_qty, 0)::numeric / b.lubricant_daily_burn, 1) END AS lubricant_days_left
+         ELSE ROUND(COALESCE(sci.lubricant_qty, 0)::numeric / b.lubricant_daily_burn, 1)
+    END AS lubricant_days_left
   FROM service_centers sc
   LEFT JOIN service_center_inventory sci ON sci.service_center = sc.name
   LEFT JOIN burn b ON b.service_center = sc.name
@@ -405,7 +409,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.get_appointment_status_log(
+CREATE OR REPLACE FUNCTION public.get_consultation_status_log(
   p_performed_by     uuid        DEFAULT NULL,
   p_from_status      text        DEFAULT NULL,
   p_to_status        text        DEFAULT NULL,
@@ -417,7 +421,7 @@ CREATE OR REPLACE FUNCTION public.get_appointment_status_log(
   p_service_center   text        DEFAULT NULL
 ) RETURNS TABLE(
   id               uuid,
-  appointment_id   uuid,
+  consultation_id  uuid,
   reference_number text,
   performed_by     uuid,
   full_name        text,
@@ -436,7 +440,7 @@ BEGIN
     RAISE EXCEPTION 'Permission denied';
   END IF;
   RETURN QUERY
-  SELECT asl.id, asl.appointment_id, da.reference_number,
+  SELECT asl.id, asl.consultation_id, c.reference_number,
     asl.changed_by AS performed_by,
     CASE
       WHEN asl.changed_by_name IS NOT NULL THEN asl.changed_by_name
@@ -445,18 +449,18 @@ BEGIN
       ELSE 'ระบบ'
     END AS full_name,
     asl.from_status::text, asl.to_status::text, asl.changed_at
-  FROM appointment_status_logs asl
-  LEFT JOIN staff_profiles      sp ON sp.staff_user_id = asl.changed_by
-  LEFT JOIN user_profiles       up ON up.user_id        = asl.changed_by
-  LEFT JOIN doctor_appointments da ON da.id              = asl.appointment_id
-  WHERE (p_performed_by     IS NULL OR asl.changed_by              = p_performed_by)
-    AND (p_from_status      IS NULL OR asl.from_status::text       = p_from_status)
-    AND (p_to_status        IS NULL OR asl.to_status::text         = p_to_status)
-    AND (p_reference_number IS NULL OR da.reference_number ILIKE '%' || p_reference_number || '%')
-    AND (p_date_from        IS NULL OR asl.changed_at             >= p_date_from)
-    AND (p_date_to          IS NULL OR asl.changed_at             <= p_date_to)
-    AND (v_my_scs           IS NULL OR da.selected_service_center  = ANY(v_my_scs))
-    AND (p_service_center   IS NULL OR da.selected_service_center  = p_service_center)
+  FROM consultation_status_logs asl
+  LEFT JOIN staff_profiles sp ON sp.staff_user_id = asl.changed_by
+  LEFT JOIN user_profiles  up ON up.user_id        = asl.changed_by
+  LEFT JOIN consultations  c  ON c.id              = asl.consultation_id
+  WHERE (p_performed_by     IS NULL OR asl.changed_by             = p_performed_by)
+    AND (p_from_status      IS NULL OR asl.from_status::text      = p_from_status)
+    AND (p_to_status        IS NULL OR asl.to_status::text        = p_to_status)
+    AND (p_reference_number IS NULL OR c.reference_number ILIKE '%' || p_reference_number || '%')
+    AND (p_date_from        IS NULL OR asl.changed_at            >= p_date_from)
+    AND (p_date_to          IS NULL OR asl.changed_at            <= p_date_to)
+    AND (v_my_scs           IS NULL OR c.selected_service_center  = ANY(v_my_scs))
+    AND (p_service_center   IS NULL OR c.selected_service_center  = p_service_center)
   ORDER BY asl.changed_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
@@ -470,16 +474,17 @@ CREATE OR REPLACE FUNCTION public.get_inventory_log(
   p_limit          integer     DEFAULT 50,
   p_offset         integer     DEFAULT 0
 ) RETURNS TABLE(
-  id              uuid,
-  performed_by    uuid,
-  full_name       text,
-  action          public.audit_action,
-  service_center  text,
-  condom_delta    integer,
-  lubricant_delta integer,
-  reason          text,
-  note            text,
-  created_at      timestamptz
+  id                uuid,
+  performed_by      uuid,
+  full_name         text,
+  action            public.audit_action,
+  service_center    text,
+  condom_delta      integer,
+  condom_quantities jsonb,
+  lubricant_delta   integer,
+  reason            text,
+  note              text,
+  created_at        timestamptz
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -492,7 +497,8 @@ BEGIN
   RETURN QUERY
   SELECT il.id, il.performed_by,
     COALESCE(il.performed_by_name, sp.first_name || ' ' || sp.last_name, 'ระบบ') AS full_name,
-    il.action, il.service_center, il.condom_delta, il.lubricant_delta, il.reason, il.note, il.created_at
+    il.action, il.service_center, il.condom_delta, il.condom_quantities,
+    il.lubricant_delta, il.reason, il.note, il.created_at
   FROM public.inventory_logs il
   LEFT JOIN staff_profiles sp ON sp.staff_user_id = il.performed_by
   WHERE (p_action         IS NULL OR il.action::text      = p_action)

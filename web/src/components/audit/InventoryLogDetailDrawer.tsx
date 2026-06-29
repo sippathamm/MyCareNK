@@ -2,11 +2,21 @@ import {
   Drawer, Box, Typography, Divider, IconButton, Chip,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getDeltaChipSx } from '../../utils/statusColors';
 import type { InventoryLogRow } from '../../hooks/useInventoryLog';
+import { alpha } from '@mui/material/styles';
 import {
   AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR, AUDIT_ACTION_LABEL,
 } from '../../constants/auditLogActions';
 import type { AuditAction } from '../../constants/auditLogActions';
+
+const AUDIT_ACTION_DARK: Record<string, { bg: string; color: string }> = {
+  restock:    { bg: alpha('#2E7D32', 0.2), color: '#81C784' },
+  fulfillment: { bg: alpha('#1565C0', 0.2), color: '#90CAF9' },
+  adjustment: { bg: alpha('#E65100', 0.2), color: '#FFBE9E' },
+};
+const AUDIT_ACTION_DARK_FALLBACK = { bg: alpha('#9E9E9E', 0.15), color: '#BDBDBD' };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -20,13 +30,14 @@ function formatDateTime(iso: string): string {
 // ─── Qty Chip ─────────────────────────────────────────────────────────────────
 
 function QtyChip({ value }: { value: number }) {
+  const { mode } = useColorMode();
   if (value === 0) return <Typography variant="body1" color="text.disabled">—</Typography>;
   const pos = value > 0;
   return (
     <Chip
       label={`${pos ? '+' : ''}${value.toLocaleString()}`}
       size="small"
-      sx={{ bgcolor: pos ? '#EBF7EC' : '#FFF0F0', color: pos ? '#2E7D32' : '#C62828', fontWeight: 600, fontSize: '0.78rem' }}
+      sx={getDeltaChipSx(value, mode)}
     />
   );
 }
@@ -39,8 +50,11 @@ interface Props {
 }
 
 export default function InventoryLogDetailDrawer({ row, onClose }: Props) {
+  const { mode } = useColorMode();
   const actionCfg = row
-    ? (AUDIT_ACTION_COLOR[row.action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR)
+    ? (mode === 'dark'
+        ? (AUDIT_ACTION_DARK[row.action] ?? AUDIT_ACTION_DARK_FALLBACK)
+        : (AUDIT_ACTION_COLOR[row.action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR))
     : null;
   const actionLabel = row
     ? (AUDIT_ACTION_LABEL[row.action as AuditAction] ?? row.action)
@@ -78,9 +92,24 @@ export default function InventoryLogDetailDrawer({ row, onClose }: Props) {
               <Typography variant="subtitle2" color="text.secondary">สถานบริการ</Typography>
               <Typography variant="body1">{row.service_center}</Typography>
             </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
               <Typography variant="subtitle2" color="text.secondary">ถุงยางอนามัย (ชิ้น)</Typography>
-              <QtyChip value={row.condom_delta} />
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+                <QtyChip value={row.condom_delta} />
+                {row.condom_quantities && (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25 }}>
+                    {(['49', '52', '54', '56'] as const).map((size) => {
+                      const v = row.condom_quantities?.[size] ?? 0;
+                      if (v === 0) return null;
+                      return (
+                        <Typography key={size} variant="caption" color="text.secondary">
+                          {size}mm: {v > 0 ? '+' : ''}{v.toLocaleString()}
+                        </Typography>
+                      );
+                    })}
+                  </Box>
+                )}
+              </Box>
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">เจลหล่อลื่น (ชิ้น)</Typography>

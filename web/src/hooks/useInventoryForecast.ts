@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 export interface InventoryForecastRow {
   service_center: string;
   condom_qty: number;
+  condom_quantities: Record<string, number>;
   lubricant_qty: number;
   condom_daily_burn: number;
   lubricant_daily_burn: number;
@@ -40,7 +41,7 @@ export function useInventoryForecast() {
       return;
     }
 
-    setForecast((forecastData as InventoryForecastRow[]) ?? []);
+    setForecast((forecastData as unknown as InventoryForecastRow[]) ?? []);
     setTrend((trendData as ConsumptionTrendPoint[]) ?? []);
     setLoading(false);
   }, []);

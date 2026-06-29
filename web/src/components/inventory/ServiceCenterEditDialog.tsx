@@ -31,7 +31,7 @@ interface ContactItem {
   value: string;
 }
 
-type ScheduleGroup = 'condom' | 'appointment';
+type ScheduleGroup = 'condom' | 'consultation';
 type SchedulePeriod = 'morning' | 'afternoon';
 
 const SCHEDULE_TABS = ['แจกถุงยางอนามัย/เจลหล่อลื่น', 'ให้คำปรึกษา'];
@@ -60,7 +60,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
   const [scheduleTab, setScheduleTab] = useState(0);
   const [condomEnabled, setCondomEnabled] = useState(true);
-  const [appointmentEnabled, setAppointmentEnabled] = useState(false);
+  const [consultationEnabled, setConsultationEnabled] = useState(false);
   const [pickupMorning, setPickupMorning] = useState<string[]>(['08:00']);
   const [pickupAfternoon, setPickupAfternoon] = useState<string[]>([]);
   const [apptMorning, setApptMorning] = useState<string[]>(['08:00']);
@@ -85,6 +85,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setScheduleTab(0);
 
     if (center) {
+      setName(center.name);
       setDescription(center.description ?? '');
       setAddress(center.address ?? '');
       setContacts(center.contacts.length > 0 ? [...center.contacts] : []);
@@ -93,11 +94,11 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setOperatingHours(center.operating_hours ?? '');
       setImageUrl(center.image_url);
       setCondomEnabled(center.condom_service_enabled);
-      setAppointmentEnabled(center.appointment_service_enabled);
+      setConsultationEnabled(center.consultation_service_enabled);
       setPickupMorning(center.pickup_times.filter(t => t < '12:00').sort());
       setPickupAfternoon(center.pickup_times.filter(t => t >= '12:00').sort());
-      setApptMorning(center.appointment_times.filter(t => t < '12:00').sort());
-      setApptAfternoon(center.appointment_times.filter(t => t >= '12:00').sort());
+      setApptMorning(center.consultation_times.filter(t => t < '12:00').sort());
+      setApptAfternoon(center.consultation_times.filter(t => t >= '12:00').sort());
     } else {
       setName('');
       setDescription('');
@@ -108,7 +109,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setOperatingHours('');
       setImageUrl(null);
       setCondomEnabled(true);
-      setAppointmentEnabled(false);
+      setConsultationEnabled(false);
       setPickupMorning(['08:00']);
       setPickupAfternoon([]);
       setApptMorning(['08:00']);
@@ -134,6 +135,8 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       else setApptAfternoon(times);
     }
   };
+
+
 
   const handleAddTime = (group: ScheduleGroup, period: SchedulePeriod) => {
     const candidates = period === 'morning'
@@ -205,7 +208,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
       setError('กรุณาเพิ่มอย่างน้อย 1 ช่วงเวลาสำหรับบริการแจกถุงยางอนามัย/เจลหล่อลื่น');
       return false;
     }
-    if (appointmentEnabled && apptMorning.length === 0 && apptAfternoon.length === 0) {
+    if (consultationEnabled && apptMorning.length === 0 && apptAfternoon.length === 0) {
       setError('กรุณาเพิ่มอย่างน้อย 1 ช่วงเวลาสำหรับบริการให้คำปรึกษา');
       return false;
     }
@@ -214,9 +217,9 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
   const buildSchedulePayload = () => ({
     p_condom_service_enabled: condomEnabled,
-    p_appointment_service_enabled: appointmentEnabled,
+    p_consultation_service_enabled: consultationEnabled,
     p_pickup_times: [...pickupMorning, ...pickupAfternoon].sort(),
-    p_appointment_times: [...apptMorning, ...apptAfternoon].sort(),
+    p_consultation_times: [...apptMorning, ...apptAfternoon].sort(),
   });
 
   const handleSaveAdd = async () => {
@@ -263,6 +266,10 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
   const handleSaveEdit = async () => {
     if (!center) return;
+    const trimmedName = name.trim();
+    if (!trimmedName) { setError('กรุณากรอกชื่อสถานบริการ'); return; }
+    const otherNames = existingNames.filter(n => n !== center.name);
+    if (otherNames.includes(trimmedName)) { setError('ชื่อนี้มีอยู่แล้ว'); return; }
     if (!validateSchedule()) return;
     const coords = validateLatLng();
     if (coords === null) return;
@@ -271,8 +278,16 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
     setSaving(true);
     setError(null);
 
+    if (trimmedName !== center.name) {
+      const { error: renameError } = await supabase.rpc('rename_service_center', {
+        p_old: center.name,
+        p_new: trimmedName,
+      });
+      if (renameError) { setError(renameError.message); setSaving(false); return; }
+    }
+
     const { error: saveError } = await supabase.rpc('upsert_service_center', {
-      p_name: center.name,
+      p_name: trimmedName,
       p_image_url: imageUrl ?? undefined,
       p_description: description.trim() || undefined,
       p_contacts: cleanedContacts as unknown as never,
@@ -353,8 +368,8 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
   };
 
   const renderSchedulePanel = (group: ScheduleGroup) => {
-    const enabled = group === 'condom' ? condomEnabled : appointmentEnabled;
-    const setEnabled = group === 'condom' ? setCondomEnabled : setAppointmentEnabled;
+    const enabled = group === 'condom' ? condomEnabled : consultationEnabled;
+    const setEnabled = group === 'condom' ? setCondomEnabled : setConsultationEnabled;
     return (
       <Box sx={{ pt: 1.5 }}>
         <FormControlLabel
@@ -379,9 +394,6 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
           <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
             {isAddMode ? 'เพิ่มสถานบริการ' : 'แก้ไขสถานบริการ'}
           </Typography>
-          {!isAddMode && center && (
-            <Typography component="div" variant="caption" color="text.secondary">{center.name}</Typography>
-          )}
         </DialogTitle>
 
         <Divider />
@@ -438,11 +450,11 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
           <TextField
             label="ชื่อสถานบริการ"
-            value={isAddMode ? name : center?.name ?? ''}
-            onChange={isAddMode ? (e) => setName(e.target.value) : undefined}
+            value={name}
+            onChange={(e) => setName(e.target.value)}
             fullWidth
-            required={isAddMode}
-            disabled={!isAddMode || saving}
+            required
+            disabled={saving}
             sx={{ mb: 2 }}
           />
 
@@ -469,7 +481,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
             {SCHEDULE_TABS.map(label => <Tab key={label} label={label} />)}
           </Tabs>
           {scheduleTab === 0 && renderSchedulePanel('condom')}
-          {scheduleTab === 1 && renderSchedulePanel('appointment')}
+          {scheduleTab === 1 && renderSchedulePanel('consultation')}
 
           <Divider sx={{ mb: 2, mt: 2.5 }} />
 

@@ -3,9 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import '../constants/app_colors.dart';
 
 /// White rounded card with a gradient header (icon + title) above a padded
-/// [child]. Shared by the condom-request and appointment-booking sections.
+/// [child]. Shared by the condom-request and consultation-booking sections.
 /// [headerColors] overrides the default primary gradient (e.g. the lubricant
-/// gradient used by the doctor-booking flow).
+/// gradient used by the consultation-booking flow).
 class SectionCard extends StatelessWidget {
   final String title;
   final IconData icon;

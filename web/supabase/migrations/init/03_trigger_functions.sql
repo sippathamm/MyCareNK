@@ -16,9 +16,10 @@
 --                      handle_staff_request_notification,
 --                      handle_user_request_notification
 --   inventory_logs   — apply_inventory_adjustment, notify_staff_on_stock_operation
---   doctor_appts     — handle_staff_appointment_notification,
---                      handle_user_appointment_notification,
---                      track_appointment_status
+--   service_center_inventory — sync_inventory_condom_qty
+--   consultations    — handle_staff_consultation_notification,
+--                      handle_user_consultation_notification,
+--                      track_consultation_status
 --   auth.users       — handle_user_deleted (cascade nullify)
 -- ============================================================
 
@@ -132,44 +133,73 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 DECLARE
-  v_condom_total      int;
-  v_current_condom    int;
-  v_current_lubricant int;
+  v_condom_total        int;
+  v_current_lubricant   int;
+  v_current_condom_qtys jsonb;
+  v_size                text;
+  v_req_qty             int;
+  v_inv_qty             int;
 BEGIN
   IF NEW.request_status = 'completed' AND OLD.request_status <> 'completed' THEN
     SELECT COALESCE(SUM(value::int), 0)
       INTO v_condom_total
       FROM jsonb_each_text(NEW.condom_quantities);
 
-    SELECT condom_qty, lubricant_qty
-      INTO v_current_condom, v_current_lubricant
+    SELECT condom_quantities, lubricant_qty
+      INTO v_current_condom_qtys, v_current_lubricant
       FROM public.service_center_inventory
      WHERE service_center = NEW.selected_service_center;
 
-    IF v_current_condom IS NULL THEN
+    IF v_current_condom_qtys IS NULL THEN
       RAISE EXCEPTION 'ไม่พบข้อมูลสต็อกของสถานบริการนี้';
     END IF;
 
-    IF v_current_condom < v_condom_total THEN
-      RAISE EXCEPTION 'สต็อกถุงยางอนามัยไม่เพียงพอ (มี % ชิ้น ต้องใช้ % ชิ้น) กรุณาไปที่หน้า "สต็อกและพยากรณ์" เพื่อเติมสต็อกก่อน',
-        v_current_condom, v_condom_total;
-    END IF;
+    -- Per-size availability check (block if any requested size is insufficient)
+    FOREACH v_size IN ARRAY ARRAY['49','52','54','56']
+    LOOP
+      v_req_qty := COALESCE((NEW.condom_quantities->>v_size)::int, 0);
+      IF v_req_qty > 0 THEN
+        v_inv_qty := COALESCE((v_current_condom_qtys->>v_size)::int, 0);
+        IF v_inv_qty < v_req_qty THEN
+          RAISE EXCEPTION 'สต็อกถุงยางอนามัยขนาด %mm ไม่เพียงพอ (มี % ชิ้น ต้องใช้ % ชิ้น) กรุณาเติมสต็อกขนาด %mm ก่อน',
+            v_size, v_inv_qty, v_req_qty, v_size;
+        END IF;
+      END IF;
+    END LOOP;
 
     IF v_current_lubricant < NEW.lubricant_quantity THEN
       RAISE EXCEPTION 'สต็อกเจลหล่อลื่นไม่เพียงพอ (มี % ชิ้น ต้องใช้ % ชิ้น) กรุณาไปที่หน้า "สต็อกและพยากรณ์" เพื่อเติมสต็อกก่อน',
         v_current_lubricant, NEW.lubricant_quantity;
     END IF;
 
+    -- Deduct per-size (trigger_sync_condom_qty_from_quantities auto-updates condom_qty total)
     UPDATE public.service_center_inventory
-       SET condom_qty    = condom_qty    - v_condom_total,
+       SET condom_quantities = jsonb_build_object(
+             '49', GREATEST(0, COALESCE((condom_quantities->>'49')::int, 0) - COALESCE((NEW.condom_quantities->>'49')::int, 0)),
+             '52', GREATEST(0, COALESCE((condom_quantities->>'52')::int, 0) - COALESCE((NEW.condom_quantities->>'52')::int, 0)),
+             '54', GREATEST(0, COALESCE((condom_quantities->>'54')::int, 0) - COALESCE((NEW.condom_quantities->>'54')::int, 0)),
+             '56', GREATEST(0, COALESCE((condom_quantities->>'56')::int, 0) - COALESCE((NEW.condom_quantities->>'56')::int, 0))
+           ),
            lubricant_qty = lubricant_qty - NEW.lubricant_quantity,
            updated_at    = now()
      WHERE service_center = NEW.selected_service_center;
 
     INSERT INTO public.inventory_logs
-      (service_center, action, condom_delta, lubricant_delta, reference_request_id, performed_by)
-    VALUES
-      (NEW.selected_service_center, 'fulfillment', -v_condom_total, -NEW.lubricant_quantity, NEW.id, NEW.handled_by);
+      (service_center, action, condom_delta, lubricant_delta, condom_quantities, reference_request_id, performed_by)
+    VALUES (
+      NEW.selected_service_center,
+      'fulfillment',
+      -v_condom_total,
+      -NEW.lubricant_quantity,
+      jsonb_build_object(
+        '49', -COALESCE((NEW.condom_quantities->>'49')::int, 0),
+        '52', -COALESCE((NEW.condom_quantities->>'52')::int, 0),
+        '54', -COALESCE((NEW.condom_quantities->>'54')::int, 0),
+        '56', -COALESCE((NEW.condom_quantities->>'56')::int, 0)
+      ),
+      NEW.id,
+      NEW.handled_by
+    );
   END IF;
   RETURN NEW;
 END;
@@ -208,15 +238,25 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_ns RECORD;
 BEGIN
   IF TG_OP = 'INSERT' OR OLD.request_status IS DISTINCT FROM NEW.request_status THEN
+    SELECT notify_staff, notify_admin, notify_superadmin INTO v_ns
+      FROM notification_settings
+     WHERE source_type = 'condom_request' AND event_type = NEW.request_status::text;
+
     INSERT INTO staff_notifications
-      (source_type, source_id, event_type, service_center, metadata)
+      (source_type, source_id, event_type, service_centers,
+       notify_staff, notify_admin, notify_superadmin, metadata)
     VALUES (
       'condom_request',
       NEW.id,
       NEW.request_status::text,
-      NEW.selected_service_center,
+      ARRAY[NEW.selected_service_center],
+      COALESCE(v_ns.notify_staff,      true),
+      COALESCE(v_ns.notify_admin,      true),
+      COALESCE(v_ns.notify_superadmin, true),
       jsonb_build_object('reference_number', NEW.reference_number)
     );
   END IF;
@@ -269,7 +309,12 @@ AS $$
 BEGIN
   IF NEW.action = 'restock' THEN
     UPDATE public.service_center_inventory
-    SET condom_qty        = GREATEST(0, condom_qty    + NEW.condom_delta),
+    SET condom_quantities = jsonb_build_object(
+          '49', GREATEST(0, COALESCE((condom_quantities->>'49')::int, 0) + COALESCE((NEW.condom_quantities->>'49')::int, 0)),
+          '52', GREATEST(0, COALESCE((condom_quantities->>'52')::int, 0) + COALESCE((NEW.condom_quantities->>'52')::int, 0)),
+          '54', GREATEST(0, COALESCE((condom_quantities->>'54')::int, 0) + COALESCE((NEW.condom_quantities->>'54')::int, 0)),
+          '56', GREATEST(0, COALESCE((condom_quantities->>'56')::int, 0) + COALESCE((NEW.condom_quantities->>'56')::int, 0))
+        ),
         lubricant_qty     = GREATEST(0, lubricant_qty + NEW.lubricant_delta),
         last_restocked_at = NOW(),
         updated_at        = NOW(),
@@ -277,11 +322,32 @@ BEGIN
     WHERE service_center = NEW.service_center;
   ELSIF NEW.action = 'adjustment' THEN
     UPDATE public.service_center_inventory
-    SET condom_qty    = GREATEST(0, condom_qty    + NEW.condom_delta),
+    SET condom_quantities = jsonb_build_object(
+          '49', GREATEST(0, COALESCE((condom_quantities->>'49')::int, 0) + COALESCE((NEW.condom_quantities->>'49')::int, 0)),
+          '52', GREATEST(0, COALESCE((condom_quantities->>'52')::int, 0) + COALESCE((NEW.condom_quantities->>'52')::int, 0)),
+          '54', GREATEST(0, COALESCE((condom_quantities->>'54')::int, 0) + COALESCE((NEW.condom_quantities->>'54')::int, 0)),
+          '56', GREATEST(0, COALESCE((condom_quantities->>'56')::int, 0) + COALESCE((NEW.condom_quantities->>'56')::int, 0))
+        ),
         lubricant_qty = GREATEST(0, lubricant_qty + NEW.lubricant_delta),
         updated_at    = NOW()
     WHERE service_center = NEW.service_center;
   END IF;
+  RETURN NEW;
+END;
+$$;
+
+-- ── service_center_inventory ─────────────────────────────────
+CREATE OR REPLACE FUNCTION public.sync_inventory_condom_qty()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO 'public'
+AS $$
+BEGIN
+  NEW.condom_qty :=
+      COALESCE((NEW.condom_quantities->>'49')::int, 0)
+    + COALESCE((NEW.condom_quantities->>'52')::int, 0)
+    + COALESCE((NEW.condom_quantities->>'54')::int, 0)
+    + COALESCE((NEW.condom_quantities->>'56')::int, 0);
   RETURN NEW;
 END;
 $$;
@@ -295,30 +361,34 @@ SET search_path TO 'public'
 AS $$
 DECLARE
   v_actor_name text;
-  v_actor_role public.role;
+  v_ns         RECORD;
 BEGIN
   IF NEW.action NOT IN ('restock', 'adjustment') THEN
     RETURN NEW;
   END IF;
 
-  SELECT first_name || ' ' || last_name, role
-    INTO v_actor_name, v_actor_role
+  SELECT first_name || ' ' || last_name
+    INTO v_actor_name
     FROM public.staff_profiles
    WHERE staff_user_id = NEW.performed_by;
 
   v_actor_name := COALESCE(v_actor_name, '');
 
+  SELECT notify_staff, notify_admin, notify_superadmin INTO v_ns
+    FROM notification_settings
+   WHERE source_type = 'stock_operation' AND event_type = NEW.action::text;
+
   INSERT INTO public.staff_notifications
-    (source_type, source_id, event_type, service_center,
+    (source_type, source_id, event_type, service_centers,
      notify_staff, notify_admin, notify_superadmin, metadata)
   VALUES (
     'stock_operation',
     NEW.id,
     NEW.action::text,
-    NEW.service_center,
-    true,
-    true,
-    COALESCE(v_actor_role = 'admin', false),
+    ARRAY[NEW.service_center],
+    COALESCE(v_ns.notify_staff,      true),
+    COALESCE(v_ns.notify_admin,      true),
+    COALESCE(v_ns.notify_superadmin, true),
     jsonb_build_object(
       'actor_name',          v_actor_name,
       'service_center_name', NEW.service_center,
@@ -330,22 +400,32 @@ BEGIN
 END;
 $$;
 
--- ── doctor_appointments ─────────────────────────────────────
-CREATE OR REPLACE FUNCTION public.handle_staff_appointment_notification()
+-- ── consultations ───────────────────────────────────────────
+CREATE OR REPLACE FUNCTION public.handle_staff_consultation_notification()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_ns RECORD;
 BEGIN
-  IF TG_OP = 'INSERT' OR OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
+  IF TG_OP = 'INSERT' OR OLD.consultation_status IS DISTINCT FROM NEW.consultation_status THEN
+    SELECT notify_staff, notify_admin, notify_superadmin INTO v_ns
+      FROM notification_settings
+     WHERE source_type = 'consultation' AND event_type = NEW.consultation_status::text;
+
     INSERT INTO staff_notifications
-      (source_type, source_id, event_type, service_center, metadata)
+      (source_type, source_id, event_type, service_centers,
+       notify_staff, notify_admin, notify_superadmin, metadata)
     VALUES (
-      'doctor_appointment',
+      'consultation',
       NEW.id,
-      NEW.appointment_status::text,
-      NEW.selected_service_center,
+      NEW.consultation_status::text,
+      ARRAY[NEW.selected_service_center],
+      COALESCE(v_ns.notify_staff,      true),
+      COALESCE(v_ns.notify_admin,      true),
+      COALESCE(v_ns.notify_superadmin, true),
       jsonb_build_object('reference_number', NEW.reference_number)
     );
   END IF;
@@ -353,7 +433,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.handle_user_appointment_notification()
+CREATE OR REPLACE FUNCTION public.handle_user_consultation_notification()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -369,12 +449,12 @@ BEGIN
 
   IF TG_OP = 'INSERT' THEN
     INSERT INTO user_notifications (user_id, source_type, source_id, reference_number, event_type, metadata)
-    VALUES (NEW.user_id, 'doctor_appointment', NEW.id, NEW.reference_number, NEW.appointment_status::text, '{}'::jsonb);
+    VALUES (NEW.user_id, 'consultation', NEW.id, NEW.reference_number, NEW.consultation_status::text, '{}'::jsonb);
     RETURN NEW;
   END IF;
 
-  IF TG_OP = 'UPDATE' AND OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    IF NEW.appointment_status::text = 'confirmed' THEN
+  IF TG_OP = 'UPDATE' AND OLD.consultation_status IS DISTINCT FROM NEW.consultation_status THEN
+    IF NEW.consultation_status::text = 'confirmed' THEN
       v_metadata := jsonb_build_object(
         'selected_date',           NEW.selected_date,
         'selected_time',           NEW.selected_time,
@@ -383,25 +463,25 @@ BEGIN
       );
     END IF;
     INSERT INTO user_notifications (user_id, source_type, source_id, reference_number, event_type, metadata)
-    VALUES (NEW.user_id, 'doctor_appointment', NEW.id, NEW.reference_number, NEW.appointment_status::text, v_metadata);
+    VALUES (NEW.user_id, 'consultation', NEW.id, NEW.reference_number, NEW.consultation_status::text, v_metadata);
   END IF;
   RETURN NEW;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.track_appointment_status()
+CREATE OR REPLACE FUNCTION public.track_consultation_status()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF OLD.appointment_status IS DISTINCT FROM NEW.appointment_status THEN
-    INSERT INTO appointment_status_logs (appointment_id, from_status, to_status, changed_by, changed_by_name, changed_at)
+  IF OLD.consultation_status IS DISTINCT FROM NEW.consultation_status THEN
+    INSERT INTO consultation_status_logs (consultation_id, from_status, to_status, changed_by, changed_by_name, changed_at)
     VALUES (
       NEW.id,
-      OLD.appointment_status,
-      NEW.appointment_status,
+      OLD.consultation_status,
+      NEW.consultation_status,
       auth.uid(),
       (SELECT first_name || ' ' || last_name FROM public.staff_profiles WHERE staff_user_id = auth.uid()),
       now()
@@ -431,7 +511,7 @@ $$;
 -- ── auth.users cascade ─────────────────────────────────────
 -- Fires BEFORE DELETE on auth.users.
 -- Nullifies audit/history references so records are preserved.
--- condom_requests and doctor_appointments are NOT deleted here;
+-- condom_requests and consultations are NOT deleted here;
 -- their user_id FKs use ON DELETE SET NULL, which fires after this trigger.
 CREATE OR REPLACE FUNCTION public.handle_user_deleted()
 RETURNS TRIGGER
@@ -441,10 +521,10 @@ SET search_path = public
 AS $$
 BEGIN
   -- Nullify staff audit/log references to preserve history
-  UPDATE public.condom_requests         SET handled_by   = NULL WHERE handled_by   = OLD.id;
-  UPDATE public.doctor_appointments     SET handled_by   = NULL WHERE handled_by   = OLD.id;
-  UPDATE public.request_status_logs     SET changed_by   = NULL WHERE changed_by   = OLD.id;
-  UPDATE public.appointment_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.condom_requests            SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.consultations              SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.request_status_logs        SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.consultation_status_logs   SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.inventory_logs           SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.service_center_inventory SET updated_by   = NULL WHERE updated_by   = OLD.id;
   UPDATE public.staff_change_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
@@ -465,7 +545,7 @@ BEGIN
   DELETE FROM public.user_monthly_quotas     WHERE user_id = OLD.id;
 
   -- Delete user profile
-  -- condom_requests, doctor_appointments and their logs are preserved;
+  -- condom_requests, consultations and their logs are preserved;
   -- user_id will be SET NULL by FK after this trigger returns.
   DELETE FROM public.user_profiles WHERE user_id = OLD.id;
 
@@ -473,19 +553,19 @@ BEGIN
 END;
 $$;
 
--- ── doctor_appointments ─────────────────────────────────────
--- Mirrors set_handled_by_and_completed_at for appointments:
+-- ── consultations ───────────────────────────────────────────
+-- Mirrors set_handled_by_and_completed_at for consultations:
 -- sets handled_by = auth.uid() on first pending→confirmed transition.
-CREATE OR REPLACE FUNCTION public.set_appointment_handled_by()
+CREATE OR REPLACE FUNCTION public.set_consultation_handled_by()
 RETURNS trigger
 LANGUAGE plpgsql
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NEW.appointment_status = 'confirmed' AND OLD.handled_by IS NULL THEN
+  IF NEW.consultation_status = 'confirmed' AND OLD.handled_by IS NULL THEN
     NEW.handled_by = auth.uid();
   END IF;
-  IF NEW.appointment_status = 'cancelled_by_staff' THEN
+  IF NEW.consultation_status = 'cancelled_by_staff' THEN
     NEW.handled_by = auth.uid();
   END IF;
   RETURN NEW;
@@ -501,7 +581,7 @@ SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
 BEGIN
-  IF NEW.event_type <> 'pending' OR NEW.service_center IS NULL THEN
+  IF NEW.event_type <> 'pending' OR cardinality(NEW.service_centers) = 0 THEN
     RETURN NEW;
   END IF;
 

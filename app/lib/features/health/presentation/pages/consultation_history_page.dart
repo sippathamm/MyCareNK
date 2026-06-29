@@ -15,8 +15,8 @@ const Color _kCancelledColor = Color(0xFF757575);
 
 List<_Filter> _buildFilters(AppLocalizations l10n) => [
   (key: null,        label: l10n.all,                 color: AppColors.primary),
-  (key: 'pending',   label: l10n.statusPendingAppt,   color: AppColors.primary),
-  (key: 'confirmed', label: l10n.statusConfirmedAppt, color: AppColors.statusReady),
+  (key: 'pending',   label: l10n.statusPendingConsultation,   color: AppColors.primary),
+  (key: 'confirmed', label: l10n.statusConfirmedConsultation, color: AppColors.statusReady),
   (key: 'completed', label: l10n.statusCompleted,     color: AppColors.statusCompleted),
   (key: 'cancelled', label: l10n.statusCancelled,     color: _kCancelledColor),
 ];
@@ -31,7 +31,7 @@ class ConsultationHistoryPage extends StatefulWidget {
 }
 
 class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
-  List<ConsultationModel> _appointments = [];
+  List<ConsultationModel> _consultations = [];
   bool _isLoading = true;
   bool _isLoggedIn = true;
   String _searchQuery = '';
@@ -58,11 +58,11 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
     if (session == null) return;
 
     _subscription = Supabase.instance.client
-        .channel('public:doctor_appointments:user_id=eq.${session.user.id}')
+        .channel('public:consultations:user_id=eq.${session.user.id}')
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
-          table: 'doctor_appointments',
+          table: 'consultations',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'user_id',
@@ -88,18 +88,18 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
 
     try {
       final response = await Supabase.instance.client
-          .from('doctor_appointments')
+          .from('consultations')
           .select()
           .eq('user_id', session.user.id)
           .order('created_at', ascending: false);
 
-      final appointments = response
+      final consultations = response
           .map((e) => ConsultationModel.fromMap(e))
           .toList();
 
       if (mounted) {
         setState(() {
-          _appointments = appointments;
+          _consultations = consultations;
           _isLoading = false;
         });
       }
@@ -111,15 +111,15 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
   // ── Filtered list ───────────────────────────────────────────────────────────
 
   List<ConsultationModel> get _filtered {
-    return _appointments.where((a) {
+    return _consultations.where((a) {
       if (_selectedStatus != null) {
         if (_selectedStatus == 'cancelled') {
-          if (a.appointmentStatus != 'cancelled_by_user' &&
-              a.appointmentStatus != 'cancelled_by_staff') {
+          if (a.consultationStatus != 'cancelled_by_user' &&
+              a.consultationStatus != 'cancelled_by_staff') {
             return false;
           }
         } else {
-          if (a.appointmentStatus != _selectedStatus) { return false; }
+          if (a.consultationStatus != _selectedStatus) { return false; }
         }
       }
       if (_searchQuery.isNotEmpty &&
@@ -148,7 +148,7 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          AppLocalizations.of(context).appointmentHistoryTitle,
+          AppLocalizations.of(context).consultationHistoryTitle,
           style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -166,7 +166,7 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
             _buildFilterRow(),
             const SizedBox(height: 16),
             Expanded(
-              child: _isLoading && _appointments.isEmpty
+              child: _isLoading && _consultations.isEmpty
                   ? _buildSkeleton()
                   : RefreshIndicator(
                       color: AppColors.primary,
@@ -175,15 +175,15 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
                         physics: const AlwaysScrollableScrollPhysics(),
                         padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
                         itemCount: (!_isLoggedIn ||
-                                _appointments.isEmpty ||
+                                _consultations.isEmpty ||
                                 filtered.isEmpty)
                             ? 1
                             : filtered.length,
                         itemBuilder: (context, index) {
                           if (!_isLoggedIn) return _buildEmptyState(Icons.lock_outline, AppLocalizations.of(context).pleaseLogin);
-                          if (_appointments.isEmpty) return _buildEmptyState(Icons.event_busy_outlined, AppLocalizations.of(context).noAppointments);
-                          if (filtered.isEmpty) return _buildEmptyState(Icons.search_off_outlined, AppLocalizations.of(context).noMatchingAppts);
-                          return _buildAppointmentCard(filtered[index]);
+                          if (_consultations.isEmpty) return _buildEmptyState(Icons.event_busy_outlined, AppLocalizations.of(context).noConsultations);
+                          if (filtered.isEmpty) return _buildEmptyState(Icons.search_off_outlined, AppLocalizations.of(context).noMatchingConsultations);
+                          return _buildConsultationCard(filtered[index]);
                         },
                       ),
                     ),
@@ -244,7 +244,7 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
       child: TextField(
         onChanged: (val) => setState(() => _searchQuery = val),
         decoration: InputDecoration(
-          hintText: AppLocalizations.of(context).searchApptRefCode,
+          hintText: AppLocalizations.of(context).searchConsultationRefCode,
           hintStyle: GoogleFonts.googleSans(color: Colors.grey[600], fontSize: 14),
           suffixIcon: const Icon(Icons.search, color: AppColors.primary),
           border: InputBorder.none,
@@ -313,9 +313,9 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
     );
   }
 
-  Widget _buildAppointmentCard(ConsultationModel data) {
-    final visuals = ConsultationStatusVisuals.of(data.appointmentStatus);
-    final statusLabel = _statusLabel(data.appointmentStatus);
+  Widget _buildConsultationCard(ConsultationModel data) {
+    final visuals = ConsultationStatusVisuals.of(data.consultationStatus);
+    final statusLabel = _statusLabel(data.consultationStatus);
     final date = data.selectedDate;
     final dateStr =
         '${date.day} ${AppLocalizations.of(context).monthsFull[date.month]} ${date.year + 543}, ${data.selectedTime} ${AppLocalizations.of(context).timeWithUnit}';
@@ -434,9 +434,9 @@ class _ConsultationHistoryPageState extends State<ConsultationHistoryPage> {
     final l10n = AppLocalizations.of(context);
     switch (status) {
       case 'pending':
-        return l10n.statusPendingAppt;
+        return l10n.statusPendingConsultation;
       case 'confirmed':
-        return l10n.statusConfirmedAppt;
+        return l10n.statusConfirmedConsultation;
       case 'completed':
         return l10n.statusCompleted;
       case 'cancelled_by_staff':

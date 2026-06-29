@@ -9,8 +9,10 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import ArticleIcon from '@mui/icons-material/Article';
-import { useArticles, type Article, type ArticleStatus } from '../../hooks/useArticles';
+import { useArticles, type Article } from '../../hooks/useArticles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getArticleStatusSx, ARTICLE_STATUS_LABELS } from '../../utils/statusColors';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 
@@ -25,28 +27,13 @@ const STATUS_FILTERS = [
 
 type FilterValue = typeof STATUS_FILTERS[number]['value'];
 
-const STATUS_CHIP_PROPS: Record<ArticleStatus, { label: string; sx: object }> = {
-  published: {
-    label: 'เผยแพร่แล้ว',
-    sx: { bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 'bold' },
-  },
-  draft: {
-    label: 'ร่าง',
-    sx: { bgcolor: '#F5F5F5', color: '#616161', fontWeight: 'bold' },
-  },
-  hidden: {
-    label: 'ซ่อน',
-    sx: { bgcolor: '#ECEFF1', color: '#546E7A', fontWeight: 'bold' },
-  },
-};
-
 const thGridLocale = createThGridLocale('ยังไม่มีบทความ');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function StatusChip({ article }: { article: Article }) {
-  const { label, sx } = STATUS_CHIP_PROPS[article.status];
-  return <Chip label={label} size="small" sx={sx} />;
+  const { mode } = useColorMode();
+  return <Chip label={ARTICLE_STATUS_LABELS[article.status] ?? article.status} size="small" sx={getArticleStatusSx(article.status, mode)} />;
 }
 
 function CoverThumbnail({ url }: { url: string | null }) {
@@ -296,7 +283,7 @@ export default function ArticlesPage() {
             localeText={thGridLocale}
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />

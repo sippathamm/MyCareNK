@@ -41,11 +41,11 @@ class _ConsultationHistoryDetailPageState
 
   void _setupRealtime() {
     _subscription = Supabase.instance.client
-        .channel('public:doctor_appointments:${_data.id}')
+        .channel('public:consultations:${_data.id}')
         .onPostgresChanges(
           event: PostgresChangeEvent.update,
           schema: 'public',
-          table: 'doctor_appointments',
+          table: 'consultations',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'id',
@@ -65,7 +65,7 @@ class _ConsultationHistoryDetailPageState
   Future<void> _fetchData() async {
     try {
       final response = await Supabase.instance.client
-          .from('doctor_appointments')
+          .from('consultations')
           .select()
           .eq('id', _data.id)
           .maybeSingle();
@@ -88,11 +88,11 @@ class _ConsultationHistoryDetailPageState
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Text(AppLocalizations.of(context).cancelAppointmentTitle,
+        title: Text(AppLocalizations.of(context).cancelConsultationTitle,
             style: GoogleFonts.googleSans(
                 fontWeight: FontWeight.bold, color: AppColors.textPrimary)),
         content: Text(
-          AppLocalizations.of(context).cancelAppointmentMessage,
+          AppLocalizations.of(context).cancelConsultationMessage,
           style: GoogleFonts.googleSans(color: AppColors.textSecondary),
         ),
         actions: [
@@ -103,27 +103,27 @@ class _ConsultationHistoryDetailPageState
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(AppLocalizations.of(context).cancelApptBtn,
+            child: Text(AppLocalizations.of(context).cancelConsultationBtn,
                 style: GoogleFonts.googleSans(
                     color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
     );
-    if (confirmed == true) _doCancelAppointment();
+    if (confirmed == true) _doCancelConsultation();
   }
 
-  Future<void> _doCancelAppointment() async {
+  Future<void> _doCancelConsultation() async {
     setState(() => _isCancelling = true);
     try {
       await Supabase.instance.client
-          .from('doctor_appointments')
-          .update({'appointment_status': 'cancelled_by_user'})
+          .from('consultations')
+          .update({'consultation_status': 'cancelled_by_user'})
           .eq('id', _data.id);
 
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppLocalizations.current.cancelApptSuccess,
+        content: Text(AppLocalizations.current.cancelConsultationSuccess,
             style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
@@ -132,7 +132,7 @@ class _ConsultationHistoryDetailPageState
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(AppLocalizations.current.cancelApptError,
+        content: Text(AppLocalizations.current.cancelConsultationError,
             style: GoogleFonts.googleSans()),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
@@ -158,7 +158,7 @@ class _ConsultationHistoryDetailPageState
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          AppLocalizations.of(context).appointmentDetailsTitle,
+          AppLocalizations.of(context).consultationDetailsTitle,
           style: GoogleFonts.googleSans(
               color: AppColors.textPrimary,
               fontSize: 18,
@@ -183,7 +183,7 @@ class _ConsultationHistoryDetailPageState
                 _buildLocationCard(),
                 if (_data.note != null && _data.note!.isNotEmpty)
                   _buildNoteCard(),
-                if ((_data.appointmentStatus == 'cancelled_by_staff') &&
+                if ((_data.consultationStatus == 'cancelled_by_staff') &&
                     _data.cancelReason != null &&
                     _data.cancelReason!.isNotEmpty)
                   _buildCancelReasonCard(),
@@ -201,7 +201,7 @@ class _ConsultationHistoryDetailPageState
   // ── Widgets ──────────────────────────────────────────────────────────────
 
   Widget _buildHeader() {
-    final visuals = ConsultationStatusVisuals.of(_data.appointmentStatus);
+    final visuals = ConsultationStatusVisuals.of(_data.consultationStatus);
     final updated = _data.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
         '${updated.day} ${AppLocalizations.of(context).monthsFull[updated.month]} ${updated.year + 543} '
@@ -236,7 +236,7 @@ class _ConsultationHistoryDetailPageState
                     Clipboard.setData(
                         ClipboardData(text: _data.referenceNumber));
                     ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                      content: Text(AppLocalizations.current.copiedApptRefCode,
+                      content: Text(AppLocalizations.current.copiedConsultationRefCode,
                           style: GoogleFonts.googleSans()),
                       backgroundColor: AppColors.success,
                       duration: const Duration(seconds: 2),
@@ -269,7 +269,7 @@ class _ConsultationHistoryDetailPageState
   }
 
   Widget _buildStatusTracker() {
-    final status = _data.appointmentStatus;
+    final status = _data.consultationStatus;
     final isCancelled =
         status == 'cancelled_by_user' || status == 'cancelled_by_staff';
     const double nodeSize = 28;
@@ -317,7 +317,7 @@ class _ConsultationHistoryDetailPageState
         ]),
         const SizedBox(height: 4),
         Row(children: [
-          Text(AppLocalizations.of(context).statusPendingAppt,
+          Text(AppLocalizations.of(context).statusPendingConsultation,
               style: GoogleFonts.googleSans(
                   fontSize: 11, color: AppColors.textSecondary)),
           const Expanded(child: SizedBox()),
@@ -331,8 +331,8 @@ class _ConsultationHistoryDetailPageState
     }
 
     final steps = [
-      (label: AppLocalizations.of(context).statusPendingAppt,  value: 'pending',   color: AppColors.primary),
-      (label: AppLocalizations.of(context).statusConfirmedAppt, value: 'confirmed', color: AppColors.statusReady),
+      (label: AppLocalizations.of(context).statusPendingConsultation,  value: 'pending',   color: AppColors.primary),
+      (label: AppLocalizations.of(context).statusConfirmedConsultation, value: 'confirmed', color: AppColors.statusReady),
       (label: AppLocalizations.of(context).statusCompleted,     value: 'completed', color: AppColors.statusCompleted),
     ];
     final currentIdx = steps.indexWhere((s) => s.value == status);
@@ -446,7 +446,7 @@ class _ConsultationHistoryDetailPageState
         const Icon(Icons.medical_services_outlined,
             color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text(AppLocalizations.of(context).apptSubjectSection,
+        Text(AppLocalizations.of(context).consultationSubjectSection,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -467,7 +467,7 @@ class _ConsultationHistoryDetailPageState
       header: Row(children: [
         const Icon(Icons.local_hospital_outlined, color: Colors.white, size: 18),
         const SizedBox(width: 8),
-        Text(AppLocalizations.of(context).apptServiceDateTime,
+        Text(AppLocalizations.of(context).consultationServiceDateTime,
             style: GoogleFonts.googleSans(
                 color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
       ]),
@@ -519,7 +519,7 @@ class _ConsultationHistoryDetailPageState
   }
 
   Widget _buildBottomButtons() {
-    final canCancel = _data.appointmentStatus == 'pending';
+    final canCancel = _data.consultationStatus == 'pending';
 
     return Column(
       children: [
@@ -548,7 +548,7 @@ class _ConsultationHistoryDetailPageState
                       child: CircularProgressIndicator(
                           strokeWidth: 2, color: AppColors.error),
                     )
-                  : Text(AppLocalizations.of(context).cancelApptBtn,
+                  : Text(AppLocalizations.of(context).cancelConsultationBtn,
                       style: GoogleFonts.googleSans(
                           fontSize: 16, fontWeight: FontWeight.bold)),
             ),

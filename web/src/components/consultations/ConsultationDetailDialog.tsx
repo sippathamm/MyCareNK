@@ -3,6 +3,8 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, Typography, Box, Divider, TextField, Chip, Stack,
 } from '@mui/material';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getConsultationStatusSx } from '../../utils/statusColors';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
@@ -17,7 +19,7 @@ export const REASON_LABELS: Record<string, string> = {
   consult: 'ปรึกษาทั่วไป',
 };
 
-export interface AppointmentData {
+export interface ConsultationData {
   id: string;
   reference_number: string;
   user_id: string | null;
@@ -26,7 +28,7 @@ export interface AppointmentData {
   selected_date: string;
   selected_time: string;
   note: string | null;
-  appointment_status: Enums<'appointment_status'>;
+  consultation_status: Enums<'consultation_status'>;
   cancel_reason: string | null;
   handled_by: string | null;
   handled_by_name: string | null;
@@ -36,9 +38,9 @@ export interface AppointmentData {
   nickname: string | null;
 }
 
-interface AppointmentDetailDialogProps {
+interface ConsultationDetailDialogProps {
   open: boolean;
-  appointment: AppointmentData | null;
+  consultation: ConsultationData | null;
   onClose: () => void;
   onStatusChange: (id: string, newStatus: string, reason?: string) => Promise<boolean>;
   statusUpdating?: boolean;
@@ -55,20 +57,18 @@ function formatDateTime(dateStr: string): string {
   return `${d.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')} น.`;
 }
 
-function StatusChip({ status }: { status: Enums<'appointment_status'> }) {
-  switch (status) {
-    case 'pending':           return <Chip label="รอยืนยัน"            size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
-    case 'confirmed':         return <Chip label="ยืนยันแล้ว"           size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
-    case 'completed':         return <Chip label="เสร็จสิ้น"            size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
-    case 'cancelled_by_user': return <Chip label="ยกเลิกโดยผู้ใช้"     size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-    case 'cancelled_by_staff':return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-    default:                  return <Chip label={status} size="small" />;
-  }
-}
+const CONSULTATION_STATUS_LABELS: Record<string, string> = {
+  pending:            'รอยืนยัน',
+  confirmed:          'ยืนยันแล้ว',
+  completed:          'เสร็จสิ้น',
+  cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
+  cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
+};
 
-export default function AppointmentDetailDialog({
-  open, appointment, onClose, onStatusChange, statusUpdating = false,
-}: AppointmentDetailDialogProps) {
+export default function ConsultationDetailDialog({
+  open, consultation, onClose, onStatusChange, statusUpdating = false,
+}: ConsultationDetailDialogProps) {
+  const { mode } = useColorMode();
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -84,34 +84,34 @@ export default function AppointmentDetailDialog({
   const handleClose = () => { resetState(); onClose(); };
 
   const handleConfirm = async () => {
-    if (!appointment) return;
-    const ok = await onStatusChange(appointment.id, 'confirmed');
+    if (!consultation) return;
+    const ok = await onStatusChange(consultation.id, 'confirmed');
     if (ok) handleClose();
   };
 
   const handleComplete = async () => {
-    if (!appointment) return;
-    const ok = await onStatusChange(appointment.id, 'completed');
+    if (!consultation) return;
+    const ok = await onStatusChange(consultation.id, 'completed');
     if (ok) handleClose();
   };
 
   const handleCancelConfirm = async () => {
-    if (!appointment || !cancelReason.trim()) return;
-    const ok = await onStatusChange(appointment.id, 'cancelled_by_staff', cancelReason);
+    if (!consultation || !cancelReason.trim()) return;
+    const ok = await onStatusChange(consultation.id, 'cancelled_by_staff', cancelReason);
     if (ok) handleClose();
   };
 
   return (
     <>
       <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-        {appointment && (
+        {consultation && (
           <>
             <DialogTitle sx={{ pb: 1 }}>
               <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
-                รายละเอียดการนัดหมาย
+                รายละเอียดการนัดรับคำปรึกษา
               </Typography>
               <Typography component="div" variant="caption" color="text.secondary">
-                {appointment.reference_number}
+                {consultation.reference_number}
               </Typography>
             </DialogTitle>
 
@@ -119,32 +119,36 @@ export default function AppointmentDetailDialog({
               <Box display="flex" flexDirection="column" gap={2}>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">ส่งคำขอเมื่อ</Typography>
-                  <Typography variant="body1">{formatDateTime(appointment.created_at)}</Typography>
+                  <Typography variant="body1">{formatDateTime(consultation.created_at)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">เปลี่ยนแปลงล่าสุดเมื่อ</Typography>
-                  <Typography variant="body1">{formatDateTime(appointment.updated_at)}</Typography>
+                  <Typography variant="body1">{formatDateTime(consultation.updated_at)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">วันนัดหมาย</Typography>
-                  <Typography variant="body1">{formatDate(appointment.selected_date)}</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">วันนัดรับคำปรึกษา</Typography>
+                  <Typography variant="body1">{formatDate(consultation.selected_date)}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เวลานัดหมาย</Typography>
-                  <Typography variant="body1">{appointment.selected_time?.slice(0, 5)} น.</Typography>
+                  <Typography variant="subtitle2" color="text.secondary">เวลานัดรับคำปรึกษา</Typography>
+                  <Typography variant="body1">{consultation.selected_time?.slice(0, 5)} น.</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">สถานที่</Typography>
-                  <Typography variant="body1" fontWeight="medium">{appointment.selected_service_center}</Typography>
+                  <Typography variant="body1" fontWeight="medium">{consultation.selected_service_center}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between" alignItems="center">
                   <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
-                  <StatusChip status={appointment.appointment_status} />
+                  <Chip
+                    label={CONSULTATION_STATUS_LABELS[consultation.consultation_status] ?? consultation.consultation_status}
+                    size="small"
+                    sx={getConsultationStatusSx(consultation.consultation_status, mode)}
+                  />
                 </Box>
-                {appointment.handled_by_name && (
+                {consultation.handled_by_name && (
                   <Box display="flex" justifyContent="space-between">
                     <Typography variant="subtitle2" color="text.secondary">ดำเนินการโดย</Typography>
-                    <Typography variant="body1">{appointment.handled_by_name}</Typography>
+                    <Typography variant="body1">{consultation.handled_by_name}</Typography>
                   </Box>
                 )}
 
@@ -152,7 +156,7 @@ export default function AppointmentDetailDialog({
 
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">เรื่องที่ต้องการรับคำปรึกษา</Typography>
-                  <Typography variant="body1">{REASON_LABELS[appointment.reason] ?? appointment.reason}</Typography>
+                  <Typography variant="body1">{REASON_LABELS[consultation.reason] ?? consultation.reason}</Typography>
                 </Box>
 
                 <Divider sx={{ my: 1 }} />
@@ -160,27 +164,27 @@ export default function AppointmentDetailDialog({
                 <Typography variant="subtitle1" fontWeight="bold">ข้อมูลติดต่อ</Typography>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">ชื่อที่ใช้เรียก</Typography>
-                  <Typography variant="body1">{appointment.nickname ?? '-'}</Typography>
+                  <Typography variant="body1">{consultation.nickname ?? '-'}</Typography>
                 </Box>
                 <Box display="flex" justifyContent="space-between">
                   <Typography variant="subtitle2" color="text.secondary">หมายเลขโทรศัพท์</Typography>
-                  <Typography variant="body1">{appointment.phone_number ?? '-'}</Typography>
+                  <Typography variant="body1">{consultation.phone_number ?? '-'}</Typography>
                 </Box>
 
-                {appointment.note && (
+                {consultation.note && (
                   <Box>
                     <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>หมายเหตุเพิ่มเติม</Typography>
                     <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(0,0,0,0.03)', p: 1.5, borderRadius: 1 }}>
-                      {appointment.note}
+                      {consultation.note}
                     </Typography>
                   </Box>
                 )}
 
-                {(appointment.appointment_status === 'cancelled_by_user' || appointment.appointment_status === 'cancelled_by_staff') && appointment.cancel_reason && (
+                {(consultation.consultation_status === 'cancelled_by_user' || consultation.consultation_status === 'cancelled_by_staff') && consultation.cancel_reason && (
                   <Box>
                     <Typography variant="subtitle2" color="error.main" sx={{ mb: 1 }}>เหตุผลที่ยกเลิก</Typography>
                     <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(211,47,47,0.06)', p: 1.5, borderRadius: 1, color: 'error.main' }}>
-                      {appointment.cancel_reason}
+                      {consultation.cancel_reason}
                     </Typography>
                   </Box>
                 )}
@@ -189,17 +193,17 @@ export default function AppointmentDetailDialog({
 
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleClose} color="inherit">ปิด</Button>
-              {appointment.appointment_status === 'pending' && (
+              {consultation.consultation_status === 'pending' && (
                 <Button onClick={() => setIsCancelling(true)} color="error" variant="outlined">
-                  ยกเลิกนัดหมาย
+                  ยกเลิกการนัดรับคำปรึกษา
                 </Button>
               )}
-              {appointment.appointment_status === 'pending' && (
+              {consultation.consultation_status === 'pending' && (
                 <Button onClick={() => setIsConfirming(true)} color="primary" variant="contained">
-                  ยืนยันนัดหมาย
+                  ยืนยันการนัดรับคำปรึกษา
                 </Button>
               )}
-              {appointment.appointment_status === 'confirmed' && (
+              {consultation.consultation_status === 'confirmed' && (
                 <Button onClick={() => setIsCompleting(true)} color="success" variant="contained">
                   เสร็จสิ้น
                 </Button>
@@ -209,15 +213,15 @@ export default function AppointmentDetailDialog({
         )}
       </Dialog>
 
-      {/* Confirm: Confirm Appointment */}
+      {/* Confirm: Confirm Consultation */}
       <ConfirmDialog
         open={isConfirming}
         icon={<EventAvailableOutlinedIcon color="primary" />}
-        title="ยืนยันนัดหมาย"
+        title="ยืนยันการนัดรับคำปรึกษา"
         body={
           <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
-            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น</Typography>
-            <Chip label="ยืนยันแล้ว" size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />
+            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะการนัดรับคำปรึกษานี้เป็น</Typography>
+            <Chip label="ยืนยันแล้ว" size="small" sx={getConsultationStatusSx('confirmed', mode)} />
             <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
           </Stack>
         }
@@ -235,8 +239,8 @@ export default function AppointmentDetailDialog({
         title="ยืนยันการเสร็จสิ้น"
         body={
           <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
-            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะนัดหมายนี้เป็น</Typography>
-            <Chip label="เสร็จสิ้น" size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />
+            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะการนัดรับคำปรึกษานี้เป็น</Typography>
+            <Chip label="เสร็จสิ้น" size="small" sx={getConsultationStatusSx('completed', mode)} />
             <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
           </Stack>
         }
@@ -247,11 +251,11 @@ export default function AppointmentDetailDialog({
         onCancel={() => setIsCompleting(false)}
       />
 
-      {/* Confirm: Cancel Appointment */}
+      {/* Confirm: Cancel Consultation */}
       <ConfirmDialog
         open={isCancelling}
         icon={<CancelOutlinedIcon color="error" />}
-        title="ยกเลิกนัดหมาย"
+        title="ยกเลิกการนัดรับคำปรึกษา"
         body="กรุณาระบุเหตุผลที่ยกเลิก"
         confirmLabel="ยืนยันการยกเลิก"
         confirmColor="error"

@@ -2,12 +2,14 @@ import { useState } from 'react';
 import {
   Dialog, DialogTitle, DialogContent, DialogActions,
   Button, TextField, Typography, Box, CircularProgress,
-  Alert, Divider, MenuItem, Collapse,
+  Alert, Divider, MenuItem, Collapse, Grid,
 } from '@mui/material';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';
+
+const CONDOM_SIZES = ['49', '52', '54', '56'] as const;
 
 const ADJUSTMENT_REASONS = [
   'สต็อกเสียหาย',
@@ -24,9 +26,13 @@ interface AdjustmentModalProps {
   onSuccess: () => void;
 }
 
+type SizeDeltaMap = Record<string, string>;
+
+const emptyDeltas = (): SizeDeltaMap => ({ '49': '', '52': '', '54': '', '56': '' });
+
 export default function AdjustmentModal({ open, target, onClose, onSuccess }: AdjustmentModalProps) {
   const { session } = useAuth();
-  const [condomDelta, setCondomDelta] = useState('');
+  const [condomDeltas, setCondomDeltas] = useState<SizeDeltaMap>(emptyDeltas);
   const [lubricantDelta, setLubricantDelta] = useState('');
   const [reason, setReason] = useState('');
   const [note, setNote] = useState('');
@@ -35,7 +41,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
 
   const handleClose = () => {
     if (loading) return;
-    setCondomDelta('');
+    setCondomDeltas(emptyDeltas());
     setLubricantDelta('');
     setReason('');
     setNote('');
@@ -46,10 +52,16 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
   const handleSubmit = async () => {
     if (!target || !session?.user) return;
 
-    const condom = parseInt(condomDelta, 10);
+    const condomQuantities: Record<string, number> = {};
+    let hasCondom = false;
+    for (const size of CONDOM_SIZES) {
+      const v = parseInt(condomDeltas[size], 10);
+      condomQuantities[size] = isNaN(v) ? 0 : v;
+      if (!isNaN(v) && v !== 0) hasCondom = true;
+    }
     const lubricant = parseInt(lubricantDelta, 10);
 
-    if ((isNaN(condom) || condom === 0) && (isNaN(lubricant) || lubricant === 0)) {
+    if (!hasCondom && (isNaN(lubricant) || lubricant === 0)) {
       setError('กรุณากรอกจำนวนที่ต้องการปรับแก้อย่างน้อย 1 รายการ (ค่าบวก = เพิ่ม, ค่าลบ = ลด)');
       return;
     }
@@ -65,17 +77,19 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
     setLoading(true);
     setError(null);
 
-    // Insert into inventory_logs — trigger on_inventory_log_insert → apply_inventory_adjustment จะอัปเดต service_center_inventory อัตโนมัติ
+    const condomDelta = Object.values(condomQuantities).reduce((a, b) => a + b, 0);
+
     const { error: insertError } = await supabase
       .from('inventory_logs')
       .insert({
-        service_center: target.service_center,
-        action: 'adjustment',
-        condom_delta: isNaN(condom) ? 0 : condom,
-        lubricant_delta: isNaN(lubricant) ? 0 : lubricant,
-        reason: reason,
-        note: note.trim() || null,
-        performed_by: session.user.id,
+        service_center:   target.service_center,
+        action:           'adjustment',
+        condom_delta:     condomDelta,
+        condom_quantities: condomQuantities,
+        lubricant_delta:  isNaN(lubricant) ? 0 : lubricant,
+        reason,
+        note:             note.trim() || null,
+        performed_by:     session.user.id,
       });
 
     if (insertError) {
@@ -85,7 +99,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
     }
 
     setLoading(false);
-    setCondomDelta('');
+    setCondomDeltas(emptyDeltas());
     setLubricantDelta('');
     setReason('');
     setNote('');
@@ -94,15 +108,20 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
 
   if (!target) return null;
 
-  const condomPreview = parseInt(condomDelta, 10);
-  const lubricantPreview = parseInt(lubricantDelta, 10);
-  const condomRaw = isNaN(condomPreview) ? target.condom_qty : target.condom_qty + condomPreview;
-  const lubricantRaw = isNaN(lubricantPreview) ? target.lubricant_qty : target.lubricant_qty + lubricantPreview;
-  const condomAfter = Math.max(0, condomRaw);
+  // Compute after-adjustment per-size preview
+  const sizeAfter: Record<string, number> = {};
+  const clampedSizes: string[] = [];
+  for (const size of CONDOM_SIZES) {
+    const delta = parseInt(condomDeltas[size], 10);
+    const current = target.condom_quantities?.[size] ?? 0;
+    const raw = isNaN(delta) ? current : current + delta;
+    sizeAfter[size] = Math.max(0, raw);
+    if (!isNaN(delta) && delta !== 0 && raw < 0) clampedSizes.push(`${size}mm`);
+  }
+  const lubricantParsed = parseInt(lubricantDelta, 10);
+  const lubricantRaw = isNaN(lubricantParsed) ? target.lubricant_qty : target.lubricant_qty + lubricantParsed;
   const lubricantAfter = Math.max(0, lubricantRaw);
-  const clampWarnings: string[] = [];
-  if (!isNaN(condomPreview) && condomRaw < 0) clampWarnings.push('ถุงยางอนามัย');
-  if (!isNaN(lubricantPreview) && lubricantRaw < 0) clampWarnings.push('เจลหล่อลื่น');
+  if (!isNaN(lubricantParsed) && lubricantParsed !== 0 && lubricantRaw < 0) clampedSizes.push('เจลหล่อลื่น');
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
@@ -119,51 +138,60 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
 
       <DialogContent sx={{ pt: 2.5 }}>
         {/* Current → After preview */}
-        <Box
-          sx={{
-            bgcolor: 'grey.50',
-            borderRadius: 1.5,
-            p: 1.5,
-            mb: 2.5,
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 1.5,
-          }}
-        >
-          {[
-            { label: 'ถุงยางอนามัย', current: target.condom_qty, after: condomAfter },
-            { label: 'เจลหล่อลื่น', current: target.lubricant_qty, after: lubricantAfter },
-          ].map(({ label, current, after }) => (
-            <Box key={label}>
-              <Typography variant="caption" color="text.secondary" display="block">{label}</Typography>
+        <Box sx={{ bgcolor: 'action.hover', borderRadius: 1.5, p: 1.5, mb: 2.5 }}>
+          <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
+            สต็อกก่อน → หลัง
+          </Typography>
+          <Grid container spacing={1.5}>
+            {CONDOM_SIZES.map((size) => {
+              const current = target.condom_quantities?.[size] ?? 0;
+              const after = sizeAfter[size];
+              return (
+                <Grid key={size} size={6}>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    ถุงยางอนามัย {size}mm
+                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+                    <Typography variant="body2" fontWeight={600}>{current.toLocaleString()}</Typography>
+                    {after !== current && (
+                      <>
+                        <Typography variant="caption" color="text.disabled">→</Typography>
+                        <Typography variant="body2" fontWeight={600} color={after > current ? 'success.main' : 'error.main'}>
+                          {after.toLocaleString()}
+                        </Typography>
+                      </>
+                    )}
+                    <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
+                  </Box>
+                </Grid>
+              );
+            })}
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary" display="block">เจลหล่อลื่น</Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
-                <Typography variant="body2" fontWeight={600}>{current.toLocaleString()}</Typography>
-                {after !== current && (
+                <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
+                {lubricantAfter !== target.lubricant_qty && (
                   <>
                     <Typography variant="caption" color="text.disabled">→</Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight={600}
-                      color={after > current ? 'success.main' : 'error.main'}
-                    >
-                      {after.toLocaleString()}
+                    <Typography variant="body2" fontWeight={600} color={lubricantAfter > target.lubricant_qty ? 'success.main' : 'error.main'}>
+                      {lubricantAfter.toLocaleString()}
                     </Typography>
                   </>
                 )}
                 <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
               </Box>
-            </Box>
-          ))}
+            </Grid>
+          </Grid>
         </Box>
 
-        <Collapse in={clampWarnings.length > 0}>
+        <Collapse in={clampedSizes.length > 0}>
           <Alert
             severity="warning"
             icon={<WarningAmberIcon fontSize="small" />}
             sx={{ mb: 2, borderRadius: 1.5, py: 0.5 }}
           >
             <Typography variant="caption">
-              {clampWarnings.join(' และ ')} จะถูกปรับเป็น 0 เนื่องจากสต็อกไม่เพียงพอ
+              {clampedSizes.join(', ')} จะถูกปรับเป็น 0 เนื่องจากสต็อกไม่เพียงพอ
             </Typography>
           </Alert>
         </Collapse>
@@ -174,20 +202,31 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
           </Alert>
         )}
 
-        <TextField
-          label="ปรับจำนวนถุงยางอนามัย (ชิ้น)"
-          helperText="ค่าบวก = เพิ่ม  |  ค่าลบ = ลด  เช่น +20 หรือ -5"
-          value={condomDelta}
-          onChange={(e) => setCondomDelta(e.target.value.replace(/[^0-9-]/g, ''))}
-          fullWidth
-          type="number"
-          sx={{ mb: 2 }}
-          disabled={loading}
-        />
+        <Typography variant="subtitle2" color="text.secondary" mb={1.5}>
+          ปรับจำนวนถุงยางอนามัย (ชิ้น)
+        </Typography>
+        <Grid container spacing={1.5} mb={2}>
+          {CONDOM_SIZES.map((size) => (
+            <Grid key={size} size={6}>
+              <TextField
+                label={`ขนาด ${size}mm`}
+                helperText="+ เพิ่ม / − ลด"
+                value={condomDeltas[size]}
+                onChange={(e) =>
+                  setCondomDeltas((prev) => ({ ...prev, [size]: e.target.value.replace(/[^0-9-]/g, '') }))
+                }
+                fullWidth
+                type="number"
+                size="small"
+                disabled={loading}
+              />
+            </Grid>
+          ))}
+        </Grid>
 
         <TextField
           label="ปรับจำนวนเจลหล่อลื่น (ชิ้น)"
-          helperText="ค่าบวก = เพิ่ม  |  ค่าลบ = ลด  เช่น +20 หรือ -5"
+          helperText="+ เพิ่ม / - ลด"
           value={lubricantDelta}
           onChange={(e) => setLubricantDelta(e.target.value.replace(/[^0-9-]/g, ''))}
           fullWidth

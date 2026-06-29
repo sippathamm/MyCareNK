@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
-  TextField, MenuItem, CircularProgress, Alert,
+  TextField, MenuItem, CircularProgress, Alert, Collapse, Snackbar,
   Select, Checkbox, ListItemText, OutlinedInput, InputLabel, FormControl,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
@@ -14,8 +14,11 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { alpha } from '@mui/material/styles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useAuth } from '../../hooks/useAuth';
+import { useColorMode } from '../../contexts/ThemeContext';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
@@ -23,6 +26,8 @@ import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 import type { Enums } from '../../lib/database.types';
 import ConfirmDialog from '../../components/shared/ConfirmDialog';
+import { useNotificationSettings, type NotificationSetting } from '../../hooks/useNotificationSettings';
+import { STATUS_CONFIG, CONSULTATION_STATUS_CONFIG, STOCK_OPERATION_CONFIG, SERVICE_CENTER_MANAGEMENT_CONFIG } from '../../contexts/NotificationContext';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -32,11 +37,22 @@ const ROLE_OPTIONS = [
   { value: 'superadmin', label: 'ผู้ดูแลสูงสุด' },
 ] as const;
 
-const ROLE_CHIP_SX: Record<string, { bgcolor: string; color: string }> = {
-  superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
-  admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
-  staff:      { bgcolor: '#F5F5F5', color: '#616161' },
-};
+function getRoleChipSx(role: string, mode: 'light' | 'dark'): { bgcolor: string; color: string } {
+  if (mode === 'dark') {
+    const dark: Record<string, { bgcolor: string; color: string }> = {
+      superadmin: { bgcolor: alpha('#EF5350', 0.15), color: '#EF9A9A' },
+      admin:      { bgcolor: alpha('#FF9F6B', 0.15), color: '#FFBE9E' },
+      staff:      { bgcolor: alpha('#9E9E9E', 0.15), color: '#BDBDBD' },
+    };
+    return dark[role] ?? dark.staff;
+  }
+  const light: Record<string, { bgcolor: string; color: string }> = {
+    superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
+    admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
+    staff:      { bgcolor: '#F5F5F5', color: '#616161' },
+  };
+  return light[role] ?? light.staff;
+}
 
 const ROLE_LABEL: Record<string, string> = {
   staff: 'เจ้าหน้าที่',
@@ -66,6 +82,209 @@ function generatePassword(): string {
   return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
 }
 
+// ─── Notification Settings Labels ────────────────────────────────────────────
+
+const NOTIF_GROUPS: Array<{
+  source_type: string;
+  label: string;
+  rows: Array<{ event_type: string; label: string }>;
+}> = [
+  {
+    source_type: 'condom_request',
+    label: 'คำขอถุงยางอนามัย',
+    rows: (Object.entries(STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'consultation',
+    label: 'นัดรับคำปรึกษา',
+    rows: (Object.entries(CONSULTATION_STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'stock_operation',
+    label: 'การจัดการสต็อก',
+    rows: (Object.entries(STOCK_OPERATION_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'service_center_management',
+    label: SERVICE_CENTER_MANAGEMENT_CONFIG.label,
+    rows: [
+      { event_type: 'add',    label: 'เพิ่มสถานบริการ' },
+      { event_type: 'remove', label: 'ลบสถานบริการ' },
+    ],
+  },
+  {
+    source_type: 'staff_management',
+    label: 'การจัดการเจ้าหน้าที่',
+    rows: [
+      { event_type: 'add',          label: 'เพิ่มเจ้าหน้าที่' },
+      { event_type: 'remove',       label: 'ลบเจ้าหน้าที่' },
+      { event_type: 'edit_profile', label: 'แก้ไขโปรไฟล์' },
+      { event_type: 'edit_email',   label: 'แก้ไขอีเมล' },
+      { event_type: 'edit_role',    label: 'แก้ไขระดับสิทธิ์' },
+    ],
+  },
+];
+
+// ─── Notification Settings Section ───────────────────────────────────────────
+
+function NotificationSettingsSection() {
+  const { settings, loading, save } = useNotificationSettings();
+  const [draft, setDraft] = useState<NotificationSetting[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+  const [sectionOpen, setSectionOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => { setDraft(settings); }, [settings]);
+
+  const isDirty = useMemo(() => {
+    if (draft.length !== settings.length) return false;
+    return draft.some(d => {
+      const orig = settings.find(s => s.source_type === d.source_type && s.event_type === d.event_type);
+      return orig && (d.notify_staff !== orig.notify_staff || d.notify_admin !== orig.notify_admin || d.notify_superadmin !== orig.notify_superadmin);
+    });
+  }, [draft, settings]);
+
+  const toggle = (source_type: string, event_type: string, field: 'notify_staff' | 'notify_admin' | 'notify_superadmin') => {
+    setDraft(prev => prev.map(s =>
+      s.source_type === source_type && s.event_type === event_type
+        ? { ...s, [field]: !s[field] }
+        : s
+    ));
+  };
+
+  const toggleGroup = (sourceType: string) => {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(sourceType)) next.delete(sourceType); else next.add(sourceType);
+      return next;
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const err = await save(draft);
+    setSaving(false);
+    setSnackbar({ open: true, message: err ? `บันทึกไม่สำเร็จ: ${err}` : 'บันทึกการตั้งค่าเรียบร้อยแล้ว', severity: err ? 'error' : 'success' });
+  };
+
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Box
+        onClick={() => setSectionOpen(o => !o)}
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', mb: sectionOpen ? 0.5 : 0 }}
+      >
+        <Typography variant="h6" fontWeight="bold">ตั้งค่าการแจ้งเตือน</Typography>
+        <ExpandMoreIcon sx={{ color: 'text.secondary', transition: 'transform 0.2s', transform: sectionOpen ? 'rotate(180deg)' : 'none' }} />
+      </Box>
+
+      <Collapse in={sectionOpen}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          กำหนดว่าแต่ละระดับสิทธิ์จะได้รับการแจ้งเตือนสำหรับกิจกรรมใดบ้าง
+        </Typography>
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
+          <>
+            {NOTIF_GROUPS.map(group => {
+              const isGroupOpen = openGroups.has(group.source_type);
+              return (
+                <Paper key={group.source_type} elevation={1} sx={{ borderRadius: 2, mb: 2, overflow: 'hidden' }}>
+                  <Box
+                    onClick={() => toggleGroup(group.source_type)}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <Typography variant="subtitle1" fontWeight="bold">{group.label}</Typography>
+                    <ExpandMoreIcon sx={{ color: 'text.secondary', fontSize: 20, transition: 'transform 0.2s', transform: isGroupOpen ? 'rotate(180deg)' : 'none' }} />
+                  </Box>
+                  <Collapse in={isGroupOpen}>
+                    <Box sx={{ px: 3, pb: 2, overflowX: 'auto' }}>
+                      <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <Box component="thead">
+                          <Box component="tr">
+                            {(['การดำเนินการ', 'เจ้าหน้าที่', 'ผู้ดูแล', 'ผู้ดูแลสูงสุด'] as const).map((h, i) => (
+                              <Box
+                                component="th"
+                                key={h}
+                                sx={{
+                                  textAlign: i === 0 ? 'left' : 'center',
+                                  pb: 1.5,
+                                  pr: 2,
+                                  fontSize: 12,
+                                  color: 'text.secondary',
+                                  fontWeight: 'medium',
+                                  whiteSpace: 'nowrap',
+                                  ...(i > 0 && { width: 100 }),
+                                }}
+                              >
+                                {h}
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                        <Box component="tbody">
+                          {group.rows.map(row => {
+                            const s = draft.find(d => d.source_type === group.source_type && d.event_type === row.event_type);
+                            return (
+                              <Box
+                                component="tr"
+                                key={row.event_type}
+                                sx={{ borderTop: '1px solid', borderColor: 'divider' }}
+                              >
+                                <Box component="td" sx={{ py: 1.5, pr: 2 }}>
+                                  <Typography variant="body2">{row.label}</Typography>
+                                </Box>
+                                {(['notify_staff', 'notify_admin', 'notify_superadmin'] as const).map(field => (
+                                  <Box component="td" key={field} sx={{ py: 1.5, textAlign: 'center', width: 100 }}>
+                                    <Checkbox
+                                      checked={s?.[field] ?? false}
+                                      onChange={() => toggle(group.source_type, row.event_type, field)}
+                                      size="small"
+                                    />
+                                  </Box>
+                                ))}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Collapse>
+                </Paper>
+              );
+            })}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button
+                variant="contained"
+                disabled={!isDirty || saving}
+                onClick={handleSave}
+                endIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
+              >
+                บันทึก
+              </Button>
+            </Box>
+          </>
+        )}
+      </Collapse>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar(s => ({ ...s, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+}
+
 // ─── Add Staff Dialog ─────────────────────────────────────────────────────────
 
 interface AddStaffDialogProps {
@@ -81,6 +300,7 @@ interface AddStaffDialogProps {
 }
 
 function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
+  const { mode } = useColorMode();
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -190,7 +410,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
               รหัสผ่านนี้จะแสดงเพียงครั้งเดียว กรุณาคัดลอกและแจ้งให้เจ้าหน้าที่ทราบ
             </Alert>
             {error && <Alert severity="error">{error}</Alert>}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'grey.100', borderRadius: 2, px: 2, py: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'action.hover', borderRadius: 2, px: 2, py: 1.5 }}>
               <Typography fontFamily="monospace" fontWeight="bold" sx={{ flex: 1, wordBreak: 'break-all' }}>
                 {password}
               </Typography>
@@ -218,7 +438,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle2" color="text.secondary">ระดับสิทธิ์</Typography>
-                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...(ROLE_CHIP_SX[role] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }} />
+                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...getRoleChipSx(role, mode), fontWeight: 600 }} />
               </Box>
             </Box>
           </Box>
@@ -260,6 +480,7 @@ interface EditStaffDialogProps {
 }
 
 function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
+  const { mode } = useColorMode();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -470,9 +691,9 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
               <Typography variant="body2" color="text.secondary">คุณกำลังลดระดับสิทธิ์จาก</Typography>
-              <Chip label={ROLE_LABEL[staff?.role ?? '']} size="small" sx={{ fontWeight: 600, ...(ROLE_CHIP_SX[staff?.role ?? ''] ?? {}) }} />
+              <Chip label={ROLE_LABEL[staff?.role ?? '']} size="small" sx={{ fontWeight: 600, ...getRoleChipSx(staff?.role ?? '', mode) }} />
               <Typography variant="body2" color="text.secondary">เป็น</Typography>
-              <Chip label={ROLE_LABEL[role]} size="small" sx={{ fontWeight: 600, ...(ROLE_CHIP_SX[role] ?? {}) }} />
+              <Chip label={ROLE_LABEL[role]} size="small" sx={{ fontWeight: 600, ...getRoleChipSx(role, mode) }} />
             </Stack>
             <Typography variant="body2" color="text.secondary">การดำเนินการนี้อาจส่งผลต่อการเข้าถึงระบบของเจ้าหน้าที่</Typography>
           </Box>
@@ -492,6 +713,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 export default function StaffManagementPage() {
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { session } = useAuth();
+  const { mode } = useColorMode();
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
   const { centers } = useServiceCenters();
@@ -540,7 +762,7 @@ export default function StaffManagementPage() {
         <Chip
           label={ROLE_LABEL[params.value as string] ?? params.value}
           size="small"
-          sx={{ ...(ROLE_CHIP_SX[params.value as string] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }}
+          sx={{ ...getRoleChipSx(params.value as string, mode), fontWeight: 600 }}
         />
       ),
     },
@@ -614,12 +836,14 @@ export default function StaffManagementPage() {
             getRowHeight={() => 56}
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />
         </Box>
       </Paper>
+
+      {isSuperadmin && <NotificationSettingsSection />}
 
       <AddStaffDialog
         open={addOpen}

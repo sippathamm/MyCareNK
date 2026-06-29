@@ -9,9 +9,9 @@ class ServiceCenterModel {
   final int displayOrder;
   final String? operatingHours;
   final bool condomServiceEnabled;
-  final bool appointmentServiceEnabled;
+  final bool consultationServiceEnabled;
   final List<String> pickupTimes;
-  final List<String> appointmentTimes;
+  final List<String> consultationTimes;
 
   const ServiceCenterModel({
     required this.name,
@@ -24,9 +24,9 @@ class ServiceCenterModel {
     required this.displayOrder,
     this.operatingHours,
     this.condomServiceEnabled = true,
-    this.appointmentServiceEnabled = false,
+    this.consultationServiceEnabled = false,
     this.pickupTimes = const ['10:00', '14:00'],
-    this.appointmentTimes = const [],
+    this.consultationTimes = const [],
   });
 
   factory ServiceCenterModel.fromMap(Map<String, dynamic> map) {
@@ -43,9 +43,9 @@ class ServiceCenterModel {
       displayOrder: map['display_order'] as int? ?? 0,
       operatingHours: map['operating_hours'] as String?,
       condomServiceEnabled: map['condom_service_enabled'] as bool? ?? true,
-      appointmentServiceEnabled: map['appointment_service_enabled'] as bool? ?? false,
+      consultationServiceEnabled: map['consultation_service_enabled'] as bool? ?? false,
       pickupTimes: List<String>.from(map['pickup_times'] ?? ['10:00', '14:00']),
-      appointmentTimes: List<String>.from(map['appointment_times'] ?? []),
+      consultationTimes: List<String>.from(map['consultation_times'] ?? []),
     );
   }
 }

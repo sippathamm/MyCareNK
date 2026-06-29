@@ -9,6 +9,7 @@
 --                    (service_role only; no GRANT to authenticated)
 --   SC management  — add_service_center, delete_service_center,
 --                    init_service_center_inventory,
+--                    rename_service_center,
 --                    toggle_service_center_active,
 --                    upsert_service_center
 -- ============================================================
@@ -48,18 +49,61 @@ END;
 $$;
 
 
+-- ── Notification settings ───────────────────────────────────
+CREATE OR REPLACE FUNCTION public.update_notification_settings(
+  p_settings jsonb
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NOT is_superadmin() THEN
+    RAISE EXCEPTION 'permission denied';
+  END IF;
+  UPDATE notification_settings ns
+  SET
+    notify_staff      = (s->>'notify_staff')::boolean,
+    notify_admin      = (s->>'notify_admin')::boolean,
+    notify_superadmin = (s->>'notify_superadmin')::boolean,
+    updated_at        = now()
+  FROM jsonb_array_elements(p_settings) s
+  WHERE ns.source_type = s->>'source_type'
+    AND ns.event_type  = s->>'event_type';
+END;
+$$;
+
+
 -- ── Service center management ───────────────────────────────
 CREATE OR REPLACE FUNCTION public.add_service_center(p_name text)
 RETURNS void
 LANGUAGE plpgsql
-SECURITY INVOKER
+SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_ns        RECORD;
+  v_actor_name text;
 BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   INSERT INTO service_centers (name, display_order)
     VALUES (p_name, (SELECT COALESCE(MAX(display_order), 0) + 1 FROM service_centers))
     ON CONFLICT (name) DO NOTHING;
+  IF NOT FOUND THEN RETURN; END IF;
+  SELECT TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')) INTO v_actor_name
+    FROM staff_profiles WHERE staff_user_id = auth.uid();
+  SELECT notify_staff, notify_admin, notify_superadmin INTO v_ns
+    FROM notification_settings
+    WHERE source_type = 'service_center_management' AND event_type = 'add';
+  INSERT INTO staff_notifications (source_type, source_id, event_type, service_centers, notify_staff, notify_admin, notify_superadmin, metadata)
+    VALUES (
+      'service_center_management', NULL, 'add', ARRAY[p_name],
+      COALESCE(v_ns.notify_staff, false),
+      COALESCE(v_ns.notify_admin, true),
+      COALESCE(v_ns.notify_superadmin, true),
+      jsonb_build_object('actor_name', COALESCE(v_actor_name, ''), 'action_type', 'add', 'service_center_name', p_name)
+    );
 END;
 $$;
 
@@ -71,14 +115,31 @@ SET search_path TO 'public'
 AS $$
 DECLARE
   v_staff_count int;
+  v_ns          RECORD;
+  v_actor_name  text;
 BEGIN
   IF NOT is_superadmin() THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   SELECT COUNT(*) INTO v_staff_count FROM staff_profiles WHERE service_centers @> ARRAY[p_name];
   IF v_staff_count > 0 THEN
     RAISE EXCEPTION 'ไม่สามารถลบสถานบริการที่ยังมีเจ้าหน้าที่อยู่ได้ กรุณาย้ายเจ้าหน้าที่ออกก่อน';
   END IF;
+  SELECT TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')) INTO v_actor_name
+    FROM staff_profiles WHERE staff_user_id = auth.uid();
+  SELECT notify_staff, notify_admin, notify_superadmin INTO v_ns
+    FROM notification_settings
+    WHERE source_type = 'service_center_management' AND event_type = 'remove';
   DELETE FROM service_center_inventory WHERE service_center = p_name;
   DELETE FROM service_centers WHERE name = p_name;
+  IF FOUND THEN
+    INSERT INTO staff_notifications (source_type, source_id, event_type, service_centers, notify_staff, notify_admin, notify_superadmin, metadata)
+      VALUES (
+        'service_center_management', NULL, 'remove', ARRAY[p_name],
+        COALESCE(v_ns.notify_staff, false),
+        COALESCE(v_ns.notify_admin, true),
+        COALESCE(v_ns.notify_superadmin, true),
+        jsonb_build_object('actor_name', COALESCE(v_actor_name, ''), 'action_type', 'remove', 'service_center_name', p_name)
+      );
+  END IF;
 END;
 $$;
 
@@ -106,9 +167,9 @@ CREATE OR REPLACE FUNCTION public.upsert_service_center(
   p_operating_hours             text             DEFAULT NULL,
   p_address                     text             DEFAULT NULL,
   p_condom_service_enabled      boolean          DEFAULT NULL,
-  p_appointment_service_enabled boolean          DEFAULT NULL,
+  p_consultation_service_enabled boolean         DEFAULT NULL,
   p_pickup_times                text[]           DEFAULT NULL,
-  p_appointment_times           text[]           DEFAULT NULL
+  p_consultation_times          text[]           DEFAULT NULL
 ) RETURNS void
 LANGUAGE plpgsql
 SECURITY INVOKER
@@ -117,22 +178,66 @@ AS $$
 BEGIN
   IF NOT (is_admin() OR is_superadmin()) THEN RAISE EXCEPTION 'Unauthorized'; END IF;
   UPDATE public.service_centers SET
-    image_url                   = COALESCE(p_image_url,                   image_url),
-    description                 = COALESCE(p_description,                 description),
-    contacts                    = COALESCE(p_contacts,                    contacts),
-    latitude                    = p_latitude,
-    longitude                   = p_longitude,
-    display_order               = COALESCE(p_display_order,               display_order),
-    operating_hours             = p_operating_hours,
-    address                     = p_address,
-    condom_service_enabled      = COALESCE(p_condom_service_enabled,      condom_service_enabled),
-    appointment_service_enabled = COALESCE(p_appointment_service_enabled, appointment_service_enabled),
-    pickup_times                = COALESCE(p_pickup_times,                pickup_times),
-    appointment_times           = COALESCE(p_appointment_times,           appointment_times),
-    updated_at                  = now()
+    image_url                    = COALESCE(p_image_url,                    image_url),
+    description                  = COALESCE(p_description,                  description),
+    contacts                     = COALESCE(p_contacts,                     contacts),
+    latitude                     = p_latitude,
+    longitude                    = p_longitude,
+    display_order                = COALESCE(p_display_order,                display_order),
+    operating_hours              = p_operating_hours,
+    address                      = p_address,
+    condom_service_enabled       = COALESCE(p_condom_service_enabled,       condom_service_enabled),
+    consultation_service_enabled = COALESCE(p_consultation_service_enabled, consultation_service_enabled),
+    pickup_times                 = COALESCE(p_pickup_times,                 pickup_times),
+    consultation_times           = COALESCE(p_consultation_times,           consultation_times),
+    updated_at                   = now()
   WHERE name = p_name;
   IF NOT FOUND THEN RAISE EXCEPTION 'สถานบริการไม่พบ: %', p_name; END IF;
 END;
 $$;
+
+
+-- ── rename_service_center ──────────────────────────────────────
+-- Renames a service center PK and cascades to all referencing columns
+-- in a single transaction. service_center_inventory uses ON UPDATE CASCADE
+-- so it is handled automatically when the PK is renamed.
+CREATE OR REPLACE FUNCTION public.rename_service_center(p_old text, p_new text)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  IF NOT is_superadmin() THEN
+    RAISE EXCEPTION 'permission denied';
+  END IF;
+
+  IF p_old = p_new THEN
+    RETURN;
+  END IF;
+
+  IF EXISTS (SELECT 1 FROM service_centers WHERE name = p_new) THEN
+    RAISE EXCEPTION 'ชื่อนี้มีอยู่แล้ว';
+  END IF;
+
+  -- Update staff_profiles array (no FK — must sync manually)
+  UPDATE staff_profiles
+  SET service_centers = array_replace(service_centers, p_old, p_new)
+  WHERE p_old = ANY(service_centers);
+
+  -- Update operational tables (no FK)
+  UPDATE condom_requests SET selected_service_center = p_new WHERE selected_service_center = p_old;
+  UPDATE consultations SET selected_service_center = p_new WHERE selected_service_center = p_old;
+  UPDATE staff_notifications
+  SET service_centers = array_replace(service_centers, p_old, p_new)
+  WHERE p_old = ANY(service_centers);
+  UPDATE inventory_logs SET service_center = p_new WHERE service_center = p_old;
+
+  -- Rename PK — ON UPDATE CASCADE handles service_center_inventory automatically
+  UPDATE service_centers SET name = p_new WHERE name = p_old;
+END;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.rename_service_center(text, text) TO authenticated;
 
 

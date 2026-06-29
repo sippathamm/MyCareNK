@@ -14,29 +14,36 @@ import { useNavigate } from 'react-router-dom';
 import {
   useNotification,
   STATUS_CONFIG,
-  APPOINTMENT_STATUS_CONFIG,
+  CONSULTATION_STATUS_CONFIG,
   STOCK_OPERATION_CONFIG,
   STAFF_MANAGEMENT_CONFIG,
-  isAppointmentNotification,
+  SERVICE_CENTER_MANAGEMENT_CONFIG,
+  isConsultationNotification,
   isStockNotification,
   isStaffManagementNotification,
+  isServiceCenterManagementNotification,
   renderStockMessageJSX,
   renderStaffManagementMessageJSX,
+  renderServiceCenterManagementMessageJSX,
+  getNotifTitle,
   type NotificationItem,
   type RequestStatus,
-  type AppointmentEventType,
+  type ConsultationEventType,
 } from '../../contexts/NotificationContext';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 
 function getNotifConfig(item: NotificationItem) {
-  if (isAppointmentNotification(item)) {
-    return APPOINTMENT_STATUS_CONFIG[item.event_type as AppointmentEventType] ?? APPOINTMENT_STATUS_CONFIG.pending;
+  if (isConsultationNotification(item)) {
+    return CONSULTATION_STATUS_CONFIG[item.event_type as ConsultationEventType] ?? CONSULTATION_STATUS_CONFIG.pending;
   }
   if (isStockNotification(item)) {
     return STOCK_OPERATION_CONFIG[item.event_type] ?? STOCK_OPERATION_CONFIG.restock;
   }
   if (isStaffManagementNotification(item)) {
     return STAFF_MANAGEMENT_CONFIG;
+  }
+  if (isServiceCenterManagementNotification(item)) {
+    return SERVICE_CENTER_MANAGEMENT_CONFIG;
   }
   return STATUS_CONFIG[item.event_type as RequestStatus];
 }
@@ -73,12 +80,14 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
   const handleItemClick = (item: NotificationItem) => {
     markAsRead(item.id);
     onClose();
-    if (isAppointmentNotification(item)) {
-      navigate('/appointments', { state: { openAppointmentId: item.source_id } });
+    if (isConsultationNotification(item)) {
+      navigate('/consultations', { state: { openConsultationId: item.source_id } });
     } else if (isStockNotification(item)) {
       navigate('/inventory');
     } else if (isStaffManagementNotification(item)) {
       navigate('/staff');
+    } else if (isServiceCenterManagementNotification(item)) {
+      navigate('/service-centers');
     } else {
       navigate('/requests', { state: { openRequestId: item.source_id } });
     }
@@ -128,7 +137,8 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
               const cfg = getNotifConfig(item);
               const isStock = isStockNotification(item);
               const isStaffMgmt = isStaffManagementNotification(item);
-              const isSystem = isStock || isStaffMgmt;
+              const isSCMgmt = isServiceCenterManagementNotification(item);
+              const isSystem = isStock || isStaffMgmt || isSCMgmt;
               const jsxMessage = isStock
                 ? renderStockMessageJSX(
                     item.metadata as { actor_name: string; service_center_name: string; action_type: string },
@@ -136,7 +146,9 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                   )
                 : isStaffMgmt
                   ? renderStaffManagementMessageJSX(item.metadata as { actor_name: string; target_name: string; action_type: string })
-                  : null;
+                  : isSCMgmt
+                    ? renderServiceCenterManagementMessageJSX(item.metadata as { actor_name: string; action_type: string; service_center_name: string })
+                    : null;
               return (
                 <Box key={item.id}>
                   <ListItemButton
@@ -161,7 +173,7 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                           sx={{ color: item.is_read ? 'text.primary' : '#FF9F6B' }}
                           noWrap
                         >
-                          {isSystem ? 'ระบบ' : cfg.label}
+                          {getNotifTitle(item)}
                         </Typography>
                         {!item.is_read && (
                           <Box sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: '#F44336', flexShrink: 0 }} />
@@ -177,8 +189,8 @@ export default function NotificationPanel({ anchorEl, onClose }: NotificationPan
                         </Typography>
                       )}
                       {!isSystem && (
-                        <Typography variant="caption" color="text.primary" fontWeight="bold" sx={{ display: 'block' }} noWrap>
-                          {(item.metadata as { reference_number?: string })?.reference_number}
+                        <Typography variant="caption" color="text.primary" sx={{ display: 'block' }} noWrap>
+                          {cfg?.label}
                         </Typography>
                       )}
                       <Typography variant="caption" color="text.disabled">

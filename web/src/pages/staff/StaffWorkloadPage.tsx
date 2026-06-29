@@ -11,6 +11,8 @@ import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
 import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getWorkloadChipSx } from '../../utils/statusColors';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 
@@ -49,6 +51,7 @@ export default function StaffWorkloadPage() {
   const { role, loading: roleLoading } = useRoleAccess();
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
   const { selectedServiceCenter } = useServiceCenterFilter();
+  const { mode } = useColorMode();
 
   // Main filter
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
@@ -83,7 +86,7 @@ export default function StaffWorkloadPage() {
     });
   }, [data, compareData, compareEnabled]);
 
-  // Columns (inside component to capture compareEnabled + setDetailRow)
+  // Columns (inside component to capture compareEnabled, mode + setDetailRow)
   const columns = useMemo<GridColDef<EnrichedRow>[]>(() => [
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 120 },
     { field: 'last_name',  headerName: 'นามสกุล', flex: 1, minWidth: 120 },
@@ -93,7 +96,7 @@ export default function StaffWorkloadPage() {
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#EBF7EC' : '#F5F5F5', color: params.value > 0 ? '#2E7D32' : '#9E9E9E', fontWeight: 600 }} />
+          <Chip label={params.value} size="small" sx={getWorkloadChipSx('completed', params.value, mode)} />
           {compareEnabled && <DeltaChip delta={params.row.delta_completed} positiveIsGood />}
         </Box>
       ),
@@ -104,7 +107,7 @@ export default function StaffWorkloadPage() {
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF0F0' : '#F5F5F5', color: params.value > 0 ? '#C62828' : '#9E9E9E', fontWeight: 600 }} />
+          <Chip label={params.value} size="small" sx={getWorkloadChipSx('cancelled', params.value, mode)} />
           {compareEnabled && <DeltaChip delta={params.row.delta_cancelled} positiveIsGood={false} />}
         </Box>
       ),
@@ -115,7 +118,7 @@ export default function StaffWorkloadPage() {
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF8E1' : '#F5F5F5', color: params.value > 0 ? '#E65100' : '#9E9E9E', fontWeight: 600 }} />
+          <Chip label={params.value} size="small" sx={getWorkloadChipSx('overdue', params.value, mode)} />
           {compareEnabled && <DeltaChip delta={params.row.delta_overdue} positiveIsGood={false} />}
         </Box>
       ),
@@ -157,7 +160,7 @@ export default function StaffWorkloadPage() {
         </Tooltip>
       ),
     },
-  ], [compareEnabled]);
+  ], [compareEnabled, mode]);
 
   // Comparison toggle handler — auto-fill comparison dates
   const handleCompareToggle = (enabled: boolean) => {
@@ -234,7 +237,7 @@ export default function StaffWorkloadPage() {
             disableRowSelectionOnClick
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />

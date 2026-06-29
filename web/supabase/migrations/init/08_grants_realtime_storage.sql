@@ -66,17 +66,20 @@ GRANT EXECUTE ON FUNCTION public.delete_service_center(text)                    
 GRANT EXECUTE ON FUNCTION public.init_service_center_inventory(text)                            TO authenticated;
 GRANT EXECUTE ON FUNCTION public.upsert_service_center(text, text, text, jsonb, double precision, double precision, smallint, text, text, boolean, boolean, text[], text[]) TO authenticated;
 
--- Request / appointment creation
+-- Request / consultation creation
 GRANT EXECUTE ON FUNCTION public.create_condom_request(uuid, jsonb, integer, text, text, text, text) TO authenticated;
-GRANT EXECUTE ON FUNCTION public.create_doctor_appointment(uuid, text, text, date, text, text)        TO authenticated;
+GRANT EXECUTE ON FUNCTION public.create_consultation(uuid, text, text, date, text, text)              TO authenticated;
 
 -- Log query RPCs
-GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text)     TO authenticated;
-GRANT EXECUTE ON FUNCTION public.get_appointment_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_request_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text)      TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_consultation_status_log(uuid, text, text, text, timestamptz, timestamptz, integer, integer, text) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_inventory_log(text, text, timestamptz, timestamptz, integer, integer)                            TO authenticated;
 GRANT EXECUTE ON FUNCTION public.get_staff_change_log(uuid, text, text, timestamptz, timestamptz, integer, integer, text)             TO authenticated;
 
 GRANT EXECUTE ON FUNCTION public.get_my_service_centers()                                         TO authenticated;
+
+-- Notification settings RPC (superadmin only — enforced inside the function)
+GRANT EXECUTE ON FUNCTION public.update_notification_settings(jsonb) TO authenticated;
 
 -- write_staff_change_log: intentionally NOT granted to anon/authenticated
 -- (service_role access only — used by Edge Functions)
@@ -87,7 +90,7 @@ GRANT EXECUTE ON FUNCTION public.get_my_service_centers()                       
 -- ============================================================
 
 ALTER PUBLICATION supabase_realtime ADD TABLE public.condom_requests;
-ALTER PUBLICATION supabase_realtime ADD TABLE public.doctor_appointments;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.consultations;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.staff_notifications;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.staff_notification_reads;
 ALTER PUBLICATION supabase_realtime ADD TABLE public.staff_notification_hidden;
