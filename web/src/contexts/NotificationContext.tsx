@@ -193,7 +193,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           .eq('staff_user_id', userId),
         supabase
           .from('staff_notifications')
-          .select('id, source_type, source_id, event_type, service_centers, metadata, created_at')
+          .select('*')
           .order('created_at', { ascending: false })
           .limit(MAX_NOTIFICATIONS),
       ]);
