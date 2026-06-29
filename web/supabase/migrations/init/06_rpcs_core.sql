@@ -76,7 +76,7 @@ DECLARE
   v_attempts   int := 0;
 BEGIN
   LOOP
-    v_ref_number := 'NK-APT-' || LPAD((10000 + floor(random() * 90000)::int)::text, 5, '0');
+    v_ref_number := 'NK-CSL-' || LPAD((10000 + floor(random() * 90000)::int)::text, 5, '0');
     BEGIN
       INSERT INTO consultations (
         user_id, reference_number, reason,
