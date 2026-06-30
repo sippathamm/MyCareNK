@@ -1,3 +1,4 @@
+import 'package:country_flags/country_flags.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
@@ -543,10 +544,12 @@ Widget _section10(GlobalKey key) {
 }
 
 Widget _languageBadges() {
-  final langs = [
-    ('ภาษาไทย', AppColors.primaryBackground, AppColors.primaryDark),
-    ('ພາສາລາວ', AppColors.statusPreparingLight, AppColors.lubricantDark),
-    ('မြန်မာဘာသာ', AppColors.statusReadyLight, AppColors.statusReady),
+  // Mirrors the language selector in settings_page.dart: (ISO country code, label).
+  const langs = [
+    ('TH', 'ไทย'),
+    ('LA', 'ລາວ'),
+    ('MM', 'မြန်မာ'),
+    ('GB', 'English'),
   ];
   return Padding(
     padding: const EdgeInsets.symmetric(vertical: 8),
@@ -554,20 +557,33 @@ Widget _languageBadges() {
       spacing: 8,
       runSpacing: 8,
       children: langs.map((lang) {
-        final (label, bg, textColor) = lang;
+        final (countryCode, label) = lang;
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(6, 6, 14, 6),
           decoration: BoxDecoration(
-            color: bg,
+            color: Colors.grey[100],
             borderRadius: BorderRadius.circular(20),
           ),
-          child: Text(
-            label,
-            style: GoogleFonts.googleSans(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: textColor,
-            ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ClipOval(
+                child: CountryFlag.fromCountryCode(
+                  countryCode,
+                  height: 22,
+                  width: 22,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: GoogleFonts.googleSans(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
           ),
         );
       }).toList(),
