@@ -17,6 +17,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { alpha } from '@mui/material/styles';
 import { useInventoryForecast, type InventoryForecastRow } from '../../hooks/useInventoryForecast';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useColorMode } from '../../contexts/ThemeContext';
 import RestockModal from './RestockModal';
 import AdjustmentModal from './AdjustmentModal';
@@ -215,6 +216,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function InventoryPage() {
+  const isMobile = useIsMobile();
   const { forecast, trend, loading, error, refetch } = useInventoryForecast();
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { mode } = useColorMode();
@@ -614,6 +616,7 @@ export default function InventoryPage() {
                   getRowId={(row) => row.service_center}
                   rowHeight={80}
                   loading={loading}
+                  columnVisibilityModel={isMobile ? { condom_qty: false, lubricant_qty: false } : {}}
                   localeText={thGridLocale}
                   initialState={{
                     pagination: {

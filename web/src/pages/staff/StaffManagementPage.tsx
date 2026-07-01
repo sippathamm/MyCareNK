@@ -17,6 +17,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { alpha } from '@mui/material/styles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useAuth } from '../../hooks/useAuth';
 import { useColorMode } from '../../contexts/ThemeContext';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
@@ -711,6 +712,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StaffManagementPage() {
+  const isMobile = useIsMobile();
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { session } = useAuth();
   const { mode } = useColorMode();
@@ -829,6 +831,7 @@ export default function StaffManagementPage() {
             getRowId={(row) => row.staff_user_id}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { staff_user_id: false, last_name: false, service_center: false } : {}}
             localeText={thGridLocale}
             initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
             pageSizeOptions={[10]}
