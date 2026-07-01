@@ -4,6 +4,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { alpha } from '@mui/material/styles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useColorMode } from '../../contexts/ThemeContext';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { createThGridLocale } from '../../constants/datagrid';
@@ -50,6 +51,7 @@ interface StaffDirectoryMember {
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffDirectoryPage() {
+  const isMobile = useIsMobile();
   const { role, serviceCenters, loading: roleLoading } = useRoleAccess();
   const { mode } = useColorMode();
   const { selectedServiceCenter } = useServiceCenterFilter();
@@ -133,6 +135,7 @@ export default function StaffDirectoryPage() {
             rows={staff}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { last_name: false, service_centers: false } : {}}
             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
             pageSizeOptions={[10]}
             localeText={thGridLocale}

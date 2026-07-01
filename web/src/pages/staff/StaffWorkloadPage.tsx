@@ -8,6 +8,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
 import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
@@ -48,6 +49,7 @@ const thGridLocale = createThGridLocale('ไม่มีข้อมูลใน
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffWorkloadPage() {
+  const isMobile = useIsMobile();
   const { role, loading: roleLoading } = useRoleAccess();
   const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
   const { selectedServiceCenter } = useServiceCenterFilter();
@@ -227,6 +229,7 @@ export default function StaffWorkloadPage() {
             rows={enrichedRows}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { last_name: false, cancelled_count: false, overdue_count: false, avg_lead_time_minutes: false } : {}}
             localeText={thGridLocale}
             getRowHeight={() => compareEnabled ? 64 : 52}
             initialState={{
