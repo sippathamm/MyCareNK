@@ -9,6 +9,7 @@ import {
 } from '../../constants/auditLogActions';
 import type { AuditAction } from '../../constants/auditLogActions';
 import { useColorMode } from '../../contexts/ThemeContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -109,6 +110,7 @@ interface Props {
 
 export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const actionCfg = row
     ? (mode === 'dark'
         ? (AUDIT_ACTION_DARK[row.action] ?? AUDIT_ACTION_DARK_FALLBACK)
@@ -164,7 +166,7 @@ export default function StaffAuditLogDetailDialog({ row, onClose }: Props) {
       : undefined;
 
   return (
-    <Dialog open={row !== null} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={row !== null} onClose={onClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>รายละเอียด</Typography>
       </DialogTitle>

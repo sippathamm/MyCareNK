@@ -741,7 +741,7 @@ export default function ArticleEditorPage() {
       </Box>
 
       {/* 2-column layout */}
-      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'flex-start' }}>
 
         {/* ── Left column ───────────────────────────────────────────── */}
         <Box sx={{ flex: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -930,7 +930,7 @@ export default function ArticleEditorPage() {
         </Box>
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
-        <Box sx={{ width: 300, flexShrink: 0 }}>
+        <Box sx={{ width: { xs: '100%', md: 300 }, flexShrink: 0 }}>
           <Stack spacing={2}>
 
             {/* Actions card */}
