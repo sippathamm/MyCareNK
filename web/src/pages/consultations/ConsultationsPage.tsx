@@ -9,6 +9,8 @@ import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { useConsultations } from '../../hooks/useConsultations';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import MobileListCard from '../../components/shared/MobileListCard';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { supabase } from '../../lib/supabase';
@@ -39,6 +41,7 @@ export default function ConsultationsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { consultations, setConsultations, loading } = useConsultations();
+  const isMobile = useIsMobile();
   const { role, loading: roleLoading } = useRoleAccess();
   const { selectedServiceCenter } = useServiceCenterFilter();
   const { mode } = useColorMode();
@@ -221,6 +224,40 @@ export default function ConsultationsPage() {
             <InboxIcon sx={{ fontSize: 48 }} />
             <Typography variant="body1" fontWeight={500}>ไม่มีรายการนัดรับคำปรึกษาในสถานบริการของคุณ</Typography>
           </Box>
+        ) : isMobile ? (
+          filteredConsultations.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center', color: 'text.disabled' }}>
+              <InboxIcon sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="body2">ไม่มีรายการนัดรับคำปรึกษา</Typography>
+            </Box>
+          ) : (
+            <Stack spacing={1.5}>
+              {filteredConsultations.map((a) => (
+                <MobileListCard
+                  key={a.id}
+                  title={REASON_LABELS[a.reason] ?? a.reason}
+                  statusChip={
+                    <Chip
+                      label={CONSULTATION_STATUS_LABELS[a.consultation_status] ?? a.consultation_status}
+                      size="small"
+                      sx={getConsultationStatusSx(a.consultation_status, mode)}
+                    />
+                  }
+                  onClick={() => handleOpenDialog(a)}
+                  meta={
+                    <>
+                      <Typography variant="body2" color="text.secondary">
+                        {a.reference_number}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {formatDate(a.selected_date)} · {a.selected_time?.slice(0, 5) ?? '-'} น.
+                      </Typography>
+                    </>
+                  }
+                />
+              ))}
+            </Stack>
+          )
         ) : (
           <Box sx={{ height: 500, width: '100%' }}>
             <DataGrid
