@@ -7,6 +7,7 @@ import {
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';
 
 const CONDOM_SIZES = ['49', '52', '54', '56'] as const;
@@ -32,6 +33,7 @@ const emptyDeltas = (): SizeDeltaMap => ({ '49': '', '52': '', '54': '', '56': '
 
 export default function AdjustmentModal({ open, target, onClose, onSuccess }: AdjustmentModalProps) {
   const { session } = useAuth();
+  const isMobile = useIsMobile();
   const [condomDeltas, setCondomDeltas] = useState<SizeDeltaMap>(emptyDeltas);
   const [lubricantDelta, setLubricantDelta] = useState('');
   const [reason, setReason] = useState('');
@@ -124,7 +126,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
   if (!isNaN(lubricantParsed) && lubricantParsed !== 0 && lubricantRaw < 0) clampedSizes.push('เจลหล่อลื่น');
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
           ปรับสต็อก

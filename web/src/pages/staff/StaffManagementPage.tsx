@@ -302,6 +302,7 @@ interface AddStaffDialogProps {
 
 function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -356,7 +357,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
       <DialogTitle fontWeight="bold">เพิ่มเจ้าหน้าที่</DialogTitle>
       <DialogContent dividers>
         {step === 1 ? (
@@ -482,6 +483,7 @@ interface EditStaffDialogProps {
 
 function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -572,7 +574,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
         <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
         <DialogContent dividers>
           {isRestricted && (

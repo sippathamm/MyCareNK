@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';
 
 const CONDOM_SIZES = ['49', '52', '54', '56'] as const;
@@ -23,6 +24,7 @@ const emptySizes = (): SizeMap => ({ '49': '', '52': '', '54': '', '56': '' });
 
 export default function RestockModal({ open, target, onClose, onSuccess }: RestockModalProps) {
   const { session } = useAuth();
+  const isMobile = useIsMobile();
   const [condomSizes, setCondomSizes] = useState<SizeMap>(emptySizes);
   const [lubricantAdd, setLubricantAdd] = useState('');
   const [reason, setReason] = useState('');
@@ -88,7 +90,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
   if (!target) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
           เติมสต็อก
