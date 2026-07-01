@@ -39,6 +39,7 @@ declare const __APP_VERSION__: string;
 const getWebBranch = (v: string): string =>
   v.includes('-preview') ? 'preview' : v.includes('-dev') ? 'dev' : 'main';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile, useIsCompact } from '../../hooks/useIsMobile';
 import { useColorMode } from '../../contexts/ThemeContext';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
 import { useNotification, STATUS_CONFIG, CONSULTATION_STATUS_CONFIG, STOCK_OPERATION_CONFIG, STAFF_MANAGEMENT_CONFIG, type RequestStatus, type ConsultationEventType } from '../../contexts/NotificationContext';
@@ -62,6 +63,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
+  const isMobile = useIsMobile();
+  const isCompact = useIsCompact();
   const { mode, toggleMode } = useColorMode();
   const { role, profile, loading, serviceCenters, isSuperadmin } = useRoleAccess();
   const { unreadCount, toastOpen, toastMessage, toastEventType, toastIsConsultation, toastConsultationEventType, toastIsStock, toastIsStaffManagement, closeToast } = useNotification();
@@ -88,6 +91,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const bellRef = useRef<HTMLButtonElement>(null);
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [whatsNewOpen, setWhatsNewOpen] = useState(false);
   const [whatsNewData, setWhatsNewData] = useState<WhatsNewData | null>(null);
   const [notifPermDialogOpen, setNotifPermDialogOpen] = useState(false);
@@ -98,6 +102,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
   const [downloadUrlLoading, setDownloadUrlLoading] = useState(false);
 
   const drawerWidth = sidebarOpen ? DRAWER_OPEN_WIDTH : DRAWER_CLOSED_WIDTH;
+  // Temporary drawer on mobile is always fully expanded; desktop respects collapse state.
+  const paperWidth = isMobile ? DRAWER_OPEN_WIDTH : drawerWidth;
+  const showLabels = isMobile || sidebarOpen;
 
   const handleBellClick = () => { setAnchorEl(bellRef.current); };
   const handlePanelClose = () => { setAnchorEl(null); };
@@ -178,8 +185,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
       <AppBar
         position="fixed"
         sx={{
-          width: `calc(100% - ${drawerWidth}px)`,
-          ml: `${drawerWidth}px`,
+          width: isMobile ? '100%' : `calc(100% - ${drawerWidth}px)`,
+          ml: isMobile ? 0 : `${drawerWidth}px`,
           bgcolor: 'background.paper',
           color: 'text.primary',
           boxShadow: 1,
@@ -188,12 +195,12 @@ export default function MainLayout({ children }: MainLayoutProps) {
       >
         <Toolbar sx={{ justifyContent: 'space-between', gap: 2 }}>
           <IconButton
-            onClick={() => setSidebarOpen(prev => !prev)}
+            onClick={() => isMobile ? setMobileOpen(true) : setSidebarOpen(prev => !prev)}
             size="large"
             color="inherit"
-            aria-label={sidebarOpen ? 'ย่อ Sidebar' : 'ขยาย Sidebar'}
+            aria-label={isMobile ? 'เปิดเมนู' : sidebarOpen ? 'ย่อ Sidebar' : 'ขยาย Sidebar'}
           >
-            {sidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
+            {isMobile ? <MenuIcon /> : sidebarOpen ? <MenuOpenIcon /> : <MenuIcon />}
           </IconButton>
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -225,6 +232,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
             {profile && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                {!isCompact && (
                 <Box sx={{ textAlign: 'right' }}>
                   <Typography variant="body2" fontWeight="bold">
                     {profile.first_name} {profile.last_name}
@@ -260,6 +268,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     )}
                   </Box>
                 </Box>
+                )}
                 <Tooltip title="โปรไฟล์">
                   <Avatar
                     sx={{ bgcolor: 'primary.main', cursor: 'pointer' }}
@@ -277,10 +286,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
       {/* Sidebar */}
       <Drawer
         sx={{
-          width: drawerWidth,
+          width: isMobile ? 0 : drawerWidth,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: drawerWidth,
+            width: paperWidth,
             boxSizing: 'border-box',
             backgroundColor: '#1E293B',
             color: 'white',
@@ -288,13 +297,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
             transition: 'width 0.3s ease',
           },
         }}
-        variant="permanent"
+        variant={isMobile ? 'temporary' : 'permanent'}
+        open={isMobile ? mobileOpen : true}
+        onClose={() => setMobileOpen(false)}
+        ModalProps={{ keepMounted: true }}
         anchor="left"
       >
         {/* Logo */}
         <Box
           sx={{
-            p: sidebarOpen ? 3 : 1,
+            p: showLabels ? 3 : 1,
             textAlign: 'center',
             height: 64,
             display: 'flex',
@@ -303,7 +315,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
             transition: 'padding 0.3s ease',
           }}
         >
-          {sidebarOpen ? (
+          {showLabels ? (
             <Typography variant="h5" fontWeight="900" color="white" letterSpacing={1} noWrap>
               <span style={{ color: '#FF9F6B' }}>MyCareNK</span> Staff
             </Typography>
@@ -315,29 +327,49 @@ export default function MainLayout({ children }: MainLayoutProps) {
         </Box>
         <Divider sx={{ borderColor: 'rgba(255,255,255,0.12)' }} />
 
+        {/* Service center selector (mobile only — desktop shows it in the AppBar) */}
+        {isMobile && chipCenters.length > 0 && (
+          <Box sx={{ px: 2, pt: 2 }}>
+            <Typography variant="caption" sx={{ color: '#94A3B8', display: 'block', mb: 0.5 }}>
+              สถานบริการ
+            </Typography>
+            <Chip
+              label={hasDropdown ? (selectedServiceCenter ?? 'ทั้งหมด') : chipCenters[0]}
+              onClick={hasDropdown ? (e) => setAnchorElSC(e.currentTarget) : undefined}
+              onDelete={hasDropdown ? (e) => setAnchorElSC(e.currentTarget) : undefined}
+              deleteIcon={hasDropdown ? <ArrowDropDownIcon sx={{ fontSize: '18px !important' }} /> : undefined}
+              sx={{
+                width: '100%', justifyContent: 'space-between', cursor: hasDropdown ? 'pointer' : 'default',
+                bgcolor: 'rgba(255,159,107,0.15)', color: '#FF9F6B',
+                '& .MuiChip-deleteIcon': { color: '#FF9F6B' },
+              }}
+            />
+          </Box>
+        )}
+
         {/* Nav Items */}
-        <List sx={{ px: sidebarOpen ? 2 : 1, pt: 2, gap: 1, display: 'flex', flexDirection: 'column' }}>
+        <List sx={{ px: showLabels ? 2 : 1, pt: 2, gap: 1, display: 'flex', flexDirection: 'column' }}>
           {navItems.filter(item => item.show).map((item) => {
             const isActive = location.pathname === item.path;
             return (
               <ListItem key={item.text} disablePadding sx={{ mb: 1 }}>
-                <Tooltip title={sidebarOpen ? '' : item.text} placement="right">
+                <Tooltip title={showLabels ? '' : item.text} placement="right">
                   <ListItemButton
-                    onClick={() => navigate(item.path)}
+                    onClick={() => { navigate(item.path); if (isMobile) setMobileOpen(false); }}
                     sx={{
                       borderRadius: 2,
                       backgroundColor: isActive ? 'rgba(255, 159, 107, 0.15)' : 'transparent',
                       color: isActive ? '#FF9F6B' : '#CBD5E1',
-                      justifyContent: sidebarOpen ? 'flex-start' : 'center',
-                      px: sidebarOpen ? 2 : 1,
+                      justifyContent: showLabels ? 'flex-start' : 'center',
+                      px: showLabels ? 2 : 1,
                       '&:hover': { backgroundColor: 'rgba(255, 159, 107, 0.25)', color: '#FF9F6B' },
                       transition: 'all 0.2s',
                     }}
                   >
-                    <ListItemIcon sx={{ color: 'inherit', minWidth: sidebarOpen ? 40 : 'unset' }}>
+                    <ListItemIcon sx={{ color: 'inherit', minWidth: showLabels ? 40 : 'unset' }}>
                       {item.icon}
                     </ListItemIcon>
-                    {sidebarOpen && (
+                    {showLabels && (
                       <ListItemText
                         primary={item.text}
                         slotProps={{ primary: { fontWeight: isActive ? 600 : 500, fontSize: '0.95rem' } }}
@@ -353,9 +385,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         <Box sx={{ flexGrow: 1 }} />
 
         {/* Download App + Logout */}
-        <Box sx={{ p: sidebarOpen ? 2 : 1, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Tooltip title={sidebarOpen ? '' : 'ดาวน์โหลดแอป'} placement="right">
-            {sidebarOpen ? (
+        <Box sx={{ p: showLabels ? 2 : 1, pb: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <Tooltip title={showLabels ? '' : 'ดาวน์โหลดแอป'} placement="right">
+            {showLabels ? (
               <Button
                 fullWidth
                 variant="outlined"
@@ -384,8 +416,8 @@ export default function MainLayout({ children }: MainLayoutProps) {
               </IconButton>
             )}
           </Tooltip>
-          <Tooltip title={sidebarOpen ? '' : 'ออกจากระบบ'} placement="right">
-            {sidebarOpen ? (
+          <Tooltip title={showLabels ? '' : 'ออกจากระบบ'} placement="right">
+            {showLabels ? (
               <Button
                 fullWidth
                 variant="outlined"
@@ -423,9 +455,9 @@ export default function MainLayout({ children }: MainLayoutProps) {
         sx={{
           flexGrow: 1,
           bgcolor: 'background.default',
-          p: 3,
+          p: { xs: 2, md: 3 },
           minHeight: '100vh',
-          width: `calc(100% - ${drawerWidth}px)`,
+          width: isMobile ? '100%' : `calc(100% - ${drawerWidth}px)`,
           transition: 'width 0.3s ease',
         }}
       >
