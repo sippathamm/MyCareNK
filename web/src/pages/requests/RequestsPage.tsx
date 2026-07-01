@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Chip, IconButton, TextField, MenuItem, Stack, Tooltip, Snackbar, Alert } from '@mui/material';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import MobileListCard from '../../components/shared/MobileListCard';
 import WarningIcon from '@mui/icons-material/Warning';
 import InboxIcon from '@mui/icons-material/Inbox';
 import { DataGrid } from '@mui/x-data-grid';
@@ -23,6 +25,7 @@ export default function RequestsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { requests, setRequests, loading } = useRequests();
+  const isMobile = useIsMobile();
   const { role, loading: roleLoading } = useRoleAccess();
   const { selectedServiceCenter } = useServiceCenterFilter();
   const { mode } = useColorMode();
@@ -235,6 +238,45 @@ export default function RequestsPage() {
             <InboxIcon sx={{ fontSize: 48 }} />
             <Typography variant="body1" fontWeight={500}>ไม่มีคำขอในสถานบริการของคุณ</Typography>
           </Box>
+        ) : isMobile ? (
+          filteredRequests.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center', color: 'text.disabled' }}>
+              <InboxIcon sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="body2">ไม่มีรายการคำขอ</Typography>
+            </Box>
+          ) : (
+            <Stack spacing={1.5}>
+              {filteredRequests.map((r) => {
+                const days = getOverdueDays(r.selected_date ?? '', r.request_status);
+                const totalCondoms = Object.values(r.condom_quantities as Record<string, number>).reduce((a, b) => a + b, 0);
+                return (
+                  <MobileListCard
+                    key={r.id}
+                    title={r.reference_number}
+                    statusChip={getStatusChip(r.request_status)}
+                    onClick={() => handleOpenDialog(r)}
+                    meta={
+                      <>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatDate(r.selected_date ?? '')} · {r.selected_time ?? '-'} น.
+                          </Typography>
+                          {days > 0 && (
+                            <Tooltip title={`เลยกำหนด ${days} วัน`}>
+                              <WarningIcon color="error" fontSize="small" />
+                            </Tooltip>
+                          )}
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          ถุงยางอนามัย {totalCondoms} ชิ้น / เจลหล่อลื่น {r.lubricant_quantity} ชิ้น
+                        </Typography>
+                      </>
+                    }
+                  />
+                );
+              })}
+            </Stack>
+          )
         ) : (
           <Box sx={{ height: 500, width: '100%' }}>
             <DataGrid
