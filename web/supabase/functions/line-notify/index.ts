@@ -9,7 +9,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     id: string;
     source_type: string;
     event_type: string;
-    service_center: string | null;
+    service_centers: string[] | null;
     metadata: { reference_number?: string; [key: string]: unknown };
     [key: string]: unknown;
   };
@@ -20,10 +20,11 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response('Bad request', { status: 400 });
   }
 
-  const { service_center, source_type } = notification;
+  const { source_type } = notification;
+  const service_centers = notification.service_centers ?? [];
   const reference_number = notification.metadata?.reference_number ?? '';
 
-  if (!service_center) {
+  if (service_centers.length === 0) {
     return new Response('OK', { status: 200 });
   }
 
@@ -42,9 +43,16 @@ Deno.serve(async (req: Request): Promise<Response> => {
     return new Response('Error', { status: 500 });
   }
 
-  // Filter in code to handle SC names with special characters safely
+  // Filter in code to handle SC names with special characters safely.
+  // A notification can target multiple SCs; match staff whose SCs overlap.
   const recipients = staffList.filter(
-    (s) => s.role === 'superadmin' || (s.service_centers ?? []).includes(service_center)
+    (s) =>
+      s.role === 'superadmin' ||
+      (s.service_centers ?? []).some((sc: string) => service_centers.includes(sc))
+  );
+
+  console.log(
+    `line-notify: source_type=${source_type} scs=${JSON.stringify(service_centers)} recipients=${recipients.length}`
   );
 
   if (recipients.length === 0) {
@@ -61,7 +69,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
     source_type === 'consultation' ? 'นัดรับคำปรึกษา' : 'ขอถุงยางอนามัย/เจลหล่อลื่น';
   const messageText = [
     'มีรายการใหม่เข้ามา!',
-    `📍 สถานบริการ: ${service_center}`,
+    `📍 สถานบริการ: ${service_centers.join(', ')}`,
     `📋 ประเภท: ${typeLabel}`,
     `🔖 รหัสอ้างอิง: ${reference_number}`,
   ].join('\n');
@@ -83,10 +91,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     )
   );
 
-  const failures = results.filter((r) => r.status === 'rejected');
-  if (failures.length > 0) {
-    console.error(`${failures.length} LINE push(es) failed`);
+  // A rejected promise is a network-level failure; a resolved fetch with a
+  // non-2xx status means LINE rejected the message (e.g. invalid user id).
+  let sent = 0;
+  for (const r of results) {
+    if (r.status === 'rejected') {
+      console.error('LINE push failed (network):', r.reason);
+    } else if (!r.value.ok) {
+      const detail = await r.value.text().catch(() => '');
+      console.error(`LINE push rejected: ${r.value.status} ${detail}`);
+    } else {
+      sent++;
+    }
   }
+  console.log(`line-notify: sent ${sent}/${recipients.length} push(es)`);
 
   return new Response('OK', { status: 200 });
 });
