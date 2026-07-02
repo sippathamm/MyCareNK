@@ -229,7 +229,7 @@ export default function StaffWorkloadPage() {
             rows={enrichedRows}
             columns={columns}
             loading={loading}
-            columnVisibilityModel={isMobile ? { last_name: false, cancelled_count: false, overdue_count: false, avg_lead_time_minutes: false } : {}}
+            columnVisibilityModel={isMobile ? { last_name: false, cancelled_count: false, overdue_count: false, avg_lead_time_minutes: false } : undefined}
             localeText={thGridLocale}
             getRowHeight={() => compareEnabled ? 64 : 52}
             initialState={{

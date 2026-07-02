@@ -237,7 +237,7 @@ function AuditLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
-              columnVisibilityModel={isMobile ? { full_name: false, created_at: false } : {}}
+              columnVisibilityModel={isMobile ? { full_name: false, created_at: false } : undefined}
               onRowClick={({ row }) => setDetailRow(row as StaffAuditLogRow)}
               disableRowSelectionOnClick
               hideFooterSelectedRowCount
@@ -342,7 +342,7 @@ function RequestStatusLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
-              columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : {}}
+              columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : undefined}
               disableRowSelectionOnClick
               sx={{
                 border: 'none',
@@ -461,7 +461,7 @@ function ConsultationStatusLogTab() {
             paginationModel={{ page, pageSize }}
             onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
-            columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : {}}
+            columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : undefined}
             disableRowSelectionOnClick
             sx={{
               border: 'none',
@@ -555,7 +555,7 @@ function InventoryLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
-              columnVisibilityModel={isMobile ? { service_center: false, full_name: false, created_at: false } : {}}
+              columnVisibilityModel={isMobile ? { service_center: false, lubricant_delta: false, full_name: false, created_at: false } : undefined}
               onRowClick={({ row }) => setDetailRow(row as InventoryLogRow)}
               disableRowSelectionOnClick
               hideFooterSelectedRowCount

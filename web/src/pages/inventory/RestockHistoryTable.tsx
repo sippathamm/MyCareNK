@@ -158,7 +158,7 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
           rows={stableRows}
           columns={columns}
           loading={loading}
-          columnVisibilityModel={isMobile ? { service_center: false, performer_name: false, note: false } : {}}
+          columnVisibilityModel={isMobile ? { service_center: false, performer_name: false, note: false } : undefined}
           localeText={thGridLocale}
           initialState={{
             pagination: { paginationModel: { pageSize: 10, page: 0 } },

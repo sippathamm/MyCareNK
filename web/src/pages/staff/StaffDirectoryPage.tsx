@@ -135,7 +135,7 @@ export default function StaffDirectoryPage() {
             rows={staff}
             columns={columns}
             loading={loading}
-            columnVisibilityModel={isMobile ? { last_name: false, service_centers: false } : {}}
+            columnVisibilityModel={isMobile ? { last_name: false, service_centers: false } : undefined}
             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
             pageSizeOptions={[10]}
             localeText={thGridLocale}
