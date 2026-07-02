@@ -213,7 +213,7 @@ export default function ServiceCentersPage() {
       </Box>
 
       <Paper elevation={1} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
           <TextField
             label="ค้นหาสถานบริการ"
             variant="outlined"
