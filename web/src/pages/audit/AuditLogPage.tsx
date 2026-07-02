@@ -555,7 +555,7 @@ function InventoryLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
-              columnVisibilityModel={isMobile ? { service_center: false, lubricant_delta: false, full_name: false, created_at: false } : undefined}
+              columnVisibilityModel={isMobile ? { service_center: false, full_name: false, created_at: false } : undefined}
               onRowClick={({ row }) => setDetailRow(row as InventoryLogRow)}
               disableRowSelectionOnClick
               hideFooterSelectedRowCount
