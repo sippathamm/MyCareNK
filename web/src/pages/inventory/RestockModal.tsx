@@ -104,15 +104,18 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
 
       <DialogContent sx={{ pt: 2.5 }}>
         {/* Current stock info */}
+        <Typography variant="subtitle2" color="text.secondary" mb={1}>
+          สต็อกปัจจุบัน
+        </Typography>
         <Box sx={{ bgcolor: 'action.hover', borderRadius: 1.5, p: 1.5, mb: 2.5 }}>
-          <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
-            สต็อกปัจจุบัน
+          <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" mb={1}>
+            ถุงยางอนามัย
           </Typography>
           <Grid container spacing={1.5}>
             {CONDOM_SIZES.map((size) => (
               <Grid key={size} size={6}>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  ถุงยางอนามัย {size}mm
+                  ขนาด {size}mm
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="body2" fontWeight={600}>
@@ -122,14 +125,15 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
                 </Box>
               </Grid>
             ))}
-            <Grid size={6}>
-              <Typography variant="caption" color="text.secondary" display="block">เจลหล่อลื่น</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
-                <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
-              </Box>
-            </Grid>
           </Grid>
+          <Divider sx={{ my: 1.5 }} />
+          <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" mb={1}>
+            เจลหล่อลื่น
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
+            <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
+          </Box>
         </Box>
 
         {error && (
