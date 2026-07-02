@@ -92,24 +92,25 @@ export default function InventoryLogDetailDrawer({ row, onClose }: Props) {
               <Typography variant="subtitle2" color="text.secondary">สถานบริการ</Typography>
               <Typography variant="body1">{row.service_center}</Typography>
             </Box>
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-              <Typography variant="subtitle2" color="text.secondary">ถุงยางอนามัย (ชิ้น)</Typography>
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.5 }}>
+            <Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="subtitle2" color="text.secondary">ถุงยางอนามัย (ชิ้น)</Typography>
                 <QtyChip value={row.condom_delta} />
-                {row.condom_quantities && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 0.25 }}>
-                    {(['49', '52', '54', '56'] as const).map((size) => {
-                      const v = row.condom_quantities?.[size] ?? 0;
-                      if (v === 0) return null;
-                      return (
-                        <Typography key={size} variant="caption" color="text.secondary">
-                          {size}mm: {v > 0 ? '+' : ''}{v.toLocaleString()}
-                        </Typography>
-                      );
-                    })}
-                  </Box>
-                )}
               </Box>
+              {row.condom_quantities && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, mt: 0.75 }}>
+                  {(['49', '52', '54', '56'] as const).map((size) => {
+                    const v = row.condom_quantities?.[size] ?? 0;
+                    if (v === 0) return null;
+                    return (
+                      <Box key={size} display="flex" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" color="text.secondary">ขนาด {size} มม.</Typography>
+                        <Typography variant="caption" color="text.secondary">{v > 0 ? '+' : ''}{v.toLocaleString()}</Typography>
+                      </Box>
+                    );
+                  })}
+                </Box>
+              )}
             </Box>
             <Box display="flex" justifyContent="space-between" alignItems="center">
               <Typography variant="subtitle2" color="text.secondary">เจลหล่อลื่น (ชิ้น)</Typography>

@@ -9,6 +9,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useStaffWorkloadTrend } from '../../hooks/useStaffWorkloadTrend';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useColorMode } from '../../contexts/ThemeContext';
 import { getWorkloadChipSx } from '../../utils/statusColors';
 import { useStaffRequests, type StaffRequestRow } from '../../hooks/useStaffRequests';
@@ -65,6 +66,7 @@ export default function StaffWorkloadDetailDialog({
   open, row, dateFrom, dateTo, serviceCenter, onClose,
 }: Props) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const staffId = row?.staff_user_id ?? null;
 
   const [reqFilter, setReqFilter]             = useState<ReqFilter>('all');
@@ -194,7 +196,7 @@ export default function StaffWorkloadDetailDialog({
   return (
     <>
       {row && (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={isMobile}>
           <DialogTitle sx={{ pb: 1 }}>
             <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               {row.first_name} {row.last_name}

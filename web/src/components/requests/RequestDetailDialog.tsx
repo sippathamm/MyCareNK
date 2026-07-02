@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, Tooltip, Stack } from '@mui/material';
 import { useColorMode } from '../../contexts/ThemeContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { getRequestStatusSx } from '../../utils/statusColors';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import MoveToInboxOutlinedIcon from '@mui/icons-material/MoveToInboxOutlined';
@@ -51,6 +52,7 @@ interface QRDialogState {
 
 export default function RequestDetailDialog({ open, request, onClose, onStatusChange, statusUpdating = false }: RequestDetailDialogProps) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [isConfirmingPrepare, setIsConfirmingPrepare] = useState(false);
@@ -110,7 +112,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   return (
     <>
       {request && (
-        <Dialog open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth fullScreen={isMobile}>
           <DialogTitle sx={{ pb: 1 }}>
             <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               รายละเอียดคำขอ

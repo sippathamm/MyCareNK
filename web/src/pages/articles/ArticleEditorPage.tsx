@@ -741,10 +741,10 @@ export default function ArticleEditorPage() {
       </Box>
 
       {/* 2-column layout */}
-      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'flex-start' }}>
 
         {/* ── Left column ───────────────────────────────────────────── */}
-        <Box sx={{ flex: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ flex: 2, minWidth: 0, order: { xs: 2, md: 0 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
 
           {/* Title card */}
           <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
@@ -911,8 +911,8 @@ export default function ArticleEditorPage() {
 
             {/* Editor content */}
             <Box sx={{
-              p: 2, minHeight: 400,
-              '& .ProseMirror': { outline: 'none', minHeight: 360 },
+              p: 2, minHeight: 400, minWidth: 0, overflowWrap: 'anywhere',
+              '& .ProseMirror': { outline: 'none', minHeight: 360, overflowWrap: 'anywhere', wordBreak: 'break-word' },
               '& .ProseMirror p.is-editor-empty:first-of-type::before': {
                 content: 'attr(data-placeholder)', color: '#aaa', pointerEvents: 'none', float: 'left', height: 0,
               },
@@ -930,7 +930,11 @@ export default function ArticleEditorPage() {
         </Box>
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
-        <Box sx={{ width: 300, flexShrink: 0 }}>
+        <Box sx={{
+          width: { xs: '100%', md: 300 }, flexShrink: 0, order: { xs: 1, md: 0 },
+          // Lock the sidebar (การเผยแพร่ card sits at its top) while scrolling on desktop
+          position: { md: 'sticky' }, top: { md: 80 }, alignSelf: { md: 'flex-start' },
+        }}>
           <Stack spacing={2}>
 
             {/* Actions card */}

@@ -8,6 +8,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess, type StaffRole } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
@@ -153,6 +154,7 @@ function InventoryQtyChip({ value }: { value: unknown }) {
 // ─── Tab 1: Staff Audit Log ───────────────────────────────────────────────────
 
 function AuditLogTab() {
+  const isMobile = useIsMobile();
   const { role } = useRoleAccess();
   const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
@@ -235,6 +237,7 @@ function AuditLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
+              columnVisibilityModel={isMobile ? { full_name: false, created_at: false } : undefined}
               onRowClick={({ row }) => setDetailRow(row as StaffAuditLogRow)}
               disableRowSelectionOnClick
               hideFooterSelectedRowCount
@@ -255,6 +258,7 @@ function AuditLogTab() {
 // ─── Tab 2: Request Status Log ────────────────────────────────────────────────
 
 function RequestStatusLogTab() {
+  const isMobile = useIsMobile();
   const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
@@ -338,6 +342,7 @@ function RequestStatusLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
+              columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : undefined}
               disableRowSelectionOnClick
               sx={{
                 border: 'none',
@@ -374,6 +379,7 @@ const CONSULTATION_STATUS_OPTIONS = [
 ];
 
 function ConsultationStatusLogTab() {
+  const isMobile = useIsMobile();
   const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
@@ -455,6 +461,7 @@ function ConsultationStatusLogTab() {
             paginationModel={{ page, pageSize }}
             onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
+            columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : undefined}
             disableRowSelectionOnClick
             sx={{
               border: 'none',
@@ -471,6 +478,7 @@ function ConsultationStatusLogTab() {
 // ─── Tab 4: Inventory Log ─────────────────────────────────────────────────────
 
 function InventoryLogTab() {
+  const isMobile = useIsMobile();
   const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
@@ -547,6 +555,7 @@ function InventoryLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
+              columnVisibilityModel={isMobile ? { service_center: false, full_name: false, created_at: false } : undefined}
               onRowClick={({ row }) => setDetailRow(row as InventoryLogRow)}
               disableRowSelectionOnClick
               hideFooterSelectedRowCount
@@ -608,6 +617,9 @@ export default function AuditLogPage() {
       <Tabs
         value={safeTab}
         onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
       >
         {visibleTabs.map(t => <Tab key={t.label} label={t.label} />)}

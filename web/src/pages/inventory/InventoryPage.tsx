@@ -17,6 +17,7 @@ import type { GridColDef } from '@mui/x-data-grid';
 import { alpha } from '@mui/material/styles';
 import { useInventoryForecast, type InventoryForecastRow } from '../../hooks/useInventoryForecast';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useColorMode } from '../../contexts/ThemeContext';
 import RestockModal from './RestockModal';
 import AdjustmentModal from './AdjustmentModal';
@@ -147,7 +148,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
               return (
                 <Grid key={size} size={6}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', px: 0.25 }}>
-                    <Typography variant="caption" color="text.disabled">ขนาด {size}mm</Typography>
+                    <Typography variant="caption" color="text.disabled">ขนาด {size} มม.</Typography>
                     <Typography variant="caption" fontWeight={600}>{qty.toLocaleString()}</Typography>
                   </Box>
                 </Grid>
@@ -215,6 +216,7 @@ function InventoryCard({ row, canRestock, onRestock, onAdjust }: InventoryCardPr
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function InventoryPage() {
+  const isMobile = useIsMobile();
   const { forecast, trend, loading, error, refetch } = useInventoryForecast();
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { mode } = useColorMode();
@@ -432,7 +434,7 @@ export default function InventoryPage() {
       {/* Filter card — admin/superadmin only, hidden when no service centers */}
       {isAdminOrSuperadmin && (loading || visibleForecast.length > 0) && (
         <Paper elevation={1} sx={{ p: 2, mb: 3, borderRadius: 2 }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
             <TextField
               label="ค้นหาสถานบริการ"
               variant="outlined"
@@ -614,6 +616,7 @@ export default function InventoryPage() {
                   getRowId={(row) => row.service_center}
                   rowHeight={80}
                   loading={loading}
+                  columnVisibilityModel={isMobile ? { condom_qty: false, lubricant_qty: false } : undefined}
                   localeText={thGridLocale}
                   initialState={{
                     pagination: {

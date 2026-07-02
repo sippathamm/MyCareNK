@@ -17,6 +17,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { alpha } from '@mui/material/styles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useAuth } from '../../hooks/useAuth';
 import { useColorMode } from '../../contexts/ThemeContext';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
@@ -301,6 +302,7 @@ interface AddStaffDialogProps {
 
 function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -355,7 +357,7 @@ function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, on
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
       <DialogTitle fontWeight="bold">เพิ่มเจ้าหน้าที่</DialogTitle>
       <DialogContent dividers>
         {step === 1 ? (
@@ -481,6 +483,7 @@ interface EditStaffDialogProps {
 
 function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
@@ -571,7 +574,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
         <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
         <DialogContent dividers>
           {isRestricted && (
@@ -711,6 +714,7 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StaffManagementPage() {
+  const isMobile = useIsMobile();
   const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { session } = useAuth();
   const { mode } = useColorMode();
@@ -829,6 +833,7 @@ export default function StaffManagementPage() {
             getRowId={(row) => row.staff_user_id}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { staff_user_id: false, last_name: false, service_center: false } : undefined}
             localeText={thGridLocale}
             initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
             pageSizeOptions={[10]}

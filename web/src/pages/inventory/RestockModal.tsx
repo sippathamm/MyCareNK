@@ -6,6 +6,7 @@ import {
 } from '@mui/material';
 import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../hooks/useAuth';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import type { InventoryForecastRow } from '../../hooks/useInventoryForecast';
 
 const CONDOM_SIZES = ['49', '52', '54', '56'] as const;
@@ -23,6 +24,7 @@ const emptySizes = (): SizeMap => ({ '49': '', '52': '', '54': '', '56': '' });
 
 export default function RestockModal({ open, target, onClose, onSuccess }: RestockModalProps) {
   const { session } = useAuth();
+  const isMobile = useIsMobile();
   const [condomSizes, setCondomSizes] = useState<SizeMap>(emptySizes);
   const [lubricantAdd, setLubricantAdd] = useState('');
   const [reason, setReason] = useState('');
@@ -88,7 +90,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
   if (!target) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth>
+    <Dialog open={open} onClose={handleClose} maxWidth="xs" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ pb: 1 }}>
         <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
           เติมสต็อก
@@ -102,15 +104,18 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
 
       <DialogContent sx={{ pt: 2.5 }}>
         {/* Current stock info */}
+        <Typography variant="subtitle2" color="text.secondary" mb={1}>
+          สต็อกปัจจุบัน
+        </Typography>
         <Box sx={{ bgcolor: 'action.hover', borderRadius: 1.5, p: 1.5, mb: 2.5 }}>
-          <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
-            สต็อกปัจจุบัน
+          <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" mb={1}>
+            ถุงยางอนามัย
           </Typography>
           <Grid container spacing={1.5}>
             {CONDOM_SIZES.map((size) => (
               <Grid key={size} size={6}>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  ถุงยางอนามัย {size}mm
+                  ขนาด {size} มม.
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="body2" fontWeight={600}>
@@ -120,14 +125,15 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
                 </Box>
               </Grid>
             ))}
-            <Grid size={6}>
-              <Typography variant="caption" color="text.secondary" display="block">เจลหล่อลื่น</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
-                <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
-              </Box>
-            </Grid>
           </Grid>
+          <Divider sx={{ my: 1.5 }} />
+          <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" mb={1}>
+            เจลหล่อลื่น
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
+            <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
+          </Box>
         </Box>
 
         {error && (
@@ -143,7 +149,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
           {CONDOM_SIZES.map((size) => (
             <Grid key={size} size={6}>
               <TextField
-                label={`ขนาด ${size}mm`}
+                label={`ขนาด ${size} มม.`}
                 value={condomSizes[size]}
                 onChange={(e) =>
                   setCondomSizes((prev) => ({ ...prev, [size]: e.target.value.replace(/\D/g, '') }))

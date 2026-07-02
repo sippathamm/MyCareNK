@@ -4,6 +4,7 @@ import {
   Button, Typography, Box, Divider, TextField, Chip, Stack,
 } from '@mui/material';
 import { useColorMode } from '../../contexts/ThemeContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { getConsultationStatusSx } from '../../utils/statusColors';
 import EventAvailableOutlinedIcon from '@mui/icons-material/EventAvailableOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -69,6 +70,7 @@ export default function ConsultationDetailDialog({
   open, consultation, onClose, onStatusChange, statusUpdating = false,
 }: ConsultationDetailDialogProps) {
   const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelling, setIsCancelling] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
@@ -103,7 +105,7 @@ export default function ConsultationDetailDialog({
 
   return (
     <>
-      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
         {consultation && (
           <>
             <DialogTitle sx={{ pb: 1 }}>

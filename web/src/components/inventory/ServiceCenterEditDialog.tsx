@@ -15,6 +15,7 @@ import PeopleOutlineIcon from '@mui/icons-material/PeopleOutline';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { supabase } from '../../lib/supabase';
 import type { ServiceCenterRow } from '../../hooks/useServiceCenters';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import ConfirmDialog from '../shared/ConfirmDialog';
 
 interface Props {
@@ -47,6 +48,7 @@ function getFileExtension(filename: string) {
 }
 
 export default function ServiceCenterEditDialog({ open, center, existingNames, isSuperadmin, onClose, onSuccess }: Props) {
+  const isMobile = useIsMobile();
   const isAddMode = open && center === null;
 
   const [name, setName] = useState('');
@@ -389,7 +391,7 @@ export default function ServiceCenterEditDialog({ open, center, existingNames, i
 
   return (
     <>
-      <Dialog open={open && !addedName} onClose={handleClose} maxWidth="sm" fullWidth>
+      <Dialog open={open && !addedName} onClose={handleClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
         <DialogTitle sx={{ pb: 1 }}>
           <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
             {isAddMode ? 'เพิ่มสถานบริการ' : 'แก้ไขสถานบริการ'}
