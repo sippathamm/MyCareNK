@@ -220,7 +220,18 @@ BEGIN
     RAISE EXCEPTION 'ชื่อนี้มีอยู่แล้ว';
   END IF;
 
-  -- Update staff_profiles array (no FK — must sync manually)
+  -- Rename the PK FIRST so the p_new row exists before staff_profiles is
+  -- touched. ON UPDATE CASCADE renames service_center_inventory automatically.
+  -- Ordering is essential: the AFTER STATEMENT recount trigger on
+  -- staff_profiles (trigger_refresh_service_center_staff_counts) matches
+  -- sc.name @> service_centers, so the p_new row must already exist when that
+  -- trigger fires — otherwise the moved staff are counted against a name with
+  -- no row and staff/admin counts are zeroed.
+  UPDATE service_centers SET name = p_new WHERE name = p_old;
+
+  -- Update staff_profiles array (no FK — must sync manually). This statement
+  -- fires the recount trigger, which now recounts correctly because the p_new
+  -- service_centers row already exists.
   UPDATE staff_profiles
   SET service_centers = array_replace(service_centers, p_old, p_new)
   WHERE p_old = ANY(service_centers);
@@ -231,10 +242,15 @@ BEGIN
   UPDATE staff_notifications
   SET service_centers = array_replace(service_centers, p_old, p_new)
   WHERE p_old = ANY(service_centers);
-  UPDATE inventory_logs SET service_center = p_new WHERE service_center = p_old;
 
-  -- Rename PK — ON UPDATE CASCADE handles service_center_inventory automatically
-  UPDATE service_centers SET name = p_new WHERE name = p_old;
+  -- Update the denormalized service center name embedded in notification
+  -- metadata (stock operations + service center management events) so
+  -- notifications display the new name after a rename.
+  UPDATE staff_notifications
+  SET metadata = jsonb_set(metadata, '{service_center_name}', to_jsonb(p_new))
+  WHERE metadata->>'service_center_name' = p_old;
+
+  UPDATE inventory_logs SET service_center = p_new WHERE service_center = p_old;
 END;
 $$;
 
