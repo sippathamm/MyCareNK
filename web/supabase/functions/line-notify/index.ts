@@ -51,6 +51,10 @@ Deno.serve(async (req: Request): Promise<Response> => {
       (s.service_centers ?? []).some((sc: string) => service_centers.includes(sc))
   );
 
+  console.log(
+    `line-notify: source_type=${source_type} scs=${JSON.stringify(service_centers)} recipients=${recipients.length}`
+  );
+
   if (recipients.length === 0) {
     return new Response('OK', { status: 200 });
   }
@@ -87,10 +91,20 @@ Deno.serve(async (req: Request): Promise<Response> => {
     )
   );
 
-  const failures = results.filter((r) => r.status === 'rejected');
-  if (failures.length > 0) {
-    console.error(`${failures.length} LINE push(es) failed`);
+  // A rejected promise is a network-level failure; a resolved fetch with a
+  // non-2xx status means LINE rejected the message (e.g. invalid user id).
+  let sent = 0;
+  for (const r of results) {
+    if (r.status === 'rejected') {
+      console.error('LINE push failed (network):', r.reason);
+    } else if (!r.value.ok) {
+      const detail = await r.value.text().catch(() => '');
+      console.error(`LINE push rejected: ${r.value.status} ${detail}`);
+    } else {
+      sent++;
+    }
   }
+  console.log(`line-notify: sent ${sent}/${recipients.length} push(es)`);
 
   return new Response('OK', { status: 200 });
 });
