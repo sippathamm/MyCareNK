@@ -911,8 +911,8 @@ export default function ArticleEditorPage() {
 
             {/* Editor content */}
             <Box sx={{
-              p: 2, minHeight: 400,
-              '& .ProseMirror': { outline: 'none', minHeight: 360 },
+              p: 2, minHeight: 400, minWidth: 0, overflowWrap: 'anywhere',
+              '& .ProseMirror': { outline: 'none', minHeight: 360, overflowWrap: 'anywhere', wordBreak: 'break-word' },
               '& .ProseMirror p.is-editor-empty:first-of-type::before': {
                 content: 'attr(data-placeholder)', color: '#aaa', pointerEvents: 'none', float: 'left', height: 0,
               },
