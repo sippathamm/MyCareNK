@@ -11,6 +11,7 @@ import EditIcon from '@mui/icons-material/Edit';
 import ArticleIcon from '@mui/icons-material/Article';
 import { useArticles, type Article } from '../../hooks/useArticles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useColorMode } from '../../contexts/ThemeContext';
 import { getArticleStatusSx, ARTICLE_STATUS_LABELS } from '../../utils/statusColors';
 import { formatDateTime } from '../../utils/requestUtils';
@@ -63,6 +64,7 @@ function CoverThumbnail({ url }: { url: string | null }) {
 
 export default function ArticlesPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { articles, staffMap, loading } = useArticles();
   const { role, loading: roleLoading } = useRoleAccess();
   const [filter, setFilter] = useState<FilterValue>('all');
@@ -276,6 +278,7 @@ export default function ArticlesPage() {
             rows={filtered}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { thumbnail_url: false, created_by: false, category: false, published_at: false, updated_at: false } : undefined}
             rowHeight={64}
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}

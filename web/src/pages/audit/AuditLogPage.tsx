@@ -617,6 +617,9 @@ export default function AuditLogPage() {
       <Tabs
         value={safeTab}
         onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
       >
         {visibleTabs.map(t => <Tab key={t.label} label={t.label} />)}
