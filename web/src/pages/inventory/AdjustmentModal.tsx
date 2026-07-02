@@ -118,7 +118,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
     const current = target.condom_quantities?.[size] ?? 0;
     const raw = isNaN(delta) ? current : current + delta;
     sizeAfter[size] = Math.max(0, raw);
-    if (!isNaN(delta) && delta !== 0 && raw < 0) clampedSizes.push(`${size}mm`);
+    if (!isNaN(delta) && delta !== 0 && raw < 0) clampedSizes.push(`ขนาด ${size} มม.`);
   }
   const lubricantParsed = parseInt(lubricantDelta, 10);
   const lubricantRaw = isNaN(lubricantParsed) ? target.lubricant_qty : target.lubricant_qty + lubricantParsed;
@@ -154,7 +154,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
               return (
                 <Grid key={size} size={6}>
                   <Typography variant="caption" color="text.secondary" display="block">
-                    ขนาด {size}mm
+                    ขนาด {size} มม.
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
                     <Typography variant="body2" fontWeight={600}>{current.toLocaleString()}</Typography>
@@ -215,7 +215,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
           {CONDOM_SIZES.map((size) => (
             <Grid key={size} size={6}>
               <TextField
-                label={`ขนาด ${size}mm`}
+                label={`ขนาด ${size} มม.`}
                 helperText="+ เพิ่ม / − ลด"
                 value={condomDeltas[size]}
                 onChange={(e) =>

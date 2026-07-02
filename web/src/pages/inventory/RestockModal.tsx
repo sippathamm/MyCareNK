@@ -115,7 +115,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
             {CONDOM_SIZES.map((size) => (
               <Grid key={size} size={6}>
                 <Typography variant="caption" color="text.secondary" display="block">
-                  ขนาด {size}mm
+                  ขนาด {size} มม.
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   <Typography variant="body2" fontWeight={600}>
@@ -149,7 +149,7 @@ export default function RestockModal({ open, target, onClose, onSuccess }: Resto
           {CONDOM_SIZES.map((size) => (
             <Grid key={size} size={6}>
               <TextField
-                label={`ขนาด ${size}mm`}
+                label={`ขนาด ${size} มม.`}
                 value={condomSizes[size]}
                 onChange={(e) =>
                   setCondomSizes((prev) => ({ ...prev, [size]: e.target.value.replace(/\D/g, '') }))
