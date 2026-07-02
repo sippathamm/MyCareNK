@@ -930,7 +930,11 @@ export default function ArticleEditorPage() {
         </Box>
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
-        <Box sx={{ width: { xs: '100%', md: 300 }, flexShrink: 0, order: { xs: 1, md: 0 } }}>
+        <Box sx={{
+          width: { xs: '100%', md: 300 }, flexShrink: 0, order: { xs: 1, md: 0 },
+          // Lock the sidebar (การเผยแพร่ card sits at its top) while scrolling on desktop
+          position: { md: 'sticky' }, top: { md: 80 }, alignSelf: { md: 'flex-start' },
+        }}>
           <Stack spacing={2}>
 
             {/* Actions card */}
