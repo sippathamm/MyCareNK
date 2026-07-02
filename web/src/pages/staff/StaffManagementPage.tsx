@@ -833,7 +833,7 @@ export default function StaffManagementPage() {
             getRowId={(row) => row.staff_user_id}
             columns={columns}
             loading={loading}
-            columnVisibilityModel={isMobile ? { staff_user_id: false, last_name: false, service_center: false } : {}}
+            columnVisibilityModel={isMobile ? { staff_user_id: false, last_name: false, service_center: false } : undefined}
             localeText={thGridLocale}
             initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
             pageSizeOptions={[10]}

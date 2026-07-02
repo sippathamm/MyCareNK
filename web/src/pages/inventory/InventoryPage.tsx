@@ -616,7 +616,7 @@ export default function InventoryPage() {
                   getRowId={(row) => row.service_center}
                   rowHeight={80}
                   loading={loading}
-                  columnVisibilityModel={isMobile ? { condom_qty: false, lubricant_qty: false } : {}}
+                  columnVisibilityModel={isMobile ? { condom_qty: false, lubricant_qty: false } : undefined}
                   localeText={thGridLocale}
                   initialState={{
                     pagination: {
