@@ -744,7 +744,7 @@ export default function ArticleEditorPage() {
       <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'flex-start' }}>
 
         {/* ── Left column ───────────────────────────────────────────── */}
-        <Box sx={{ flex: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ flex: 2, minWidth: 0, order: { xs: 2, md: 0 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
 
           {/* Title card */}
           <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
@@ -930,7 +930,7 @@ export default function ArticleEditorPage() {
         </Box>
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
-        <Box sx={{ width: { xs: '100%', md: 300 }, flexShrink: 0 }}>
+        <Box sx={{ width: { xs: '100%', md: 300 }, flexShrink: 0, order: { xs: 1, md: 0 } }}>
           <Stack spacing={2}>
 
             {/* Actions card */}
