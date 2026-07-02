@@ -140,9 +140,12 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
 
       <DialogContent sx={{ pt: 2.5 }}>
         {/* Current → After preview */}
+        <Typography variant="subtitle2" color="text.secondary" mb={1}>
+          สต็อกก่อน → หลัง
+        </Typography>
         <Box sx={{ bgcolor: 'action.hover', borderRadius: 1.5, p: 1.5, mb: 2.5 }}>
-          <Typography variant="caption" color="text.secondary" display="block" mb={0.75}>
-            สต็อกก่อน → หลัง
+          <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" mb={1}>
+            ถุงยางอนามัย
           </Typography>
           <Grid container spacing={1.5}>
             {CONDOM_SIZES.map((size) => {
@@ -151,7 +154,7 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
               return (
                 <Grid key={size} size={6}>
                   <Typography variant="caption" color="text.secondary" display="block">
-                    ถุงยางอนามัย {size}mm
+                    ขนาด {size}mm
                   </Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
                     <Typography variant="body2" fontWeight={600}>{current.toLocaleString()}</Typography>
@@ -168,22 +171,23 @@ export default function AdjustmentModal({ open, target, onClose, onSuccess }: Ad
                 </Grid>
               );
             })}
-            <Grid size={6}>
-              <Typography variant="caption" color="text.secondary" display="block">เจลหล่อลื่น</Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
-                <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
-                {lubricantAfter !== target.lubricant_qty && (
-                  <>
-                    <Typography variant="caption" color="text.disabled">→</Typography>
-                    <Typography variant="body2" fontWeight={600} color={lubricantAfter > target.lubricant_qty ? 'success.main' : 'error.main'}>
-                      {lubricantAfter.toLocaleString()}
-                    </Typography>
-                  </>
-                )}
-                <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
-              </Box>
-            </Grid>
           </Grid>
+          <Divider sx={{ my: 1.5 }} />
+          <Typography variant="caption" color="text.secondary" fontWeight={700} display="block" mb={1}>
+            เจลหล่อลื่น
+          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+            <Typography variant="body2" fontWeight={600}>{target.lubricant_qty.toLocaleString()}</Typography>
+            {lubricantAfter !== target.lubricant_qty && (
+              <>
+                <Typography variant="caption" color="text.disabled">→</Typography>
+                <Typography variant="body2" fontWeight={600} color={lubricantAfter > target.lubricant_qty ? 'success.main' : 'error.main'}>
+                  {lubricantAfter.toLocaleString()}
+                </Typography>
+              </>
+            )}
+            <Typography variant="caption" color="text.disabled">ชิ้น</Typography>
+          </Box>
         </Box>
 
         <Collapse in={clampedSizes.length > 0}>
