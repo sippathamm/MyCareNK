@@ -5,19 +5,13 @@ import {
   CartesianGrid, Tooltip, Legend,
 } from 'recharts';
 import type { ConsumptionTrendPoint } from '../../hooks/useInventoryForecast';
+import { getServiceCenterColor } from '../../lib/serviceCenterColor';
+import { useColorMode } from '../../contexts/ThemeContext';
 
 interface ConsumptionTrendChartProps {
   trend: ConsumptionTrendPoint[];
   loading: boolean;
 }
-
-// สีสำหรับแต่ละ service center
-const CENTER_COLORS: Record<string, string> = {
-  'รพ.โพนพิสัย':  '#FF9F6B',
-  'รพ.สต.วัดหลวง': '#64B5F6',
-  'อบต.วัดหลวง':  '#BA68C8',
-  'สสจ.หนองคาย':  '#81C784',
-};
 
 type ProductType = 'condom' | 'lubricant';
 
@@ -51,34 +45,41 @@ function TrendPanel({
   data: Record<string, unknown>[];
   centers: string[];
 }) {
+  const { mode } = useColorMode();
+  const tick       = mode === 'dark' ? '#A0AEC0' : '#666666';
+  const grid       = mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+  const tooltipBg  = mode === 'dark' ? '#1E2433' : '#ffffff';
+  const tooltipBorder = mode === 'dark' ? '#2D3748' : '#e0e0e0';
+  const tooltipText = mode === 'dark' ? '#E2E8F0' : '#000000';
+
   return (
     <Box>
       <Typography variant="subtitle2" fontWeight={600} color="text.secondary" mb={1}>
         {title}
       </Typography>
-      <Box sx={{ height: 220 }}>
+      <Box sx={{ height: 320, '& .recharts-wrapper': { overflow: 'visible' } }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={grid} />
             <XAxis
               dataKey="day"
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: tick }}
               interval={4}
               tickLine={false}
             />
             <YAxis
               allowDecimals={false}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: tick }}
               tickLine={false}
               axisLine={false}
               width={32}
             />
             <Tooltip
-              cursor={{ stroke: 'rgba(0,0,0,0.08)', strokeWidth: 2 }}
-              contentStyle={{ borderRadius: 8, fontSize: 12 }}
+              cursor={{ stroke: mode === 'dark' ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)', strokeWidth: 2 }}
+              contentStyle={{ borderRadius: 8, fontSize: 12, background: tooltipBg, border: `1px solid ${tooltipBorder}`, color: tooltipText }}
             />
             <Legend
-              wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+              wrapperStyle={{ fontSize: 12, paddingTop: 8, color: tick }}
               iconType="circle"
               iconSize={8}
             />
@@ -87,7 +88,7 @@ function TrendPanel({
                 key={center}
                 type="monotone"
                 dataKey={center}
-                stroke={CENTER_COLORS[center] ?? '#BDBDBD'}
+                stroke={getServiceCenterColor(center)}
                 strokeWidth={2}
                 dot={false}
                 activeDot={{ r: 4 }}
@@ -110,16 +111,16 @@ export default function ConsumptionTrendChart({ trend, loading }: ConsumptionTre
   const lubricantData = useMemo(() => buildChartData(trend, 'lubricant'), [trend]);
 
   return (
-    <Card elevation={1} sx={{ borderRadius: 2 }}>
+    <Card elevation={1} sx={{ borderRadius: 2, overflow: 'visible' }}>
       <CardContent sx={{ p: 2.5 }}>
         <Typography variant="h6" fontWeight="bold" sx={{ mb: 2 }}>
           อัตราการใช้ 30 วันย้อนหลัง
         </Typography>
 
         {loading ? (
-          <Skeleton variant="rounded" height={220} />
+          <Skeleton variant="rounded" height={320} />
         ) : trend.length === 0 ? (
-          <Box sx={{ height: 220, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <Box sx={{ height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography color="text.secondary" variant="body2">
               ไม่มีข้อมูลการใช้ในช่วง 30 วันที่ผ่านมา
             </Typography>

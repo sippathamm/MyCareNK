@@ -26,6 +26,7 @@ abstract final class AppColors {
   // Error / red
   static const Color error = Color(0xFFEF7070);
   static const Color errorDark = Color(0xFFB71C1C);
+  static const Color errorLight = Color(0xFFFFEBEE);
   static const Color errorShadow = Color(0x4DB71C1C); // ~30% opacity
 
   // Success / green
@@ -45,17 +46,17 @@ abstract final class AppColors {
   static const Color textSecondary = Color(0xFF666666);
   static const Color textMuted = Color(0xFF777777);
   static const Color textHint = Color(0xFF999999);
-  static const Color textBlack87 = Color(0xDD000000);
-
   // Avatar / profile
   static const Color avatarBackground = Color(0xFFEFE5FD);
   static const Color avatarCircle = Color(0xFFD1C4E9);
   static const Color avatarIcon = Color(0xFF7C4DFF);
   static const Color avatarIconShadow = Color(0x297C4DFF); // ~16% opacity
 
+  // Info / note box
+  static const Color infoNoteText = Color(0xFF1A4A7A);
+
   // Neutral
   static const Color white = Color(0xFFFFFFFF);
   static const Color cardShadow = Color(0x0D000000); // ~5% black
   static const Color cardShadowMedium = Color(0x14000000); // ~8% black
-  static const Color overlayDark = Color(0x80000000); // ~50% black
 }

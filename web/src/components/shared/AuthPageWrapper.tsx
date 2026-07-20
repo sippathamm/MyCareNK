@@ -7,11 +7,11 @@ interface AuthPageWrapperProps {
 }
 
 const AuthPageWrapper = ({ children, maxWidth = 'xs' }: AuthPageWrapperProps) => (
-  <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+  <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', px: 2, py: 4, boxSizing: 'border-box' }}>
     <Typography
       component="h1"
       variant="h4"
-      sx={{ mb: 1, fontWeight: 900, textAlign: 'center', whiteSpace: 'nowrap', letterSpacing: 1 }}
+      sx={{ mb: 1, fontWeight: 900, textAlign: 'center', whiteSpace: 'nowrap', letterSpacing: 1, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}
     >
       <Box component="span" sx={{ color: 'primary.main' }}>MyCareNK</Box>
       {' '}
@@ -21,10 +21,10 @@ const AuthPageWrapper = ({ children, maxWidth = 'xs' }: AuthPageWrapperProps) =>
       variant="body2"
       sx={{ mb: 4, color: 'text.secondary', textAlign: 'center' }}
     >
-      ระบบจัดการคำขอถุงยางอนามัยและนัดพบแพทย์ (PEP · PrEP · ตรวจเลือด)
+      ระบบจัดการคำขอถุงยางอนามัย/เจลหล่อลื่นและนัดรับคำปรึกษา (PEP · PrEP · ตรวจเลือด)
     </Typography>
     <Container component="main" maxWidth={maxWidth}>
-      <Paper elevation={3} sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', borderRadius: 3 }}>
+      <Paper elevation={3} sx={{ p: { xs: 3, sm: 4 }, display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', borderRadius: 3 }}>
         {children}
       </Paper>
     </Container>

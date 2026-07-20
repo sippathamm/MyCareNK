@@ -1,13 +1,22 @@
 import { useState } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, CircularProgress, Tooltip } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Box, Divider, TextField, Chip, Tooltip, Stack } from '@mui/material';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { getRequestStatusSx } from '../../utils/statusColors';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import MoveToInboxOutlinedIcon from '@mui/icons-material/MoveToInboxOutlined';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import QrCode2Icon from '@mui/icons-material/QrCode2';
 import { formatDate, formatDateTime, getOverdueDays } from '../../utils/requestUtils';
 import QRCodeDialog from './QRCodeDialog';
+import ConfirmDialog from '../shared/ConfirmDialog';
 import type { Enums } from '../../lib/database.types';
 
 export interface RequestData {
   id: string;
   reference_number: string;
+  user_id: string | null;
   selected_date: string | null;
   selected_time: string | null;
   selected_service_center: string;
@@ -16,10 +25,13 @@ export interface RequestData {
   message: string | null;
   cancel_reason: string | null;
   handled_by: string | null;
+  handled_by_name: string | null;
   completed_at: string | null;
   created_at: string;
   updated_at: string;
   request_status: Enums<'request_status'>;
+  phone_number: string | null;
+  nickname: string | null;
 }
 
 interface RequestDetailDialogProps {
@@ -39,6 +51,8 @@ interface QRDialogState {
 }
 
 export default function RequestDetailDialog({ open, request, onClose, onStatusChange, statusUpdating = false }: RequestDetailDialogProps) {
+  const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [rejectReason, setRejectReason] = useState('');
   const [isRejecting, setIsRejecting] = useState(false);
   const [isConfirmingPrepare, setIsConfirmingPrepare] = useState(false);
@@ -54,13 +68,13 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
 
   const handleFinishPrepare = () => {
     if (!request) return;
-    // Capture request data before closing (request prop may be stale after onClose)
     const qrData = {
       open: true,
       requestId: request.id,
       referenceNumber: request.reference_number,
       onFinishPrepare: () => onStatusChange(request.id, 'ready'),
     };
+    setIsConfirmingFinish(false);
     onCloseDialogInternal();
     setQrDialog(qrData);
   };
@@ -98,7 +112,7 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
   return (
     <>
       {request && (
-        <Dialog open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth>
+        <Dialog open={open} onClose={onCloseDialog} maxWidth="sm" fullWidth fullScreen={isMobile}>
           <DialogTitle sx={{ pb: 1 }}>
             <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               รายละเอียดคำขอ
@@ -109,251 +123,255 @@ export default function RequestDetailDialog({ open, request, onClose, onStatusCh
           </DialogTitle>
 
           <DialogContent dividers>
-            {isConfirmingComplete ? (
-              <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
-                <Typography variant="h6" color="success.main" fontWeight="bold">
-                  ยืนยันการเสร็จสิ้น
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น "เสร็จสิ้น" ใช่หรือไม่?
-                </Typography>
+            <Box display="flex" flexDirection="column" gap={2}>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="subtitle2" color="text.secondary">ส่งคำขอเมื่อ</Typography>
+                <Typography variant="body1">{formatDateTime(request.created_at)}</Typography>
               </Box>
-            ) : isConfirmingPrepare ? (
-              <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
-                <Typography variant="h6" color="warning.main" fontWeight="bold">
-                  ยืนยันการเริ่มจัดเตรียม
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น "กำลังเตรียม" ใช่หรือไม่?
-                </Typography>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="subtitle2" color="text.secondary">เปลี่ยนแปลงล่าสุดเมื่อ</Typography>
+                <Typography variant="body1">{formatDateTime(request.updated_at)}</Typography>
               </Box>
-            ) : isConfirmingFinish ? (
-              <Box display="flex" flexDirection="column" alignItems="center" py={4} gap={3}>
-                <Typography variant="h6" color="info.main" fontWeight="bold">
-                  ยืนยันการเตรียมการเสร็จสิ้น
-                </Typography>
-                <Typography variant="body1" color="text.secondary">
-                  คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น "รอรับ" ใช่หรือไม่?
-                </Typography>
-              </Box>
-            ) : (
-              <Box display="flex" flexDirection="column" gap={2}>
-                <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">ส่งคำขอเมื่อ</Typography>
-                  <Typography variant="body1">{formatDateTime(request.created_at)}</Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เปลี่ยนแปลงล่าสุดเมื่อ</Typography>
-                  <Typography variant="body1">{formatDateTime(request.updated_at)}</Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle2" color="text.secondary">วันรับ</Typography>
-                  {(() => {
-                    const days = getOverdueDays(request.selected_date ?? '', request.request_status);
-                    if (days > 0) {
-                      return (
-                        <Typography variant="body1" color="error.main">
-                          {formatDate(request.selected_date ?? '')} (เลยกำหนด {days} วัน)
-                        </Typography>
-                      );
-                    }
-                    return <Typography variant="body1">{formatDate(request.selected_date ?? '')}</Typography>;
-                  })()}
-                </Box>
-                <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">เวลารับ</Typography>
-                  <Typography variant="body1">{request.selected_time ?? '-'} น.</Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between">
-                  <Typography variant="subtitle2" color="text.secondary">สถานที่</Typography>
-                  <Typography variant="body1" fontWeight="medium">{request.selected_service_center}</Typography>
-                </Box>
-                <Box display="flex" justifyContent="space-between" alignItems="center">
-                  <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
-                  {(() => {
-                    switch (request.request_status) {
-                      case 'pending':            return <Chip label="รอดำเนินการ"        size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
-                      case 'preparing':          return <Chip label="กำลังเตรียม"        size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
-                      case 'ready':              return <Chip label="รอรับ"              size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
-                      case 'completed':          return <Chip label="เสร็จสิ้น"          size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
-                      case 'cancelled_by_user':  return <Chip label="ยกเลิกโดยผู้ใช้"    size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-                      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-                    }
-                  })()}
-                </Box>
-
-                <Divider sx={{ my: 1 }} />
-
-                <Typography variant="subtitle1" fontWeight="bold">รายการที่ต้องจัดเตรียม</Typography>
-                <Box bgcolor="background.default" p={2} borderRadius={2}>
-                  <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>ถุงยางอนามัย</Typography>
-                  {Object.entries(request.condom_quantities).map(([type, qty]) => (
-                    <Box key={type} display="flex" justifyContent="space-between" mb={1} pl={2}>
-                      <Typography variant="body2">• ขนาด {type} มม.</Typography>
-                      <Typography variant="body2" fontWeight="bold" color={qty > 0 ? 'text.primary' : 'text.secondary'}>
-                        {qty > 0 ? `${qty} ชิ้น` : 'ไม่ต้องการ'}
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="subtitle2" color="text.secondary">วันรับ</Typography>
+                {(() => {
+                  const days = getOverdueDays(request.selected_date ?? '', request.request_status);
+                  if (days > 0) {
+                    return (
+                      <Typography variant="body1" color="error.main">
+                        {formatDate(request.selected_date ?? '')} (เลยกำหนด {days} วัน)
                       </Typography>
-                    </Box>
-                  ))}
+                    );
+                  }
+                  return <Typography variant="body1">{formatDate(request.selected_date ?? '')}</Typography>;
+                })()}
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="subtitle2" color="text.secondary">เวลารับ</Typography>
+                <Typography variant="body1">{request.selected_time ?? '-'} น.</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="subtitle2" color="text.secondary">สถานที่</Typography>
+                <Typography variant="body1" fontWeight="medium">{request.selected_service_center}</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between" alignItems="center">
+                <Typography variant="subtitle2" color="text.secondary">สถานะ</Typography>
+                {(() => {
+                  const labels: Record<string, string> = {
+                    pending: 'รอดำเนินการ', preparing: 'กำลังเตรียม', ready: 'รอรับ',
+                    completed: 'เสร็จสิ้น', cancelled_by_user: 'ยกเลิกโดยผู้ใช้', cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
+                  };
+                  return <Chip label={labels[request.request_status] ?? request.request_status} size="small" sx={getRequestStatusSx(request.request_status, mode)} />;
+                })()}
+              </Box>
+              {request.handled_by_name && (
+                <Box display="flex" justifyContent="space-between">
+                  <Typography variant="subtitle2" color="text.secondary">ดำเนินการโดย</Typography>
+                  <Typography variant="body1">{request.handled_by_name}</Typography>
+                </Box>
+              )}
 
-                  <Divider sx={{ my: 1.5, borderStyle: 'dashed' }} />
+              <Divider sx={{ my: 1 }} />
 
-                  <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>เพิ่มเติม</Typography>
-                  <Box display="flex" justifyContent="space-between" pl={2}>
-                    <Typography variant="body2">• เจลหล่อลื่น</Typography>
-                    <Typography variant="body2" fontWeight="bold" color={request.lubricant_quantity > 0 ? 'text.primary' : 'text.secondary'}>
-                      {request.lubricant_quantity > 0 ? `${request.lubricant_quantity} ซอง` : 'ไม่ต้องการ'}
+              <Typography variant="subtitle1" fontWeight="bold">รายการที่ต้องจัดเตรียม</Typography>
+              <Box bgcolor="background.default" p={2} borderRadius={2}>
+                <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>ถุงยางอนามัย</Typography>
+                {Object.entries(request.condom_quantities).map(([type, qty]) => (
+                  <Box key={type} display="flex" justifyContent="space-between" mb={1} pl={2}>
+                    <Typography variant="body2">• ขนาด {type} มม.</Typography>
+                    <Typography variant="body2" fontWeight="bold" color={qty > 0 ? 'text.primary' : 'text.secondary'}>
+                      {qty > 0 ? `${qty} ชิ้น` : 'ไม่ต้องการ'}
                     </Typography>
                   </Box>
-                </Box>
+                ))}
 
-                {request.message && (
-                  <Box mt={2}>
+                <Divider sx={{ my: 1.5, borderStyle: 'dashed' }} />
+
+                <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>เพิ่มเติม</Typography>
+                <Box display="flex" justifyContent="space-between" pl={2}>
+                  <Typography variant="body2">• เจลหล่อลื่น</Typography>
+                  <Typography variant="body2" fontWeight="bold" color={request.lubricant_quantity > 0 ? 'text.primary' : 'text.secondary'}>
+                    {request.lubricant_quantity > 0 ? `${request.lubricant_quantity} ซอง` : 'ไม่ต้องการ'}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Divider sx={{ my: 1 }} />
+
+              <Typography variant="subtitle1" fontWeight="bold">ข้อมูลติดต่อ</Typography>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="subtitle2" color="text.secondary">ชื่อที่ใช้เรียก</Typography>
+                <Typography variant="body1">{request.nickname ?? '-'}</Typography>
+              </Box>
+              <Box display="flex" justifyContent="space-between">
+                <Typography variant="subtitle2" color="text.secondary">หมายเลขโทรศัพท์</Typography>
+                <Typography variant="body1">{request.phone_number ?? '-'}</Typography>
+              </Box>
+
+              {request.message && (
+                <>
+                  <Divider sx={{ my: 1 }} />
+                  <Box>
                     <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>ข้อความเพิ่มเติม</Typography>
                     <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(0,0,0,0.03)', p: 1.5, borderRadius: 1 }}>
                       {request.message}
                     </Typography>
                   </Box>
-                )}
+                </>
+              )}
 
-                {(request.request_status === 'cancelled_by_user' || request.request_status === 'cancelled_by_staff') && request.cancel_reason && (
-                  <Box mt={2}>
+              {(request.request_status === 'cancelled_by_user' || request.request_status === 'cancelled_by_staff') && request.cancel_reason && (
+                <>
+                  <Divider sx={{ my: 1 }} />
+                  <Box>
                     <Typography variant="subtitle2" color="error.main" sx={{ mb: 1 }}>เหตุผลที่ยกเลิก</Typography>
                     <Typography variant="body2" sx={{ fontStyle: 'italic', bgcolor: 'rgba(211,47,47,0.06)', p: 1.5, borderRadius: 1, color: 'error.main' }}>
                       {request.cancel_reason}
                     </Typography>
                   </Box>
-                )}
-
-                {isRejecting && (
-                  <Box mt={2}>
-                    <TextField
-                      fullWidth
-                      label="ระบุเหตุผลที่ยกเลิก"
-                      multiline
-                      rows={3}
-                      value={rejectReason}
-                      onChange={(e) => setRejectReason(e.target.value)}
-                      error={rejectReason.trim() === ''}
-                      helperText={rejectReason.trim() === '' ? 'จำเป็นต้องระบุเหตุผล' : ''}
-                      color="error"
-                      autoFocus
-                    />
-                  </Box>
-                )}
-              </Box>
-            )}
+                </>
+              )}
+            </Box>
           </DialogContent>
 
           <DialogActions sx={{ p: 2 }}>
-            {isConfirmingPrepare ? (
-              <>
-                <Button onClick={() => setIsConfirmingPrepare(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
-                <Button
-                  onClick={handleConfirmPrepare}
-                  variant="contained"
-                  color="primary"
-                  disabled={statusUpdating}
-                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  ยืนยัน
-                </Button>
-              </>
-            ) : isConfirmingFinish ? (
-              <>
-                <Button onClick={() => setIsConfirmingFinish(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
-                <Button
-                  onClick={handleFinishPrepare}
-                  variant="contained"
-                  color="info"
-                  disabled={statusUpdating}
-                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  ยืนยัน
-                </Button>
-              </>
-            ) : isConfirmingComplete ? (
-              <>
-                <Button onClick={() => setIsConfirmingComplete(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
-                <Button
-                  onClick={handleConfirmComplete}
-                  variant="contained"
-                  color="success"
-                  disabled={statusUpdating}
-                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  ยืนยัน
-                </Button>
-              </>
-            ) : isRejecting ? (
-              <>
-                <Button onClick={() => setIsRejecting(false)} disabled={statusUpdating} color="inherit">กลับ</Button>
-                <Button
-                  onClick={handleCancelConfirm}
-                  color="error"
-                  variant="contained"
-                  disabled={!rejectReason.trim() || statusUpdating}
-                  endIcon={statusUpdating ? <CircularProgress size={16} color="inherit" /> : null}
-                >
-                  ยืนยันการยกเลิก
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button onClick={onCloseDialog} color="inherit">ปิด</Button>
-                {request.request_status === 'ready' && (
-                  <Button
-                    variant="outlined"
-                    startIcon={<QrCode2Icon />}
-                    onClick={openQRDialog}
-                  >
-                    ดู QR Code
-                  </Button>
-                )}
-                {request.request_status === 'ready' && (() => {
-                  const daysPast = (() => {
-                    if (!request.selected_date) return 0;
-                    const selected = new Date(request.selected_date);
-                    selected.setHours(0, 0, 0, 0);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    return Math.floor((today.getTime() - selected.getTime()) / 86400000);
-                  })();
-                  return (
-                    <Tooltip title={daysPast <= 7 ? 'กดปุ่มนี้ได้เมื่อเลยกำหนดมากกว่า 7 วัน' : ''}>
-                      <span>
-                        <Button
-                          onClick={() => setIsConfirmingComplete(true)}
-                          color="success"
-                          variant="contained"
-                          disabled={daysPast <= 7}
-                        >
-                          เสร็จสิ้น
-                        </Button>
-                      </span>
-                    </Tooltip>
-                  );
-                })()}
-                {request.request_status === 'pending' && (
-                  <>
-                    <Button onClick={() => setIsRejecting(true)} color="error" variant="outlined">
-                      ยกเลิกคำขอ
+            <Button onClick={onCloseDialog} color="inherit">ปิด</Button>
+            {request.request_status === 'ready' && (
+              <Button
+                variant="outlined"
+                startIcon={<QrCode2Icon />}
+                onClick={openQRDialog}
+              >
+                ดู QR Code
+              </Button>
+            )}
+            {request.request_status === 'ready' && (() => {
+              const daysPast = (() => {
+                if (!request.selected_date) return 0;
+                const selected = new Date(request.selected_date);
+                selected.setHours(0, 0, 0, 0);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                return Math.floor((today.getTime() - selected.getTime()) / 86400000);
+              })();
+              return (
+                <Tooltip title={daysPast <= 7 ? 'กดปุ่มนี้ได้เมื่อเลยกำหนดมากกว่า 7 วัน' : ''}>
+                  <span>
+                    <Button
+                      onClick={() => setIsConfirmingComplete(true)}
+                      color="success"
+                      variant="contained"
+                      disabled={daysPast <= 7}
+                    >
+                      เสร็จสิ้น
                     </Button>
-                    <Button onClick={() => setIsConfirmingPrepare(true)} color="primary" variant="contained">
-                      จัดเตรียมรายการ
-                    </Button>
-                  </>
-                )}
-                {request.request_status === 'preparing' && (
-                  <Button onClick={() => setIsConfirmingFinish(true)} color="info" variant="contained">
-                    เตรียมการเสร็จสิ้น
-                  </Button>
-                )}
+                  </span>
+                </Tooltip>
+              );
+            })()}
+            {request.request_status === 'pending' && (
+              <>
+                <Button onClick={() => setIsRejecting(true)} color="error" variant="outlined">
+                  ยกเลิกคำขอ
+                </Button>
+                <Button onClick={() => setIsConfirmingPrepare(true)} color="primary" variant="contained">
+                  จัดเตรียมรายการ
+                </Button>
               </>
+            )}
+            {request.request_status === 'preparing' && (
+              <Button onClick={() => setIsConfirmingFinish(true)} color="info" variant="contained">
+                เตรียมการเสร็จสิ้น
+              </Button>
             )}
           </DialogActions>
         </Dialog>
       )}
+
+      {/* Confirm: Start Preparing */}
+      <ConfirmDialog
+        open={isConfirmingPrepare}
+        icon={<PlayArrowIcon color="primary" />}
+        title="ยืนยันการเริ่มจัดเตรียม"
+        body={
+          <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น</Typography>
+            <Chip label="กำลังเตรียม" size="small" sx={getRequestStatusSx('preparing', mode)} />
+            <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
+          </Stack>
+        }
+        confirmLabel="ยืนยัน"
+        confirmColor="primary"
+        loading={statusUpdating}
+        onConfirm={handleConfirmPrepare}
+        onCancel={() => setIsConfirmingPrepare(false)}
+      />
+
+      {/* Confirm: Finish Preparing → Ready */}
+      <ConfirmDialog
+        open={isConfirmingFinish}
+        icon={<MoveToInboxOutlinedIcon color="info" />}
+        title="ยืนยันการเตรียมการเสร็จสิ้น"
+        body={
+          <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น</Typography>
+            <Chip label="รอรับ" size="small" sx={getRequestStatusSx('ready', mode)} />
+            <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
+          </Stack>
+        }
+        confirmLabel="ยืนยัน"
+        confirmColor="info"
+        loading={statusUpdating}
+        onConfirm={handleFinishPrepare}
+        onCancel={() => setIsConfirmingFinish(false)}
+      />
+
+      {/* Confirm: Complete */}
+      <ConfirmDialog
+        open={isConfirmingComplete}
+        icon={<CheckCircleOutlineIcon color="success" />}
+        title="ยืนยันการเสร็จสิ้น"
+        body={
+          <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+            <Typography variant="body2" color="text.secondary">คุณต้องการเปลี่ยนสถานะคำขอนี้เป็น</Typography>
+            <Chip label="เสร็จสิ้น" size="small" sx={getRequestStatusSx('completed', mode)} />
+            <Typography variant="body2" color="text.secondary">ใช่หรือไม่?</Typography>
+          </Stack>
+        }
+        confirmLabel="ยืนยัน"
+        confirmColor="success"
+        loading={statusUpdating}
+        onConfirm={handleConfirmComplete}
+        onCancel={() => setIsConfirmingComplete(false)}
+      />
+
+      {/* Confirm: Cancel (Reject) */}
+      <ConfirmDialog
+        open={isRejecting}
+        icon={<CancelOutlinedIcon color="error" />}
+        title="ยกเลิกคำขอ"
+        body="กรุณาระบุเหตุผลที่ยกเลิก"
+        confirmLabel="ยืนยันการยกเลิก"
+        confirmColor="error"
+        confirmDisabled={!rejectReason.trim()}
+        loading={statusUpdating}
+        onConfirm={handleCancelConfirm}
+        onCancel={() => { setIsRejecting(false); setRejectReason(''); }}
+        maxWidth="sm"
+      >
+        <TextField
+          fullWidth
+          label="เหตุผลที่ยกเลิก"
+          multiline
+          rows={3}
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+          error={rejectReason.trim() === ''}
+          helperText={rejectReason.trim() === '' ? 'จำเป็นต้องระบุเหตุผล' : ''}
+          color="error"
+          autoFocus
+        />
+      </ConfirmDialog>
 
       <QRCodeDialog
         open={qrDialog.open}

@@ -8,7 +8,4 @@ abstract final class AppConstants {
 
   // Condom sizes offered (mm) — mirrors `condom_quantities` default in DB
   static const List<int> condomSizes = [49, 52, 54, 56];
-
-  // Available pickup times
-  static const List<String> pickupTimes = ['10:00', '14:00'];
 }

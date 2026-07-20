@@ -2,9 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
-import '../../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import 'article_detail_page.dart';
+import '../../../../../core/l10n/app_localizations.dart';
+import '../widgets/category_chip.dart';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+String _formatDateTime(String isoDate) {
+  final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
+  final l10n = AppLocalizations.current;
+  final h = dt.hour.toString().padLeft(2, '0');
+  final m = dt.minute.toString().padLeft(2, '0');
+  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
+}
 
 class ArticleListPage extends StatefulWidget {
   const ArticleListPage({super.key});
@@ -40,24 +51,28 @@ class _ArticleListPageState extends State<ArticleListPage> {
   void _showLoginRequired() {
     showDialog<void>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.6),
       builder: (ctx) => AlertDialog(
         backgroundColor: AppColors.white,
-        elevation: 24,
-        shadowColor: Colors.black38,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Text(
-          'กรุณาเข้าสู่ระบบ',
-          style: GoogleFonts.googleSans(fontSize: 18, fontWeight: FontWeight.bold),
+          AppLocalizations.of(context).pleaseLogin,
+          style: GoogleFonts.googleSans(
+              fontWeight: FontWeight.bold, color: AppColors.textPrimary),
         ),
         content: Text(
-          'คุณต้องเข้าสู่ระบบก่อนจึงจะดูบทความได้',
-          style: GoogleFonts.googleSans(fontSize: 15, height: 1.6),
+          AppLocalizations.of(context).loginToViewArticles,
+          style: GoogleFonts.googleSans(color: AppColors.textSecondary),
         ),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         actions: [
-          GradientButton(
-            height: 46,
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              Navigator.of(context).pop();
+            },
+            child: Text(AppLocalizations.of(context).cancel,
+                style: GoogleFonts.googleSans(color: AppColors.textSecondary)),
+          ),
+          TextButton(
             onPressed: () async {
               Navigator.of(ctx).pop();
               final loggedIn = await Navigator.of(context, rootNavigator: true)
@@ -70,28 +85,9 @@ class _ArticleListPageState extends State<ArticleListPage> {
                 Navigator.of(context).pop();
               }
             },
-            label: 'เข้าสู่ระบบ',
-            fontSize: 15,
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: FilledButton(
-              onPressed: () {
-                Navigator.of(ctx).pop();
-                Navigator.of(context).pop();
-              },
-              style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFFEEEEEE),
-                foregroundColor: AppColors.textPrimary,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-              ),
-              child: Text(
-                'ยกเลิก',
-                style: GoogleFonts.googleSans(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-            ),
+            child: Text(AppLocalizations.of(context).loginBtn,
+                style: GoogleFonts.googleSans(
+                    color: AppColors.primary, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
@@ -162,17 +158,6 @@ class _ArticleListPageState extends State<ArticleListPage> {
     }
   }
 
-  static String _formatDateTime(String isoDate) {
-    final dt = DateTime.parse(isoDate).add(const Duration(hours: 7));
-    const months = [
-      '', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.',
-      'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.',
-    ];
-    final h = dt.hour.toString().padLeft(2, '0');
-    final m = dt.minute.toString().padLeft(2, '0');
-    return '${dt.day} ${months[dt.month]} ${dt.year + 543} $h:$m น.';
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -187,7 +172,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'บทความ',
+          AppLocalizations.of(context).articlesTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -214,7 +199,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'เกิดข้อผิดพลาด',
+              AppLocalizations.of(context).errorOccurredTitle,
               style: GoogleFonts.googleSans(
                 fontSize: 16,
                 color: AppColors.textPrimary,
@@ -223,7 +208,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
             const SizedBox(height: 12),
             OutlinedButton(
               onPressed: _fetchArticles,
-              child: Text('ลองใหม่', style: GoogleFonts.googleSans()),
+              child: Text(AppLocalizations.of(context).tryAgain, style: GoogleFonts.googleSans()),
             ),
           ],
         ),
@@ -237,7 +222,7 @@ class _ArticleListPageState extends State<ArticleListPage> {
             Icon(Icons.article_outlined, size: 64, color: Colors.grey.shade300),
             const SizedBox(height: 16),
             Text(
-              'ยังไม่มีบทความ',
+              AppLocalizations.of(context).noArticles,
               style: GoogleFonts.googleSans(
                 fontSize: 16,
                 color: AppColors.textSecondary,
@@ -273,8 +258,9 @@ class _ArticleListPageState extends State<ArticleListPage> {
           id: a['id'] as String,
           title: a['title'] as String,
           excerpt: a['excerpt'] as String?,
-          coverImageUrl: a['cover_image_url'] as String?,
-          publishAt: a['publish_at'] as String?,
+          thumbnailUrl: a['thumbnail_url'] as String?,
+          category: a['category'] as String?,
+          publishedAt: a['published_at'] as String?,
           createdByName: a['created_by_name'] as String?,
         );
       },
@@ -286,16 +272,18 @@ class _ArticleCard extends StatelessWidget {
   final String id;
   final String title;
   final String? excerpt;
-  final String? coverImageUrl;
-  final String? publishAt;
+  final String? thumbnailUrl;
+  final String? category;
+  final String? publishedAt;
   final String? createdByName;
 
   const _ArticleCard({
     required this.id,
     required this.title,
     this.excerpt,
-    this.coverImageUrl,
-    this.publishAt,
+    this.thumbnailUrl,
+    this.category,
+    this.publishedAt,
     this.createdByName,
   });
 
@@ -304,11 +292,11 @@ class _ArticleCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
             color: AppColors.cardShadow,
             blurRadius: 8,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -328,9 +316,9 @@ class _ArticleCard extends StatelessWidget {
                 SizedBox(
                   height: 180,
                   width: double.infinity,
-                  child: coverImageUrl != null
+                  child: thumbnailUrl != null
                       ? Image.network(
-                          coverImageUrl!,
+                          thumbnailUrl!,
                           fit: BoxFit.cover,
                           errorBuilder: (_, _, _) =>
                               const _GradientPlaceholder(),
@@ -342,6 +330,10 @@ class _ArticleCard extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      if (category?.isNotEmpty ?? false) ...[
+                        CategoryChip(label: category!),
+                        const SizedBox(height: 6),
+                      ],
                       Text(
                         title,
                         style: GoogleFonts.googleSans(
@@ -365,7 +357,7 @@ class _ArticleCard extends StatelessWidget {
                         ),
                       ],
                       const SizedBox(height: 8),
-                      if (createdByName != null && createdByName!.isNotEmpty)
+                      if (createdByName?.isNotEmpty ?? false)
                         Row(
                           children: [
                             const Icon(Icons.person_outline, size: 14, color: AppColors.textMuted),
@@ -379,14 +371,14 @@ class _ArticleCard extends StatelessWidget {
                             ),
                           ],
                         ),
-                      if (publishAt != null) ...[
+                      if (publishedAt != null) ...[
                         const SizedBox(height: 2),
                         Row(
                           children: [
                             const Icon(Icons.access_time, size: 14, color: AppColors.textMuted),
                             const SizedBox(width: 4),
                             Text(
-                              _ArticleListPageState._formatDateTime(publishAt!),
+                              _formatDateTime(publishedAt!),
                               style: GoogleFonts.googleSans(
                                 fontSize: 12,
                                 color: AppColors.textMuted,
@@ -416,8 +408,8 @@ class _SkeletonArticleCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.white,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: const Offset(0, 2)),
+        boxShadow: const [
+          BoxShadow(color: AppColors.cardShadow, blurRadius: 8, offset: Offset(0, 2)),
         ],
       ),
       child: Column(

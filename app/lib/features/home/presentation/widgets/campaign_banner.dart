@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 import '../../../health/presentation/pages/hiv_assessment_page.dart';
 
 class CampaignBanner extends StatelessWidget {
@@ -98,7 +99,7 @@ class CampaignBanner extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'ทำแบบประเมินความเสี่ยง',
+                              AppLocalizations.of(context).campaignAssessRisk,
                               style: GoogleFonts.googleSans(
                                 color: Colors.white,
                                 fontSize: 15,
@@ -106,7 +107,7 @@ class CampaignBanner extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'การติดเชื้อ HIV ฟรี!',
+                              AppLocalizations.of(context).campaignHIVFree,
                               style: GoogleFonts.googleSans(
                                 color: Colors.white70,
                                 fontSize: 13,

@@ -1,10 +1,18 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
+import '../../../../../core/services/app_version_service.dart';
 import '../../../home/presentation/pages/home_navigator.dart';
 import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
 import '../../../service/presentation/pages/request_history_page.dart';
+import '../../widgets/update_dialog.dart';
+import 'settings_page.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -24,8 +32,43 @@ class _MainScreenState extends State<MainScreen> {
   // Unread count จาก MessagesPage — ใช้แสดง badge บน nav bar
   final ValueNotifier<int> _messagesUnreadNotifier = ValueNotifier(0);
 
+  StreamSubscription<AuthState>? _authSubscription;
+  bool _versionCheckDone = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _authSubscription =
+        Supabase.instance.client.auth.onAuthStateChange.listen((state) {
+      if (!mounted) return;
+      if (state.event == AuthChangeEvent.signedOut) {
+        _messagesUnreadNotifier.value = 0;
+        setState(() {
+          _currentIndex = 0;
+          _messagesRefreshKey++;
+        });
+      } else if (state.event == AuthChangeEvent.signedIn) {
+        setState(() => _messagesRefreshKey++);
+      }
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
+  }
+
+  Future<void> _checkForUpdate() async {
+    if (_versionCheckDone || !mounted) return;
+    _versionCheckDone = true;
+    final service = AppVersionService();
+    final remote = await service.getLatestVersion();
+    if (remote == null || !mounted) return;
+    final hasUpdate = await service.isUpdateAvailable();
+    if (hasUpdate && mounted) {
+      await UpdateDialog.show(context, remote);
+    }
+  }
+
   @override
   void dispose() {
+    _authSubscription?.cancel();
     _homeVisibilityNotifier.dispose();
     _messagesUnreadNotifier.dispose();
     super.dispose();
@@ -56,18 +99,39 @@ class _MainScreenState extends State<MainScreen> {
     }
   }
 
+  void _onAndroidBack() {
+    if (_currentIndex == 0 && (_homeNavigatorKey.currentState?.canPop() ?? false)) {
+      _homeNavigatorKey.currentState!.maybePop();
+      return;
+    }
+    if (_currentIndex == 1 && (_serviceNavigatorKey.currentState?.canPop() ?? false)) {
+      _serviceNavigatorKey.currentState!.maybePop();
+      return;
+    }
+    if (_currentIndex != 0) {
+      setState(() => _currentIndex = 0);
+      return;
+    }
+    SystemNavigator.pop();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.white,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _onAndroidBack();
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.white,
       body: IndexedStack(
         index: _currentIndex,
         children: [
-          HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory),
+          HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory, onGoToSettings: () => _onItemTapped(4)),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
           const ScanPage(),
           MessagesPage(unreadNotifier: _messagesUnreadNotifier, refreshKey: _messagesRefreshKey),
-          const Center(child: Text('Settings Screen Placeholder')),
+          const SettingsPage(),
         ],
       ),
       bottomNavigationBar: BottomNavigationBar(
@@ -76,18 +140,20 @@ class _MainScreenState extends State<MainScreen> {
         unselectedItemColor: AppColors.textMuted,
         showSelectedLabels: true,
         showUnselectedLabels: true,
+        selectedFontSize: 13,
+        unselectedFontSize: 12,
         currentIndex: _currentIndex,
         onTap: _onItemTapped,
         items: [
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'หน้าหลัก',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.home_outlined),
+            activeIcon: const Icon(Icons.home),
+            label: AppLocalizations.of(context).navHome,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.grid_view),
-            activeIcon: Icon(Icons.grid_view, color: AppColors.primary),
-            label: 'บริการ',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.grid_view),
+            activeIcon: const Icon(Icons.grid_view, color: AppColors.primary),
+            label: AppLocalizations.of(context).navService,
           ),
           BottomNavigationBarItem(
             icon: Container(
@@ -105,7 +171,7 @@ class _MainScreenState extends State<MainScreen> {
               ),
               child: const Icon(Icons.camera_alt_outlined, color: AppColors.white),
             ),
-            label: 'สแกน',
+            label: AppLocalizations.of(context).navScan,
           ),
           BottomNavigationBarItem(
             icon: ValueListenableBuilder<int>(
@@ -117,7 +183,7 @@ class _MainScreenState extends State<MainScreen> {
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
-                child: const Icon(Icons.chat_bubble_outline),
+                child: const Icon(Icons.notifications_outlined),
               ),
             ),
             activeIcon: ValueListenableBuilder<int>(
@@ -129,16 +195,17 @@ class _MainScreenState extends State<MainScreen> {
                   count > 99 ? '99+' : '$count',
                   style: const TextStyle(fontSize: 10, color: Colors.white),
                 ),
-                child: const Icon(Icons.chat_bubble),
+                child: const Icon(Icons.notifications),
               ),
             ),
-            label: 'แจ้งเตือน',
+            label: AppLocalizations.of(context).navMessages,
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.settings_outlined),
-            label: 'ตั้งค่า',
+          BottomNavigationBarItem(
+            icon: const Icon(Icons.settings_outlined),
+            label: AppLocalizations.of(context).navSettings,
           ),
         ],
+        ),
       ),
     );
   }

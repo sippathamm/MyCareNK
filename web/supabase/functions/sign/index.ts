@@ -61,6 +61,7 @@ Deno.serve(async (req: Request): Promise<Response> => {
   // Compute HMAC-SHA256 signature
   const secretKey = Deno.env.get('SIGNATURE_SECRET_KEY');
   if (!secretKey) {
+    console.error('[sign] SIGNATURE_SECRET_KEY is not set');
     return jsonResponse(500, 'error', 'เกิดข้อผิดพลาดของระบบ กรุณาลองใหม่');
   }
 

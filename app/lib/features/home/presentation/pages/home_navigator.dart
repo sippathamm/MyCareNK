@@ -5,12 +5,14 @@ class HomeNavigator extends StatelessWidget {
   final GlobalKey<NavigatorState> navigatorKey;
   final ValueNotifier<int> visibilityNotifier;
   final VoidCallback? onNavigateToHistory;
+  final VoidCallback? onGoToSettings;
 
   const HomeNavigator({
     super.key,
     required this.navigatorKey,
     required this.visibilityNotifier,
     this.onNavigateToHistory,
+    this.onGoToSettings,
   });
 
   @override
@@ -21,6 +23,7 @@ class HomeNavigator extends StatelessWidget {
         builder: (_) => HomePage(
           visibilityNotifier: visibilityNotifier,
           onNavigateToHistory: onNavigateToHistory,
+          onGoToSettings: onGoToSettings,
         ),
       ),
     );

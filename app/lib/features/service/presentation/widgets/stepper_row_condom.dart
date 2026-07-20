@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../../core/constants/app_colors.dart';
+import '../../../../../core/l10n/app_localizations.dart';
 
 class StepperRowCondom extends StatefulWidget {
   final String label;
@@ -74,19 +75,22 @@ class _StepperRowCondomState extends State<StepperRowCondom> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text.rich(
-            TextSpan(
-              text: 'ขนาด ',
-              style: GoogleFonts.googleSans(fontSize: 16, color: AppColors.textPrimary),
-              children: [
-                TextSpan(
-                  text: widget.label,
-                  style: GoogleFonts.googleSans(fontWeight: FontWeight.bold),
-                ),
-                const TextSpan(text: ' มม.'),
-              ],
-            ),
-          ),
+          Builder(builder: (context) {
+            final l10n = AppLocalizations.of(context);
+            return Text.rich(
+              TextSpan(
+                text: '${l10n.sizeLabel} ',
+                style: GoogleFonts.googleSans(fontSize: 16, color: AppColors.textPrimary),
+                children: [
+                  TextSpan(
+                    text: widget.label,
+                    style: GoogleFonts.googleSans(fontWeight: FontWeight.bold),
+                  ),
+                  TextSpan(text: ' ${l10n.sizeMm}'),
+                ],
+              ),
+            );
+          }),
           const Spacer(),
           _buildStepperButton(
             icon: Icons.remove,

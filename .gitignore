@@ -15,5 +15,14 @@
 .env.local
 .env.*.local
 
-# CLAUDE.md (local-only AI instructions)
+# CLAUDE.md and sub-files (local-only AI instructions)
 CLAUDE.md
+APP_ARCHITECTURE.md
+APP_UI_RULES.md
+WEB_ARCHITECTURE.md
+WEB_UI_RULES.md
+WEB_PAGES.md
+DB_SCHEMA.md
+
+# Local VS Code settings
+settings.local.json

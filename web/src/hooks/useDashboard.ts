@@ -45,7 +45,7 @@ function toLocalDateString(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-export function useDashboard() {
+export function useDashboard(serviceCenter: string | null = null) {
   const [data, setData] = useState<DashboardData>({
     statusCounts: EMPTY_COUNTS,
     monthlyStatusCounts: EMPTY_COUNTS,
@@ -62,9 +62,13 @@ export function useDashboard() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
     sevenDaysAgo.setHours(0, 0, 0, 0);
 
-    const { data: rows, error: err } = await supabase
+    let query = supabase
       .from('condom_requests')
       .select('request_status, created_at');
+    if (serviceCenter) {
+      query = query.eq('selected_service_center', serviceCenter);
+    }
+    const { data: rows, error: err } = await query;
 
     if (err) {
       setError(err.message);
@@ -106,7 +110,7 @@ export function useDashboard() {
 
     setData({ statusCounts: counts, monthlyStatusCounts: monthlyCounts, weeklyData });
     setLoading(false);
-  }, []);
+  }, [serviceCenter]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../widgets/recovery_codes_grid.dart';
 import 'login_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 /// Displays the new recovery codes after a successful password reset.
 class RecoveryCodesDisplayPage extends StatelessWidget {
@@ -22,7 +23,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: Text(
-          'เปลี่ยนรหัสผ่าน',
+          AppLocalizations.of(context).changePasswordTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -49,7 +50,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
               const SizedBox(height: 16),
 
               Text(
-                'เปลี่ยนรหัสผ่านสำเร็จ!',
+                AppLocalizations.of(context).passwordChangedSuccess,
                 style: GoogleFonts.googleSans(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -58,7 +59,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'รหัสกู้คืนชุดใหม่ถูกสร้างขึ้นแล้ว',
+                AppLocalizations.of(context).newCodesCreated,
                 style: GoogleFonts.googleSans(
                   fontSize: 15,
                   color: AppColors.textSecondary,
@@ -82,7 +83,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'รหัสกู้คืนชุดเก่าใช้ไม่ได้แล้ว\nกรุณาบันทึกรหัสชุดใหม่ทั้ง 6 ตัวไว้ในที่ปลอดภัย',
+                        AppLocalizations.of(context).oldCodesExpired,
                         style: GoogleFonts.googleSans(
                           fontSize: 13,
                           color: AppColors.textPrimary,
@@ -129,7 +130,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
                             const Icon(Icons.key_outlined, color: Colors.white, size: 18),
                             const SizedBox(width: 8),
                             Text(
-                              'รหัสกู้คืนบัญชี',
+                              AppLocalizations.of(context).recoveryCodesTitle,
                               style: GoogleFonts.googleSans(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -143,7 +144,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
                         padding: const EdgeInsets.all(16),
                         child: RecoveryCodesGrid(
                           recoveryCodes: recoveryCodes,
-                          footerText: 'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัสชุดใหม่นี้',
+                          footerText: AppLocalizations.of(context).newCodesHint,
                         ),
                       ),
                     ],
@@ -159,7 +160,7 @@ class RecoveryCodesDisplayPage extends StatelessWidget {
                     (route) => route.isFirst,
                   );
                 },
-                label: 'กลับไปเข้าสู่ระบบ',
+                label: AppLocalizations.of(context).backToLogin,
               ),
             ],
           ),

@@ -10,13 +10,17 @@ import UpdatePasswordPage from './pages/auth/UpdatePasswordPage';
 import DashboardPage from './pages/dashboard/DashboardPage';
 import RequestsPage from './pages/requests/RequestsPage';
 import StaffManagementPage from './pages/staff/StaffManagementPage';
+import StaffDirectoryPage from './pages/staff/StaffDirectoryPage';
 import StaffWorkloadPage from './pages/staff/StaffWorkloadPage';
 import NotificationsPage from './pages/notifications/NotificationsPage';
 import InventoryPage from './pages/inventory/InventoryPage';
 import AuditLogPage from './pages/audit/AuditLogPage';
-import AppointmentsPage from './pages/appointments/AppointmentsPage';
+import ConsultationsPage from './pages/consultations/ConsultationsPage';
 import ArticlesPage from './pages/articles/ArticlesPage';
 import ArticleEditorPage from './pages/articles/ArticleEditorPage';
+import ProfilePage from './pages/profile/ProfilePage';
+import LineCallbackPage from './pages/line-callback/LineCallbackPage';
+import ServiceCentersPage from './pages/service-centers/ServiceCentersPage';
 import MainLayout from './components/layout/MainLayout';
 import { NotificationProvider } from './contexts/NotificationContext';
 
@@ -55,6 +59,16 @@ function App() {
         element={<UpdatePasswordPage loading={loading} errorMsg={errorMsg} onSubmit={updatePassword} />}
       />
 
+      {/* LINE OAuth callback — protected but no MainLayout (redirect handler) */}
+      <Route
+        path="/line-callback"
+        element={
+          <ProtectedRoute session={session} isInitializing={isInitializing}>
+            <LineCallbackPage />
+          </ProtectedRoute>
+        }
+      />
+
       {/* Protected Routes inside MainLayout */}
       <Route
         path="/*"
@@ -65,8 +79,9 @@ function App() {
                 <Routes>
                   <Route path="dashboard" element={<DashboardPage session={session!} />} />
                   <Route path="requests" element={<RequestsPage />} />
-                  <Route path="appointments" element={<AppointmentsPage />} />
+                  <Route path="consultations" element={<ConsultationsPage />} />
                   <Route path="staff" element={<StaffManagementPage />} />
+                  <Route path="staff-directory" element={<StaffDirectoryPage />} />
                   <Route path="staff-workload" element={<StaffWorkloadPage />} />
                   <Route path="notifications" element={<NotificationsPage />} />
                   <Route path="inventory" element={<InventoryPage />} />
@@ -74,6 +89,8 @@ function App() {
                   <Route path="articles" element={<ArticlesPage />} />
                   <Route path="articles/new" element={<ArticleEditorPage />} />
                   <Route path="articles/:id/edit" element={<ArticleEditorPage />} />
+                  <Route path="service-centers" element={<ServiceCentersPage />} />
+                  <Route path="profile" element={<ProfilePage />} />
                   <Route path="*" element={<Navigate to="/dashboard" replace />} />
                 </Routes>
               </MainLayout>
