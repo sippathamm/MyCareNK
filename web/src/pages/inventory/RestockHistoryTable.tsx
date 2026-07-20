@@ -5,6 +5,7 @@ import TuneIcon from '@mui/icons-material/Tune';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRestockHistory } from '../../hooks/useRestockHistory';
+import { useIsMobile } from '../../hooks/useIsMobile';
 
 const thGridLocale = {
   noRowsLabel: 'ไม่มีประวัติการแก้ไขสต็อก',
@@ -68,6 +69,7 @@ interface RestockHistoryTableProps {
 }
 
 export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTableProps) {
+  const isMobile = useIsMobile();
   const { rows, loading, refetch } = useRestockHistory();
 
   useEffect(() => {
@@ -156,6 +158,7 @@ export default function RestockHistoryTable({ refetchTrigger }: RestockHistoryTa
           rows={stableRows}
           columns={columns}
           loading={loading}
+          columnVisibilityModel={isMobile ? { service_center: false, performer_name: false, note: false } : undefined}
           localeText={thGridLocale}
           initialState={{
             pagination: { paginationModel: { pageSize: 10, page: 0 } },

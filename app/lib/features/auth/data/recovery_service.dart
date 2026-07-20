@@ -1,7 +1,7 @@
 import 'dart:math';
 
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/l10n/app_localizations.dart';
 
 /// Result model for password recovery operations.
 class RecoveryResult {
@@ -111,21 +111,19 @@ class RecoveryService {
       return RecoveryResult(
         success: false,
         error: data['error'] as String? ??
-            'ชื่อผู้ใช้งานหรือรหัสกู้คืนไม่ถูกต้อง',
+            AppLocalizations.current.recoveryCodeInvalid,
         rateLimited: data['rate_limited'] == true,
         locked: data['locked'] == true,
       );
-    } on PostgrestException catch (e) {
-      debugPrint('RecoveryService.$functionName PostgrestException: ${e.message}');
-      return const RecoveryResult(
+    } on PostgrestException catch (_) {
+      return RecoveryResult(
         success: false,
-        error: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+        error: AppLocalizations.current.generalErrorRetry,
       );
-    } catch (e) {
-      debugPrint('RecoveryService.$functionName error: $e');
-      return const RecoveryResult(
+    } catch (_) {
+      return RecoveryResult(
         success: false,
-        error: 'เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง',
+        error: AppLocalizations.current.generalErrorRetry,
       );
     }
   }

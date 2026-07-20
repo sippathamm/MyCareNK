@@ -9,6 +9,7 @@ export interface InventoryLogRow {
   action: AuditAction;
   service_center: string;
   condom_delta: number;
+  condom_quantities: Record<string, number> | null;
   lubricant_delta: number;
   reason: string | null;
   note: string | null;

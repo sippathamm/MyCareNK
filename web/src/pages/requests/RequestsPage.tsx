@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Box, Typography, Paper, Chip, IconButton, TextField, MenuItem, Stack, Tooltip, Snackbar, Alert } from '@mui/material';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import MobileListCard from '../../components/shared/MobileListCard';
 import WarningIcon from '@mui/icons-material/Warning';
 import InboxIcon from '@mui/icons-material/Inbox';
 import { DataGrid } from '@mui/x-data-grid';
@@ -11,9 +13,11 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import { formatDate, getOverdueDays } from '../../utils/requestUtils';
 import { useRequests } from '../../hooks/useRequests';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { supabase } from '../../lib/supabase';
 import { createThGridLocale } from '../../constants/datagrid';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getRequestStatusSx } from '../../utils/statusColors';
 
 const thGridLocale = createThGridLocale('ไม่มีรายการคำขอ');
 
@@ -21,12 +25,12 @@ export default function RequestsPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const { requests, setRequests, loading } = useRequests();
+  const isMobile = useIsMobile();
   const { role, loading: roleLoading } = useRoleAccess();
-  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
-  const { centers } = useServiceCenters(isAdminOrSuperadmin);
+  const { selectedServiceCenter } = useServiceCenterFilter();
+  const { mode } = useColorMode();
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [serviceCenterFilter, setServiceCenterFilter] = useState('all');
   const [selectedRequest, setSelectedRequest] = useState<RequestData | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [statusUpdating, setStatusUpdating] = useState(false);
@@ -45,16 +49,18 @@ export default function RequestsPage() {
     }
   }, [loading, openRequestId, requests, navigate, location.pathname]);
 
+  const STATUS_LABELS: Record<string, string> = {
+    pending:            'รอดำเนินการ',
+    preparing:          'กำลังเตรียม',
+    ready:              'รอรับ',
+    completed:          'เสร็จสิ้น',
+    cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
+    cancelled_by_staff: 'ยกเลิกโดยเจ้าหน้าที่',
+  };
+
   const getStatusChip = (status: string) => {
-    switch (status) {
-      case 'pending':            return <Chip label="รอดำเนินการ"        size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600 }} />;
-      case 'preparing':          return <Chip label="กำลังเตรียม"        size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600 }} />;
-      case 'ready':              return <Chip label="รอรับ"              size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600 }} />;
-      case 'completed':          return <Chip label="เสร็จสิ้น"          size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600 }} />;
-      case 'cancelled_by_user':  return <Chip label="ยกเลิกโดยผู้ใช้"    size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-      case 'cancelled_by_staff': return <Chip label="ยกเลิกโดยเจ้าหน้าที่" size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600 }} />;
-      default: return <Chip label={status} size="small" />;
-    }
+    const label = STATUS_LABELS[status] ?? status;
+    return <Chip label={label} size="small" sx={getRequestStatusSx(status, mode)} />;
   };
 
   const handleOpenDialog = (req: RequestData) => {
@@ -100,8 +106,7 @@ export default function RequestsPage() {
     const matchStatus = statusFilter === 'all'
       || r.request_status === statusFilter
       || (statusFilter === 'cancelled' && (r.request_status === 'cancelled_by_user' || r.request_status === 'cancelled_by_staff'));
-    const matchServiceCenter = !isAdminOrSuperadmin || serviceCenterFilter === 'all'
-      || r.selected_service_center === serviceCenterFilter;
+    const matchServiceCenter = selectedServiceCenter === null || r.selected_service_center === selectedServiceCenter;
     return matchSearch && matchStatus && matchServiceCenter;
   });
 
@@ -188,7 +193,7 @@ export default function RequestsPage() {
         รายการคำขอ
       </Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        จัดการรายการคำขอถุงยางอนามัย
+        จัดการรายการคำขอถุงยางอนามัย/เจลหล่อลื่น
       </Typography>
 
       <Paper elevation={1} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
@@ -201,21 +206,6 @@ export default function RequestsPage() {
             onChange={(e) => setSearch(e.target.value)}
             sx={{ flexGrow: 1 }}
           />
-          {isAdminOrSuperadmin && (
-            <TextField
-              select
-              label="สถานบริการ"
-              size="small"
-              value={serviceCenterFilter}
-              onChange={(e) => setServiceCenterFilter(e.target.value)}
-              sx={{ minWidth: 200 }}
-            >
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              {centers.map(c => (
-                <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
-              ))}
-            </TextField>
-          )}
           <TextField
             select
             label="สถานะ"
@@ -248,6 +238,45 @@ export default function RequestsPage() {
             <InboxIcon sx={{ fontSize: 48 }} />
             <Typography variant="body1" fontWeight={500}>ไม่มีคำขอในสถานบริการของคุณ</Typography>
           </Box>
+        ) : isMobile ? (
+          filteredRequests.length === 0 ? (
+            <Box sx={{ py: 6, textAlign: 'center', color: 'text.disabled' }}>
+              <InboxIcon sx={{ fontSize: 40, mb: 1 }} />
+              <Typography variant="body2">ไม่มีรายการคำขอ</Typography>
+            </Box>
+          ) : (
+            <Stack spacing={1.5}>
+              {filteredRequests.map((r) => {
+                const days = getOverdueDays(r.selected_date ?? '', r.request_status);
+                const totalCondoms = Object.values(r.condom_quantities as Record<string, number>).reduce((a, b) => a + b, 0);
+                return (
+                  <MobileListCard
+                    key={r.id}
+                    title={r.reference_number}
+                    statusChip={getStatusChip(r.request_status)}
+                    onClick={() => handleOpenDialog(r)}
+                    meta={
+                      <>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatDate(r.selected_date ?? '')} · {r.selected_time ?? '-'} น.
+                          </Typography>
+                          {days > 0 && (
+                            <Tooltip title={`เลยกำหนด ${days} วัน`}>
+                              <WarningIcon color="error" fontSize="small" />
+                            </Tooltip>
+                          )}
+                        </Box>
+                        <Typography variant="body2" color="text.secondary">
+                          ถุงยางอนามัย {totalCondoms} ชิ้น / เจลหล่อลื่น {r.lubricant_quantity} ชิ้น
+                        </Typography>
+                      </>
+                    }
+                  />
+                );
+              })}
+            </Stack>
+          )
         ) : (
           <Box sx={{ height: 500, width: '100%' }}>
             <DataGrid
@@ -264,7 +293,7 @@ export default function RequestsPage() {
               disableRowSelectionOnClick
               sx={{
                 border: 'none',
-                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
               }}
             />

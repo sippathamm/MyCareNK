@@ -10,93 +10,115 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.4"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
-      appointment_status_logs: {
+      app_versions: {
         Row: {
-          appointment_id: string
-          changed_at: string
-          changed_by: string | null
-          from_status: Database["public"]["Enums"]["appointment_status"] | null
-          id: string
-          to_status: Database["public"]["Enums"]["appointment_status"]
+          additions: string[]
+          branch: string
+          build_number: number | null
+          created_at: string
+          download_url: string
+          fixes: string[]
+          force_update: boolean
+          id: number
+          improvements: string[]
+          others: string[]
+          release_date: string
+          version: string | null
         }
         Insert: {
-          appointment_id: string
-          changed_at?: string
-          changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["appointment_status"] | null
-          id?: string
-          to_status: Database["public"]["Enums"]["appointment_status"]
+          additions?: string[]
+          branch: string
+          build_number?: number | null
+          created_at?: string
+          download_url: string
+          fixes?: string[]
+          force_update?: boolean
+          id?: number
+          improvements?: string[]
+          others?: string[]
+          release_date?: string
+          version?: string | null
         }
         Update: {
-          appointment_id?: string
-          changed_at?: string
-          changed_by?: string | null
-          from_status?: Database["public"]["Enums"]["appointment_status"] | null
-          id?: string
-          to_status?: Database["public"]["Enums"]["appointment_status"]
+          additions?: string[]
+          branch?: string
+          build_number?: number | null
+          created_at?: string
+          download_url?: string
+          fixes?: string[]
+          force_update?: boolean
+          id?: number
+          improvements?: string[]
+          others?: string[]
+          release_date?: string
+          version?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "appointment_status_logs_appointment_id_fkey"
-            columns: ["appointment_id"]
-            isOneToOne: false
-            referencedRelation: "doctor_appointments"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       articles: {
         Row: {
-          content_html: string
-          content_json: Json
-          cover_image_url: string | null
+          body: string
+          category: string
           created_at: string | null
           created_by: string | null
-          has_draft: boolean
+          draft_body: string | null
+          draft_category: string | null
+          draft_thumbnail_url: string | null
+          draft_title: string | null
+          hidden_at: string | null
+          hidden_by: string | null
           id: string
-          is_visible: boolean
-          publish_at: string | null
-          published_content_html: string | null
-          published_content_json: Json | null
+          published_at: string | null
+          published_by: string | null
           status: Database["public"]["Enums"]["article_status"]
+          thumbnail_url: string | null
           title: string
           updated_at: string | null
+          updated_by: string | null
         }
         Insert: {
-          content_html?: string
-          content_json?: Json
-          cover_image_url?: string | null
+          body: string
+          category: string
           created_at?: string | null
           created_by?: string | null
-          has_draft?: boolean
+          draft_body?: string | null
+          draft_category?: string | null
+          draft_thumbnail_url?: string | null
+          draft_title?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
-          is_visible?: boolean
-          publish_at?: string | null
-          published_content_html?: string | null
-          published_content_json?: Json | null
+          published_at?: string | null
+          published_by?: string | null
           status?: Database["public"]["Enums"]["article_status"]
+          thumbnail_url?: string | null
           title: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Update: {
-          content_html?: string
-          content_json?: Json
-          cover_image_url?: string | null
+          body?: string
+          category?: string
           created_at?: string | null
           created_by?: string | null
-          has_draft?: boolean
+          draft_body?: string | null
+          draft_category?: string | null
+          draft_thumbnail_url?: string | null
+          draft_title?: string | null
+          hidden_at?: string | null
+          hidden_by?: string | null
           id?: string
-          is_visible?: boolean
-          publish_at?: string | null
-          published_content_html?: string | null
-          published_content_json?: Json | null
+          published_at?: string | null
+          published_by?: string | null
           status?: Database["public"]["Enums"]["article_status"]
+          thumbnail_url?: string | null
           title?: string
           updated_at?: string | null
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -117,7 +139,7 @@ export type Database = {
           selected_service_center: string
           selected_time: string | null
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           cancel_reason?: string | null
@@ -135,7 +157,7 @@ export type Database = {
           selected_service_center: string
           selected_time?: string | null
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           cancel_reason?: string | null
@@ -153,22 +175,56 @@ export type Database = {
           selected_service_center?: string
           selected_time?: string | null
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      consultation_status_logs: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          changed_by_name: string | null
+          consultation_id: string
+          from_status: Database["public"]["Enums"]["consultation_status"] | null
+          id: string
+          to_status: Database["public"]["Enums"]["consultation_status"]
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          consultation_id: string
+          from_status?:
+            | Database["public"]["Enums"]["consultation_status"]
+            | null
+          id?: string
+          to_status: Database["public"]["Enums"]["consultation_status"]
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          changed_by_name?: string | null
+          consultation_id?: string
+          from_status?:
+            | Database["public"]["Enums"]["consultation_status"]
+            | null
+          id?: string
+          to_status?: Database["public"]["Enums"]["consultation_status"]
         }
         Relationships: [
           {
-            foreignKeyName: "fk_condom_requests_service_center"
-            columns: ["selected_service_center"]
+            foreignKeyName: "consultation_status_logs_consultation_id_fkey"
+            columns: ["consultation_id"]
             isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
+            referencedRelation: "consultations"
+            referencedColumns: ["id"]
           },
         ]
       }
-      doctor_appointments: {
+      consultations: {
         Row: {
-          appointment_status: Database["public"]["Enums"]["appointment_status"]
           cancel_reason: string | null
+          consultation_status: Database["public"]["Enums"]["consultation_status"]
           created_at: string
           handled_by: string | null
           id: string
@@ -179,11 +235,11 @@ export type Database = {
           selected_service_center: string
           selected_time: string
           updated_at: string
-          user_id: string
+          user_id: string | null
         }
         Insert: {
-          appointment_status?: Database["public"]["Enums"]["appointment_status"]
           cancel_reason?: string | null
+          consultation_status?: Database["public"]["Enums"]["consultation_status"]
           created_at?: string
           handled_by?: string | null
           id?: string
@@ -194,11 +250,11 @@ export type Database = {
           selected_service_center: string
           selected_time: string
           updated_at?: string
-          user_id: string
+          user_id?: string | null
         }
         Update: {
-          appointment_status?: Database["public"]["Enums"]["appointment_status"]
           cancel_reason?: string | null
+          consultation_status?: Database["public"]["Enums"]["consultation_status"]
           created_at?: string
           handled_by?: string | null
           id?: string
@@ -209,27 +265,21 @@ export type Database = {
           selected_service_center?: string
           selected_time?: string
           updated_at?: string
-          user_id?: string
+          user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_doctor_appointments_service_center"
-            columns: ["selected_service_center"]
-            isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
       inventory_logs: {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
           condom_delta: number
+          condom_quantities: Json | null
           created_at: string
           id: string
           lubricant_delta: number
           note: string | null
           performed_by: string | null
+          performed_by_name: string | null
           reason: string | null
           reference_request_id: string | null
           service_center: string
@@ -237,11 +287,13 @@ export type Database = {
         Insert: {
           action: Database["public"]["Enums"]["audit_action"]
           condom_delta?: number
+          condom_quantities?: Json | null
           created_at?: string
           id?: string
           lubricant_delta?: number
           note?: string | null
           performed_by?: string | null
+          performed_by_name?: string | null
           reason?: string | null
           reference_request_id?: string | null
           service_center: string
@@ -249,23 +301,18 @@ export type Database = {
         Update: {
           action?: Database["public"]["Enums"]["audit_action"]
           condom_delta?: number
+          condom_quantities?: Json | null
           created_at?: string
           id?: string
           lubricant_delta?: number
           note?: string | null
           performed_by?: string | null
+          performed_by_name?: string | null
           reason?: string | null
           reference_request_id?: string | null
           service_center?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "fk_inventory_logs_service_center"
-            columns: ["service_center"]
-            isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
-          },
           {
             foreignKeyName: "inventory_logs_reference_request_id_fkey"
             columns: ["reference_request_id"]
@@ -274,6 +321,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      notification_settings: {
+        Row: {
+          event_type: string
+          notify_admin: boolean
+          notify_staff: boolean
+          notify_superadmin: boolean
+          source_type: string
+          updated_at: string
+        }
+        Insert: {
+          event_type: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type: string
+          updated_at?: string
+        }
+        Update: {
+          event_type?: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          source_type?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       recovery_attempts: {
         Row: {
@@ -300,6 +374,7 @@ export type Database = {
         Row: {
           changed_at: string
           changed_by: string | null
+          changed_by_name: string | null
           from_status: Database["public"]["Enums"]["request_status"] | null
           id: string
           request_id: string
@@ -308,6 +383,7 @@ export type Database = {
         Insert: {
           changed_at?: string
           changed_by?: string | null
+          changed_by_name?: string | null
           from_status?: Database["public"]["Enums"]["request_status"] | null
           id?: string
           request_id: string
@@ -316,6 +392,7 @@ export type Database = {
         Update: {
           changed_at?: string
           changed_by?: string | null
+          changed_by_name?: string | null
           from_status?: Database["public"]["Enums"]["request_status"] | null
           id?: string
           request_id?: string
@@ -334,34 +411,31 @@ export type Database = {
       service_center_inventory: {
         Row: {
           condom_qty: number
+          condom_quantities: Json
           id: string
-          last_restocked_at: string | null
           lubricant_qty: number
           service_center: string
           updated_at: string
-          updated_by: string | null
         }
         Insert: {
           condom_qty?: number
+          condom_quantities?: Json
           id?: string
-          last_restocked_at?: string | null
           lubricant_qty?: number
           service_center: string
           updated_at?: string
-          updated_by?: string | null
         }
         Update: {
           condom_qty?: number
+          condom_quantities?: Json
           id?: string
-          last_restocked_at?: string | null
           lubricant_qty?: number
           service_center?: string
           updated_at?: string
-          updated_by?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "fk_service_center_inventory_service_center"
+            foreignKeyName: "service_center_inventory_service_center_fkey"
             columns: ["service_center"]
             isOneToOne: true
             referencedRelation: "service_centers"
@@ -372,49 +446,67 @@ export type Database = {
       service_centers: {
         Row: {
           address: string | null
+          admin_count: number
+          condom_service_enabled: boolean
+          consultation_service_enabled: boolean
+          consultation_times: string[]
           contacts: Json
           created_at: string
           description: string | null
           display_order: number
           image_url: string | null
-          is_active: boolean
           latitude: number | null
           longitude: number | null
           name: string
           operating_hours: string | null
+          pickup_times: string[]
+          staff_count: number
+          superadmin_count: number
           updated_at: string
         }
         Insert: {
           address?: string | null
+          admin_count?: number
+          condom_service_enabled?: boolean
+          consultation_service_enabled?: boolean
+          consultation_times?: string[]
           contacts?: Json
           created_at?: string
           description?: string | null
           display_order?: number
           image_url?: string | null
-          is_active?: boolean
           latitude?: number | null
           longitude?: number | null
           name: string
           operating_hours?: string | null
+          pickup_times?: string[]
+          staff_count?: number
+          superadmin_count?: number
           updated_at?: string
         }
         Update: {
           address?: string | null
+          admin_count?: number
+          condom_service_enabled?: boolean
+          consultation_service_enabled?: boolean
+          consultation_times?: string[]
           contacts?: Json
           created_at?: string
           description?: string | null
           display_order?: number
           image_url?: string | null
-          is_active?: boolean
           latitude?: number | null
           longitude?: number | null
           name?: string
           operating_hours?: string | null
+          pickup_times?: string[]
+          staff_count?: number
+          superadmin_count?: number
           updated_at?: string
         }
         Relationships: []
       }
-      staff_audit_logs: {
+      staff_change_logs: {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
           created_at: string
@@ -422,7 +514,10 @@ export type Database = {
           new_value: Json | null
           old_value: Json | null
           performed_by: string | null
+          performed_by_name: string | null
           target_id: string
+          target_name: string | null
+          target_staff_user_id: string | null
           target_table: string
         }
         Insert: {
@@ -432,7 +527,10 @@ export type Database = {
           new_value?: Json | null
           old_value?: Json | null
           performed_by?: string | null
+          performed_by_name?: string | null
           target_id: string
+          target_name?: string | null
+          target_staff_user_id?: string | null
           target_table: string
         }
         Update: {
@@ -442,10 +540,39 @@ export type Database = {
           new_value?: Json | null
           old_value?: Json | null
           performed_by?: string | null
+          performed_by_name?: string | null
           target_id?: string
+          target_name?: string | null
+          target_staff_user_id?: string | null
           target_table?: string
         }
         Relationships: []
+      }
+      staff_notification_hidden: {
+        Row: {
+          hidden_at: string
+          notification_id: string
+          staff_user_id: string
+        }
+        Insert: {
+          hidden_at?: string
+          notification_id: string
+          staff_user_id: string
+        }
+        Update: {
+          hidden_at?: string
+          notification_id?: string
+          staff_user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_notification"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "staff_notifications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       staff_notification_reads: {
         Row: {
@@ -465,7 +592,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notification_reads_notification_id_fkey"
+            foreignKeyName: "staff_notification_reads_notification_id_fkey"
             columns: ["notification_id"]
             isOneToOne: false
             referencedRelation: "staff_notifications"
@@ -479,8 +606,11 @@ export type Database = {
           event_type: string
           id: string
           metadata: Json
-          reference_number: string
-          source_id: string
+          notify_admin: boolean
+          notify_staff: boolean
+          notify_superadmin: boolean
+          service_centers: string[]
+          source_id: string | null
           source_type: string
         }
         Insert: {
@@ -488,8 +618,11 @@ export type Database = {
           event_type: string
           id?: string
           metadata?: Json
-          reference_number?: string
-          source_id: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          service_centers?: string[]
+          source_id?: string | null
           source_type: string
         }
         Update: {
@@ -497,8 +630,11 @@ export type Database = {
           event_type?: string
           id?: string
           metadata?: Json
-          reference_number?: string
-          source_id?: string
+          notify_admin?: boolean
+          notify_staff?: boolean
+          notify_superadmin?: boolean
+          service_centers?: string[]
+          source_id?: string | null
           source_type?: string
         }
         Relationships: []
@@ -509,8 +645,11 @@ export type Database = {
           first_name: string | null
           id: string
           last_name: string | null
+          line_display_name: string | null
+          line_picture_url: string | null
+          line_user_id: string | null
           role: Database["public"]["Enums"]["role"]
-          service_center: string | null
+          service_centers: string[] | null
           staff_user_id: string
           updated_at: string | null
         }
@@ -519,8 +658,11 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          line_display_name?: string | null
+          line_picture_url?: string | null
+          line_user_id?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: string | null
+          service_centers?: string[] | null
           staff_user_id: string
           updated_at?: string | null
         }
@@ -529,20 +671,15 @@ export type Database = {
           first_name?: string | null
           id?: string
           last_name?: string | null
+          line_display_name?: string | null
+          line_picture_url?: string | null
+          line_user_id?: string | null
           role?: Database["public"]["Enums"]["role"]
-          service_center?: string | null
+          service_centers?: string[] | null
           staff_user_id?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_staff_profiles_service_center"
-            columns: ["service_center"]
-            isOneToOne: false
-            referencedRelation: "service_centers"
-            referencedColumns: ["name"]
-          },
-        ]
+        Relationships: []
       }
       user_monthly_quotas: {
         Row: {
@@ -635,8 +772,11 @@ export type Database = {
           created_at: string | null
           date_of_birth: string | null
           gender: string | null
+          health_coverage: string | null
           id: string
           nationality: string | null
+          nickname: string | null
+          phone_number: string | null
           user_id: string
           username: string
         }
@@ -644,8 +784,11 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           gender?: string | null
+          health_coverage?: string | null
           id?: string
           nationality?: string | null
+          nickname?: string | null
+          phone_number?: string | null
           user_id: string
           username?: string
         }
@@ -653,8 +796,11 @@ export type Database = {
           created_at?: string | null
           date_of_birth?: string | null
           gender?: string | null
+          health_coverage?: string | null
           id?: string
           nationality?: string | null
+          nickname?: string | null
+          phone_number?: string | null
           user_id?: string
           username?: string
         }
@@ -687,6 +833,45 @@ export type Database = {
         }
         Relationships: []
       }
+      web_changelogs: {
+        Row: {
+          additions: string[]
+          branch: string
+          build_number: number
+          created_at: string
+          fixes: string[]
+          id: number
+          improvements: string[]
+          others: string[]
+          release_date: string
+          version: string
+        }
+        Insert: {
+          additions?: string[]
+          branch: string
+          build_number: number
+          created_at?: string
+          fixes?: string[]
+          id?: number
+          improvements?: string[]
+          others?: string[]
+          release_date: string
+          version: string
+        }
+        Update: {
+          additions?: string[]
+          branch?: string
+          build_number?: number
+          created_at?: string
+          fixes?: string[]
+          id?: number
+          improvements?: string[]
+          others?: string[]
+          release_date?: string
+          version?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -705,7 +890,7 @@ export type Database = {
         }
         Returns: string
       }
-      create_doctor_appointment: {
+      create_consultation: {
         Args: {
           p_date: string
           p_note?: string
@@ -716,65 +901,18 @@ export type Database = {
         }
         Returns: string
       }
-      dearmor: { Args: { "": string }; Returns: string }
+      delete_own_account: { Args: never; Returns: undefined }
       delete_service_center: { Args: { p_name: string }; Returns: undefined }
-      gen_random_uuid: { Args: never; Returns: string }
-      gen_salt: { Args: { "": string }; Returns: string }
-      get_appointment_status_log: {
-        Args: {
-          p_date_from?: string
-          p_date_to?: string
-          p_from_status?: string
-          p_limit?: number
-          p_offset?: number
-          p_performed_by?: string
-          p_reference_number?: string
-          p_to_status?: string
-        }
-        Returns: {
-          appointment_id: string
-          changed_at: string
-          from_status: string
-          full_name: string
-          id: string
-          performed_by: string
-          reference_number: string
-          to_status: string
-        }[]
-      }
       get_article_detail: {
         Args: { p_article_id: string }
         Returns: {
-          content_json: Json
-          cover_image_url: string
+          body: string
+          category: string
           created_by_name: string
           id: string
-          publish_at: string
+          published_at: string
+          thumbnail_url: string
           title: string
-        }[]
-      }
-      get_audit_log: {
-        Args: {
-          p_action?: string
-          p_date_from?: string
-          p_date_to?: string
-          p_limit?: number
-          p_offset?: number
-          p_performed_by?: string
-          p_target_id?: string
-          p_target_table?: string
-        }
-        Returns: {
-          action: Database["public"]["Enums"]["audit_action"]
-          created_at: string
-          full_name: string
-          id: string
-          new_value: Json
-          old_value: Json
-          performed_by: string
-          target_full_name: string
-          target_id: string
-          target_table: string
         }[]
       }
       get_average_lead_time: {
@@ -788,6 +926,29 @@ export type Database = {
           pending_to_preparing: number
           preparing_to_ready: number
           ready_to_completed: number
+        }[]
+      }
+      get_consultation_status_log: {
+        Args: {
+          p_date_from?: string
+          p_date_to?: string
+          p_from_status?: string
+          p_limit?: number
+          p_offset?: number
+          p_performed_by?: string
+          p_reference_number?: string
+          p_service_center?: string
+          p_to_status?: string
+        }
+        Returns: {
+          changed_at: string
+          consultation_id: string
+          from_status: string
+          full_name: string
+          id: string
+          performed_by: string
+          reference_number: string
+          to_status: string
         }[]
       }
       get_consumption_trend: {
@@ -806,7 +967,7 @@ export type Database = {
           condom_daily_burn: number
           condom_days_left: number
           condom_qty: number
-          is_active: boolean
+          condom_quantities: Json
           lubricant_daily_burn: number
           lubricant_days_left: number
           lubricant_qty: number
@@ -825,6 +986,7 @@ export type Database = {
         Returns: {
           action: Database["public"]["Enums"]["audit_action"]
           condom_delta: number
+          condom_quantities: Json
           created_at: string
           full_name: string
           id: string
@@ -835,6 +997,38 @@ export type Database = {
           service_center: string
         }[]
       }
+      get_latest_app_version: {
+        Args: { p_branch?: string }
+        Returns: {
+          additions: string[]
+          branch: string
+          build_number: number
+          created_at: string
+          download_url: string
+          fixes: string[]
+          force_update: boolean
+          id: number
+          improvements: string[]
+          others: string[]
+          release_date: string
+          version: string
+        }[]
+      }
+      get_latest_web_changelog: {
+        Args: { p_branch?: string }
+        Returns: {
+          additions: string[]
+          branch: string
+          build_number: number
+          fixes: string[]
+          id: number
+          improvements: string[]
+          others: string[]
+          release_date: string
+          version: string
+        }[]
+      }
+      get_my_service_centers: { Args: never; Returns: string[] }
       get_peak_time_stats: {
         Args: {
           p_date_from: string
@@ -850,11 +1044,12 @@ export type Database = {
       get_published_articles: {
         Args: { p_limit?: number; p_offset?: number }
         Returns: {
-          cover_image_url: string
+          category: string
           created_by_name: string
           excerpt: string
           id: string
-          publish_at: string
+          published_at: string
+          thumbnail_url: string
           title: string
         }[]
       }
@@ -867,6 +1062,7 @@ export type Database = {
           p_offset?: number
           p_performed_by?: string
           p_reference_number?: string
+          p_service_center?: string
           p_to_status?: string
         }
         Returns: {
@@ -900,25 +1096,27 @@ export type Database = {
       get_service_centers: {
         Args: never
         Returns: {
+          address: string | null
+          admin_count: number
+          condom_service_enabled: boolean
+          consultation_service_enabled: boolean
+          consultation_times: string[]
           contacts: Json
           created_at: string
           description: string | null
           display_order: number
           image_url: string | null
-          is_active: boolean
           latitude: number | null
           longitude: number | null
           name: string
+          operating_hours: string | null
+          pickup_times: string[]
+          staff_count: number
+          superadmin_count: number
           updated_at: string
         }[]
-        SetofOptions: {
-          from: "*"
-          to: "service_centers"
-          isOneToOne: false
-          isSetofReturn: true
-        }
       }
-      get_staff_audit_log: {
+      get_staff_change_log: {
         Args: {
           p_action?: string
           p_date_from?: string
@@ -926,6 +1124,7 @@ export type Database = {
           p_limit?: number
           p_offset?: number
           p_performed_by?: string
+          p_service_center?: string
           p_target_id?: string
         }
         Returns: {
@@ -938,6 +1137,8 @@ export type Database = {
           performed_by: string
           target_full_name: string
           target_id: string
+          target_name: string
+          target_staff_user_id: string
         }[]
       }
       get_staff_workload: {
@@ -978,32 +1179,24 @@ export type Database = {
       is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
       is_superadmin: { Args: never; Returns: boolean }
-      log_audit_event: {
-        Args: {
-          p_action: string
-          p_new_value?: Json
-          p_old_value?: Json
-          p_performed_by: string
-          p_target_id: string
-          p_target_table: string
-        }
+      rename_service_center: {
+        Args: { p_new: string; p_old: string }
         Returns: undefined
-      }
-      pgp_armor_headers: {
-        Args: { "": string }
-        Returns: Record<string, unknown>[]
       }
       save_recovery_codes: {
         Args: { secret_codes: string[] }
         Returns: undefined
       }
-      toggle_service_center_active: {
-        Args: { p_is_active: boolean; p_name: string }
+      update_notification_settings: {
+        Args: { p_settings: Json }
         Returns: undefined
       }
       upsert_service_center: {
         Args: {
           p_address?: string
+          p_condom_service_enabled?: boolean
+          p_consultation_service_enabled?: boolean
+          p_consultation_times?: string[]
           p_contacts?: Json
           p_description?: string
           p_display_order?: number
@@ -1012,6 +1205,7 @@ export type Database = {
           p_longitude?: number
           p_name: string
           p_operating_hours?: string
+          p_pickup_times?: string[]
         }
         Returns: undefined
       }
@@ -1027,26 +1221,22 @@ export type Database = {
         }
         Returns: Json
       }
-      write_audit_log: {
+      write_staff_change_log: {
         Args: {
           p_action: Database["public"]["Enums"]["audit_action"]
           p_new_value?: Json
           p_old_value?: Json
           p_performed_by?: string
           p_target_id: string
+          p_target_name?: string
+          p_target_staff_user_id?: string
           p_target_table: string
         }
         Returns: undefined
       }
     }
     Enums: {
-      appointment_status:
-        | "pending"
-        | "confirmed"
-        | "cancelled_by_user"
-        | "cancelled_by_staff"
-        | "completed"
-      article_status: "draft" | "scheduled" | "published" | "hidden"
+      article_status: "draft" | "published" | "hidden"
       audit_action:
         | "role_updated"
         | "staff_profile_updated"
@@ -1056,6 +1246,12 @@ export type Database = {
         | "staff_created"
         | "staff_deleted"
         | "email_updated"
+      consultation_status:
+        | "pending"
+        | "confirmed"
+        | "completed"
+        | "cancelled_by_user"
+        | "cancelled_by_staff"
       request_status:
         | "pending"
         | "preparing"
@@ -1192,14 +1388,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      appointment_status: [
-        "pending",
-        "confirmed",
-        "cancelled_by_user",
-        "cancelled_by_staff",
-        "completed",
-      ],
-      article_status: ["draft", "scheduled", "published", "hidden"],
+      article_status: ["draft", "published", "hidden"],
       audit_action: [
         "role_updated",
         "staff_profile_updated",
@@ -1209,6 +1398,13 @@ export const Constants = {
         "staff_created",
         "staff_deleted",
         "email_updated",
+      ],
+      consultation_status: [
+        "pending",
+        "confirmed",
+        "completed",
+        "cancelled_by_user",
+        "cancelled_by_staff",
       ],
       request_status: [
         "pending",

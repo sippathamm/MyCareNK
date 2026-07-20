@@ -1,14 +1,19 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Navigate } from 'react-router-dom';
+import { useRoleAccess } from '../../hooks/useRoleAccess';
 import {
   Box, Typography, Paper, Button, IconButton, Tooltip,
-  Stack, TextField, Divider, RadioGroup, FormControlLabel, Radio, Switch,
-  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+  Stack, TextField, Divider, Chip,
+  Dialog, DialogTitle, DialogContent, DialogActions,
   Snackbar, Alert, LinearProgress, CircularProgress,
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import CloseIcon from '@mui/icons-material/Close';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import VisibilityOffOutlinedIcon from '@mui/icons-material/VisibilityOffOutlined';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ConfirmDialog from '../../components/shared/ConfirmDialog';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 import FormatBoldIcon from '@mui/icons-material/FormatBold';
 import FormatAlignLeftIcon from '@mui/icons-material/FormatAlignLeft';
 import FormatAlignCenterIcon from '@mui/icons-material/FormatAlignCenter';
@@ -35,6 +40,25 @@ import Youtube from '@tiptap/extension-youtube';
 import Placeholder from '@tiptap/extension-placeholder';
 import CharacterCount from '@tiptap/extension-character-count';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../hooks/useAuth';
+import { formatDateTime } from '../../utils/requestUtils';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getArticleStatusSx, ARTICLE_STATUS_LABELS } from '../../utils/statusColors';
+import {
+  type ArticleStatus, type ArticleDetail, type ContentPayload,
+  fetchArticleDetail, createArticle,
+  publishArticle as publishArticleHelper,
+  republishArticle as republishArticleHelper,
+  hideArticle as hideArticleHelper,
+  restoreArticle as restoreArticleHelper,
+  autoSaveArticle,
+} from '../../hooks/useArticles';
+
+// ─── Auto-save constants ──────────────────────────────────────────────────────
+
+const DEBOUNCE_DELAY = 2000;
+const RETRY_DELAY = 5000;
+const MAX_SILENT_RETRIES = 1;
 
 // ─── Custom image extension (size + alignment) ────────────────────────────────
 
@@ -86,7 +110,38 @@ interface SnackbarState {
   severity: 'success' | 'error';
 }
 
-type AutoSaveStatus = 'idle' | 'saving' | 'saved';
+type AutoSaveStatus = 'idle' | 'saving' | 'saved' | 'failed' | 'offline';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+function getFileExtension(filename: string) {
+  return filename.split('.').pop() ?? 'jpg';
+}
+
+function generateId(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function extractStoragePath(url: string): string | null {
+  const marker = '/article-assets/';
+  const idx = url.indexOf(marker);
+  if (idx === -1) return null;
+  return decodeURIComponent(url.slice(idx + marker.length).split('?')[0]);
+}
+
+function extractImageUrlsFromHtml(html: string): string[] {
+  const urls: string[] = [];
+  for (const m of html.matchAll(/<img[^>]+src="([^"]+)"/g)) {
+    urls.push(m[1]);
+  }
+  return urls;
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
@@ -94,22 +149,40 @@ export default function ArticleEditorPage() {
   const navigate = useNavigate();
   const { id: articleId } = useParams<{ id: string }>();
   const isEditMode = !!articleId;
+  const { session } = useAuth();
+  const { role, loading: roleLoading } = useRoleAccess();
+  const { mode } = useColorMode();
 
-  // ─── State ─────────────────────────────────────────────────────────────────
+  const userId = session?.user?.id ?? '';
+
+  // ─── Content state ─────────────────────────────────────────────────────────
 
   const [title, setTitle] = useState('');
-  const [coverUrl, setCoverUrl] = useState<string | null>(null);
-  const [publishMode, setPublishMode] = useState<'immediate' | 'scheduled'>('immediate');
-  const [scheduledAt, setScheduledAt] = useState<Date | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
+  const [category, setCategory] = useState('');
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null);
 
-  const [isVisible, setIsVisible] = useState(true);
-  const [savedIsVisible, setSavedIsVisible] = useState(true);
-  const [isDirty, setIsDirty] = useState(false);
+  // ─── Article status state ──────────────────────────────────────────────────
+
+  const [articleStatus, setArticleStatus] = useState<ArticleStatus | null>(null);
+  // hasDraft: draft_* columns are non-null on a published/hidden article
+  const [hasDraft, setHasDraft] = useState(false);
+
+  // ─── UI state ──────────────────────────────────────────────────────────────
+
+  const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ title?: string; body?: string; category?: string }>({});
   const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>('idle');
+  const [autoSavedAt, setAutoSavedAt] = useState<Date | null>(null);
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [snackbar, setSnackbar] = useState<SnackbarState>({ open: false, message: '', severity: 'success' });
+  const [staffNameMap, setStaffNameMap] = useState<Record<string, string>>({});
+  const [articleMeta, setArticleMeta] = useState<{
+    created_by: string | null; created_at: string | null;
+    updated_by: string | null; updated_at: string | null;
+    published_by: string | null; published_at: string | null;
+    hidden_by: string | null; hidden_at: string | null;
+  } | null>(null);
 
   // ─── Dialog state ──────────────────────────────────────────────────────────
 
@@ -119,24 +192,32 @@ export default function ArticleEditorPage() {
   const [linkUrl, setLinkUrl] = useState('');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [exitDialogOpen, setExitDialogOpen] = useState(false);
-  const [exitSaveMode, setExitSaveMode] = useState<'draft' | 'publish' | null>(null);
+  const [hideDialogOpen, setHideDialogOpen] = useState(false);
 
   // ─── Refs ──────────────────────────────────────────────────────────────────
 
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const autoSaveStatusTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoad = useRef(true);
+  const userIdRef = useRef(userId);
+  userIdRef.current = userId;
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
+  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
+  const titleRef = useRef(title);
+  const categoryRef = useRef(category);
+  const thumbnailUrlRef = useRef(thumbnailUrl);
+  const articleStatusRef = useRef(articleStatus);
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const autoSaveRetryCount = useRef(0);
+  const scheduleAutoSaveRef = useRef<() => void>(() => {});
   const imageInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
 
-  // Kept in sync with latest state so auto-save timer never reads stale values
-  const editorRef = useRef<ReturnType<typeof useEditor>>(null);
-  const scheduleAutoSaveRef = useRef<() => void>(() => {});
-  const titleRef = useRef(title);
-  const coverUrlRef = useRef(coverUrl);
+  // Keep refs in sync with latest state
   titleRef.current = title;
-  coverUrlRef.current = coverUrl;
+  categoryRef.current = category;
+  thumbnailUrlRef.current = thumbnailUrl;
+  articleStatusRef.current = articleStatus;
 
   // ─── Editor ────────────────────────────────────────────────────────────────
 
@@ -152,12 +233,154 @@ export default function ArticleEditorPage() {
     content: '',
     onUpdate: () => {
       if (isInitialLoad.current) return;
-      setIsDirty(true);
+      setFieldErrors(prev => ({ ...prev, body: undefined }));
+      // Reset retry counter on real edit so retries re-enable
+      autoSaveRetryCount.current = 0;
+      if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
       scheduleAutoSaveRef.current();
     },
   });
 
-  // ─── Load existing article ─────────────────────────────────────────────────
+  // ─── Auto-save ─────────────────────────────────────────────────────────────
+
+  const doAutoSave = useCallback(async () => {
+    autoSaveTimer.current = null; // clear ref so handleBackClick knows timer has fired
+    const currentEditor = editorRef.current;
+    if (!currentEditor) return;
+
+    setAutoSaveStatus('saving');
+    const payload: ContentPayload = {
+      title: titleRef.current,
+      body: currentEditor.getHTML(),
+      category: categoryRef.current,
+      thumbnail_url: thumbnailUrlRef.current,
+    };
+
+    // ── New article: create in DB ───────────────────────────────────────────
+    if (!articleId) {
+      const allEmpty = !payload.title.trim() && currentEditor.isEmpty && !payload.category.trim();
+      if (allEmpty) { setAutoSaveStatus('idle'); return; }
+      const result = await createArticle(payload, userIdRef.current);
+      if ('error' in result) {
+        if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
+          autoSaveRetryCount.current++;
+          setAutoSaveStatus('failed');
+          retryTimer.current = setTimeout(doAutoSave, RETRY_DELAY);
+        } else {
+          setAutoSaveStatus('offline');
+        }
+      } else {
+        autoSaveRetryCount.current = 0;
+        setAutoSaveStatus('saved');
+        setAutoSavedAt(new Date());
+        navigateRef.current(`/articles/${result.id}/edit`, { replace: true });
+      }
+      return;
+    }
+
+    // ── Existing article ────────────────────────────────────────────────────
+    if (!articleStatusRef.current) return;
+    const saveTime = new Date().toISOString();
+    const err = await autoSaveArticle(articleId, payload, articleStatusRef.current, userIdRef.current);
+    if (!err) {
+      autoSaveRetryCount.current = 0;
+      setAutoSaveStatus('saved');
+      setAutoSavedAt(new Date());
+      if (articleStatusRef.current !== 'draft') setHasDraft(true);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userIdRef.current, updated_at: saveTime } : prev);
+    } else if (autoSaveRetryCount.current < MAX_SILENT_RETRIES) {
+      autoSaveRetryCount.current++;
+      setAutoSaveStatus('failed');
+      retryTimer.current = setTimeout(doAutoSave, RETRY_DELAY);
+    } else {
+      setAutoSaveStatus('offline');
+    }
+  }, [articleId]);
+
+  const scheduleAutoSave = useCallback(() => {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+    autoSaveTimer.current = setTimeout(doAutoSave, DEBOUNCE_DELAY);
+  }, [doAutoSave]);
+
+  useEffect(() => { editorRef.current = editor; }, [editor]);
+  scheduleAutoSaveRef.current = scheduleAutoSave;
+
+  // Trigger auto-save when title or category changes (editor changes handled in onUpdate)
+  useEffect(() => {
+    if (isInitialLoad.current) return;
+    autoSaveRetryCount.current = 0;
+    if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
+    scheduleAutoSave();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, category, scheduleAutoSave]);
+
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+      if (retryTimer.current) clearTimeout(retryTimer.current);
+    };
+  }, []);
+
+  // ─── Load article ──────────────────────────────────────────────────────────
+
+  const applyArticleToForm = useCallback((article: ArticleDetail) => {
+    const hasDraftContent =
+      article.draft_title !== null ||
+      article.draft_body !== null ||
+      article.draft_category !== null ||
+      article.draft_thumbnail_url !== null;
+
+    const isDraft = article.status === 'draft';
+    const formTitle = isDraft ? article.title : (article.draft_title ?? article.title);
+    const formBody  = isDraft ? article.body  : (article.draft_body  ?? article.body);
+    const formCat   = isDraft ? article.category : (article.draft_category ?? article.category);
+    // When a draft exists, use draft_thumbnail_url directly (even if null = "removed").
+    // ?? would incorrectly fall back to the original when draft explicitly cleared the thumbnail.
+    const formThumb = isDraft
+      ? article.thumbnail_url
+      : hasDraftContent
+        ? article.draft_thumbnail_url
+        : article.thumbnail_url;
+
+    setTitle(formTitle);
+    setCategory(formCat);
+    setThumbnailUrl(formThumb);
+    setArticleStatus(article.status as ArticleStatus);
+    setHasDraft(hasDraftContent);
+    editorRef.current?.commands.setContent(formBody, { emitUpdate: false });
+
+    setArticleMeta({
+      created_by: article.created_by, created_at: article.created_at,
+      updated_by: article.updated_by, updated_at: article.updated_at,
+      published_by: article.published_by, published_at: article.published_at,
+      hidden_by: article.hidden_by, hidden_at: article.hidden_at,
+    });
+
+    const ids = [...new Set([
+      article.created_by, article.updated_by,
+      article.published_by, article.hidden_by,
+    ].filter(Boolean) as string[])];
+    if (ids.length > 0) {
+      supabase.from('staff_profiles')
+        .select('staff_user_id, first_name, last_name')
+        .in('staff_user_id', ids)
+        .then(({ data }) => {
+          if (!data) return;
+          const map: Record<string, string> = {};
+          for (const s of data) map[s.staff_user_id] = `${s.first_name ?? ''} ${s.last_name ?? ''}`.trim();
+          setStaffNameMap(map);
+        });
+    }
+  }, []);
+
+  const loadArticle = useCallback(async () => {
+    if (!articleId || !editorRef.current) return null;
+    const article = await fetchArticleDetail(articleId);
+    if (!article) return null;
+    applyArticleToForm(article);
+    return article;
+  }, [articleId, applyArticleToForm]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -165,144 +388,146 @@ export default function ArticleEditorPage() {
       return;
     }
     if (!editor) return;
-    supabase
-      .from('articles')
-      .select('*')
-      .eq('id', articleId!)
-      .single()
-      .then(({ data, error }) => {
-        if (error || !data) return;
-        setTitle(data.title);
-        setIsVisible(data.is_visible ?? true);
-        setSavedIsVisible(data.is_visible ?? true);
-        setCoverUrl(data.cover_image_url);
-        if (data.publish_at) {
-          const d = new Date(data.publish_at);
-          if (d > new Date()) {
-            setPublishMode('scheduled');
-            setScheduledAt(d);
-          } else {
-            setPublishMode('immediate');
-          }
-        }
-        editor.commands.setContent(data.content_json as object);
-        setTimeout(() => { isInitialLoad.current = false; }, 300);
-      });
-  }, [articleId, isEditMode, editor]);
 
-  // ─── Auto-save logic ───────────────────────────────────────────────────────
+    (async () => {
+      await loadArticle();
+      setTimeout(() => { isInitialLoad.current = false; }, 300);
+    })();
+  // editor changes on mount only — no need to re-run on editor updates
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditMode, editor]);
 
-  // Stable callback: deps are only articleId (never changes after mount).
-  // All mutable values (editor, title, coverUrl) are read from refs at timer-fire
-  // time, so the closure is never stale.
-  const scheduleAutoSave = useCallback(() => {
-    if (!articleId) return;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(async () => {
-      const currentEditor = editorRef.current;
-      if (!currentEditor) return;
-      setAutoSaveStatus('saving');
-      const { error } = await supabase.from('articles').update({
-        title: titleRef.current.trim() || 'ไม่มีหัวเรื่อง',
-        content_html: currentEditor.getHTML(),
-        content_json: currentEditor.getJSON(),
-        cover_image_url: coverUrlRef.current || null,
-        has_draft: true,
-      }).eq('id', articleId);
-      if (!error) {
-        setIsDirty(false);
-        setAutoSaveStatus('saved');
-        if (autoSaveStatusTimer.current) clearTimeout(autoSaveStatusTimer.current);
-        autoSaveStatusTimer.current = setTimeout(() => setAutoSaveStatus('idle'), 3000);
-      } else {
-        setAutoSaveStatus('idle');
-      }
-    }, 2000);
-  }, [articleId]);
+  // ─── Validation ────────────────────────────────────────────────────────────
 
-  // Keep refs pointing at latest instances
-  useEffect(() => { editorRef.current = editor; }, [editor]);
-  scheduleAutoSaveRef.current = scheduleAutoSave;
+  function validateForPublish(): boolean {
+    const currentEditor = editorRef.current;
+    const errs: { title?: string; body?: string; category?: string } = {};
+    if (!titleRef.current.trim()) errs.title = 'กรุณาระบุหัวเรื่อง';
+    if (!categoryRef.current.trim()) errs.category = 'กรุณาระบุหมวดหมู่';
+    if (!currentEditor || currentEditor.isEmpty) errs.body = 'กรุณาระบุเนื้อหาบทความ';
+    setFieldErrors(errs);
+    return Object.keys(errs).length === 0;
+  }
 
-  useEffect(() => {
-    if (isInitialLoad.current || !isEditMode) return;
-    scheduleAutoSave();
-  }, [title, scheduleAutoSave, isEditMode]);
-
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-      if (autoSaveStatusTimer.current) clearTimeout(autoSaveStatusTimer.current);
-    };
-  }, []);
-
-  // ─── Helpers ───────────────────────────────────────────────────────────────
+  // ─── Snackbar ──────────────────────────────────────────────────────────────
 
   function showSnackbar(message: string, severity: 'success' | 'error') {
     setSnackbar({ open: true, message, severity });
   }
 
-  function getFileExtension(filename: string) {
-    return filename.split('.').pop() ?? 'jpg';
+  // ─── Get current payload from refs ────────────────────────────────────────
+
+  function getPayload(): ContentPayload {
+    return {
+      title: titleRef.current,
+      body: editorRef.current?.getHTML() ?? '',
+      category: categoryRef.current,
+      thumbnail_url: thumbnailUrlRef.current,
+    };
   }
 
-  function generateId(): string {
-    return Array.from(crypto.getRandomValues(new Uint8Array(16)))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
+  // ─── Scenario 4A — Publish from draft ─────────────────────────────────────
+
+  function cancelPendingAutoSave() {
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    if (retryTimer.current) clearTimeout(retryTimer.current);
+    autoSaveTimer.current = null;
   }
 
-  function extractStoragePath(url: string): string | null {
-    const marker = '/article-assets/';
-    const idx = url.indexOf(marker);
-    if (idx === -1) return null;
-    return decodeURIComponent(url.slice(idx + marker.length).split('?')[0]);
-  }
-
-  function extractContentImageUrls(json: unknown): string[] {
-    if (!json || typeof json !== 'object') return [];
-    const urls: string[] = [];
-    function traverse(node: Record<string, unknown>) {
-      if (node.type === 'image' && node.attrs && typeof node.attrs === 'object') {
-        const src = (node.attrs as Record<string, unknown>).src;
-        if (typeof src === 'string') urls.push(src);
-      }
-      if (Array.isArray(node.content)) {
-        (node.content as Record<string, unknown>[]).forEach(traverse);
-      }
-    }
-    traverse(json as Record<string, unknown>);
-    return urls;
-  }
-
-  // ─── Navigation with dirty check ──────────────────────────────────────────
-
-  function handleBackClick() {
-    if (isDirty) {
-      setExitDialogOpen(true);
+  async function handlePublish() {
+    if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
+    setSaving(true);
+    const publishTime = new Date().toISOString();
+    const err = await publishArticleHelper(articleId, getPayload(), userId);
+    if (err) {
+      showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
     } else {
-      navigate('/articles');
+      setAutoSaveStatus('idle');
+      setArticleStatus('published');
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: publishTime, published_by: userId, published_at: publishTime } : prev);
+      showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
     }
+    setSaving(false);
   }
 
-  async function handleExitSaveDraft() {
-    setExitSaveMode('draft');
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    await handleSave('draft');
-    setExitSaveMode(null);
-    navigate('/articles');
+  // ─── Scenario 4B — Republish ──────────────────────────────────────────────
+
+  async function handleRepublish() {
+    if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
+    setSaving(true);
+    const republishTime = new Date().toISOString();
+    const err = await republishArticleHelper(articleId, getPayload(), userId);
+    if (err) {
+      showSnackbar(`เผยแพร่ไม่สำเร็จ: ${err}`, 'error');
+    } else {
+      setAutoSaveStatus('idle');
+      setHasDraft(false);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: republishTime, published_by: userId, published_at: republishTime } : prev);
+      showSnackbar('เผยแพร่บทความเรียบร้อยแล้ว', 'success');
+    }
+    setSaving(false);
   }
 
-  async function handleExitSaveAndPublish() {
-    setExitSaveMode('publish');
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    await handleSave('publish');
-    setExitSaveMode(null);
-    navigate('/articles');
+  // ─── Scenario 5A — Hide ───────────────────────────────────────────────────
+
+  async function handleHide() {
+    if (!articleId) return;
+    cancelPendingAutoSave();
+    setSaving(true);
+    const hideTime = new Date().toISOString();
+    const err = await hideArticleHelper(articleId, userId);
+    if (err) {
+      showSnackbar(`ซ่อนบทความไม่สำเร็จ: ${err}`, 'error');
+    } else {
+      setArticleStatus('hidden');
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: hideTime, hidden_by: userId, hidden_at: hideTime } : prev);
+      showSnackbar('ซ่อนบทความเรียบร้อยแล้ว', 'success');
+    }
+    setHideDialogOpen(false);
+    setSaving(false);
   }
 
-  function handleExitDiscard() {
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+  // ─── Scenario 5B — Restore ────────────────────────────────────────────────
+
+  async function handleRestore() {
+    if (!validateForPublish() || !articleId) return;
+    cancelPendingAutoSave();
+    setSaving(true);
+    const restoreTime = new Date().toISOString();
+    const err = await restoreArticleHelper(articleId, getPayload(), userId);
+    if (err) {
+      showSnackbar(`เผยแพร่อีกครั้งไม่สำเร็จ: ${err}`, 'error');
+    } else {
+      setAutoSaveStatus('idle');
+      setArticleStatus('published');
+      setHasDraft(false);
+      setArticleMeta(prev => prev ? { ...prev, updated_by: userId, updated_at: restoreTime, published_by: userId, published_at: restoreTime } : prev);
+      showSnackbar('เผยแพร่บทความอีกครั้งเรียบร้อยแล้ว', 'success');
+    }
+    setSaving(false);
+  }
+
+  // ─── Navigation — silent save if timer pending ────────────────────────────
+
+  async function handleBackClick() {
+    const hasPending = autoSaveTimer.current !== null;
+    cancelPendingAutoSave();
+
+    if (hasPending) {
+      const payload = getPayload();
+      const isDraftContext = !isEditMode || articleStatusRef.current === 'draft';
+      if (isDraftContext && !payload.title.trim()) payload.title = 'ไม่มีหัวเรื่อง';
+
+      if (!isEditMode) {
+        const allEmpty = !payload.title.trim() && (!editorRef.current || editorRef.current.isEmpty) && !payload.category.trim();
+        if (!allEmpty) await createArticle(payload, userId);
+      } else if (articleStatusRef.current) {
+        await autoSaveArticle(articleId!, payload, articleStatusRef.current, userId);
+      }
+    }
+
     navigate('/articles');
   }
 
@@ -311,12 +536,8 @@ export default function ArticleEditorPage() {
   async function handleImageFileChange(file: File) {
     setUploadingImage(true);
     try {
-      const ext = getFileExtension(file.name);
-      const path = `content/${generateId()}.${ext}`;
-      const { error } = await supabase.storage.from('article-assets').upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+      const path = `content/${generateId()}.${getFileExtension(file.name)}`;
+      const { error } = await supabase.storage.from('article-assets').upload(path, file, { cacheControl: '3600', upsert: false });
       if (error) { showSnackbar(`อัปโหลดรูปไม่สำเร็จ: ${error.message}`, 'error'); return; }
       const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
       editor?.chain().focus().setImage({ src: publicUrl }).run();
@@ -330,16 +551,15 @@ export default function ArticleEditorPage() {
   async function handleCoverFileChange(file: File) {
     setUploadingCover(true);
     try {
-      const ext = getFileExtension(file.name);
-      const path = `cover/${generateId()}.${ext}`;
-      const { error } = await supabase.storage.from('article-assets').upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-      });
+      const path = `cover/${generateId()}.${getFileExtension(file.name)}`;
+      const { error } = await supabase.storage.from('article-assets').upload(path, file, { cacheControl: '3600', upsert: false });
       if (error) { showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${error.message}`, 'error'); return; }
       const { data: { publicUrl } } = supabase.storage.from('article-assets').getPublicUrl(path);
-      setCoverUrl(publicUrl);
-      if (!isInitialLoad.current) setIsDirty(true);
+      setThumbnailUrl(publicUrl);
+      if (!isInitialLoad.current) {
+        autoSaveRetryCount.current = 0;
+        scheduleAutoSave();
+      }
     } catch (e) {
       showSnackbar(`อัปโหลดรูปหน้าปกไม่สำเร็จ: ${e instanceof Error ? e.message : 'ข้อผิดพลาดที่ไม่ทราบสาเหตุ'}`, 'error');
     } finally {
@@ -347,12 +567,22 @@ export default function ArticleEditorPage() {
     }
   }
 
+  async function handleRemoveCover() {
+    if (!thumbnailUrl) return;
+    const path = extractStoragePath(thumbnailUrl);
+    if (path) await supabase.storage.from('article-assets').remove([path]);
+    setThumbnailUrl(null);
+    if (!isInitialLoad.current) {
+      autoSaveRetryCount.current = 0;
+      scheduleAutoSave();
+    }
+  }
+
   // ─── Video insert ──────────────────────────────────────────────────────────
 
   function handleVideoConfirm() {
     if (!videoUrl.trim() || !editor) { setVideoDialogOpen(false); return; }
-    const isYoutube = /youtu\.be\/|youtube\.com\/watch/.test(videoUrl);
-    if (isYoutube) {
+    if (/youtu\.be\/|youtube\.com\/watch/.test(videoUrl)) {
       editor.commands.setYoutubeVideo({ src: videoUrl });
     } else {
       editor.chain().focus().insertContent(
@@ -372,91 +602,15 @@ export default function ArticleEditorPage() {
     setLinkDialogOpen(false);
   }
 
-  // ─── Save ──────────────────────────────────────────────────────────────────
-
-  async function handleSave(mode: 'draft' | 'publish') {
-    if (!editor) return;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    setSaving(true);
-
-    const isPublish = mode === 'publish';
-    // is_visible is only applied on explicit publish — draft saves preserve the live value
-    const publishSuccessMsg = isEditMode
-      ? 'บันทึกและเผยแพร่บทความเรียบร้อยแล้ว'
-      : publishMode === 'scheduled'
-      ? 'ตั้งเวลาเผยแพร่เรียบร้อยแล้ว'
-      : 'เผยแพร่บทความเรียบร้อยแล้ว';
-    const contentPayload = {
-      title: title.trim() || 'ไม่มีหัวเรื่อง',
-      content_html: editor.getHTML(),
-      content_json: editor.getJSON(),
-      cover_image_url: coverUrl || null,
-    };
-
-    if (articleId) {
-      // Existing article: draft save keeps publish_at and is_visible unchanged.
-      // Only an explicit publish may update both.
-      const updatePayload = isPublish
-        ? {
-            ...contentPayload,
-            is_visible: isVisible,
-            has_draft: false,
-            publish_at:
-              publishMode === 'immediate'
-                ? new Date().toISOString()
-                : scheduledAt?.toISOString() ?? null,
-          }
-        : { ...contentPayload, has_draft: true };
-
-      const { error } = await supabase.from('articles').update(updatePayload).eq('id', articleId);
-      if (error) {
-        showSnackbar(`บันทึกไม่สำเร็จ: ${error.message}`, 'error');
-      } else {
-        setIsDirty(false);
-        setAutoSaveStatus('idle');
-        if (isPublish) setSavedIsVisible(isVisible);
-        showSnackbar(isPublish ? publishSuccessMsg : 'บันทึกร่างเรียบร้อยแล้ว', 'success');
-      }
-    } else {
-      // New article: is_visible only matters on publish; draft uses DB default (true)
-      const userRes = await supabase.auth.getUser();
-      const { data, error } = await supabase
-        .from('articles')
-        .insert({
-          ...contentPayload,
-          ...(isPublish ? { is_visible: isVisible } : {}),
-          has_draft: !isPublish,
-          publish_at: !isPublish
-            ? null
-            : publishMode === 'immediate'
-            ? new Date().toISOString()
-            : scheduledAt?.toISOString() ?? null,
-          created_by: userRes.data.user?.id ?? null,
-        })
-        .select('id')
-        .single();
-      if (error) {
-        showSnackbar(`สร้างบทความไม่สำเร็จ: ${error.message}`, 'error');
-      } else if (data) {
-        setIsDirty(false);
-        navigate(`/articles/${data.id}/edit`, { replace: true });
-        showSnackbar(isPublish ? publishSuccessMsg : 'สร้างบทความเรียบร้อยแล้ว', 'success');
-      }
-    }
-
-    setSaving(false);
-  }
-
   // ─── Delete ────────────────────────────────────────────────────────────────
 
   async function handleDelete() {
     if (!articleId) return;
     setDeleting(true);
 
-    // Fetch saved image URLs before deletion
     const { data: saved } = await supabase
       .from('articles')
-      .select('cover_image_url, content_json')
+      .select('thumbnail_url, draft_thumbnail_url, body, draft_body')
       .eq('id', articleId)
       .single();
 
@@ -468,48 +622,114 @@ export default function ArticleEditorPage() {
       return;
     }
 
-    // Delete associated storage files (best-effort)
     if (saved) {
       const paths: string[] = [];
-      if (saved.cover_image_url) {
-        const p = extractStoragePath(saved.cover_image_url);
-        if (p) paths.push(p);
+      for (const url of [saved.thumbnail_url, saved.draft_thumbnail_url]) {
+        if (url) { const p = extractStoragePath(url); if (p) paths.push(p); }
       }
-      extractContentImageUrls(saved.content_json).forEach(url => {
-        const p = extractStoragePath(url);
-        if (p) paths.push(p);
-      });
-      if (paths.length > 0) {
-        await supabase.storage.from('article-assets').remove(paths);
+      for (const html of [saved.body, saved.draft_body]) {
+        if (html) extractImageUrlsFromHtml(html).forEach(url => { const p = extractStoragePath(url); if (p) paths.push(p); });
       }
+      if (paths.length > 0) await supabase.storage.from('article-assets').remove(paths);
     }
 
     navigate('/articles', { replace: true });
   }
 
-  // ─── Scheduled datetime local string ──────────────────────────────────────
+  // ─── Status chip label ─────────────────────────────────────────────────────
 
-  function toDatetimeLocalString(date: Date | null): string {
-    if (!date) return '';
-    const pad = (n: number) => String(n).padStart(2, '0');
+  function statusChip() {
+    if (!articleStatus) return null;
     return (
-      `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}` +
-      `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+      <Chip
+        label={ARTICLE_STATUS_LABELS[articleStatus] ?? articleStatus}
+        size="small"
+        sx={getArticleStatusSx(articleStatus, mode)}
+      />
     );
   }
 
-  const exitSaving = exitSaveMode !== null;
+  // ─── Action buttons by scenario ────────────────────────────────────────────
 
-  const publishButtonLabel = isEditMode
-    ? 'บันทึกและเผยแพร่'
-    : publishMode === 'scheduled'
-    ? 'เผยแพร่ภายหลัง'
-    : 'เผยแพร่';
+  function renderActionButtons() {
+    const base = { fullWidth: true, disabled: saving };
+
+    if (!isEditMode) {
+      return (
+        <Button variant="contained" fullWidth disabled>เผยแพร่</Button>
+      );
+    }
+
+    if (articleStatus === null) return null;
+
+    if (articleStatus === 'draft') {
+      return (
+        <Button variant="contained" {...base} onClick={handlePublish}>
+          {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่'}
+        </Button>
+      );
+    }
+
+    if (articleStatus === 'published') {
+      return (
+        <Stack spacing={1.5}>
+          {hasDraft && (
+            <Button variant="contained" {...base} onClick={handleRepublish}>
+              {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
+            </Button>
+          )}
+          <Button variant="outlined" color="error" {...base} onClick={() => setHideDialogOpen(true)}>
+            ซ่อนบทความ
+          </Button>
+        </Stack>
+      );
+    }
+
+    // hidden
+    return (
+      <Button variant="contained" {...base} onClick={handleRestore}>
+        {saving ? 'กำลังเผยแพร่...' : 'เผยแพร่อีกครั้ง'}
+      </Button>
+    );
+  }
+
+  // ─── Auto-save indicator ───────────────────────────────────────────────────
+
+  function renderAutoSaveIndicator() {
+    if (autoSaveStatus === 'idle') return null;
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5, flexWrap: 'wrap' }}>
+        {autoSaveStatus === 'saving' && (
+          <><CircularProgress size={12} /><Typography variant="caption" color="text.secondary">กำลังบันทึกอัตโนมัติ...</Typography></>
+        )}
+        {autoSaveStatus === 'saved' && (
+          <><CheckCircleOutlineIcon sx={{ fontSize: 14, color: 'success.main' }} />
+          <Typography variant="caption" color="success.main">
+            บันทึกอัตโนมัติเมื่อ {autoSavedAt ? formatTime(autoSavedAt) : ''}
+          </Typography></>
+        )}
+        {autoSaveStatus === 'failed' && (
+          <><ErrorOutlineIcon sx={{ fontSize: 14, color: 'warning.main' }} />
+          <Typography variant="caption" color="warning.main">บันทึกอัตโนมัติไม่สำเร็จ กำลังลองใหม่...</Typography></>
+        )}
+        {autoSaveStatus === 'offline' && (
+          <><ErrorOutlineIcon sx={{ fontSize: 14, color: 'error.main' }} />
+          <Typography variant="caption" color="error.main">บันทึกอัตโนมัติไม่พร้อมใช้งาน กรุณาบันทึกด้วยตนเอง</Typography></>
+        )}
+      </Box>
+    );
+  }
 
   // ─── Render ────────────────────────────────────────────────────────────────
 
+  // Staff cannot access articles pages at all (placed here to satisfy Rules of Hooks)
+  if (!roleLoading && role === 'staff') {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <Box sx={{ width: '100%', maxWidth: 1400, margin: '0 auto' }}>
+
       {/* Page header */}
       <Box display="flex" alignItems="center" mb={3}>
         <IconButton onClick={handleBackClick}>
@@ -521,9 +741,10 @@ export default function ArticleEditorPage() {
       </Box>
 
       {/* 2-column layout */}
-      <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 3, alignItems: 'flex-start' }}>
+
         {/* ── Left column ───────────────────────────────────────────── */}
-        <Box sx={{ flex: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Box sx={{ flex: 2, minWidth: 0, order: { xs: 2, md: 0 }, display: 'flex', flexDirection: 'column', gap: 2 }}>
 
           {/* Title card */}
           <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
@@ -532,9 +753,16 @@ export default function ArticleEditorPage() {
               placeholder="หัวเรื่อง"
               variant="standard"
               value={title}
+              error={!!fieldErrors.title}
+              helperText={fieldErrors.title}
               onChange={e => {
                 setTitle(e.target.value);
-                if (!isInitialLoad.current) setIsDirty(true);
+                if (!isInitialLoad.current) {
+                  setFieldErrors(prev => ({ ...prev, title: undefined }));
+                  autoSaveRetryCount.current = 0;
+                  if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
+                  scheduleAutoSaveRef.current();
+                }
               }}
               slotProps={{
                 input: { disableUnderline: true },
@@ -546,215 +774,147 @@ export default function ArticleEditorPage() {
           {/* Content card */}
           <Paper elevation={1} sx={{ borderRadius: 2 }}>
 
-          {/* Sticky toolbar */}
-          <Box sx={{
-            position: 'sticky',
-            top: 64,
-            zIndex: 10,
-            bgcolor: 'background.paper',
-            borderRadius: '8px 8px 0 0',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            px: 1.5,
-            pt: 1,
-            pb: 0.5,
-          }}>
-          <Stack direction="row" spacing={0.5} flexWrap="wrap">
-            {/* Bold */}
-            <Tooltip title="ตัวหนา">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleBold().run()}
-                sx={{ color: editor?.isActive('bold') ? 'primary.main' : 'inherit' }}
-              >
-                <FormatBoldIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+            {/* Sticky toolbar */}
+            <Box sx={{
+              position: 'sticky', top: 64, zIndex: 10,
+              bgcolor: 'background.paper', borderRadius: '8px 8px 0 0',
+              borderBottom: '1px solid', borderColor: 'divider',
+              px: 1.5, pt: 1, pb: 0.5,
+            }}>
+              <Stack direction="row" spacing={0.5} flexWrap="wrap">
 
-            {/* Italic */}
-            <Tooltip title="ตัวเอียง">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleItalic().run()}
-                sx={{ color: editor?.isActive('italic') ? 'primary.main' : 'inherit' }}
-              >
-                <FormatItalicIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="ตัวหนา">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleBold().run()}
+                    sx={{ color: editor?.isActive('bold') ? 'primary.main' : 'inherit' }}>
+                    <FormatBoldIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* Strikethrough */}
-            <Tooltip title="ขีดทับ">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleStrike().run()}
-                sx={{ color: editor?.isActive('strike') ? 'primary.main' : 'inherit' }}
-              >
-                <StrikethroughSIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="ตัวเอียง">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleItalic().run()}
+                    sx={{ color: editor?.isActive('italic') ? 'primary.main' : 'inherit' }}>
+                    <FormatItalicIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* H1 */}
-            <Tooltip title="หัวข้อ 1">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
-                sx={{ color: editor?.isActive('heading', { level: 1 }) ? 'primary.main' : 'inherit' }}
-              >
-                <Typography variant="caption" fontWeight="bold" lineHeight={1}>H1</Typography>
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="ขีดทับ">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleStrike().run()}
+                    sx={{ color: editor?.isActive('strike') ? 'primary.main' : 'inherit' }}>
+                    <StrikethroughSIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* H2 */}
-            <Tooltip title="หัวข้อ 2">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
-                sx={{ color: editor?.isActive('heading', { level: 2 }) ? 'primary.main' : 'inherit' }}
-              >
-                <Typography variant="caption" fontWeight="bold" lineHeight={1}>H2</Typography>
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="หัวข้อ 1">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
+                    sx={{ color: editor?.isActive('heading', { level: 1 }) ? 'primary.main' : 'inherit' }}>
+                    <Typography variant="caption" fontWeight="bold" lineHeight={1}>H1</Typography>
+                  </IconButton>
+                </Tooltip>
 
-            {/* H3 */}
-            <Tooltip title="หัวข้อ 3">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
-                sx={{ color: editor?.isActive('heading', { level: 3 }) ? 'primary.main' : 'inherit' }}
-              >
-                <Typography variant="caption" fontWeight="bold" lineHeight={1}>H3</Typography>
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="หัวข้อ 2">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+                    sx={{ color: editor?.isActive('heading', { level: 2 }) ? 'primary.main' : 'inherit' }}>
+                    <Typography variant="caption" fontWeight="bold" lineHeight={1}>H2</Typography>
+                  </IconButton>
+                </Tooltip>
 
-            {/* Bullet list */}
-            <Tooltip title="รายการหัวข้อ">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleBulletList().run()}
-                sx={{ color: editor?.isActive('bulletList') ? 'primary.main' : 'inherit' }}
-              >
-                <FormatListBulletedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="หัวข้อ 3">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()}
+                    sx={{ color: editor?.isActive('heading', { level: 3 }) ? 'primary.main' : 'inherit' }}>
+                    <Typography variant="caption" fontWeight="bold" lineHeight={1}>H3</Typography>
+                  </IconButton>
+                </Tooltip>
 
-            {/* Ordered list */}
-            <Tooltip title="รายการลำดับ">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleOrderedList().run()}
-                sx={{ color: editor?.isActive('orderedList') ? 'primary.main' : 'inherit' }}
-              >
-                <FormatListNumberedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="รายการหัวข้อ">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleBulletList().run()}
+                    sx={{ color: editor?.isActive('bulletList') ? 'primary.main' : 'inherit' }}>
+                    <FormatListBulletedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* Blockquote */}
-            <Tooltip title="คำพูดอ้างอิง">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleBlockquote().run()}
-                sx={{ color: editor?.isActive('blockquote') ? 'primary.main' : 'inherit' }}
-              >
-                <FormatQuoteIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="รายการลำดับ">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleOrderedList().run()}
+                    sx={{ color: editor?.isActive('orderedList') ? 'primary.main' : 'inherit' }}>
+                    <FormatListNumberedIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* Code block */}
-            <Tooltip title="โค้ด">
-              <IconButton
-                size="small"
-                onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
-                sx={{ color: editor?.isActive('codeBlock') ? 'primary.main' : 'inherit' }}
-              >
-                <CodeIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="คำพูดอ้างอิง">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleBlockquote().run()}
+                    sx={{ color: editor?.isActive('blockquote') ? 'primary.main' : 'inherit' }}>
+                    <FormatQuoteIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            <Divider orientation="vertical" flexItem />
+                <Tooltip title="โค้ด">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
+                    sx={{ color: editor?.isActive('codeBlock') ? 'primary.main' : 'inherit' }}>
+                    <CodeIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* Insert image */}
-            <Tooltip title="แทรกรูปภาพ">
-              <span>
-                <IconButton
-                  size="small"
-                  onClick={() => imageInputRef.current?.click()}
-                  disabled={uploadingImage}
-                >
-                  {uploadingImage
-                    ? <CircularProgress size={16} />
-                    : <ImageIcon fontSize="small" />}
-                </IconButton>
-              </span>
-            </Tooltip>
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/avif,image/bmp,image/tiff,image/svg+xml"
-              style={{ display: 'none' }}
-              onChange={e => {
-                const file = e.target.files?.[0];
-                if (file) handleImageFileChange(file);
-                e.target.value = '';
-              }}
-            />
+                <Divider orientation="vertical" flexItem />
 
-            {/* Insert video */}
-            <Tooltip title="แทรกวิดีโอ">
-              <IconButton size="small" onClick={() => setVideoDialogOpen(true)}>
-                <VideoLibraryIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="แทรกรูปภาพ">
+                  <span>
+                    <IconButton size="small" onClick={() => imageInputRef.current?.click()} disabled={uploadingImage}>
+                      {uploadingImage ? <CircularProgress size={16} /> : <ImageIcon fontSize="small" />}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+                <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+                  style={{ display: 'none' }}
+                  onChange={e => { const f = e.target.files?.[0]; if (f) handleImageFileChange(f); e.target.value = ''; }} />
 
-            {/* Insert link */}
-            <Tooltip title="แทรกลิงก์">
-              <IconButton
-                size="small"
-                onClick={() => setLinkDialogOpen(true)}
-                sx={{ color: editor?.isActive('link') ? 'primary.main' : 'inherit' }}
-              >
-                <LinkIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="แทรกวิดีโอ">
+                  <IconButton size="small" onClick={() => setVideoDialogOpen(true)}>
+                    <VideoLibraryIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            <Divider orientation="vertical" flexItem />
+                <Tooltip title="แทรกลิงก์">
+                  <IconButton size="small" onClick={() => setLinkDialogOpen(true)}
+                    sx={{ color: editor?.isActive('link') ? 'primary.main' : 'inherit' }}>
+                    <LinkIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-            {/* Undo */}
-            <Tooltip title="เลิกทำ">
-              <IconButton size="small" onClick={() => editor?.chain().focus().undo().run()}>
-                <UndoIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Divider orientation="vertical" flexItem />
 
-            {/* Redo */}
-            <Tooltip title="ทำซ้ำ">
-              <IconButton size="small" onClick={() => editor?.chain().focus().redo().run()}>
-                <RedoIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
+                <Tooltip title="เลิกทำ">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().undo().run()}>
+                    <UndoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-          </Stack>
+                <Tooltip title="ทำซ้ำ">
+                  <IconButton size="small" onClick={() => editor?.chain().focus().redo().run()}>
+                    <RedoIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
 
-          {/* Uploading image indicator */}
-          {uploadingImage && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pt: 0.5 }}>
-              <CircularProgress size={12} />
-              <Typography variant="caption" color="text.secondary">กำลังอัปโหลดรูปภาพ...</Typography>
+              </Stack>
+              {uploadingImage && (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, pt: 0.5 }}>
+                  <CircularProgress size={12} />
+                  <Typography variant="caption" color="text.secondary">กำลังอัปโหลดรูปภาพ...</Typography>
+                </Box>
+              )}
             </Box>
-          )}
-          </Box>{/* end sticky toolbar */}
 
-          {/* Editor content */}
-          <Box
-            sx={{
-              p: 2,
-              minHeight: 400,
-              '& .ProseMirror': { outline: 'none', minHeight: 360 },
+            {/* Body error */}
+            {fieldErrors.body && (
+              <Box sx={{ px: 2, pt: 1 }}>
+                <Typography variant="caption" color="error">{fieldErrors.body}</Typography>
+              </Box>
+            )}
+
+            {/* Editor content */}
+            <Box sx={{
+              p: 2, minHeight: 400, minWidth: 0, overflowWrap: 'anywhere',
+              '& .ProseMirror': { outline: 'none', minHeight: 360, overflowWrap: 'anywhere', wordBreak: 'break-word' },
               '& .ProseMirror p.is-editor-empty:first-of-type::before': {
-                content: 'attr(data-placeholder)',
-                color: '#aaa',
-                pointerEvents: 'none',
-                float: 'left',
-                height: 0,
+                content: 'attr(data-placeholder)', color: '#aaa', pointerEvents: 'none', float: 'left', height: 0,
               },
               '& .ProseMirror h1': { fontSize: '1.8rem', fontWeight: 700, mt: 2, mb: 1 },
               '& .ProseMirror h2': { fontSize: '1.4rem', fontWeight: 700, mt: 2, mb: 1 },
@@ -763,157 +923,149 @@ export default function ArticleEditorPage() {
               '& .ProseMirror blockquote': { borderLeft: '3px solid #ccc', pl: 2, color: 'text.secondary' },
               '& .ProseMirror img': { maxWidth: '100%', borderRadius: 1 },
               '& .ProseMirror iframe': { maxWidth: '100%', width: '100%', aspectRatio: '16/9', border: 0 },
-            }}
-          >
-            <EditorContent editor={editor} />
-          </Box>
-          </Paper>{/* end content card */}
-        </Box>{/* end left column */}
+            }}>
+              <EditorContent editor={editor} />
+            </Box>
+          </Paper>
+        </Box>
 
         {/* ── Right sidebar ─────────────────────────────────────────── */}
-        <Box sx={{ width: 320, flexShrink: 0 }}>
+        <Box sx={{
+          width: { xs: '100%', md: 300 }, flexShrink: 0, order: { xs: 1, md: 0 },
+          // Lock the sidebar (การเผยแพร่ card sits at its top) while scrolling on desktop
+          position: { md: 'sticky' }, top: { md: 80 }, alignSelf: { md: 'flex-start' },
+        }}>
           <Stack spacing={2}>
-            {/* Publish settings */}
+
+            {/* Actions card */}
             <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                ตั้งค่าการเผยแพร่
+                การเผยแพร่
               </Typography>
-              <RadioGroup
-                value={publishMode}
-                onChange={e => setPublishMode(e.target.value as 'immediate' | 'scheduled')}
-              >
-                <FormControlLabel value="immediate" control={<Radio size="small" />} label="เผยแพร่ทันที" />
-                <FormControlLabel value="scheduled" control={<Radio size="small" />} label="ตั้งเวลา" />
-              </RadioGroup>
-
-              {publishMode === 'scheduled' && (
-                <TextField
-                  type="datetime-local"
-                  fullWidth
-                  size="small"
-                  sx={{ mt: 1 }}
-                  value={toDatetimeLocalString(scheduledAt)}
-                  onChange={e => setScheduledAt(e.target.value ? new Date(e.target.value) : null)}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  label="วันและเวลาเผยแพร่"
-                />
-              )}
-
-              <Divider sx={{ my: 1.5 }} />
-
-              {/* Visibility toggle */}
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Typography variant="body2">
-                  {isVisible ? 'แสดงบทความ' : 'ซ่อนบทความ'}
-                </Typography>
-                <Switch
-                  size="small"
-                  checked={isVisible}
-                  onChange={e => setIsVisible(e.target.checked)}
-                />
-              </Box>
-
-              {/* Auto-save status */}
-              {isEditMode && autoSaveStatus !== 'idle' && (
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mt: 1.5 }}>
-                  {autoSaveStatus === 'saving' ? (
-                    <>
-                      <CircularProgress size={12} />
-                      <Typography variant="caption" color="text.secondary">กำลังบันทึกอัตโนมัติ...</Typography>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircleOutlineIcon sx={{ fontSize: 14, color: 'success.main' }} />
-                      <Typography variant="caption" color="success.main">บันทึกอัตโนมัติแล้ว</Typography>
-                    </>
+              {/* Status + unpublished badge */}
+              {(!isEditMode || !!articleStatus) && (
+                <Stack direction="row" spacing={1} alignItems="center" mb={1.5} flexWrap="wrap">
+                  {isEditMode ? statusChip() : <Chip label={ARTICLE_STATUS_LABELS.draft} size="small" sx={getArticleStatusSx('draft', mode)} />}
+                  {hasDraft && articleStatus === 'published' && (
+                    <Chip
+                      label="มีการแก้ไขที่ยังไม่ได้เผยแพร่"
+                      size="small"
+                      variant="outlined"
+                      sx={mode === 'dark'
+                        ? { borderColor: '#FF8A50', color: '#FF8A50', fontWeight: 600 }
+                        : { borderColor: '#E65100', color: '#E65100', fontWeight: 600 }}
+                    />
                   )}
-                </Box>
+                </Stack>
               )}
 
-              <Stack spacing={1.5} sx={{ mt: 2 }}>
-                <Button
-                  variant="contained"
-                  fullWidth
-                  disabled={saving}
-                  onClick={() => handleSave('publish')}
-                >
-                  {saving ? 'กำลังบันทึก...' : publishButtonLabel}
-                </Button>
-                <Button
-                  variant="outlined"
-                  fullWidth
-                  disabled={saving || !savedIsVisible}
-                  onClick={() => handleSave('draft')}
-                >
-                  บันทึกร่าง
-                </Button>
-              </Stack>
+              {renderAutoSaveIndicator()}
+
+              <Box sx={{ mt: 1.5 }}>
+                {renderActionButtons()}
+              </Box>
             </Paper>
 
-            {/* Cover image */}
+            {/* Category card */}
             <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
               <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-                รูปหน้าปก
+                หมวดหมู่
               </Typography>
-              {/* 16:9 preview */}
-              <Box
-                sx={{
-                  width: '100%',
-                  aspectRatio: '16/9',
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                  mb: 1.5,
-                  background: 'linear-gradient(135deg, #FEF1D2 0%, #FBCFB8 100%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {coverUrl ? (
-                  <Box
-                    component="img"
-                    src={coverUrl}
-                    sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
-                ) : (
-                  <ArticleIcon sx={{ fontSize: 40, color: '#FF9F6B' }} />
-                )}
-              </Box>
-              <Button
-                variant="outlined"
+              <TextField
                 fullWidth
-                disabled={uploadingCover}
-                onClick={() => coverInputRef.current?.click()}
-              >
-                {uploadingCover ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปหน้าปก'}
-              </Button>
-              {uploadingCover && (
-                <LinearProgress sx={{ mt: 1, borderRadius: 1 }} />
-              )}
-              <input
-                ref={coverInputRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/avif,image/bmp,image/tiff"
-                style={{ display: 'none' }}
+                size="small"
+                placeholder="เช่น สุขภาพ, ความปลอดภัย"
+                value={category}
+                error={!!fieldErrors.category}
+                helperText={fieldErrors.category}
                 onChange={e => {
-                  const file = e.target.files?.[0];
-                  if (file) handleCoverFileChange(file);
-                  e.target.value = '';
+                  setCategory(e.target.value);
+                  if (!isInitialLoad.current) {
+                    setFieldErrors(prev => ({ ...prev, category: undefined }));
+                    autoSaveRetryCount.current = 0;
+                    if (autoSaveStatus === 'offline') setAutoSaveStatus('idle');
+                    scheduleAutoSaveRef.current();
+                  }
                 }}
               />
             </Paper>
 
-            {/* Delete article */}
+            {/* Thumbnail card */}
+            <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
+              <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                รูปหน้าปก
+              </Typography>
+              <Box sx={{
+                position: 'relative', width: '100%', aspectRatio: '16/9', borderRadius: 1, overflow: 'hidden', mb: 1.5,
+                background: 'linear-gradient(135deg, #FEF1D2 0%, #FBCFB8 100%)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {thumbnailUrl
+                  ? <Box component="img" src={thumbnailUrl} sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  : <ArticleIcon sx={{ fontSize: 40, color: '#FF9F6B' }} />}
+                {thumbnailUrl && (
+                  <Tooltip title="ลบรูปหน้าปก">
+                    <IconButton
+                      size="small"
+                      onClick={handleRemoveCover}
+                      sx={{
+                        position: 'absolute', top: 4, right: 4,
+                        bgcolor: 'rgba(0,0,0,0.45)', color: 'white',
+                        '&:hover': { bgcolor: 'rgba(0,0,0,0.65)' },
+                      }}
+                    >
+                      <CloseIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                )}
+              </Box>
+              <Button variant="outlined" fullWidth disabled={uploadingCover} onClick={() => coverInputRef.current?.click()}>
+                {uploadingCover ? 'กำลังอัปโหลด...' : 'อัปโหลดรูปหน้าปก'}
+              </Button>
+              {uploadingCover && <LinearProgress sx={{ mt: 1, borderRadius: 1 }} />}
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                รองรับไฟล์ JPG, PNG, WEBP, GIF ขนาดไม่เกิน 5 MB
+              </Typography>
+              <input ref={coverInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif"
+                style={{ display: 'none' }}
+                onChange={e => { const f = e.target.files?.[0]; if (f) handleCoverFileChange(f); e.target.value = ''; }} />
+            </Paper>
+
+            {/* Delete */}
             {isEditMode && (
-              <Button
-                variant="contained"
-                color="error"
-                fullWidth
-                startIcon={<DeleteOutlineIcon />}
-                onClick={() => setDeleteDialogOpen(true)}
-              >
+              <Button variant="contained" color="error" fullWidth startIcon={<DeleteOutlineIcon />}
+                onClick={() => setDeleteDialogOpen(true)}>
                 ลบบทความ
               </Button>
+            )}
+
+            {/* Article metadata */}
+            {isEditMode && articleMeta && (
+              <Paper elevation={1} sx={{ p: 2.5, borderRadius: 2 }}>
+                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+                  ข้อมูลบทความ
+                </Typography>
+                <Stack spacing={1.5}>
+                  {[
+                    { label: 'สร้างโดย', by: articleMeta.created_by, at: articleMeta.created_at },
+                    { label: 'แก้ไขล่าสุด', by: articleMeta.updated_by, at: articleMeta.updated_at },
+                    { label: 'เผยแพร่ล่าสุด', by: articleMeta.published_by, at: articleMeta.published_at },
+                    { label: 'ซ่อนล่าสุด', by: articleMeta.hidden_by, at: articleMeta.hidden_at },
+                  ].filter(row => row.at).map(row => (
+                    <Box key={row.label}>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.6 }}>
+                        {row.label}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', lineHeight: 1.4, fontWeight: 500 }}>
+                        {row.by ? (staffNameMap[row.by] || '—') : '—'}
+                      </Typography>
+                      <Typography variant="caption" color="text.disabled" sx={{ display: 'block', lineHeight: 1.4 }}>
+                        {formatDateTime(row.at ?? undefined)}
+                      </Typography>
+                    </Box>
+                  ))}
+                </Stack>
+              </Paper>
             )}
           </Stack>
         </Box>
@@ -921,21 +1073,13 @@ export default function ArticleEditorPage() {
 
       {/* Image bubble menu */}
       {editor && (
-        <BubbleMenu
-          editor={editor}
-          shouldShow={({ editor: e }) => e.isActive('image')}
-        >
+        <BubbleMenu editor={editor} shouldShow={({ editor: e }) => e.isActive('image')}>
           <Paper elevation={4} sx={{ px: 0.5, py: 0.25, display: 'flex', alignItems: 'center', gap: 0.25, borderRadius: 1 }}>
             {IMAGE_SIZES.map(({ width, label, tooltip }) => (
               <Tooltip key={width} title={tooltip}>
-                <IconButton
-                  size="small"
+                <IconButton size="small"
                   onClick={() => editor.chain().focus().updateAttributes('image', { imgWidth: width }).run()}
-                  sx={{
-                    fontSize: 11, fontWeight: 700, minWidth: 28,
-                    color: (editor.getAttributes('image').imgWidth ?? '100%') === width ? 'primary.main' : 'text.secondary',
-                  }}
-                >
+                  sx={{ fontSize: 11, fontWeight: 700, minWidth: 28, color: (editor.getAttributes('image').imgWidth ?? '100%') === width ? 'primary.main' : 'text.secondary' }}>
                   {label}
                 </IconButton>
               </Tooltip>
@@ -947,11 +1091,9 @@ export default function ArticleEditorPage() {
               { align: 'right'  as const, icon: <FormatAlignRightIcon fontSize="small" />,  tooltip: 'ขวา' },
             ]).map(({ align, icon, tooltip }) => (
               <Tooltip key={align} title={tooltip}>
-                <IconButton
-                  size="small"
+                <IconButton size="small"
                   onClick={() => editor.chain().focus().updateAttributes('image', { imgAlign: align }).run()}
-                  sx={{ color: (editor.getAttributes('image').imgAlign ?? 'left') === align ? 'primary.main' : 'text.secondary' }}
-                >
+                  sx={{ color: (editor.getAttributes('image').imgAlign ?? 'left') === align ? 'primary.main' : 'text.secondary' }}>
                   {icon}
                 </IconButton>
               </Tooltip>
@@ -964,15 +1106,9 @@ export default function ArticleEditorPage() {
       <Dialog open={videoDialogOpen} onClose={() => setVideoDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle fontWeight="bold">แทรกวิดีโอ</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label="URL วิดีโอ (YouTube หรือ URL ตรง)"
-            value={videoUrl}
-            onChange={e => setVideoUrl(e.target.value)}
-            sx={{ mt: 1 }}
-            onKeyDown={e => { if (e.key === 'Enter') handleVideoConfirm(); }}
-          />
+          <TextField autoFocus fullWidth label="URL วิดีโอ (YouTube หรือ URL ตรง)" value={videoUrl}
+            onChange={e => setVideoUrl(e.target.value)} sx={{ mt: 1 }}
+            onKeyDown={e => { if (e.key === 'Enter') handleVideoConfirm(); }} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => { setVideoUrl(''); setVideoDialogOpen(false); }}>ยกเลิก</Button>
@@ -984,16 +1120,9 @@ export default function ArticleEditorPage() {
       <Dialog open={linkDialogOpen} onClose={() => setLinkDialogOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle fontWeight="bold">แทรกลิงก์</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            label="URL"
-            placeholder="https://"
-            value={linkUrl}
-            onChange={e => setLinkUrl(e.target.value)}
-            sx={{ mt: 1 }}
-            onKeyDown={e => { if (e.key === 'Enter') handleLinkConfirm(); }}
-          />
+          <TextField autoFocus fullWidth label="URL" placeholder="https://" value={linkUrl}
+            onChange={e => setLinkUrl(e.target.value)} sx={{ mt: 1 }}
+            onKeyDown={e => { if (e.key === 'Enter') handleLinkConfirm(); }} />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => { setLinkUrl(''); setLinkDialogOpen(false); }}>ยกเลิก</Button>
@@ -1001,60 +1130,43 @@ export default function ArticleEditorPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Delete dialog */}
-      <Dialog open={deleteDialogOpen} onClose={() => !deleting && setDeleteDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ยืนยันการลบบทความ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            คุณต้องการลบบทความ <strong>"{title || 'ไม่มีหัวเรื่อง'}"</strong> ใช่หรือไม่?
-            การกระทำนี้ไม่สามารถย้อนกลับได้
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeleteDialogOpen(false)} disabled={deleting}>ยกเลิก</Button>
-          <Button variant="contained" color="error" onClick={handleDelete} disabled={deleting}>
-            {deleting ? 'กำลังลบ...' : 'ลบบทความ'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Hide confirmation dialog */}
+      <ConfirmDialog
+        open={hideDialogOpen}
+        icon={<VisibilityOffOutlinedIcon color="error" />}
+        title="ยืนยันการซ่อนบทความ"
+        body="บทความจะถูกซ่อนและผู้ใช้ทั่วไปจะไม่สามารถเข้าถึงได้ คุณสามารถเผยแพร่บทความอีกครั้งได้ในภายหลัง"
+        confirmLabel="ซ่อนบทความ"
+        confirmColor="error"
+        loading={saving}
+        onConfirm={handleHide}
+        onCancel={() => setHideDialogOpen(false)}
+      />
 
-      {/* Exit dialog */}
-      <Dialog open={exitDialogOpen} onClose={() => !exitSaving && setExitDialogOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle fontWeight="bold">ออกจากบทความ</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            มีการแก้ไขที่ยังไม่ได้บันทึก ต้องการบันทึกก่อนออกหรือไม่?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={handleExitDiscard} disabled={exitSaving} color="error">
-            ละทิ้ง
-          </Button>
-          <Box sx={{ flex: 1 }} />
-          <Button onClick={() => setExitDialogOpen(false)} disabled={exitSaving}>
-            อยู่ต่อ
-          </Button>
-          <Button variant="outlined" onClick={handleExitSaveDraft} disabled={exitSaving}>
-            {exitSaveMode === 'draft' ? 'กำลังบันทึก...' : 'บันทึกร่าง'}
-          </Button>
-          <Button variant="contained" onClick={handleExitSaveAndPublish} disabled={exitSaving}>
-            {exitSaveMode === 'publish' ? 'กำลังบันทึก...' : 'บันทึกและเผยแพร่'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Delete dialog */}
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        icon={<DeleteOutlineIcon color="error" />}
+        title="ยืนยันการลบบทความ"
+        body={
+          <Typography variant="body2" color="text.secondary">
+            คุณต้องการลบบทความ <strong>"{title || 'ไม่มีหัวเรื่อง'}"</strong> ใช่หรือไม่?{' '}
+            การกระทำนี้ไม่สามารถย้อนกลับได้
+          </Typography>
+        }
+        confirmLabel="ลบบทความ"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteDialogOpen(false)}
+      />
 
       {/* Snackbar */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
+      <Snackbar open={snackbar.open} autoHideDuration={4000}
         onClose={() => setSnackbar(s => ({ ...s, open: false }))}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          severity={snackbar.severity}
-          variant="filled"
-          onClose={() => setSnackbar(s => ({ ...s, open: false }))}
-        >
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity={snackbar.severity} variant="filled"
+          onClose={() => setSnackbar(s => ({ ...s, open: false }))}>
           {snackbar.message}
         </Alert>
       </Snackbar>

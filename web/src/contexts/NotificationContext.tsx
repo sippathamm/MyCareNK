@@ -17,22 +17,57 @@ import type { Enums, Tables } from '../lib/database.types';
 // ---------------------------------------------------------------------------
 
 export type RequestStatus = Enums<'request_status'>;
-export type AppointmentEventType = Enums<'appointment_status'>;
+export type ConsultationEventType = Enums<'consultation_status'>;
 
 export type NotificationItem = Tables<'staff_notifications'> & { is_read: boolean };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export function isAppointmentNotification(item: NotificationItem): boolean {
-  return item.source_type === 'doctor_appointment';
+export function isConsultationNotification(item: NotificationItem): boolean {
+  return item.source_type === 'consultation';
 }
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const APPOINTMENT_STATUS_CONFIG: Record<AppointmentEventType, { label: string; color: string; bg: string }> = {
-  pending:            { label: 'นัดหมายใหม่',           color: '#FF9F6B', bg: '#FFF0E6' },
-  confirmed:          { label: 'ยืนยันนัดหมาย',           color: '#BA68C8', bg: '#F5EAF9' },
-  completed:          { label: 'นัดหมายเสร็จสิ้น',        color: '#81C784', bg: '#EBF7EC' },
-  cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',        color: '#9E9E9E', bg: '#F5F5F5' },
-  cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่',   color: '#9E9E9E', bg: '#F5F5F5' },
+export function isStockNotification(item: NotificationItem): boolean {
+  return item.source_type === 'stock_operation';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function isStaffManagementNotification(item: NotificationItem): boolean {
+  return item.source_type === 'staff_management';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function isServiceCenterManagementNotification(item: NotificationItem): boolean {
+  return item.source_type === 'service_center_management';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const STOCK_OPERATION_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
+  restock:    { label: 'เติมสต็อก', color: '#4CAF50', bg: '#EBF7EC' },
+  adjustment: { label: 'ปรับสต็อก', color: '#FF9800', bg: '#FFF3E0' },
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const STAFF_MANAGEMENT_CONFIG: { label: string; color: string; bg: string } = {
+  label: 'การจัดการเจ้าหน้าที่',
+  color: '#5C6BC0',
+  bg: '#EDE7F6',
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const SERVICE_CENTER_MANAGEMENT_CONFIG: { label: string; color: string; bg: string } = {
+  label: 'การจัดการสถานบริการ',
+  color: '#0288D1',
+  bg: '#E3F2FD',
+};
+
+// eslint-disable-next-line react-refresh/only-export-components
+export const CONSULTATION_STATUS_CONFIG: Record<ConsultationEventType, { label: string; color: string; bg: string }> = {
+  pending:            { label: 'นัดรับคำปรึกษาใหม่',              color: '#FF9F6B', bg: '#FFF0E6' },
+  confirmed:          { label: 'ยืนยันการนัดรับคำปรึกษา',         color: '#BA68C8', bg: '#F5EAF9' },
+  completed:          { label: 'การนัดรับคำปรึกษาเสร็จสิ้น',      color: '#81C784', bg: '#EBF7EC' },
+  cancelled_by_user:  { label: 'ยกเลิกโดยผู้ใช้',                 color: '#9E9E9E', bg: '#F5F5F5' },
+  cancelled_by_staff: { label: 'ยกเลิกโดยเจ้าหน้าที่',            color: '#9E9E9E', bg: '#F5F5F5' },
 };
 
 interface NotificationContextValue {
@@ -41,8 +76,11 @@ interface NotificationContextValue {
   toastOpen: boolean;
   toastMessage: string;
   toastEventType: RequestStatus | null;
-  toastIsAppointment: boolean;
-  toastAppointmentEventType: AppointmentEventType | null;
+  toastIsConsultation: boolean;
+  toastConsultationEventType: ConsultationEventType | null;
+  toastIsStock: boolean;
+  toastIsStaffManagement: boolean;
+  toastIsServiceCenterManagement: boolean;
   closeToast: () => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -96,24 +134,29 @@ const MAX_NOTIFICATIONS = 50;
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const { session } = useAuth();
   const userId = session?.user?.id ?? '';
-  const { role, profile, loading: roleLoading } = useRoleAccess();
-  const serviceCenter = profile?.service_center ?? null;
+  const { role, loading: roleLoading, isSuperadmin, isAdmin } = useRoleAccess();
 
   const readIdsRef = useRef<Set<string>>(new Set());
-  const roleRef = useRef(role);
-  const serviceCenterRef = useRef(serviceCenter);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [toastOpen, setToastOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const [toastEventType, setToastEventType] = useState<RequestStatus | null>(null);
-  const [toastIsAppointment, setToastIsAppointment] = useState(false);
-  const [toastAppointmentEventType, setToastAppointmentEventType] = useState<AppointmentEventType | null>(null);
+  const [toastIsConsultation, setToastIsConsultation] = useState(false);
+  const [toastConsultationEventType, setToastConsultationEventType] = useState<ConsultationEventType | null>(null);
+  const [toastIsStock, setToastIsStock] = useState(false);
+  const [toastIsStaffManagement, setToastIsStaffManagement] = useState(false);
+  const [toastIsServiceCenterManagement, setToastIsServiceCenterManagement] = useState(false);
 
-  // Keep refs in sync for stable callbacks
+  // Keep ref in sync for stable callbacks
   useEffect(() => { readIdsRef.current = readIds; }, [readIds]);
-  useEffect(() => { roleRef.current = role; }, [role]);
-  useEffect(() => { serviceCenterRef.current = serviceCenter; }, [serviceCenter]);
+
+  // Request browser Notification permission once if not yet decided
+  useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(() => {});
+    }
+  }, []);
 
   // Resume AudioContext on any user interaction (bypass browser autoplay policy)
   useEffect(() => {
@@ -129,119 +172,118 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  // Initial load: fetch notifications + read state from DB
+  // Initial load: fetch notifications + read state + hidden state from DB
+  // RLS handles filtering automatically:
+  //   staff       → service_center=own SC
+  //   admin/super → all rows at own SC / everything
   useEffect(() => {
     if (!userId || roleLoading) return;
 
     let cancelled = false;
 
     (async () => {
-      const { data: readsData } = await supabase
-        .from('staff_notification_reads')
-        .select('notification_id')
-        .eq('staff_user_id', userId);
+      const [{ data: readsData }, { data: hiddenData }, { data: notifData }] = await Promise.all([
+        supabase
+          .from('staff_notification_reads')
+          .select('notification_id')
+          .eq('staff_user_id', userId),
+        supabase
+          .from('staff_notification_hidden')
+          .select('notification_id')
+          .eq('staff_user_id', userId),
+        supabase
+          .from('staff_notifications')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(MAX_NOTIFICATIONS),
+      ]);
 
       if (cancelled) return;
 
       const ids = new Set<string>((readsData ?? []).map(r => r.notification_id));
-
-      let notifData: Tables<'staff_notifications'>[] = [];
-
-      if (role === 'staff' && serviceCenter) {
-        const [{ data: requests }, { data: appointments }] = await Promise.all([
-          supabase.from('condom_requests').select('id').eq('selected_service_center', serviceCenter),
-          supabase.from('doctor_appointments').select('id').eq('selected_service_center', serviceCenter),
-        ]);
-
-        if (cancelled) return;
-
-        const requestIds = (requests ?? []).map(r => r.id);
-        const appointmentIds = (appointments ?? []).map(r => r.id);
-        const allSourceIds = [...requestIds, ...appointmentIds];
-
-        if (allSourceIds.length > 0) {
-          const { data } = await supabase
-            .from('staff_notifications')
-            .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
-            .in('source_id', allSourceIds)
-            .order('created_at', { ascending: false })
-            .limit(MAX_NOTIFICATIONS);
-
-          if (cancelled) return;
-          notifData = data ?? [];
-        }
-      } else {
-        const { data } = await supabase
-          .from('staff_notifications')
-          .select('id, source_type, source_id, reference_number, event_type, metadata, created_at')
-          .order('created_at', { ascending: false })
-          .limit(MAX_NOTIFICATIONS);
-        notifData = data ?? [];
-      }
-
-      if (cancelled) return;
-
+      const hiddenIds = new Set<string>((hiddenData ?? []).map(r => r.notification_id));
       setReadIds(ids);
-      setNotifications(notifData.map(r => ({ ...r, is_read: ids.has(r.id) })));
+      setNotifications(
+        (notifData ?? [])
+          .filter(r => !hiddenIds.has(r.id))
+          .map(r => ({ ...r, is_read: ids.has(r.id) }))
+      );
     })();
 
     return () => { cancelled = true; };
-  }, [userId, role, serviceCenter, roleLoading]);
+  }, [userId, roleLoading]);
 
   // Realtime: new notification inserted
+  // RLS (service_centers && get_my_service_centers()) handles filtering for all roles.
+  // No channel filter needed — 1 row per event, RLS scopes correctly.
   useEffect(() => {
-    if (!userId) return;
+    if (!userId || roleLoading) return;
 
     const channel = supabase
       .channel('notification-inserts')
       .on(
         'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'staff_notifications' },
-        async (payload) => {
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'staff_notifications',
+        },
+        (payload) => {
           const row = payload.new as Tables<'staff_notifications'>;
-
-          // For staff: only show notifications for their service center
-          if (roleRef.current === 'staff' && serviceCenterRef.current) {
-            const table = row.source_type === 'doctor_appointment' ? 'doctor_appointments' : 'condom_requests';
-            const { data: src } = await supabase
-              .from(table)
-              .select('selected_service_center')
-              .eq('id', row.source_id)
-              .single();
-            if (src?.selected_service_center !== serviceCenterRef.current) return;
-          }
-
-          const isAppointment = row.source_type === 'doctor_appointment';
-          const aptEventType = isAppointment ? (row.event_type as AppointmentEventType) : null;
+          const isConsultation = row.source_type === 'consultation';
+          const isStock = row.source_type === 'stock_operation';
+          const isStaffMgmt = row.source_type === 'staff_management';
+          const isSCMgmt = row.source_type === 'service_center_management';
+          const consultEventType = isConsultation ? (row.event_type as ConsultationEventType) : null;
           const item: NotificationItem = { ...row, is_read: false };
+          const message = isStock
+            ? buildStockMessage(
+                row.metadata as { actor_name: string; service_center_name: string; action_type: string },
+                !isAdmin && !isSuperadmin,
+              )
+            : isStaffMgmt
+              ? buildStaffManagementMessage(row.metadata as { actor_name: string; target_name: string; action_type: string })
+              : isSCMgmt
+                ? buildServiceCenterManagementMessage(row.metadata as { actor_name: string; action_type: string; service_center_name: string })
+                : buildToastMessage(row.event_type as RequestStatus, (row.metadata as { reference_number?: string })?.reference_number ?? '', isConsultation, consultEventType);
           setNotifications(prev => [item, ...prev].slice(0, MAX_NOTIFICATIONS));
-          setToastIsAppointment(isAppointment);
-          setToastAppointmentEventType(aptEventType);
-          setToastEventType(isAppointment ? null : row.event_type as RequestStatus);
-          setToastMessage(buildToastMessage(row.event_type as RequestStatus, row.reference_number, isAppointment, aptEventType));
+          setToastIsConsultation(isConsultation);
+          setToastIsStock(isStock);
+          setToastIsStaffManagement(isStaffMgmt);
+          setToastIsServiceCenterManagement(isSCMgmt);
+          setToastConsultationEventType(consultEventType);
+          setToastEventType(isConsultation || isStock || isStaffMgmt || isSCMgmt ? null : row.event_type as RequestStatus);
+          setToastMessage(message);
           setToastOpen(true);
           playNotificationSound();
+          if ('Notification' in window && document.hidden && Notification.permission === 'granted') {
+            new Notification('MyCareNK — แจ้งเตือนใหม่', { body: message, icon: '/favicon.png', tag: row.id });
+          }
         }
       )
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [userId]);
+  }, [userId, role, isSuperadmin, isAdmin, roleLoading]);
 
-  // Realtime: notification deleted (sync across devices)
+  // Realtime: soft-delete hidden row inserted on another device → hide locally
   useEffect(() => {
     if (!userId) return;
 
     const channel = supabase
-      .channel('notification-deletes')
+      .channel('notification-hidden-sync')
       .on(
         'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'staff_notifications' },
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'staff_notification_hidden',
+          filter: `staff_user_id=eq.${userId}`,
+        },
         (payload) => {
-          const deletedId = (payload.old as { id?: string }).id;
-          if (!deletedId) return;
-          setNotifications(prev => prev.filter(n => n.id !== deletedId));
-          setReadIds(prev => { const next = new Set(prev); next.delete(deletedId); return next; });
+          const { notification_id } = payload.new as { notification_id: string };
+          setNotifications(prev => prev.filter(n => n.id !== notification_id));
+          setReadIds(prev => { const next = new Set(prev); next.delete(notification_id); return next; });
         }
       )
       .subscribe();
@@ -313,23 +355,30 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
   const closeToast = useCallback(() => {
     setToastOpen(false);
-    setToastIsAppointment(false);
-    setToastAppointmentEventType(null);
+    setToastIsConsultation(false);
+    setToastIsStock(false);
+    setToastIsStaffManagement(false);
+    setToastIsServiceCenterManagement(false);
+    setToastConsultationEventType(null);
   }, []);
 
   const deleteNotification = useCallback(async (id: string) => {
+    if (!userId) return;
     // Optimistic update
     setNotifications(prev => prev.filter(n => n.id !== id));
     setReadIds(prev => { const next = new Set(prev); next.delete(id); return next; });
-    // Delete from DB (cascade deletes staff_notification_reads rows too)
-    await supabase.from('staff_notifications').delete().eq('id', id);
-  }, []);
+    // Soft delete: insert into staff_notification_hidden (per-user isolation)
+    await supabase.from('staff_notification_hidden').upsert(
+      { notification_id: id, staff_user_id: userId },
+      { onConflict: 'notification_id,staff_user_id' }
+    );
+  }, [userId]);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
   return (
     <NotificationContext.Provider
-      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsAppointment, toastAppointmentEventType, closeToast, markAsRead, markAllAsRead, deleteNotification }}
+      value={{ notifications, unreadCount, toastOpen, toastMessage, toastEventType, toastIsConsultation, toastConsultationEventType, toastIsStock, toastIsStaffManagement, toastIsServiceCenterManagement, closeToast, markAsRead, markAllAsRead, deleteNotification }}
     >
       {children}
     </NotificationContext.Provider>
@@ -360,11 +409,110 @@ export const STATUS_CONFIG: Record<RequestStatus, { label: string; color: string
 function buildToastMessage(
   eventType: RequestStatus,
   referenceNumber: string,
-  isAppointment = false,
-  appointmentEventType: AppointmentEventType | null = null,
+  isConsultation = false,
+  consultationEventType: ConsultationEventType | null = null,
 ): string {
-  const label = isAppointment
-    ? (APPOINTMENT_STATUS_CONFIG[appointmentEventType ?? 'pending']?.label ?? 'นัดหมาย')
+  const label = isConsultation
+    ? (CONSULTATION_STATUS_CONFIG[consultationEventType ?? 'pending']?.label ?? 'นัดรับคำปรึกษา')
     : (STATUS_CONFIG[eventType]?.label ?? eventType);
   return `${label}: ${referenceNumber}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildStockMessage(
+  metadata: { actor_name: string; service_center_name: string; action_type: string },
+  isViewerStaff: boolean,
+): string {
+  const actionLabel = metadata.action_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  if (isViewerStaff) {
+    return `สถานบริการของคุณถูก${actionLabel} โดย ${metadata.actor_name}`;
+  }
+  return `สถานบริการ ${metadata.service_center_name} ถูก${actionLabel} โดย ${metadata.actor_name}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildStaffManagementMessage(
+  metadata: { actor_name: string; target_name: string; action_type: string },
+): string {
+  const { actor_name, target_name, action_type } = metadata;
+  switch (action_type) {
+    case 'add':          return `${actor_name} เพิ่ม ${target_name}`;
+    case 'remove':       return `${actor_name} ลบ ${target_name}`;
+    case 'edit_profile': return `${actor_name} แก้ไขโปรไฟล์ ${target_name}`;
+    case 'edit_email':   return `${actor_name} แก้ไขอีเมล ${target_name}`;
+    case 'edit_role':    return `${actor_name} แก้ไขระดับสิทธิ์ ${target_name}`;
+    default:             return `${actor_name} แก้ไข ${target_name}`;
+  }
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderStockMessageJSX(
+  metadata: { actor_name: string; service_center_name: string; action_type: string },
+  isViewerStaff: boolean,
+): ReactNode {
+  const actionLabel = metadata.action_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  if (isViewerStaff) {
+    return <>สถานบริการของคุณถูก{actionLabel} โดย <strong>{metadata.actor_name}</strong></>;
+  }
+  return <>สถานบริการ <strong>{metadata.service_center_name}</strong> ถูก{actionLabel} โดย <strong>{metadata.actor_name}</strong></>;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderStaffManagementMessageJSX(
+  metadata: { actor_name: string; target_name: string; action_type: string },
+): ReactNode {
+  const { actor_name, target_name, action_type } = metadata;
+  const actor = <strong>{actor_name}</strong>;
+  const target = <strong>{target_name}</strong>;
+  switch (action_type) {
+    case 'add':          return <>{actor} เพิ่ม {target}</>;
+    case 'remove':       return <>{actor} ลบ {target}</>;
+    case 'edit_profile': return <>{actor} แก้ไขโปรไฟล์ {target}</>;
+    case 'edit_email':   return <>{actor} แก้ไขอีเมล {target}</>;
+    case 'edit_role':    return <>{actor} แก้ไขระดับสิทธิ์ {target}</>;
+    default:             return <>{actor} แก้ไข {target}</>;
+  }
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function getNotifTitle(item: NotificationItem): string {
+  if (isStockNotification(item)) {
+    return item.event_type === 'restock' ? 'เติมสต็อก' : 'ปรับสต็อก';
+  }
+  if (isStaffManagementNotification(item)) {
+    const titles: Record<string, string> = {
+      add:          'เพิ่มเจ้าหน้าที่',
+      remove:       'ลบเจ้าหน้าที่',
+      edit_profile: 'แก้ไขโปรไฟล์เจ้าหน้าที่',
+      edit_email:   'แก้ไขอีเมลเจ้าหน้าที่',
+      edit_role:    'แก้ไขระดับสิทธิ์',
+    };
+    return titles[item.event_type] ?? item.event_type;
+  }
+  if (isServiceCenterManagementNotification(item)) {
+    return item.event_type === 'add' ? 'เพิ่มสถานบริการ' : 'ลบสถานบริการ';
+  }
+  return (item.metadata as { reference_number?: string })?.reference_number ?? '';
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function buildServiceCenterManagementMessage(
+  metadata: { actor_name: string; action_type: string; service_center_name: string },
+): string {
+  const { actor_name, action_type, service_center_name } = metadata;
+  return action_type === 'add'
+    ? `${actor_name} เพิ่มสถานบริการ ${service_center_name}`
+    : `${actor_name} ลบสถานบริการ ${service_center_name}`;
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function renderServiceCenterManagementMessageJSX(
+  metadata: { actor_name: string; action_type: string; service_center_name: string },
+): ReactNode {
+  const { actor_name, action_type, service_center_name } = metadata;
+  const actor = <strong>{actor_name}</strong>;
+  const sc = <strong>{service_center_name}</strong>;
+  return action_type === 'add'
+    ? <>{actor} เพิ่มสถานบริการ {sc}</>
+    : <>{actor} ลบสถานบริการ {sc}</>;
 }

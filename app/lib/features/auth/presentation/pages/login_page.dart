@@ -4,8 +4,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/widgets/gradient_button.dart';
-import 'register_page.dart';
+import 'register_step1_page.dart';
 import 'forgot_password_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -49,17 +50,16 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('ชื่อผู้ใช้งานหรือรหัสผ่านไม่ถูกต้อง', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.current.incorrectCredentials, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
       );
-    } catch (e) {
-      debugPrint('Error during login: $e');
+    } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('เกิดข้อผิดพลาดในการเข้าสู่ระบบ', style: GoogleFonts.googleSans()),
+          content: Text(AppLocalizations.current.loginErrorMsg, style: GoogleFonts.googleSans()),
           backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
         ),
@@ -83,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'เข้าสู่ระบบ',
+          AppLocalizations.of(context).loginTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -128,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'ยินดีต้อนรับ',
+                        AppLocalizations.of(context).loginWelcome,
                         style: GoogleFonts.googleSans(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
@@ -137,7 +137,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'เข้าสู่ระบบเพื่อใช้บริการ MyCareNK',
+                        AppLocalizations.of(context).loginSubtitle,
                         style: GoogleFonts.googleSans(
                           fontSize: 15,
                           color: AppColors.textSecondary,
@@ -150,66 +150,86 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 32),
 
                 // Username Field
-                _buildInputBox(
-                  child: TextFormField(
-                    controller: _usernameController,
-                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                      hintText: 'ชื่อผู้ใช้งาน',
-                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 16.0,
-                      ),
+                FormField<void>(
+                  autovalidateMode: AutovalidateMode.disabled,
+                  validator: (_) {
+                    final v = _usernameController.text.trim();
+                    if (v.isEmpty) return AppLocalizations.current.usernameRequired;
+                    if (v.length < 4) return AppLocalizations.current.usernameTooShort;
+                    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(v)) return AppLocalizations.current.usernameInvalidChars;
+                    return null;
+                  },
+                  builder: (field) => _buildFieldContainer(
+                    hasError: field.hasError,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _usernameController,
+                              style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context).usernameHint,
+                                hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ]),
+                        if (field.hasError)
+                          _buildErrorText(field.errorText!),
+                      ],
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'กรุณากรอกชื่อผู้ใช้งาน';
-                      }
-                      if (value.trim().length < 4) {
-                        return 'ชื่อผู้ใช้งานต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
-                      }
-                      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
-                        return 'ชื่อผู้ใช้งานต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น';
-                      }
-                      return null;
-                    },
                   ),
                 ),
                 const SizedBox(height: 16.0),
 
                 // Password Field
-                _buildInputBox(
-                  child: TextFormField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      prefixIcon: Icon(Icons.lock_outline, color: Colors.grey[400]),
-                      hintText: 'รหัสผ่าน',
-                      hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 16.0,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: Colors.grey[400],
-                        ),
-                        onPressed: () =>
-                            setState(() => _obscurePassword = !_obscurePassword),
-                      ),
+                FormField<void>(
+                  autovalidateMode: AutovalidateMode.disabled,
+                  validator: (_) {
+                    if (_passwordController.text.isEmpty) return AppLocalizations.current.passwordRequired;
+                    return null;
+                  },
+                  builder: (field) => _buildFieldContainer(
+                    hasError: field.hasError,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.lock_outline, color: Colors.grey[400], size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _passwordController,
+                              obscureText: _obscurePassword,
+                              style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context).passwordHint,
+                                hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                                suffixIcon: IconButton(
+                                  icon: Icon(
+                                    _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                                    color: Colors.grey[400],
+                                  ),
+                                  onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ]),
+                        if (field.hasError)
+                          _buildErrorText(field.errorText!),
+                      ],
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'กรุณากรอกรหัสผ่าน';
-                      }
-                      return null;
-                    },
                   ),
                 ),
                 const SizedBox(height: 4.0),
@@ -227,7 +247,7 @@ class _LoginPageState extends State<LoginPage> {
                       );
                     },
                     child: Text(
-                      'ลืมรหัสผ่าน?',
+                      AppLocalizations.of(context).forgotPassword,
                       style: GoogleFonts.googleSans(color: AppColors.primary),
                     ),
                   ),
@@ -238,7 +258,7 @@ class _LoginPageState extends State<LoginPage> {
                 // Login Button
                 GradientButton(
                   onPressed: _isLoading ? null : _login,
-                  label: 'เข้าสู่ระบบ',
+                  label: AppLocalizations.of(context).loginBtn,
                   isLoading: _isLoading,
                 ),
 
@@ -255,7 +275,7 @@ class _LoginPageState extends State<LoginPage> {
                             final result = await Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => const RegisterPage(),
+                                builder: (context) => const RegisterStep1Page(),
                               ),
                             );
                             if (result == true && context.mounted) {
@@ -270,7 +290,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     child: Text(
-                      'สร้างบัญชีใหม่',
+                      AppLocalizations.of(context).createNewAccount,
                       style: GoogleFonts.googleSans(
                         fontSize: 16.0,
                         fontWeight: FontWeight.bold,
@@ -286,13 +306,24 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildInputBox({required Widget child}) {
+  Widget _buildFieldContainer({required Widget child, bool hasError = false}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(12.0),
+        borderRadius: BorderRadius.circular(12),
       ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: child,
+    );
+  }
+
+  Widget _buildErrorText(String message) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(
+        message,
+        style: GoogleFonts.googleSans(color: AppColors.error, fontSize: 12),
+      ),
     );
   }
 }

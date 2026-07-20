@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Navigate } from 'react-router-dom';
 import {
   Box, Typography, Paper, Chip, Button, IconButton, Tooltip,
   Stack, TextField,
@@ -9,8 +9,11 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import ArticleIcon from '@mui/icons-material/Article';
-import { useArticles, type Article, type ArticleStatus } from '../../hooks/useArticles';
+import { useArticles, type Article } from '../../hooks/useArticles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getArticleStatusSx, ARTICLE_STATUS_LABELS } from '../../utils/statusColors';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 
@@ -19,39 +22,19 @@ import { createThGridLocale } from '../../constants/datagrid';
 const STATUS_FILTERS = [
   { value: 'all', label: 'ทั้งหมด' },
   { value: 'published', label: 'เผยแพร่แล้ว' },
-  { value: 'scheduled', label: 'รอเผยแพร่' },
   { value: 'draft', label: 'ร่าง' },
   { value: 'hidden', label: 'ซ่อน' },
 ] as const;
 
 type FilterValue = typeof STATUS_FILTERS[number]['value'];
 
-const STATUS_CHIP_PROPS: Record<ArticleStatus, { label: string; sx: object }> = {
-  published: {
-    label: 'เผยแพร่แล้ว',
-    sx: { bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 'bold' },
-  },
-  scheduled: {
-    label: 'รอเผยแพร่',
-    sx: { bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 'bold' },
-  },
-  draft: {
-    label: 'ร่าง',
-    sx: { bgcolor: '#F5F5F5', color: '#616161', fontWeight: 'bold' },
-  },
-  hidden: {
-    label: 'ซ่อน',
-    sx: { bgcolor: '#ECEFF1', color: '#546E7A', fontWeight: 'bold' },
-  },
-};
-
 const thGridLocale = createThGridLocale('ยังไม่มีบทความ');
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function StatusChip({ article }: { article: Article }) {
-  const { label, sx } = STATUS_CHIP_PROPS[article.status];
-  return <Chip label={label} size="small" sx={sx} />;
+  const { mode } = useColorMode();
+  return <Chip label={ARTICLE_STATUS_LABELS[article.status] ?? article.status} size="small" sx={getArticleStatusSx(article.status, mode)} />;
 }
 
 function CoverThumbnail({ url }: { url: string | null }) {
@@ -81,14 +64,11 @@ function CoverThumbnail({ url }: { url: string | null }) {
 
 export default function ArticlesPage() {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const { articles, staffMap, loading } = useArticles();
-  const { role } = useRoleAccess();
-  const canManage = role === 'admin' || role === 'superadmin';
-
+  const { role, loading: roleLoading } = useRoleAccess();
   const [filter, setFilter] = useState<FilterValue>('all');
   const [titleSearch, setTitleSearch] = useState('');
-
-  // ─── Filter ───────────────────────────────────────────────────────────────
 
   const filtered = useMemo(() => {
     let result = articles;
@@ -103,22 +83,26 @@ export default function ArticlesPage() {
   const counts = useMemo(() => ({
     all: articles.length,
     published: articles.filter(a => a.status === 'published').length,
-    scheduled: articles.filter(a => a.status === 'scheduled').length,
     draft: articles.filter(a => a.status === 'draft').length,
     hidden: articles.filter(a => a.status === 'hidden').length,
   }), [articles]);
+
+  if (roleLoading) return null;
+  if (role === 'staff') return <Navigate to="/dashboard" replace />;
+
+  const canManage = role === 'admin' || role === 'superadmin';
 
   // ─── Columns ──────────────────────────────────────────────────────────────
 
   const columns: GridColDef[] = [
     {
-      field: 'cover_image_url',
+      field: 'thumbnail_url',
       headerName: 'รูปหน้าปก',
       width: 110,
       sortable: false,
       renderCell: (params: GridRenderCellParams<Article>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-          <CoverThumbnail url={params.row.cover_image_url} />
+          <CoverThumbnail url={params.row.thumbnail_url} />
         </Box>
       ),
     },
@@ -128,7 +112,11 @@ export default function ArticlesPage() {
       flex: 1,
       minWidth: 220,
       renderCell: (params: GridRenderCellParams<Article>) => {
-        const hasDraft = params.row.has_draft && params.row.status === 'published';
+        const hasDraft = (
+          params.row.draft_title !== null ||
+          params.row.draft_body !== null ||
+          params.row.draft_category !== null
+        ) && params.row.status === 'published';
         return (
           <Box sx={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', height: '100%', py: 1 }}>
             <Typography variant="body2" fontWeight="bold" noWrap sx={{ maxWidth: 320 }}>
@@ -168,16 +156,25 @@ export default function ArticlesPage() {
       ),
     },
     {
-      field: 'publish_at',
+      field: 'category',
+      headerName: 'หมวดหมู่',
+      flex: 0.6,
+      minWidth: 120,
+      renderCell: (params: GridRenderCellParams<Article>) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+          <Typography variant="body2">{params.row.category || '—'}</Typography>
+        </Box>
+      ),
+    },
+    {
+      field: 'published_at',
       headerName: 'วันที่เผยแพร่',
       flex: 0.8,
       minWidth: 160,
       renderCell: (params: GridRenderCellParams<Article>) => (
         <Box sx={{ display: 'flex', alignItems: 'center', height: '100%' }}>
           <Typography variant="body2">
-            {params.row.status === 'published' && params.row.publish_at
-              ? formatDateTime(params.row.publish_at)
-              : '—'}
+            {params.row.published_at ? formatDateTime(params.row.published_at) : '—'}
           </Typography>
         </Box>
       ),
@@ -250,27 +247,29 @@ export default function ArticlesPage() {
             onChange={e => setTitleSearch(e.target.value)}
             sx={{ flexGrow: 1, maxWidth: 360 }}
           />
-          <Stack direction="row" spacing={1} flexWrap="wrap">
-            {STATUS_FILTERS.map(f => {
-              const active = filter === f.value;
-              return (
-                <Chip
-                  key={f.value}
-                  label={`${f.label} (${counts[f.value]})`}
-                  onClick={() => setFilter(f.value)}
-                  sx={{
-                    fontWeight: active ? 700 : 400,
-                    bgcolor: active ? '#FF9F6B' : 'transparent',
-                    color: active ? 'white' : 'text.secondary',
-                    border: '1px solid',
-                    borderColor: active ? '#FF9F6B' : 'divider',
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
-                  }}
-                />
-              );
-            })}
-          </Stack>
+          {canManage && (
+            <Stack direction="row" spacing={1} flexWrap="wrap">
+              {STATUS_FILTERS.map(f => {
+                const active = filter === f.value;
+                return (
+                  <Chip
+                    key={f.value}
+                    label={`${f.label} (${counts[f.value]})`}
+                    onClick={() => setFilter(f.value)}
+                    sx={{
+                      fontWeight: active ? 700 : 400,
+                      bgcolor: active ? '#FF9F6B' : 'transparent',
+                      color: active ? 'white' : 'text.secondary',
+                      border: '1px solid',
+                      borderColor: active ? '#FF9F6B' : 'divider',
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: active ? '#FF9F6B' : 'action.hover' },
+                    }}
+                  />
+                );
+              })}
+            </Stack>
+          )}
         </Stack>
 
         {/* DataGrid */}
@@ -279,6 +278,7 @@ export default function ArticlesPage() {
             rows={filtered}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { thumbnail_url: false, created_by: false, category: false, published_at: false, updated_at: false } : undefined}
             rowHeight={64}
             pageSizeOptions={[10, 25, 50]}
             initialState={{ pagination: { paginationModel: { pageSize: 10 } } }}
@@ -286,7 +286,7 @@ export default function ArticlesPage() {
             localeText={thGridLocale}
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />

@@ -1,23 +1,34 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
-  Box, Typography, Paper, Chip, Button, IconButton, Tooltip,
+  Box, Typography, Paper, Chip, Stack, Button, IconButton, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogActions, Divider,
-  TextField, MenuItem, CircularProgress, Alert,
+  TextField, MenuItem, CircularProgress, Alert, Collapse, Snackbar,
+  Select, Checkbox, ListItemText, OutlinedInput, InputLabel, FormControl,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import PersonAddIcon from '@mui/icons-material/PersonAdd';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { alpha } from '@mui/material/styles';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
+import { useIsMobile } from '../../hooks/useIsMobile';
 import { useAuth } from '../../hooks/useAuth';
+import { useColorMode } from '../../contexts/ThemeContext';
 import { useStaffManagement, type StaffMember } from '../../hooks/useStaffManagement';
 import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 import type { Enums } from '../../lib/database.types';
+import ConfirmDialog from '../../components/shared/ConfirmDialog';
+import { useNotificationSettings, type NotificationSetting } from '../../hooks/useNotificationSettings';
+import { STATUS_CONFIG, CONSULTATION_STATUS_CONFIG, STOCK_OPERATION_CONFIG, SERVICE_CENTER_MANAGEMENT_CONFIG } from '../../contexts/NotificationContext';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
@@ -27,11 +38,22 @@ const ROLE_OPTIONS = [
   { value: 'superadmin', label: 'ผู้ดูแลสูงสุด' },
 ] as const;
 
-const ROLE_CHIP_SX: Record<string, { bgcolor: string; color: string }> = {
-  superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
-  admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
-  staff:      { bgcolor: '#F5F5F5', color: '#616161' },
-};
+function getRoleChipSx(role: string, mode: 'light' | 'dark'): { bgcolor: string; color: string } {
+  if (mode === 'dark') {
+    const dark: Record<string, { bgcolor: string; color: string }> = {
+      superadmin: { bgcolor: alpha('#EF5350', 0.15), color: '#EF9A9A' },
+      admin:      { bgcolor: alpha('#FF9F6B', 0.15), color: '#FFBE9E' },
+      staff:      { bgcolor: alpha('#9E9E9E', 0.15), color: '#BDBDBD' },
+    };
+    return dark[role] ?? dark.staff;
+  }
+  const light: Record<string, { bgcolor: string; color: string }> = {
+    superadmin: { bgcolor: '#FFEBEE', color: '#B71C1C' },
+    admin:      { bgcolor: '#FFF3E0', color: '#E65100' },
+    staff:      { bgcolor: '#F5F5F5', color: '#616161' },
+  };
+  return light[role] ?? light.staff;
+}
 
 const ROLE_LABEL: Record<string, string> = {
   staff: 'เจ้าหน้าที่',
@@ -61,40 +83,252 @@ function generatePassword(): string {
   return [...required, ...rest].sort(() => Math.random() - 0.5).join('');
 }
 
+// ─── Notification Settings Labels ────────────────────────────────────────────
+
+const NOTIF_GROUPS: Array<{
+  source_type: string;
+  label: string;
+  rows: Array<{ event_type: string; label: string }>;
+}> = [
+  {
+    source_type: 'condom_request',
+    label: 'คำขอถุงยางอนามัย',
+    rows: (Object.entries(STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'consultation',
+    label: 'นัดรับคำปรึกษา',
+    rows: (Object.entries(CONSULTATION_STATUS_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'stock_operation',
+    label: 'การจัดการสต็อก',
+    rows: (Object.entries(STOCK_OPERATION_CONFIG) as [string, { label: string }][]).map(([k, v]) => ({ event_type: k, label: v.label })),
+  },
+  {
+    source_type: 'service_center_management',
+    label: SERVICE_CENTER_MANAGEMENT_CONFIG.label,
+    rows: [
+      { event_type: 'add',    label: 'เพิ่มสถานบริการ' },
+      { event_type: 'remove', label: 'ลบสถานบริการ' },
+    ],
+  },
+  {
+    source_type: 'staff_management',
+    label: 'การจัดการเจ้าหน้าที่',
+    rows: [
+      { event_type: 'add',          label: 'เพิ่มเจ้าหน้าที่' },
+      { event_type: 'remove',       label: 'ลบเจ้าหน้าที่' },
+      { event_type: 'edit_profile', label: 'แก้ไขโปรไฟล์' },
+      { event_type: 'edit_email',   label: 'แก้ไขอีเมล' },
+      { event_type: 'edit_role',    label: 'แก้ไขระดับสิทธิ์' },
+    ],
+  },
+];
+
+// ─── Notification Settings Section ───────────────────────────────────────────
+
+function NotificationSettingsSection() {
+  const { settings, loading, save } = useNotificationSettings();
+  const [draft, setDraft] = useState<NotificationSetting[]>([]);
+  const [saving, setSaving] = useState(false);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({ open: false, message: '', severity: 'success' });
+  const [sectionOpen, setSectionOpen] = useState(false);
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set());
+
+  useEffect(() => { setDraft(settings); }, [settings]);
+
+  const isDirty = useMemo(() => {
+    if (draft.length !== settings.length) return false;
+    return draft.some(d => {
+      const orig = settings.find(s => s.source_type === d.source_type && s.event_type === d.event_type);
+      return orig && (d.notify_staff !== orig.notify_staff || d.notify_admin !== orig.notify_admin || d.notify_superadmin !== orig.notify_superadmin);
+    });
+  }, [draft, settings]);
+
+  const toggle = (source_type: string, event_type: string, field: 'notify_staff' | 'notify_admin' | 'notify_superadmin') => {
+    setDraft(prev => prev.map(s =>
+      s.source_type === source_type && s.event_type === event_type
+        ? { ...s, [field]: !s[field] }
+        : s
+    ));
+  };
+
+  const toggleGroup = (sourceType: string) => {
+    setOpenGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(sourceType)) next.delete(sourceType); else next.add(sourceType);
+      return next;
+    });
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const err = await save(draft);
+    setSaving(false);
+    setSnackbar({ open: true, message: err ? `บันทึกไม่สำเร็จ: ${err}` : 'บันทึกการตั้งค่าเรียบร้อยแล้ว', severity: err ? 'error' : 'success' });
+  };
+
+  return (
+    <Box sx={{ mt: 4 }}>
+      <Box
+        onClick={() => setSectionOpen(o => !o)}
+        sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', userSelect: 'none', mb: sectionOpen ? 0.5 : 0 }}
+      >
+        <Typography variant="h6" fontWeight="bold">ตั้งค่าการแจ้งเตือน</Typography>
+        <ExpandMoreIcon sx={{ color: 'text.secondary', transition: 'transform 0.2s', transform: sectionOpen ? 'rotate(180deg)' : 'none' }} />
+      </Box>
+
+      <Collapse in={sectionOpen}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          กำหนดว่าแต่ละระดับสิทธิ์จะได้รับการแจ้งเตือนสำหรับกิจกรรมใดบ้าง
+        </Typography>
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={28} />
+          </Box>
+        ) : (
+          <>
+            {NOTIF_GROUPS.map(group => {
+              const isGroupOpen = openGroups.has(group.source_type);
+              return (
+                <Paper key={group.source_type} elevation={1} sx={{ borderRadius: 2, mb: 2, overflow: 'hidden' }}>
+                  <Box
+                    onClick={() => toggleGroup(group.source_type)}
+                    sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 3, py: 2, cursor: 'pointer', userSelect: 'none' }}
+                  >
+                    <Typography variant="subtitle1" fontWeight="bold">{group.label}</Typography>
+                    <ExpandMoreIcon sx={{ color: 'text.secondary', fontSize: 20, transition: 'transform 0.2s', transform: isGroupOpen ? 'rotate(180deg)' : 'none' }} />
+                  </Box>
+                  <Collapse in={isGroupOpen}>
+                    <Box sx={{ px: 3, pb: 2, overflowX: 'auto' }}>
+                      <Box component="table" sx={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <Box component="thead">
+                          <Box component="tr">
+                            {(['การดำเนินการ', 'เจ้าหน้าที่', 'ผู้ดูแล', 'ผู้ดูแลสูงสุด'] as const).map((h, i) => (
+                              <Box
+                                component="th"
+                                key={h}
+                                sx={{
+                                  textAlign: i === 0 ? 'left' : 'center',
+                                  pb: 1.5,
+                                  pr: 2,
+                                  fontSize: 12,
+                                  color: 'text.secondary',
+                                  fontWeight: 'medium',
+                                  whiteSpace: 'nowrap',
+                                  ...(i > 0 && { width: 100 }),
+                                }}
+                              >
+                                {h}
+                              </Box>
+                            ))}
+                          </Box>
+                        </Box>
+                        <Box component="tbody">
+                          {group.rows.map(row => {
+                            const s = draft.find(d => d.source_type === group.source_type && d.event_type === row.event_type);
+                            return (
+                              <Box
+                                component="tr"
+                                key={row.event_type}
+                                sx={{ borderTop: '1px solid', borderColor: 'divider' }}
+                              >
+                                <Box component="td" sx={{ py: 1.5, pr: 2 }}>
+                                  <Typography variant="body2">{row.label}</Typography>
+                                </Box>
+                                {(['notify_staff', 'notify_admin', 'notify_superadmin'] as const).map(field => (
+                                  <Box component="td" key={field} sx={{ py: 1.5, textAlign: 'center', width: 100 }}>
+                                    <Checkbox
+                                      checked={s?.[field] ?? false}
+                                      onChange={() => toggle(group.source_type, row.event_type, field)}
+                                      size="small"
+                                    />
+                                  </Box>
+                                ))}
+                              </Box>
+                            );
+                          })}
+                        </Box>
+                      </Box>
+                    </Box>
+                  </Collapse>
+                </Paper>
+              );
+            })}
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
+              <Button
+                variant="contained"
+                disabled={!isDirty || saving}
+                onClick={handleSave}
+                endIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
+              >
+                บันทึก
+              </Button>
+            </Box>
+          </>
+        )}
+      </Collapse>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        onClose={() => setSnackbar(s => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={snackbar.severity} variant="filled" onClose={() => setSnackbar(s => ({ ...s, open: false }))}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+}
+
 // ─── Add Staff Dialog ─────────────────────────────────────────────────────────
 
 interface AddStaffDialogProps {
   open: boolean;
   centerNames: string[];
+  currentRole: string;
   onClose: () => void;
   onSuccess: () => void;
   onCreate: (payload: {
     email: string; password: string; first_name: string;
-    last_name: string; service_center: string; role: Enums<'role'>;
+    last_name: string; service_centers: string[]; role: Enums<'role'>;
   }) => Promise<string | null>;
 }
 
-function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
+function AddStaffDialog({ open, centerNames, currentRole, onClose, onSuccess, onCreate }: AddStaffDialogProps) {
+  const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [step, setStep] = useState<1 | 2>(1);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [serviceCenter, setServiceCenter] = useState('');
+  const [serviceCenters, setServiceCenters] = useState<string[]>([]);
   const [role, setRole] = useState<Enums<'role'>>('staff');
   const [password, setPassword] = useState('');
   const [copied, setCopied] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const scRequired = role === 'staff' || role === 'admin';
+
   const handleClose = () => {
     setStep(1); setFirstName(''); setLastName(''); setEmail('');
-    setServiceCenter(''); setRole('staff'); setPassword(''); setCopied(false); setError(null);
+    setServiceCenters([]); setRole('staff'); setPassword(''); setCopied(false); setError(null);
     onClose();
   };
 
   const handleNext = () => {
-    if (!firstName || !lastName || !email || !serviceCenter || !role) {
+    if (!firstName || !lastName || !email || !role) {
       setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
+    }
+    if (scRequired && serviceCenters.length === 0) {
+      setError('กรุณาเลือกสถานบริการ');
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -115,7 +349,7 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
   const handleCreate = async () => {
     setSubmitting(true);
     setError(null);
-    const err = await onCreate({ email, password, first_name: firstName, last_name: lastName, service_center: serviceCenter, role });
+    const err = await onCreate({ email, password, first_name: firstName, last_name: lastName, service_centers: serviceCenters, role });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
@@ -123,7 +357,7 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
   };
 
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
       <DialogTitle fontWeight="bold">เพิ่มเจ้าหน้าที่</DialogTitle>
       <DialogContent dividers>
         {step === 1 ? (
@@ -134,17 +368,42 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
               <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth required />
             </Box>
             <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth required />
-            <TextField
-              select label="สถานบริการ" value={serviceCenter}
-              onChange={e => setServiceCenter(e.target.value)} fullWidth required
-            >
-              {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
-            </TextField>
+            {role === 'staff' ? (
+              <TextField
+                select label="สถานบริการ" required fullWidth
+                value={serviceCenters[0] ?? ''}
+                onChange={e => setServiceCenters(e.target.value ? [e.target.value] : [])}
+              >
+                {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              </TextField>
+            ) : (
+              <FormControl fullWidth required={role === 'admin'}>
+                <InputLabel>สถานบริการ{role === 'superadmin' ? ' (ไม่บังคับ)' : ''}</InputLabel>
+                <Select
+                  multiple
+                  value={serviceCenters}
+                  onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                  input={<OutlinedInput label={`สถานบริการ${role === 'superadmin' ? ' (ไม่บังคับ)' : ''}`} />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
+                    </Box>
+                  )}
+                >
+                  {centerNames.map(sc => (
+                    <MenuItem key={sc} value={sc}>
+                      <Checkbox checked={serviceCenters.includes(sc)} size="small" />
+                      <ListItemText primary={sc} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
             <TextField
               select label="ระดับสิทธิ์" value={role}
-              onChange={e => setRole(e.target.value as Enums<'role'>)} fullWidth required
+              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth required
             >
-              {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+              {ROLE_OPTIONS.filter(r => currentRole !== 'admin' || r.value !== 'superadmin').map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
             </TextField>
           </Box>
         ) : (
@@ -153,7 +412,7 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
               รหัสผ่านนี้จะแสดงเพียงครั้งเดียว กรุณาคัดลอกและแจ้งให้เจ้าหน้าที่ทราบ
             </Alert>
             {error && <Alert severity="error">{error}</Alert>}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'grey.100', borderRadius: 2, px: 2, py: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: 'action.hover', borderRadius: 2, px: 2, py: 1.5 }}>
               <Typography fontFamily="monospace" fontWeight="bold" sx={{ flex: 1, wordBreak: 'break-all' }}>
                 {password}
               </Typography>
@@ -173,13 +432,15 @@ function AddStaffDialog({ open, centerNames, onClose, onSuccess, onCreate }: Add
                 <Typography variant="subtitle2" color="text.secondary">อีเมล</Typography>
                 <Typography variant="body1">{email}</Typography>
               </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Typography variant="subtitle2" color="text.secondary">สถานบริการ</Typography>
-                <Typography variant="body1">{serviceCenter}</Typography>
+                <Typography variant="body1" textAlign="right">
+                  {serviceCenters.length > 0 ? serviceCenters.join(', ') : '—'}
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <Typography variant="subtitle2" color="text.secondary">ระดับสิทธิ์</Typography>
-                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...(ROLE_CHIP_SX[role] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }} />
+                <Chip label={ROLE_LABEL[role]} size="small" sx={{ ...getRoleChipSx(role, mode), fontWeight: 600 }} />
               </Box>
             </Box>
           </Box>
@@ -216,20 +477,22 @@ interface EditStaffDialogProps {
   currentUserId: string;
   currentRole: string;
   onClose: () => void;
-  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_center: string; role: Enums<'role'>; email?: string }) => Promise<string | null>;
+  onUpdate: (payload: { staff_user_id: string; first_name: string; last_name: string; service_centers?: string[]; role?: Enums<'role'>; email?: string }) => Promise<string | null>;
   onDelete: (userId: string) => Promise<string | null>;
 }
 
 function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole, onClose, onUpdate, onDelete }: EditStaffDialogProps) {
+  const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
-  const [serviceCenter, setServiceCenter] = useState('');
+  const [serviceCenters, setServiceCenters] = useState<string[]>([]);
   const [role, setRole] = useState<Enums<'role'>>('staff');
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [confirmDowngrade, setConfirmDowngrade] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [confirmDowngradeOpen, setConfirmDowngradeOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -238,35 +501,70 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
       setFirstName(staff.first_name);
       setLastName(staff.last_name);
       setEmail(staff.email);
-      setServiceCenter(staff.service_center);
+      setServiceCenters(staff.service_centers);
       setRole(staff.role);
       setError(null);
-      setConfirmDelete(false);
-      setConfirmDowngrade(false);
+      setConfirmDeleteOpen(false);
+      setConfirmDowngradeOpen(false);
     }
   }, [staff]);
 
-  const handleClose = () => { setError(null); setConfirmDelete(false); setConfirmDowngrade(false); onClose(); };
+  const handleClose = () => { setError(null); setConfirmDeleteOpen(false); setConfirmDowngradeOpen(false); onClose(); };
 
-  const handleSave = async () => {
+  const isCallerAdmin = currentRole === 'admin';
+  // Admin cannot touch superadmin accounts at all
+  const isRestricted = isCallerAdmin && staff?.role === 'superadmin';
+  // Admin cannot change role or SC of anyone
+  const isRoleScLocked = isCallerAdmin;
+  // Admin cannot change name/email of other admins or self (can only edit staff)
+  const isNameEmailLocked = isCallerAdmin && staff?.role !== 'staff';
+  // Nothing is editable — disable save
+  const nothingEditable = isRestricted || (isRoleScLocked && isNameEmailLocked);
+
+  const doSave = async () => {
     if (!staff) return;
-    const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
-    if (isDowngrade && !confirmDowngrade) {
-      setConfirmDowngrade(true);
-      return;
-    }
     setSubmitting(true);
     setError(null);
     const emailChanged = email !== staff.email;
-    const err = await onUpdate({ staff_user_id: staff.staff_user_id, first_name: firstName, last_name: lastName, service_center: serviceCenter, role, ...(emailChanged && { email }) });
+    const err = await onUpdate({
+      staff_user_id: staff.staff_user_id,
+      first_name: firstName,
+      last_name: lastName,
+      ...(emailChanged && { email }),
+      ...(!isRoleScLocked && { service_centers: serviceCenters, role }),
+    });
     setSubmitting(false);
     if (err) { setError(err); return; }
     handleClose();
   };
 
-  const handleDelete = async () => {
+  const handleSave = async () => {
     if (!staff) return;
-    if (!confirmDelete) { setConfirmDelete(true); return; }
+    if (!isRestricted && !isNameEmailLocked) {
+      if (!firstName.trim() || !lastName.trim() || !email.trim()) {
+        setError('กรุณากรอกข้อมูลให้ครบถ้วน');
+        return;
+      }
+    }
+    if (!isRoleScLocked) {
+      if ((role === 'staff' || role === 'admin') && serviceCenters.length === 0) {
+        setError('กรุณาเลือกสถานบริการ');
+        return;
+      }
+      const isDowngrade = (ROLE_RANK[role] ?? 0) < (ROLE_RANK[staff.role] ?? 0);
+      if (isDowngrade) { setConfirmDowngradeOpen(true); return; }
+    }
+    await doSave();
+  };
+
+  const handleDowngradeConfirm = async () => {
+    setConfirmDowngradeOpen(false);
+    await doSave();
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!staff) return;
+    setConfirmDeleteOpen(false);
     setDeleting(true);
     const err = await onDelete(staff.staff_user_id);
     setDeleting(false);
@@ -274,96 +572,163 @@ function EditStaffDialog({ open, staff, centerNames, currentUserId, currentRole,
     handleClose();
   };
 
-  const isRestricted = currentRole === 'admin' && staff?.role === 'superadmin';
-
   return (
-    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-      <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
-      <DialogContent dividers>
-        {isRestricted && (
-          <Alert severity="warning" sx={{ mb: 2 }}>
-            ผู้ดูแลไม่สามารถแก้ไขหรือลบบัญชีผู้ดูแลสูงสุดได้
-          </Alert>
-        )}
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
-          <Box sx={{ display: 'flex', gap: 2 }}>
-            <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth disabled={isRestricted} />
-            <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth disabled={isRestricted} />
-          </Box>
-          <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth disabled={isRestricted} />
-          <TextField
-            select label="สถานบริการ" value={serviceCenter}
-            onChange={e => setServiceCenter(e.target.value)} fullWidth disabled={isRestricted}
-          >
-            {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
-          </TextField>
-          <TextField
-            select label="ระดับสิทธิ์" value={role}
-            onChange={e => { setRole(e.target.value as Enums<'role'>); setConfirmDowngrade(false); }} fullWidth disabled={isRestricted}
-          >
-            {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
-          </TextField>
-          <Divider sx={{ my: 1 }} />
-          {staff && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="subtitle2" color="text.secondary">เพิ่มเมื่อ</Typography>
-                <Typography variant="body1">{formatDateTime(staff.created_at)}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Typography variant="subtitle2" color="text.secondary">แก้ไขเมื่อ</Typography>
-                <Typography variant="body1">{formatDateTime(staff.updated_at ?? undefined)}</Typography>
-              </Box>
+    <>
+      <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm" fullScreen={isMobile}>
+        <DialogTitle fontWeight="bold">แก้ไขข้อมูล</DialogTitle>
+        <DialogContent dividers>
+          {isRestricted && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              ผู้ดูแลไม่สามารถแก้ไขหรือลบบัญชีผู้ดูแลสูงสุดได้
+            </Alert>
+          )}
+          {!isRestricted && isNameEmailLocked && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              ไม่สามารถแก้ไขข้อมูลได้ โปรดติดต่อผู้ดูแลสูงสุด
+            </Alert>
+          )}
+          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <TextField label="ชื่อ" value={firstName} onChange={e => setFirstName(e.target.value)} fullWidth required disabled={isRestricted || isNameEmailLocked} />
+              <TextField label="นามสกุล" value={lastName} onChange={e => setLastName(e.target.value)} fullWidth required disabled={isRestricted || isNameEmailLocked} />
             </Box>
-          )}
-          {confirmDowngrade && (
-            <Alert severity="warning">
-              คุณกำลังลดระดับสิทธิ์จาก <strong>{ROLE_LABEL[staff?.role ?? '']}</strong> เป็น <strong>{ROLE_LABEL[role]}</strong> กดปุ่ม "บันทึก" อีกครั้งเพื่อยืนยัน
-            </Alert>
-          )}
-          {confirmDelete && (
-            <Alert severity="warning">
-              คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้ กดปุ่ม "ลบ" อีกครั้งเพื่อยืนยัน
-            </Alert>
-          )}
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button
-          variant="contained"
-          color="error"
-          startIcon={deleting ? undefined : <DeleteIcon />}
-          endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
-          onClick={handleDelete}
-          disabled={deleting || isRestricted || (staff?.staff_user_id === currentUserId)}
-          sx={{ mr: 'auto' }}
-        >
-          {confirmDelete ? 'ยืนยันลบ' : 'ลบ'}
-        </Button>
-        <Button onClick={handleClose} color="inherit">ยกเลิก</Button>
-        <Button
-          variant="contained"
-          onClick={handleSave}
-          disabled={submitting || isRestricted}
-          endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
-        >
-          บันทึก
-        </Button>
-      </DialogActions>
-    </Dialog>
+            <TextField label="อีเมล" type="email" value={email} onChange={e => setEmail(e.target.value)} fullWidth required disabled={isRestricted || isNameEmailLocked} />
+            {role === 'staff' ? (
+              <TextField
+                select label="สถานบริการ" required fullWidth disabled={isRestricted || isRoleScLocked}
+                value={serviceCenters[0] ?? ''}
+                onChange={e => setServiceCenters(e.target.value ? [e.target.value] : [])}
+              >
+                {centerNames.map(sc => <MenuItem key={sc} value={sc}>{sc}</MenuItem>)}
+              </TextField>
+            ) : (
+              <FormControl fullWidth required={role === 'admin'} disabled={isRestricted || isRoleScLocked}>
+                <InputLabel>สถานบริการ{role === 'superadmin' ? ' (ไม่บังคับ)' : ''}</InputLabel>
+                <Select
+                  multiple
+                  value={serviceCenters}
+                  onChange={e => setServiceCenters(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value as string[])}
+                  input={<OutlinedInput label={`สถานบริการ${role === 'superadmin' ? ' (ไม่บังคับ)' : ''}`} />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).length === 0
+                        ? <Typography variant="body2" color="text.disabled">ไม่ระบุ</Typography>
+                        : (selected as string[]).map(v => <Chip key={v} label={v} size="small" />)}
+                    </Box>
+                  )}
+                >
+                  {centerNames.map(sc => (
+                    <MenuItem key={sc} value={sc}>
+                      <Checkbox checked={serviceCenters.includes(sc)} size="small" />
+                      <ListItemText primary={sc} />
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+            <TextField
+              select label="ระดับสิทธิ์" value={role}
+              onChange={e => { setRole(e.target.value as Enums<'role'>); setServiceCenters([]); }} fullWidth required disabled={isRestricted || isRoleScLocked}
+            >
+              {ROLE_OPTIONS.map(r => <MenuItem key={r.value} value={r.value}>{r.label}</MenuItem>)}
+            </TextField>
+            <Divider sx={{ my: 1 }} />
+            {staff && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="subtitle2" color="text.secondary">เพิ่มเมื่อ</Typography>
+                  <Typography variant="body1">{formatDateTime(staff.created_at)}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="subtitle2" color="text.secondary">แก้ไขเมื่อ</Typography>
+                  <Typography variant="body1">{formatDateTime(staff.updated_at ?? undefined)}</Typography>
+                </Box>
+              </Box>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            variant="contained"
+            color="error"
+            startIcon={deleting ? undefined : <DeleteIcon />}
+            endIcon={deleting ? <CircularProgress size={16} color="inherit" /> : undefined}
+            onClick={() => setConfirmDeleteOpen(true)}
+            disabled={deleting || staff?.role === 'superadmin' || (isCallerAdmin && staff?.role === 'admin') || (staff?.staff_user_id === currentUserId)}
+            sx={{ mr: 'auto' }}
+          >
+            ลบ
+          </Button>
+          <Button onClick={handleClose} color="inherit">ยกเลิก</Button>
+          <Button
+            variant="contained"
+            onClick={handleSave}
+            disabled={submitting || nothingEditable}
+            endIcon={submitting ? <CircularProgress size={16} color="inherit" /> : undefined}
+          >
+            บันทึก
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirm: Delete staff */}
+      <ConfirmDialog
+        open={confirmDeleteOpen}
+        icon={<DeleteOutlineIcon color="error" />}
+        title="ยืนยันการลบบัญชี"
+        body="คุณแน่ใจหรือไม่ว่าต้องการลบบัญชีนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+        confirmLabel="ลบ"
+        confirmColor="error"
+        loading={deleting}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setConfirmDeleteOpen(false)}
+      />
+
+      {/* Confirm: Role downgrade */}
+      <ConfirmDialog
+        open={confirmDowngradeOpen}
+        icon={<WarningAmberRoundedIcon color="warning" />}
+        title="ยืนยันการลดระดับสิทธิ์"
+        body={
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+              <Typography variant="body2" color="text.secondary">คุณกำลังลดระดับสิทธิ์จาก</Typography>
+              <Chip label={ROLE_LABEL[staff?.role ?? '']} size="small" sx={{ fontWeight: 600, ...getRoleChipSx(staff?.role ?? '', mode) }} />
+              <Typography variant="body2" color="text.secondary">เป็น</Typography>
+              <Chip label={ROLE_LABEL[role]} size="small" sx={{ fontWeight: 600, ...getRoleChipSx(role, mode) }} />
+            </Stack>
+            <Typography variant="body2" color="text.secondary">การดำเนินการนี้อาจส่งผลต่อการเข้าถึงระบบของเจ้าหน้าที่</Typography>
+          </Box>
+        }
+        confirmLabel="ยืนยัน"
+        confirmColor="warning"
+        loading={submitting}
+        onConfirm={handleDowngradeConfirm}
+        onCancel={() => setConfirmDowngradeOpen(false)}
+      />
+    </>
   );
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function StaffManagementPage() {
-  const { role, loading: roleLoading } = useRoleAccess();
+  const isMobile = useIsMobile();
+  const { role, loading: roleLoading, isSuperadmin, serviceCenters } = useRoleAccess();
   const { session } = useAuth();
+  const { mode } = useColorMode();
   const currentUserId = session?.user?.id ?? '';
   const { staff, loading, error, fetchStaff, createStaff, updateStaff, deleteStaff } = useStaffManagement();
   const { centers } = useServiceCenters();
-  const centerNames = centers.map(c => c.name);
+  const { selectedServiceCenter } = useServiceCenterFilter();
+  // Admin can only assign staff to their own SCs; superadmin can use all centers
+  const centerNames = isSuperadmin
+    ? centers.map(c => c.name)
+    : centers.filter(c => serviceCenters.includes(c.name)).map(c => c.name);
+  const filteredStaff = selectedServiceCenter === null
+    ? staff
+    : staff.filter(s => s.service_centers.includes(selectedServiceCenter));
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null);
 
@@ -401,11 +766,24 @@ export default function StaffManagementPage() {
         <Chip
           label={ROLE_LABEL[params.value as string] ?? params.value}
           size="small"
-          sx={{ ...(ROLE_CHIP_SX[params.value as string] ?? ROLE_CHIP_SX.staff), fontWeight: 600 }}
+          sx={{ ...getRoleChipSx(params.value as string, mode), fontWeight: 600 }}
         />
       ),
     },
-    { field: 'service_center', headerName: 'สถานบริการ', flex: 1.5, minWidth: 160 },
+    {
+      field: 'service_center',
+      headerName: 'สถานบริการ',
+      flex: 1.5,
+      minWidth: 160,
+      renderCell: (params) => {
+        const scs: string[] = (params.row as StaffMember).service_centers ?? [];
+        return (
+          <Typography variant="body2" noWrap>
+            {scs.length > 0 ? scs.join(', ') : (params.value as string) || '—'}
+          </Typography>
+        );
+      },
+    },
     {
       field: 'actions',
       headerName: '',
@@ -451,10 +829,11 @@ export default function StaffManagementPage() {
       <Paper elevation={1} sx={{ p: 3, borderRadius: 2 }}>
         <Box sx={{ height: 500, width: '100%' }}>
           <DataGrid
-            rows={staff}
+            rows={filteredStaff}
             getRowId={(row) => row.staff_user_id}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { staff_user_id: false, last_name: false, service_center: false } : undefined}
             localeText={thGridLocale}
             initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
             pageSizeOptions={[10]}
@@ -462,16 +841,19 @@ export default function StaffManagementPage() {
             getRowHeight={() => 56}
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />
         </Box>
       </Paper>
 
+      {isSuperadmin && <NotificationSettingsSection />}
+
       <AddStaffDialog
         open={addOpen}
         centerNames={centerNames}
+        currentRole={role ?? ''}
         onClose={() => setAddOpen(false)}
         onSuccess={fetchStaff}
         onCreate={createStaff}

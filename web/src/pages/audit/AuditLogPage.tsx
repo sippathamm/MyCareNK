@@ -3,16 +3,18 @@ import {
   Box, Typography, Paper, TextField, MenuItem, Stack,
   Alert, Chip, Tabs, Tab,
 } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess, type StaffRole } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffAuditLog, type StaffAuditLogRow, type StaffAuditLogFilters } from '../../hooks/useStaffAuditLog';
 import { useInventoryLog, type InventoryLogRow, type InventoryLogFilters } from '../../hooks/useInventoryLog';
 import { useRequestStatusLog, type RequestStatusLogRow, type RequestStatusLogFilters } from '../../hooks/useRequestStatusLog';
-import { useAppointmentStatusLog, type AppointmentStatusLogRow, type AppointmentStatusLogFilters } from '../../hooks/useAppointmentStatusLog';
-import StaffAuditLogDetailDrawer from '../../components/audit/StaffAuditLogDetailDrawer';
+import { useConsultationStatusLog, type ConsultationStatusLogRow, type ConsultationStatusLogFilters } from '../../hooks/useConsultationStatusLog';
+import StaffAuditLogDetailDialog from '../../components/audit/StaffAuditLogDetailDialog';
 import InventoryLogDetailDrawer from '../../components/audit/InventoryLogDetailDrawer';
 import {
   AUDIT_ACTION, AUDIT_ACTION_LABEL, AUDIT_ACTION_COLOR, AUDIT_ACTION_FALLBACK_COLOR,
@@ -20,6 +22,7 @@ import {
 import type { AuditAction } from '../../constants/auditLogActions';
 import { formatDateTime } from '../../utils/requestUtils';
 import { createThGridLocale } from '../../constants/datagrid';
+import { useColorMode } from '../../contexts/ThemeContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -67,7 +70,7 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled_by_user:  'ยกเลิกโดยผู้ใช้',
 };
 
-const APPOINTMENT_STATUS_LABELS: Record<string, string> = {
+const CONSULTATION_STATUS_LABELS: Record<string, string> = {
   pending:            'รอยืนยัน',
   confirmed:          'ยืนยันแล้ว',
   completed:          'เสร็จสิ้น',
@@ -82,6 +85,18 @@ const STATUS_OPTIONS = [
 
 // ─── Shared sub-components ────────────────────────────────────────────────────
 
+const AUDIT_ACTION_DARK_SX: Record<string, { bg: string; color: string }> = {
+  staff_created:         { bg: alpha('#2E7D32', 0.2), color: '#81C784' },
+  staff_deleted:         { bg: alpha('#B71C1C', 0.2), color: '#EF9A9A' },
+  role_updated:          { bg: alpha('#7B1FA2', 0.2), color: '#CE93D8' },
+  staff_profile_updated: { bg: alpha('#E65100', 0.2), color: '#FFBE9E' },
+  email_updated:         { bg: alpha('#1565C0', 0.2), color: '#90CAF9' },
+  restock:               { bg: alpha('#2E7D32', 0.2), color: '#81C784' },
+  fulfillment:           { bg: alpha('#1565C0', 0.2), color: '#90CAF9' },
+  adjustment:            { bg: alpha('#E65100', 0.2), color: '#FFBE9E' },
+};
+const AUDIT_ACTION_DARK_FALLBACK = { bg: alpha('#9E9E9E', 0.15), color: '#BDBDBD' };
+
 function DateTimeCell({ value }: { value: string }) {
   return (
     <Typography variant="body2" sx={{ fontSize: '0.82rem' }}>
@@ -91,7 +106,10 @@ function DateTimeCell({ value }: { value: string }) {
 }
 
 function ActionChip({ action }: { action: string }) {
-  const cfg = AUDIT_ACTION_COLOR[action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR;
+  const { mode } = useColorMode();
+  const cfg = mode === 'dark'
+    ? (AUDIT_ACTION_DARK_SX[action] ?? AUDIT_ACTION_DARK_FALLBACK)
+    : (AUDIT_ACTION_COLOR[action as AuditAction] ?? AUDIT_ACTION_FALLBACK_COLOR);
   return (
     <Chip
       label={AUDIT_ACTION_LABEL[action as AuditAction] ?? action}
@@ -102,25 +120,33 @@ function ActionChip({ action }: { action: string }) {
 }
 
 function StatusChip({ status }: { status: string | null }) {
+  const { mode } = useColorMode();
   if (!status) return <Typography variant="caption" color="text.disabled">—</Typography>;
+  const d = mode === 'dark';
   switch (status) {
-    case 'pending':   return <Chip label={STATUS_LABELS['pending']}   size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600, fontSize: '0.72rem' }} />;
-    case 'preparing': return <Chip label={STATUS_LABELS['preparing']} size="small" sx={{ bgcolor: '#E3F2FD', color: '#1565C0', fontWeight: 600, fontSize: '0.72rem' }} />;
-    case 'ready':     return <Chip label={STATUS_LABELS['ready']}     size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600, fontSize: '0.72rem' }} />;
-    case 'completed': return <Chip label={STATUS_LABELS['completed']} size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600, fontSize: '0.72rem' }} />;
-    default:          return <Chip label={STATUS_LABELS[status] ?? status} size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'pending':   return <Chip label={STATUS_LABELS['pending']}   size="small" sx={{ bgcolor: d ? alpha('#E65100', 0.15) : '#FFF3E0', color: d ? '#FFBE9E' : '#E65100', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'preparing': return <Chip label={STATUS_LABELS['preparing']} size="small" sx={{ bgcolor: d ? alpha('#1565C0', 0.15) : '#E3F2FD', color: d ? '#90CAF9' : '#1565C0', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'ready':     return <Chip label={STATUS_LABELS['ready']}     size="small" sx={{ bgcolor: d ? alpha('#7B1FA2', 0.15) : '#F3E5F5', color: d ? '#CE93D8' : '#7B1FA2', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'completed': return <Chip label={STATUS_LABELS['completed']} size="small" sx={{ bgcolor: d ? alpha('#2E7D32', 0.15) : '#E8F5E9', color: d ? '#81C784' : '#2E7D32', fontWeight: 600, fontSize: '0.72rem' }} />;
+    default:          return <Chip label={STATUS_LABELS[status] ?? status} size="small" sx={{ bgcolor: d ? alpha('#9E9E9E', 0.15) : '#F5F5F5', color: d ? '#BDBDBD' : '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
   }
 }
 
 function InventoryQtyChip({ value }: { value: unknown }) {
+  const { mode } = useColorMode();
   const num = typeof value === 'number' ? value : Number(value);
   if (num === 0 || isNaN(num)) return <Typography variant="body2" color="text.disabled">—</Typography>;
   const isPositive = num > 0;
+  const d = mode === 'dark';
   return (
     <Chip
       label={`${isPositive ? '+' : ''}${num.toLocaleString()}`}
       size="small"
-      sx={{ bgcolor: isPositive ? '#EBF7EC' : '#FFF0F0', color: isPositive ? '#2E7D32' : '#C62828', fontWeight: 600, fontSize: '0.78rem' }}
+      sx={{
+        bgcolor: isPositive ? (d ? alpha('#2E7D32', 0.15) : '#EBF7EC') : (d ? alpha('#C62828', 0.15) : '#FFF0F0'),
+        color:   isPositive ? (d ? '#81C784' : '#2E7D32') : (d ? '#EF9A9A' : '#C62828'),
+        fontWeight: 600, fontSize: '0.78rem',
+      }}
     />
   );
 }
@@ -128,6 +154,9 @@ function InventoryQtyChip({ value }: { value: unknown }) {
 // ─── Tab 1: Staff Audit Log ───────────────────────────────────────────────────
 
 function AuditLogTab() {
+  const isMobile = useIsMobile();
+  const { role } = useRoleAccess();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
@@ -136,15 +165,20 @@ function AuditLogTab() {
   const [pageSize, setPageSize] = useState(25);
   const [detailRow, setDetailRow] = useState<StaffAuditLogRow | null>(null);
 
+  const availableActions = STAFF_AUDIT_ACTIONS.filter(
+    v => role !== 'admin' || v !== AUDIT_ACTION.ROLE_UPDATED
+  );
+
   const resetPage = useCallback(() => setPage(0), []);
 
   const filters = useMemo<StaffAuditLogFilters>(() => ({
-    performedBy: null,
-    action:      (actionFilter as AuditAction) || null,
-    targetId:    targetIdFilter.trim() || null,
-    dateFrom:    dateFrom  || null,
-    dateTo:      dateTo    || null,
-  }), [actionFilter, targetIdFilter, dateFrom, dateTo]);
+    performedBy:   null,
+    action:        (actionFilter as AuditAction) || null,
+    targetId:      targetIdFilter.trim() || null,
+    dateFrom:      dateFrom  || null,
+    dateTo:        dateTo    || null,
+    serviceCenter: selectedServiceCenter,
+  }), [actionFilter, targetIdFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useStaffAuditLog(filters, page, pageSize);
 
@@ -154,10 +188,12 @@ function AuditLogTab() {
       renderCell: (p) => <ActionChip action={p.value} />,
     },
     {
-      field: 'target_id', headerName: 'UUID เจ้าหน้าที่', width: 310,
-      renderCell: (p) => (
-        <Typography variant="body2">{p.value ?? '—'}</Typography>
-      ),
+      field: 'target_name', headerName: 'เจ้าหน้าที่', flex: 1.2, minWidth: 160,
+      renderCell: (p) => {
+        const row = p.row as StaffAuditLogRow;
+        const display = row.target_name ?? row.target_full_name ?? '—';
+        return <Typography variant="body2">{display}</Typography>;
+      },
     },
     {
       field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
@@ -185,14 +221,14 @@ function AuditLogTab() {
             onChange={e => { setActionFilter(e.target.value); resetPage(); }} sx={{ minWidth: 220 }}
             slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
             <MenuItem value="">ทั้งหมด</MenuItem>
-            {STAFF_AUDIT_ACTIONS.map(v => (
+            {availableActions.map(v => (
               <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
             ))}
           </TextField>
           <TextField size="small" value={targetIdFilter}
             onChange={e => { setTargetIdFilter(e.target.value); resetPage(); }}
             sx={{ minWidth: 220 }}
-            placeholder="ค้นหา UUID เจ้าหน้าที่" />
+            placeholder="ค้นหาชื่อ-นามสกุล / UUID" />
         </Stack>
         <Box sx={{ height: 500 }}>
             <DataGrid
@@ -201,18 +237,20 @@ function AuditLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
+              columnVisibilityModel={isMobile ? { full_name: false, created_at: false } : undefined}
               onRowClick={({ row }) => setDetailRow(row as StaffAuditLogRow)}
+              disableRowSelectionOnClick
+              hideFooterSelectedRowCount
               sx={{
                 border: 'none',
-                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
-                '& .MuiDataGrid-row': { cursor: 'pointer' },
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
               }}
             />
           </Box>
       </Paper>
 
-      <StaffAuditLogDetailDrawer row={detailRow} onClose={() => setDetailRow(null)} />
+      <StaffAuditLogDetailDialog row={detailRow} onClose={() => setDetailRow(null)} />
     </>
   );
 }
@@ -220,6 +258,8 @@ function AuditLogTab() {
 // ─── Tab 2: Request Status Log ────────────────────────────────────────────────
 
 function RequestStatusLogTab() {
+  const isMobile = useIsMobile();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [fromStatus, setFromStatus] = useState('');
@@ -237,7 +277,8 @@ function RequestStatusLogTab() {
     referenceNumber: refNumFilter.trim() || null,
     dateFrom:        dateFrom   || null,
     dateTo:          dateTo     || null,
-  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
+    serviceCenter:   selectedServiceCenter,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo, selectedServiceCenter]);
 
   const { rows, loading, error } = useRequestStatusLog(filters, page, pageSize);
 
@@ -301,10 +342,11 @@ function RequestStatusLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
+              columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : undefined}
               disableRowSelectionOnClick
               sx={{
                 border: 'none',
-                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
               }}
             />
@@ -314,27 +356,31 @@ function RequestStatusLogTab() {
   );
 }
 
-// ─── Tab 3: Appointment Status Log ───────────────────────────────────────────
+// ─── Tab 3: Consultation Status Log ──────────────────────────────────────────
 
-function AppointmentStatusChip({ status }: { status: string | null }) {
+function ConsultationStatusChip({ status }: { status: string | null }) {
+  const { mode } = useColorMode();
   if (!status) return <Typography variant="caption" color="text.disabled">—</Typography>;
-  const label = APPOINTMENT_STATUS_LABELS[status] ?? status;
+  const label = CONSULTATION_STATUS_LABELS[status] ?? status;
+  const d = mode === 'dark';
   switch (status) {
-    case 'pending':            return <Chip label={label} size="small" sx={{ bgcolor: '#FFF3E0', color: '#E65100', fontWeight: 600, fontSize: '0.72rem' }} />;
-    case 'confirmed':          return <Chip label={label} size="small" sx={{ bgcolor: '#F3E5F5', color: '#7B1FA2', fontWeight: 600, fontSize: '0.72rem' }} />;
-    case 'completed':          return <Chip label={label} size="small" sx={{ bgcolor: '#E8F5E9', color: '#2E7D32', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'pending':            return <Chip label={label} size="small" sx={{ bgcolor: d ? alpha('#E65100', 0.15) : '#FFF3E0', color: d ? '#FFBE9E' : '#E65100', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'confirmed':          return <Chip label={label} size="small" sx={{ bgcolor: d ? alpha('#7B1FA2', 0.15) : '#F3E5F5', color: d ? '#CE93D8' : '#7B1FA2', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'completed':          return <Chip label={label} size="small" sx={{ bgcolor: d ? alpha('#2E7D32', 0.15) : '#E8F5E9', color: d ? '#81C784' : '#2E7D32', fontWeight: 600, fontSize: '0.72rem' }} />;
     case 'cancelled_by_user':
-    case 'cancelled_by_staff': return <Chip label={label} size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
-    default:                   return <Chip label={label} size="small" sx={{ bgcolor: '#F5F5F5', color: '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
+    case 'cancelled_by_staff': return <Chip label={label} size="small" sx={{ bgcolor: d ? alpha('#9E9E9E', 0.15) : '#F5F5F5', color: d ? '#BDBDBD' : '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
+    default:                   return <Chip label={label} size="small" sx={{ bgcolor: d ? alpha('#9E9E9E', 0.15) : '#F5F5F5', color: d ? '#BDBDBD' : '#616161', fontWeight: 600, fontSize: '0.72rem' }} />;
   }
 }
 
-const APPOINTMENT_STATUS_OPTIONS = [
+const CONSULTATION_STATUS_OPTIONS = [
   { value: '', label: 'ทั้งหมด' },
-  ...Object.entries(APPOINTMENT_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
+  ...Object.entries(CONSULTATION_STATUS_LABELS).map(([v, l]) => ({ value: v, label: l })),
 ];
 
-function AppointmentStatusLogTab() {
+function ConsultationStatusLogTab() {
+  const isMobile = useIsMobile();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [fromStatus, setFromStatus] = useState('');
@@ -345,29 +391,30 @@ function AppointmentStatusLogTab() {
 
   const resetPage = useCallback(() => setPage(0), []);
 
-  const filters = useMemo<AppointmentStatusLogFilters>(() => ({
+  const filters = useMemo<ConsultationStatusLogFilters>(() => ({
     performedBy:     null,
     fromStatus:      fromStatus || null,
     toStatus:        toStatus   || null,
     referenceNumber: refNumFilter.trim() || null,
     dateFrom:        dateFrom   || null,
     dateTo:          dateTo     || null,
-  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo]);
+    serviceCenter:   selectedServiceCenter,
+  }), [fromStatus, toStatus, refNumFilter, dateFrom, dateTo, selectedServiceCenter]);
 
-  const { rows, loading, error } = useAppointmentStatusLog(filters, page, pageSize);
+  const { rows, loading, error } = useConsultationStatusLog(filters, page, pageSize);
 
-  const columns = useMemo<GridColDef<AppointmentStatusLogRow>[]>(() => [
+  const columns = useMemo<GridColDef<ConsultationStatusLogRow>[]>(() => [
     {
       field: 'reference_number', headerName: 'รหัสอ้างอิง', width: 180, minWidth: 150,
       renderCell: (p) => <Typography variant="body2">{p.value ?? '—'}</Typography>,
     },
     {
       field: 'from_status', headerName: 'จากสถานะ', flex: 1, minWidth: 160,
-      renderCell: (p) => <AppointmentStatusChip status={p.value} />,
+      renderCell: (p) => <ConsultationStatusChip status={p.value} />,
     },
     {
       field: 'to_status', headerName: 'เป็นสถานะ', flex: 1, minWidth: 160,
-      renderCell: (p) => <AppointmentStatusChip status={p.value} />,
+      renderCell: (p) => <ConsultationStatusChip status={p.value} />,
     },
     {
       field: 'full_name', headerName: 'โดย', flex: 1.2, minWidth: 140,
@@ -395,12 +442,12 @@ function AppointmentStatusLogTab() {
             <TextField label="จากสถานะ" select size="small" value={fromStatus}
               onChange={e => { setFromStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
               slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-              {APPOINTMENT_STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              {CONSULTATION_STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
             </TextField>
             <TextField label="เป็นสถานะ" select size="small" value={toStatus}
               onChange={e => { setToStatus(e.target.value); resetPage(); }} sx={{ minWidth: 190 }}
               slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-              {APPOINTMENT_STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
+              {CONSULTATION_STATUS_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{o.label}</MenuItem>)}
             </TextField>
           </Stack>
           <TextField size="small" value={refNumFilter}
@@ -414,10 +461,11 @@ function AppointmentStatusLogTab() {
             paginationModel={{ page, pageSize }}
             onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
             pageSizeOptions={PAGE_SIZE_OPTIONS}
+            columnVisibilityModel={isMobile ? { from_status: false, full_name: false, changed_at: false } : undefined}
             disableRowSelectionOnClick
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />
@@ -430,11 +478,11 @@ function AppointmentStatusLogTab() {
 // ─── Tab 4: Inventory Log ─────────────────────────────────────────────────────
 
 function InventoryLogTab() {
-  const { centers } = useServiceCenters();
+  const isMobile = useIsMobile();
+  const { selectedServiceCenter } = useServiceCenterFilter();
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(() => toLocalDateString(new Date()));
   const [actionFilter, setActionFilter] = useState('');
-  const [serviceCenterFilter, setServiceCenterFilter] = useState('');
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(25);
   const [detailRow, setDetailRow] = useState<InventoryLogRow | null>(null);
@@ -443,10 +491,10 @@ function InventoryLogTab() {
 
   const filters = useMemo<InventoryLogFilters>(() => ({
     action:        (actionFilter as AuditAction) || null,
-    serviceCenter: serviceCenterFilter || null,
+    serviceCenter: selectedServiceCenter,
     dateFrom:      dateFrom  || null,
     dateTo:        dateTo    || null,
-  }), [actionFilter, serviceCenterFilter, dateFrom, dateTo]);
+  }), [actionFilter, selectedServiceCenter, dateFrom, dateTo]);
 
   const { rows, loading, error } = useInventoryLog(filters, page, pageSize);
 
@@ -499,14 +547,6 @@ function InventoryLogTab() {
               <MenuItem key={v} value={v}>{AUDIT_ACTION_LABEL[v]}</MenuItem>
             ))}
           </TextField>
-          <TextField label="สถานบริการ" select size="small" value={serviceCenterFilter}
-            onChange={e => { setServiceCenterFilter(e.target.value); resetPage(); }} sx={{ minWidth: 180 }}
-            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-            <MenuItem value="">ทั้งหมด</MenuItem>
-            {centers.map(c => (
-              <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>
-            ))}
-          </TextField>
         </Stack>
         <Box sx={{ height: 500 }}>
             <DataGrid
@@ -515,11 +555,13 @@ function InventoryLogTab() {
               paginationModel={{ page, pageSize }}
               onPaginationModelChange={({ page: p, pageSize: ps }) => { setPage(p); setPageSize(ps); }}
               pageSizeOptions={PAGE_SIZE_OPTIONS}
+              columnVisibilityModel={isMobile ? { service_center: false, full_name: false, created_at: false } : undefined}
               onRowClick={({ row }) => setDetailRow(row as InventoryLogRow)}
+              disableRowSelectionOnClick
+              hideFooterSelectedRowCount
               sx={{
                 border: 'none',
-                '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
-                '& .MuiDataGrid-row': { cursor: 'pointer' },
+                '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                 '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
               }}
             />
@@ -536,9 +578,9 @@ function InventoryLogTab() {
 // ─── Tab definitions ──────────────────────────────────────────────────────────
 
 const ALL_TABS: { label: string; roles: StaffRole[]; Component: () => React.JSX.Element }[] = [
-  { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['superadmin'],          Component: AuditLogTab },
+  { label: 'ประวัติการแก้ไขข้อมูลเจ้าหน้าที่', roles: ['admin', 'superadmin'], Component: AuditLogTab },
   { label: 'ประวัติสถานะคำขอ',                  roles: ['staff', 'admin', 'superadmin'], Component: RequestStatusLogTab },
-  { label: 'ประวัติสถานะนัดหมาย',               roles: ['staff', 'admin', 'superadmin'], Component: AppointmentStatusLogTab },
+  { label: 'ประวัติสถานะนัดรับคำปรึกษา',          roles: ['staff', 'admin', 'superadmin'], Component: ConsultationStatusLogTab },
   { label: 'ประวัติการแก้ไขสต็อก',              roles: ['admin', 'superadmin'], Component: InventoryLogTab },
 ];
 
@@ -566,12 +608,18 @@ export default function AuditLogPage() {
     <Box sx={{ width: '100%', maxWidth: 1200, margin: '0 auto' }}>
       <Typography variant="h5" fontWeight="bold" gutterBottom>บันทึกการตรวจสอบ</Typography>
       <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-        ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ การเปลี่ยนแปลงสถานะนัดหมาย และการจัดการสต็อก
+        {role === 'staff'
+          ? 'ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการเปลี่ยนแปลงสถานะคำขอ และการเปลี่ยนแปลงสถานะนัดรับคำปรึกษา'
+          : 'ติดตามและตรวจสอบประวัติการดำเนินการในระบบ ครอบคลุมการแก้ไขข้อมูลเจ้าหน้าที่ การเปลี่ยนแปลงสถานะคำขอ การเปลี่ยนแปลงสถานะนัดรับคำปรึกษา และการจัดการสต็อก'
+        }
       </Typography>
 
       <Tabs
         value={safeTab}
         onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        allowScrollButtonsMobile
         sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
       >
         {visibleTabs.map(t => <Tab key={t.label} label={t.label} />)}

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../main/presentation/pages/main_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class RegistrationSuccessPage extends StatelessWidget {
   final List<String> recoveryCodes;
@@ -12,7 +13,9 @@ class RegistrationSuccessPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      child: Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
         backgroundColor: AppColors.white,
@@ -21,7 +24,7 @@ class RegistrationSuccessPage extends StatelessWidget {
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: Text(
-          'สร้างบัญชีใหม่',
+          AppLocalizations.of(context).createNewAccount,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -49,7 +52,7 @@ class RegistrationSuccessPage extends StatelessWidget {
 
               // Title + subtitle
               Text(
-                'สร้างบัญชีใหม่สำเร็จ!',
+                AppLocalizations.of(context).registrationSuccessTitle,
                 style: GoogleFonts.googleSans(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -58,7 +61,7 @@ class RegistrationSuccessPage extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Text(
-                'ยินดีต้อนรับสู่ MyCareNK',
+                AppLocalizations.of(context).welcomeTo,
                 style: GoogleFonts.googleSans(
                   fontSize: 15,
                   color: AppColors.textSecondary,
@@ -82,7 +85,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
-                        'กรุณาบันทึกรหัสกู้คืนทั้ง 6 ตัวไว้ในที่ปลอดภัย\nใช้สำหรับกู้คืนบัญชีหากลืมรหัสผ่าน',
+                        AppLocalizations.of(context).saveCodesHint,
                         style: GoogleFonts.googleSans(
                           fontSize: 13,
                           color: AppColors.textPrimary,
@@ -130,7 +133,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                             const Icon(Icons.key_outlined, color: Colors.white, size: 18),
                             const SizedBox(width: 8),
                             Text(
-                              'รหัสกู้คืนบัญชี',
+                              AppLocalizations.of(context).recoveryCodesTitle,
                               style: GoogleFonts.googleSans(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -161,7 +164,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                         child: SizedBox(
                           width: double.infinity,
                           child: Text(
-                            'หากต้องการกู้คืนบัญชี ให้ใช้หนึ่งในรหัส 6 ตัวนี้',
+                            AppLocalizations.of(context).recoveryCodesHint,
                             textAlign: TextAlign.center,
                             style: GoogleFonts.googleSans(
                               fontSize: 12,
@@ -186,7 +189,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                     (route) => false,
                   );
                 },
-                label: 'เริ่มใช้งาน',
+                label: AppLocalizations.of(context).startUsing,
               ),
               const SizedBox(height: 12),
               SizedBox(
@@ -199,7 +202,8 @@ class RegistrationSuccessPage extends StatelessWidget {
                     );
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text('คัดลอกรหัสทั้งหมดแล้ว', style: GoogleFonts.googleSans()),
+                        content: Text(AppLocalizations.current.allCopied, style: GoogleFonts.googleSans()),
+                        backgroundColor: AppColors.success,
                         behavior: SnackBarBehavior.floating,
                       ),
                     );
@@ -213,7 +217,7 @@ class RegistrationSuccessPage extends StatelessWidget {
                   ),
                   icon: const Icon(Icons.copy_outlined, size: 18),
                   label: Text(
-                    'คัดลอกรหัสทั้งหมด',
+                    AppLocalizations.of(context).copyAll,
                     style: GoogleFonts.googleSans(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -225,7 +229,8 @@ class RegistrationSuccessPage extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildCodeBox(String code) {

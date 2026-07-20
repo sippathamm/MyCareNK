@@ -9,6 +9,9 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useStaffWorkloadTrend } from '../../hooks/useStaffWorkloadTrend';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getWorkloadChipSx } from '../../utils/statusColors';
 import { useStaffRequests, type StaffRequestRow } from '../../hooks/useStaffRequests';
 import RequestDetailDialog, { type RequestData } from '../requests/RequestDetailDialog';
 import StaffWeeklyTrendChart from './StaffWeeklyTrendChart';
@@ -62,6 +65,8 @@ interface Props {
 export default function StaffWorkloadDetailDialog({
   open, row, dateFrom, dateTo, serviceCenter, onClose,
 }: Props) {
+  const { mode } = useColorMode();
+  const isMobile = useIsMobile();
   const staffId = row?.staff_user_id ?? null;
 
   const [reqFilter, setReqFilter]             = useState<ReqFilter>('all');
@@ -191,7 +196,7 @@ export default function StaffWorkloadDetailDialog({
   return (
     <>
       {row && (
-        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+        <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth fullScreen={isMobile}>
           <DialogTitle sx={{ pb: 1 }}>
             <Typography component="div" variant="h6" fontWeight="bold" lineHeight={1.2}>
               {row.first_name} {row.last_name}
@@ -207,31 +212,19 @@ export default function StaffWorkloadDetailDialog({
               <Box>
                 <Typography variant="caption" color="text.secondary">เสร็จสิ้น</Typography>
                 <Box mt={0.5}>
-                  <Chip label={row.completed_count} size="small" sx={{
-                    bgcolor: row.completed_count > 0 ? '#EBF7EC' : '#F5F5F5',
-                    color:   row.completed_count > 0 ? '#2E7D32' : '#9E9E9E',
-                    fontWeight: 700,
-                  }} />
+                  <Chip label={row.completed_count} size="small" sx={{ ...getWorkloadChipSx('completed', row.completed_count, mode), fontWeight: 700 }} />
                 </Box>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">ยกเลิก</Typography>
                 <Box mt={0.5}>
-                  <Chip label={row.cancelled_count} size="small" sx={{
-                    bgcolor: row.cancelled_count > 0 ? '#FFF0F0' : '#F5F5F5',
-                    color:   row.cancelled_count > 0 ? '#C62828' : '#9E9E9E',
-                    fontWeight: 700,
-                  }} />
+                  <Chip label={row.cancelled_count} size="small" sx={{ ...getWorkloadChipSx('cancelled', row.cancelled_count, mode), fontWeight: 700 }} />
                 </Box>
               </Box>
               <Box>
                 <Typography variant="caption" color="text.secondary">ล่าช้า</Typography>
                 <Box mt={0.5}>
-                  <Chip label={row.overdue_count} size="small" sx={{
-                    bgcolor: row.overdue_count > 0 ? '#FFF8E1' : '#F5F5F5',
-                    color:   row.overdue_count > 0 ? '#E65100' : '#9E9E9E',
-                    fontWeight: 700,
-                  }} />
+                  <Chip label={row.overdue_count} size="small" sx={{ ...getWorkloadChipSx('overdue', row.overdue_count, mode), fontWeight: 700 }} />
                 </Box>
               </Box>
               <Box>
@@ -294,7 +287,7 @@ export default function StaffWorkloadDetailDialog({
                 sx={{
                   border: 'none',
                   borderRadius: 2,
-                  '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+                  '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
                 }}
               />
             </Box>

@@ -46,7 +46,7 @@ class CondomRequestModel {
   });
 
   factory CondomRequestModel.fromJson(Map<String, dynamic> json) {
-    Map<int, int> parsedQuantities = {};
+    final Map<int, int> parsedQuantities = {};
     if (json['condom_quantities'] != null) {
       final q = json['condom_quantities'] as Map<String, dynamic>;
       q.forEach((key, value) {

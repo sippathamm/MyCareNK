@@ -3,6 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import 'forgot_password_recovery_code_page.dart';
+import '../../../../core/l10n/app_localizations.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -46,7 +47,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'ลืมรหัสผ่าน',
+          AppLocalizations.of(context).forgotPasswordTitle,
           style: GoogleFonts.googleSans(
             color: AppColors.textPrimary,
             fontSize: 18,
@@ -82,7 +83,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 const SizedBox(height: 16),
 
                 Text(
-                  'กรอกชื่อผู้ใช้งานของคุณ',
+                  AppLocalizations.of(context).enterYourUsername,
                   style: GoogleFonts.googleSans(
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -91,7 +92,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'ยืนยันตัวตนด้วยรหัสกู้ยืน',
+                  AppLocalizations.of(context).verifyWithRecoveryCode,
                   style: GoogleFonts.googleSans(
                     fontSize: 15,
                     color: AppColors.textSecondary,
@@ -101,47 +102,58 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 const SizedBox(height: 32),
 
                 // Username field
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: TextFormField(
-                    controller: _usernameController,
-                    style: GoogleFonts.googleSans(color: AppColors.textPrimary),
-                    decoration: InputDecoration(
-                      hintText: 'ชื่อผู้ใช้งาน',
-                      hintStyle: GoogleFonts.googleSans(
-                        color: Colors.grey[400],
-                        fontSize: 14,
-                      ),
-                      prefixIcon: Icon(Icons.person_outline, color: Colors.grey[400]),
-                      border: InputBorder.none,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 16.0,
-                      ),
+                FormField<void>(
+                  autovalidateMode: AutovalidateMode.disabled,
+                  validator: (_) {
+                    final v = _usernameController.text.trim();
+                    if (v.isEmpty) return AppLocalizations.current.usernameRequired;
+                    if (v.length < 4) return AppLocalizations.current.usernameTooShort;
+                    if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(v)) return AppLocalizations.current.usernameInvalidChars;
+                    return null;
+                  },
+                  builder: (field) => Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[100],
+                      borderRadius: BorderRadius.circular(12),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'กรุณากรอกชื่อผู้ใช้งาน';
-                      }
-                      if (value.trim().length < 4) {
-                        return 'ชื่อผู้ใช้งานต้องมีความยาวอย่างน้อย 4 ตัวอักษร';
-                      }
-                      if (!RegExp(r'^[a-zA-Z0-9]+$').hasMatch(value.trim())) {
-                        return 'ชื่อผู้ใช้งานต้องเป็นตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น';
-                      }
-                      return null;
-                    },
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Row(children: [
+                          Icon(Icons.person_outline, color: Colors.grey[400], size: 20),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: _usernameController,
+                              style: GoogleFonts.googleSans(color: AppColors.textPrimary),
+                              decoration: InputDecoration(
+                                hintText: AppLocalizations.of(context).usernameHint,
+                                hintStyle: GoogleFonts.googleSans(color: Colors.grey[400], fontSize: 14),
+                                border: InputBorder.none,
+                                contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                              ),
+                            ),
+                          ),
+                        ]),
+                        if (field.hasError)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 10),
+                            child: Text(
+                              field.errorText!,
+                              style: GoogleFonts.googleSans(color: AppColors.error, fontSize: 12),
+                            ),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
 
-                const SizedBox(height: 48),
-
+                const SizedBox(height: 24),
                 GradientButton(
                   onPressed: _onNext,
-                  label: 'ถัดไป',
+                  label: AppLocalizations.of(context).next,
                 ),
               ],
             ),

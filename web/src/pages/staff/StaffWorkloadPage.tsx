@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import {
-  Box, Typography, Paper, TextField, MenuItem, Stack,
+  Box, Typography, Paper, TextField, Stack,
   Chip, Alert, Switch, FormControlLabel, Divider, IconButton, Tooltip,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -8,9 +8,12 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { DataGrid } from '@mui/x-data-grid';
 import type { GridColDef } from '@mui/x-data-grid';
 import { useRoleAccess } from '../../hooks/useRoleAccess';
-import { useServiceCenters } from '../../hooks/useServiceCenters';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { useServiceCenterFilter } from '../../contexts/ServiceCenterFilterContext';
 import { useStaffWorkload, type EnrichedRow } from '../../hooks/useStaffWorkload';
 import StaffWorkloadDetailDialog from '../../components/staff/StaffWorkloadDetailDialog';
+import { useColorMode } from '../../contexts/ThemeContext';
+import { getWorkloadChipSx } from '../../utils/statusColors';
 import { toLocalDateString } from '../../utils/staffWorkloadUtils';
 import { createThGridLocale } from '../../constants/datagrid';
 
@@ -46,13 +49,15 @@ const thGridLocale = createThGridLocale('ไม่มีข้อมูลใน
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function StaffWorkloadPage() {
+  const isMobile = useIsMobile();
   const { role, loading: roleLoading } = useRoleAccess();
-  const { centers } = useServiceCenters(role === 'superadmin');
+  const isAdminOrSuperadmin = role === 'admin' || role === 'superadmin';
+  const { selectedServiceCenter } = useServiceCenterFilter();
+  const { mode } = useColorMode();
 
   // Main filter
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom);
   const [dateTo, setDateTo] = useState(getDefaultDateTo);
-  const [serviceCenter, setServiceCenter] = useState<string>('all');
 
   // Comparison
   const [compareEnabled, setCompareEnabled] = useState(false);
@@ -62,10 +67,8 @@ export default function StaffWorkloadPage() {
   // Detail dialog
   const [detailRow, setDetailRow] = useState<EnrichedRow | null>(null);
 
-  const selectedSC = serviceCenter === 'all' ? null : serviceCenter;
-
   const { data, compareData, loading, error } = useStaffWorkload(
-    dateFrom, dateTo, selectedSC,
+    dateFrom, dateTo, selectedServiceCenter,
     compareEnabled ? compareDateFrom : null,
     compareEnabled ? compareDateTo : null,
   );
@@ -85,7 +88,7 @@ export default function StaffWorkloadPage() {
     });
   }, [data, compareData, compareEnabled]);
 
-  // Columns (inside component to capture compareEnabled + setDetailRow)
+  // Columns (inside component to capture compareEnabled, mode + setDetailRow)
   const columns = useMemo<GridColDef<EnrichedRow>[]>(() => [
     { field: 'first_name', headerName: 'ชื่อ', flex: 1, minWidth: 120 },
     { field: 'last_name',  headerName: 'นามสกุล', flex: 1, minWidth: 120 },
@@ -95,7 +98,7 @@ export default function StaffWorkloadPage() {
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#EBF7EC' : '#F5F5F5', color: params.value > 0 ? '#2E7D32' : '#9E9E9E', fontWeight: 600 }} />
+          <Chip label={params.value} size="small" sx={getWorkloadChipSx('completed', params.value, mode)} />
           {compareEnabled && <DeltaChip delta={params.row.delta_completed} positiveIsGood />}
         </Box>
       ),
@@ -106,7 +109,7 @@ export default function StaffWorkloadPage() {
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF0F0' : '#F5F5F5', color: params.value > 0 ? '#C62828' : '#9E9E9E', fontWeight: 600 }} />
+          <Chip label={params.value} size="small" sx={getWorkloadChipSx('cancelled', params.value, mode)} />
           {compareEnabled && <DeltaChip delta={params.row.delta_cancelled} positiveIsGood={false} />}
         </Box>
       ),
@@ -117,7 +120,7 @@ export default function StaffWorkloadPage() {
       flex: 0.8, minWidth: 100, type: 'number', headerAlign: 'left', align: 'left',
       renderCell: (params) => (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', justifyContent: 'center', height: '100%', gap: 0.3 }}>
-          <Chip label={params.value} size="small" sx={{ bgcolor: params.value > 0 ? '#FFF8E1' : '#F5F5F5', color: params.value > 0 ? '#E65100' : '#9E9E9E', fontWeight: 600 }} />
+          <Chip label={params.value} size="small" sx={getWorkloadChipSx('overdue', params.value, mode)} />
           {compareEnabled && <DeltaChip delta={params.row.delta_overdue} positiveIsGood={false} />}
         </Box>
       ),
@@ -159,7 +162,7 @@ export default function StaffWorkloadPage() {
         </Tooltip>
       ),
     },
-  ], [compareEnabled]);
+  ], [compareEnabled, mode]);
 
   // Comparison toggle handler — auto-fill comparison dates
   const handleCompareToggle = (enabled: boolean) => {
@@ -176,7 +179,7 @@ export default function StaffWorkloadPage() {
   };
 
   if (roleLoading) return null;
-  if (role !== 'superadmin') {
+  if (!isAdminOrSuperadmin) {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 2 }}>
         <LockOutlinedIcon sx={{ fontSize: 72, opacity: 0.3 }} />
@@ -200,10 +203,6 @@ export default function StaffWorkloadPage() {
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }} flexWrap="wrap">
             <TextField label="ตั้งแต่วันที่" type="date" size="small" value={dateFrom} onChange={e => setDateFrom(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
             <TextField label="ถึงวันที่" type="date" size="small" value={dateTo} onChange={e => setDateTo(e.target.value)} slotProps={{ inputLabel: { shrink: true } }} sx={{ minWidth: 160 }} />
-            <TextField label="สถานบริการ" select size="small" value={serviceCenter} onChange={e => setServiceCenter(e.target.value)} sx={{ minWidth: 180 }}>
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              {centers.map(c => <MenuItem key={c.name} value={c.name}>{c.name}</MenuItem>)}
-            </TextField>
             <FormControlLabel
               control={<Switch size="small" checked={compareEnabled} onChange={e => handleCompareToggle(e.target.checked)} />}
               label={<Typography variant="body2">เปรียบเทียบช่วงเวลา</Typography>}
@@ -230,6 +229,7 @@ export default function StaffWorkloadPage() {
             rows={enrichedRows}
             columns={columns}
             loading={loading}
+            columnVisibilityModel={isMobile ? { last_name: false, cancelled_count: false, overdue_count: false, avg_lead_time_minutes: false } : undefined}
             localeText={thGridLocale}
             getRowHeight={() => compareEnabled ? 64 : 52}
             initialState={{
@@ -240,7 +240,7 @@ export default function StaffWorkloadPage() {
             disableRowSelectionOnClick
             sx={{
               border: 'none',
-              '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+              '& .MuiDataGrid-columnHeaders': { bgcolor: 'action.hover' },
               '& .MuiDataGrid-cell': { display: 'flex', alignItems: 'center' },
             }}
           />
@@ -253,7 +253,7 @@ export default function StaffWorkloadPage() {
         row={detailRow}
         dateFrom={dateFrom}
         dateTo={dateTo}
-        serviceCenter={selectedSC}
+        serviceCenter={selectedServiceCenter}
         onClose={() => setDetailRow(null)}
       />
     </Box>

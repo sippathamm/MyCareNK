@@ -28,7 +28,19 @@ export function useSignPayload() {
       body: { request_id: requestId },
     });
 
-    if (error || data?.status !== 'success' || !data.result?.payload) {
+    if (error) {
+      let errorBody: ApiResponse | null = null;
+      try {
+        errorBody = await (error as unknown as { context?: Response }).context?.json();
+      } catch { /* ignore */ }
+      console.error('[sign] error:', error, errorBody);
+      const message = errorBody?.message ?? data?.message ?? 'ไม่สามารถสร้าง QR Code ได้ กรุณาลองใหม่';
+      setState({ payload: null, loading: false, error: message });
+      return null;
+    }
+
+    if (data?.status !== 'success' || !data.result?.payload) {
+      console.error('[sign] unexpected response:', data);
       const message = data?.message ?? 'ไม่สามารถสร้าง QR Code ได้ กรุณาลองใหม่';
       setState({ payload: null, loading: false, error: message });
       return null;
