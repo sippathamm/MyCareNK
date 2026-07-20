@@ -132,6 +132,12 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "raw=$RAW" >> $GITHUB_OUTPUT
 
+      - name: Compute safe ref name
+        id: refname
+        run: |
+          RAW_REF="${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}"
+          echo "safe_ref=$(echo "$RAW_REF" | tr '/' '-')" >> $GITHUB_OUTPUT
+
       - name: Build debug APK
         working-directory: app
         run: flutter build apk --debug
@@ -162,14 +168,14 @@ jobs:
       - name: Upload debug APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.ref_name }}-debug-apk-${{ github.run_number }}
+          name: ${{ steps.refname.outputs.safe_ref }}-debug-apk-${{ github.run_number }}
           path: MyCareNK-v${{ steps.version.outputs.semver }}-debug.apk
           retention-days: 14
 
       - name: Upload release APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ github.ref_name }}-release-apk-${{ github.run_number }}
+          name: ${{ steps.refname.outputs.safe_ref }}-release-apk-${{ github.run_number }}
           path: MyCareNK-v${{ steps.version.outputs.semver }}.apk
           retention-days: 14
 
