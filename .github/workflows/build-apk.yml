@@ -214,6 +214,7 @@ jobs:
   build-release:
     name: Release APK
     runs-on: ubuntu-latest
+    environment: main
     permissions:
       contents: write
     if: >-
