@@ -64,13 +64,16 @@ CREATE TRIGGER trigger_update_updated_at_column_service_centers
 
 -- ── 2. user_profiles ───────────────────────────────────────
 CREATE TABLE public.user_profiles (
-  id            uuid         NOT NULL DEFAULT gen_random_uuid(),
-  user_id       uuid         NOT NULL,
-  gender        varchar(20),
-  nationality   varchar(100),
-  date_of_birth date,
-  created_at    timestamptz           DEFAULT now(),
-  username      text         NOT NULL DEFAULT '',
+  id              uuid         NOT NULL DEFAULT gen_random_uuid(),
+  user_id         uuid         NOT NULL,
+  gender          varchar(20),
+  nationality     varchar(100),
+  date_of_birth   date,
+  created_at      timestamptz           DEFAULT now(),
+  username        text         NOT NULL DEFAULT '',
+  health_coverage text,
+  phone_number    text,
+  nickname        text,
   CONSTRAINT user_profiles_pkey         PRIMARY KEY (id),
   CONSTRAINT user_profiles_user_id_key  UNIQUE (user_id),
   CONSTRAINT user_profiles_user_id_fkey FOREIGN KEY (user_id)
