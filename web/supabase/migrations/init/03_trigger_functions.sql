@@ -315,10 +315,8 @@ BEGIN
           '54', GREATEST(0, COALESCE((condom_quantities->>'54')::int, 0) + COALESCE((NEW.condom_quantities->>'54')::int, 0)),
           '56', GREATEST(0, COALESCE((condom_quantities->>'56')::int, 0) + COALESCE((NEW.condom_quantities->>'56')::int, 0))
         ),
-        lubricant_qty     = GREATEST(0, lubricant_qty + NEW.lubricant_delta),
-        last_restocked_at = NOW(),
-        updated_at        = NOW(),
-        updated_by        = NEW.performed_by
+        lubricant_qty = GREATEST(0, lubricant_qty + NEW.lubricant_delta),
+        updated_at    = NOW()
     WHERE service_center = NEW.service_center;
   ELSIF NEW.action = 'adjustment' THEN
     UPDATE public.service_center_inventory

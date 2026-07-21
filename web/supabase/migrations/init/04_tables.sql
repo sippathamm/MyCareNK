@@ -401,15 +401,11 @@ CREATE TABLE public.service_center_inventory (
   condom_qty        integer     NOT NULL DEFAULT 0,
   condom_quantities jsonb       NOT NULL DEFAULT '{"49":0,"52":0,"54":0,"56":0}'::jsonb,
   lubricant_qty     integer     NOT NULL DEFAULT 0,
-  last_restocked_at timestamptz,
   updated_at        timestamptz NOT NULL DEFAULT now(),
-  updated_by        uuid,
   CONSTRAINT service_center_inventory_pkey                PRIMARY KEY (id),
   CONSTRAINT service_center_inventory_service_center_key  UNIQUE (service_center),
   CONSTRAINT service_center_inventory_service_center_fkey FOREIGN KEY (service_center)
-    REFERENCES public.service_centers(name) ON UPDATE CASCADE,
-  CONSTRAINT service_center_inventory_updated_by_fkey FOREIGN KEY (updated_by)
-    REFERENCES auth.users(id)
+    REFERENCES public.service_centers(name) ON UPDATE CASCADE
 );
 
 ALTER TABLE public.service_center_inventory ENABLE ROW LEVEL SECURITY;
