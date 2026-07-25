@@ -1,6 +1,6 @@
 -- ============================================================
 -- 04_tables.sql — MyCareNK
--- All 19 tables in FK dependency order, each with RLS policies
+-- All 22 tables in FK dependency order, each with RLS policies
 -- and inline trigger attachments.
 -- Apply order: 4 of 8
 -- ============================================================
@@ -10,12 +10,13 @@
 --   3.  user_monthly_quotas        4.  user_recovery_codes
 --   5.  recovery_attempts          6.  staff_profiles
 --   7.  staff_change_logs          8.  staff_notifications
---   9.  staff_notification_reads   10. user_notifications
---   11. user_notification_reads    12. service_center_inventory
---   13. condom_requests            14. request_status_logs
---   15. inventory_logs             16. consultations
---   17. consultation_status_logs   18. articles
---   19. app_versions               20. web_changelogs
+--   9.  staff_notification_reads   10. staff_notification_hidden
+--   11. user_notifications         12. user_notification_reads
+--   13. service_center_inventory   14. condom_requests
+--   15. request_status_logs        16. inventory_logs
+--   17. consultations              18. consultation_status_logs
+--   19. articles                   20. app_versions
+--   21. web_changelogs             22. notification_settings
 --       + auth.users cascade trigger
 -- ============================================================
 
