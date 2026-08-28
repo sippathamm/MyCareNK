@@ -572,19 +572,42 @@ $$;
 
 -- ── staff_notifications (LINE push) ────────────────────────
 -- Calls line-notify Edge Function via pg_net for pending notifications.
+--
+-- ⚠️ REQUIRES a Vault secret named 'project_url' holding this project's base
+-- URL (e.g. https://<project-ref>.supabase.co, no trailing slash). Without it
+-- the trigger logs a WARNING and skips the push — inserts still succeed, but
+-- LINE notifications silently stop. When standing up a new project, create it:
+--
+--   SELECT vault.create_secret(
+--     'https://<project-ref>.supabase.co',
+--     'project_url',
+--     'Base URL of this Supabase project. Read by notify_line_on_staff_notification().'
+--   );
 CREATE OR REPLACE FUNCTION public.notify_line_on_staff_notification()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path TO 'public'
 AS $$
+DECLARE
+  v_project_url text;
 BEGIN
   IF NEW.event_type <> 'pending' OR cardinality(NEW.service_centers) = 0 THEN
     RETURN NEW;
   END IF;
 
+  SELECT rtrim(decrypted_secret, '/')
+    INTO v_project_url
+    FROM vault.decrypted_secrets
+   WHERE name = 'project_url';
+
+  IF v_project_url IS NULL OR v_project_url = '' THEN
+    RAISE WARNING 'notify_line_on_staff_notification: vault secret "project_url" is missing or empty; skipping LINE push for staff_notification %', NEW.id;
+    RETURN NEW;
+  END IF;
+
   PERFORM net.http_post(
-    url     := 'https://timuuxjeffzqtsqnjbnz.supabase.co/functions/v1/line-notify'::text,
+    url     := v_project_url || '/functions/v1/line-notify',
     headers := '{"Content-Type": "application/json"}'::jsonb,
     body    := to_jsonb(NEW),
     timeout_milliseconds := 5000
