@@ -519,12 +519,11 @@ SET search_path = public
 AS $$
 BEGIN
   -- Nullify staff audit/log references to preserve history
-  UPDATE public.condom_requests            SET handled_by   = NULL WHERE handled_by   = OLD.id;
-  UPDATE public.consultations              SET handled_by   = NULL WHERE handled_by   = OLD.id;
-  UPDATE public.request_status_logs        SET changed_by   = NULL WHERE changed_by   = OLD.id;
-  UPDATE public.consultation_status_logs   SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.condom_requests          SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.consultations            SET handled_by   = NULL WHERE handled_by   = OLD.id;
+  UPDATE public.request_status_logs      SET changed_by   = NULL WHERE changed_by   = OLD.id;
+  UPDATE public.consultation_status_logs SET changed_by   = NULL WHERE changed_by   = OLD.id;
   UPDATE public.inventory_logs           SET performed_by = NULL WHERE performed_by = OLD.id;
-  UPDATE public.service_center_inventory SET updated_by   = NULL WHERE updated_by   = OLD.id;
   UPDATE public.staff_change_logs        SET performed_by = NULL WHERE performed_by = OLD.id;
   UPDATE public.articles SET created_by   = NULL WHERE created_by   = OLD.id;
   UPDATE public.articles SET updated_by   = NULL WHERE updated_by   = OLD.id;
