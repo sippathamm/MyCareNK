@@ -2331,10 +2331,10 @@ class AppLocalizations {
     'Tap Safari\'s Share button (if you don\'t see it, tap ••• first)',
   );
   String get installIosStep2 => _t(
-    'เลื่อนลงแล้วเลือก "เพิ่มไปยังหน้าจอโฮม"',
-    'ເລື່ອນລົງ ແລ້ວເລືອກ "Add to Home Screen"',
-    'အောက်သို့ဆွဲပြီး "Add to Home Screen" ကို ရွေးပါ',
-    'Scroll down and choose "Add to Home Screen"',
+    'เลือก "เพิ่มไปยังหน้าจอโฮม" (อาจต้องเลื่อนลงหรือแตะดูเพิ่มเติมก่อน)',
+    'ເລືອກ "Add to Home Screen" (ອາດຕ້ອງເລື່ອນລົງ ຫຼື ແຕະ "View More" ກ່ອນ)',
+    '"Add to Home Screen" ကို ရွေးပါ (အောက်သို့ဆွဲရန် သို့မဟုတ် "View More" ကို အရင်နှိပ်ရန် လိုနိုင်သည်)',
+    'Choose "Add to Home Screen" (you may need to scroll or tap "View More" first)',
   );
   String get installIosStep3 => _t(
     'แตะ "เพิ่ม" ที่มุมขวาบน',
