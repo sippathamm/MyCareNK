@@ -7,10 +7,11 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:web/web.dart' as web;
 
-// Same script mobile_scanner loads for live scanning (see its
-// ZXingBarcodeReader.scriptUrl / scriptId), so the library is fetched once.
+import 'zxing_script.dart';
+
+// Same script tag mobile_scanner uses for live scanning (its
+// ZXingBarcodeReader.scriptId), so the library is fetched once.
 const _zxingScriptId = 'mobile-scanner-barcode-reader';
-const _zxingScriptUrl = 'https://unpkg.com/@zxing/library@0.21.3';
 
 // Phone photos are often 12MP+; ZXing is slow and less reliable on them.
 const _maxDimension = 1600;
@@ -77,7 +78,7 @@ Future<void> _ensureZXingLoaded() async {
   final script = web.HTMLScriptElement()
     ..id = _zxingScriptId
     ..crossOrigin = 'anonymous'
-    ..src = _zxingScriptUrl;
+    ..src = kZxingScriptUrl;
   script.onload = ((web.Event _) => completer.complete()).toJS;
   script.onerror = ((web.Event _) {
     script.remove();
