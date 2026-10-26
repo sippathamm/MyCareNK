@@ -155,7 +155,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ),
                 ),
-                _buildCheckUpdateTile(),
+                if (AppVersionService.isSupported) _buildCheckUpdateTile(),
                 _buildVersionTile(l10n),
                 if (isLoggedIn) ...[
                   _buildDivider(),

@@ -51,8 +51,7 @@ app.*.map.json
 # Claude Code
 CLAUDE.md
 
-# Desktop/web platform directories
+# Desktop platform directories
 linux/
 macos/
-web/
 windows/

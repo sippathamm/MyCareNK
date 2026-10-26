@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
+import '../../data/qr_image_decoder.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../widgets/scan_overlay.dart';
 import '../widgets/scan_result_widgets.dart';
@@ -24,7 +26,12 @@ enum _ScanResultType {
 }
 
 class ScanPage extends StatefulWidget {
-  const ScanPage({super.key});
+  /// Whether the สแกน tab is the visible tab. The page lives in an
+  /// `IndexedStack`, so the camera must only run while this is true —
+  /// otherwise the browser asks for camera permission on app launch.
+  final bool isActive;
+
+  const ScanPage({super.key, required this.isActive});
 
   @override
   State<ScanPage> createState() => _ScanPageState();
@@ -33,6 +40,7 @@ class ScanPage extends StatefulWidget {
 class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   final MobileScannerController _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
   );
 
   bool _torchOn = false;
@@ -42,6 +50,43 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (widget.isActive) _startCamera();
+  }
+
+  @override
+  void didUpdateWidget(covariant ScanPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive == oldWidget.isActive) return;
+    widget.isActive ? _startCamera() : _stopCamera();
+  }
+
+  Future<void> _startCamera() async {
+    if (_hasScanned) return;
+    // Browsers can't re-prompt after a denial, and mobile_scanner's web
+    // reader stays allocated after the failed start, so a retry only throws
+    // "already running" over the permission message.
+    if (kIsWeb &&
+        _controller.value.error?.errorCode ==
+            MobileScannerErrorCode.permissionDenied) {
+      return;
+    }
+    try {
+      await _controller.start();
+    } on MobileScannerException {
+      // A start already in flight (controllerInitializing) settles the state
+      // below; other errors are rendered by the MobileScanner widget.
+      return;
+    }
+    // stop() is a no-op until start() completes, so a tab switch during
+    // startup would otherwise leave the camera running on another tab.
+    if (mounted && !widget.isActive) await _controller.stop();
+  }
+
+  // Callers outside build (lifecycle events) wrap this in setState; from
+  // didUpdateWidget the rebuild is already scheduled.
+  void _stopCamera() {
+    _controller.stop();
+    _torchOn = false;
   }
 
   @override
@@ -54,9 +99,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      _controller.stop();
-    } else if (state == AppLifecycleState.resumed) {
-      _controller.start();
+      setState(_stopCamera);
+    } else if (state == AppLifecycleState.resumed && widget.isActive) {
+      _startCamera();
     }
   }
 
@@ -76,10 +121,15 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
 
-    final result = await _controller.analyzeImage(image.path);
+    String? rawValue;
+    try {
+      rawValue = await decodeQrFromImage(image, _controller);
+    } catch (_) {
+      rawValue = null;
+    }
     if (!mounted) return;
 
-    if (result == null || result.barcodes.isEmpty) {
+    if (rawValue == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.current.qrNotFoundInImage),
@@ -93,9 +143,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       );
       return;
     }
-
-    final rawValue = result.barcodes.first.rawValue;
-    if (rawValue == null) return;
 
     setState(() => _hasScanned = true);
     _controller.stop();
@@ -134,7 +181,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     ).then((_) {
       if (mounted) {
         setState(() => _hasScanned = false);
-        _controller.start();
+        if (widget.isActive) _startCamera();
       }
     });
   }

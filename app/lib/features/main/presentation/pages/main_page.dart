@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _checkForUpdate() async {
-    if (_versionCheckDone || !mounted) return;
+    if (!AppVersionService.isSupported || _versionCheckDone || !mounted) return;
     _versionCheckDone = true;
     final service = AppVersionService();
     final remote = await service.getLatestVersion();
@@ -129,7 +129,7 @@ class _MainScreenState extends State<MainScreen> {
         children: [
           HomeNavigator(navigatorKey: _homeNavigatorKey, visibilityNotifier: _homeVisibilityNotifier, onNavigateToHistory: _navigateToHistory, onGoToSettings: () => _onItemTapped(4)),
           ServiceNavigator(navigatorKey: _serviceNavigatorKey),
-          const ScanPage(),
+          ScanPage(isActive: _currentIndex == 2),
           MessagesPage(unreadNotifier: _messagesUnreadNotifier, refreshKey: _messagesRefreshKey),
           const SettingsPage(),
         ],
