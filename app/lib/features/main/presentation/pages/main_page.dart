@@ -55,7 +55,7 @@ class _MainScreenState extends State<MainScreen> {
   }
 
   Future<void> _checkForUpdate() async {
-    if (_versionCheckDone || !mounted) return;
+    if (!AppVersionService.isSupported || _versionCheckDone || !mounted) return;
     _versionCheckDone = true;
     final service = AppVersionService();
     final remote = await service.getLatestVersion();
