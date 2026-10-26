@@ -99,8 +99,12 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
         run: |
           args=(deploy app/build/web --yes --token "$VERCEL_TOKEN")
+          # Always pass the target: Vercel promotes a project's first deployment
+          # to production when none is given (PR #285's first preview did).
           if [ "${{ github.event_name }}" = "push" ]; then
             args+=(--prod)
+          else
+            args+=(--target=preview)
           fi
           # stdout is only the deployment URL; progress goes to stderr.
           url=$(npx --yes "vercel@${VERCEL_CLI_VERSION}" "${args[@]}")
