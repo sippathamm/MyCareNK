@@ -60,7 +60,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     widget.isActive ? _startCamera() : _stopCamera();
   }
 
-  void _startCamera() {
+  Future<void> _startCamera() async {
     if (_hasScanned) return;
     // Browsers can't re-prompt after a denial, and mobile_scanner's web
     // reader stays allocated after the failed start, so a retry only throws
@@ -70,7 +70,16 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
             MobileScannerErrorCode.permissionDenied) {
       return;
     }
-    _controller.start();
+    try {
+      await _controller.start();
+    } on MobileScannerException {
+      // A start already in flight (controllerInitializing) settles the state
+      // below; other errors are rendered by the MobileScanner widget.
+      return;
+    }
+    // stop() is a no-op until start() completes, so a tab switch during
+    // startup would otherwise leave the camera running on another tab.
+    if (mounted && !widget.isActive) await _controller.stop();
   }
 
   // Callers outside build (lifecycle events) wrap this in setState; from
