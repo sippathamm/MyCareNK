@@ -347,8 +347,9 @@ class _CameraErrorView extends StatelessWidget {
     return ColoredBox(
       color: Colors.black,
       child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 72),
+        child: ConstrainedBox(
+          // Stay inside the scan frame so its corner marks don't cut the text.
+          constraints: const BoxConstraints(maxWidth: kScanFrameSize - 32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
