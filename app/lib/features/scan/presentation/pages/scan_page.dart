@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
+import '../../data/qr_image_decoder.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../widgets/scan_overlay.dart';
 import '../widgets/scan_result_widgets.dart';
@@ -60,6 +62,14 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
 
   void _startCamera() {
     if (_hasScanned) return;
+    // Browsers can't re-prompt after a denial, and mobile_scanner's web
+    // reader stays allocated after the failed start, so a retry only throws
+    // "already running" over the permission message.
+    if (kIsWeb &&
+        _controller.value.error?.errorCode ==
+            MobileScannerErrorCode.permissionDenied) {
+      return;
+    }
     _controller.start();
   }
 
@@ -102,10 +112,15 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
 
-    final result = await _controller.analyzeImage(image.path);
+    String? rawValue;
+    try {
+      rawValue = await decodeQrFromImage(image, _controller);
+    } catch (_) {
+      rawValue = null;
+    }
     if (!mounted) return;
 
-    if (result == null || result.barcodes.isEmpty) {
+    if (rawValue == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.current.qrNotFoundInImage),
@@ -119,9 +134,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       );
       return;
     }
-
-    final rawValue = result.barcodes.first.rawValue;
-    if (rawValue == null) return;
 
     setState(() => _hasScanned = true);
     _controller.stop();
