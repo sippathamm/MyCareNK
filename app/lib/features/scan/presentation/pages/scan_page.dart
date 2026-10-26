@@ -24,7 +24,12 @@ enum _ScanResultType {
 }
 
 class ScanPage extends StatefulWidget {
-  const ScanPage({super.key});
+  /// Whether the สแกน tab is the visible tab. The page lives in an
+  /// `IndexedStack`, so the camera must only run while this is true —
+  /// otherwise the browser asks for camera permission on app launch.
+  final bool isActive;
+
+  const ScanPage({super.key, required this.isActive});
 
   @override
   State<ScanPage> createState() => _ScanPageState();
@@ -33,6 +38,7 @@ class ScanPage extends StatefulWidget {
 class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   final MobileScannerController _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
   );
 
   bool _torchOn = false;
@@ -42,6 +48,26 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (widget.isActive) _startCamera();
+  }
+
+  @override
+  void didUpdateWidget(covariant ScanPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive == oldWidget.isActive) return;
+    widget.isActive ? _startCamera() : _stopCamera();
+  }
+
+  void _startCamera() {
+    if (_hasScanned) return;
+    _controller.start();
+  }
+
+  // Callers outside build (lifecycle events) wrap this in setState; from
+  // didUpdateWidget the rebuild is already scheduled.
+  void _stopCamera() {
+    _controller.stop();
+    _torchOn = false;
   }
 
   @override
@@ -54,9 +80,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      _controller.stop();
-    } else if (state == AppLifecycleState.resumed) {
-      _controller.start();
+      setState(_stopCamera);
+    } else if (state == AppLifecycleState.resumed && widget.isActive) {
+      _startCamera();
     }
   }
 
@@ -134,7 +160,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     ).then((_) {
       if (mounted) {
         setState(() => _hasScanned = false);
-        _controller.start();
+        if (widget.isActive) _startCamera();
       }
     });
   }
