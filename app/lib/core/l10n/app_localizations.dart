@@ -2323,11 +2323,12 @@ class AppLocalizations {
     'အက်ပ်ကဲ့သို့ ဖွင့်သုံးနိုင်ပြီး မကြာခဏ ဝင်ရောက်ရန် မလိုစေရန် ပင်မစခရင်တွင် ထည့်ပါ',
     'Add it to your home screen to open it like an app and stay signed in.',
   );
+  // iOS 26 moved Share into Safari's ••• menu; older versions show it directly.
   String get installIosStep1 => _t(
-    'แตะปุ่ม "แชร์" ที่แถบด้านล่างของ Safari',
-    'ແຕະປຸ່ມ "ແບ່ງປັນ" (Share) ຢູ່ແຖບລຸ່ມຂອງ Safari',
-    'Safari အောက်ခြေရှိ "မျှဝေရန်" (Share) ခလုတ်ကို နှိပ်ပါ',
-    'Tap the Share button in Safari\'s bottom bar',
+    'แตะปุ่ม "แชร์" ใน Safari (ถ้าไม่เห็น ให้แตะ ••• ก่อน)',
+    'ແຕະປຸ່ມ "ແບ່ງປັນ" (Share) ໃນ Safari (ຖ້າບໍ່ເຫັນ ໃຫ້ແຕະ ••• ກ່ອນ)',
+    'Safari တွင် "မျှဝေရန်" (Share) ခလုတ်ကို နှိပ်ပါ (မတွေ့ပါက ••• ကို အရင်နှိပ်ပါ)',
+    'Tap Safari\'s Share button (if you don\'t see it, tap ••• first)',
   );
   String get installIosStep2 => _t(
     'เลื่อนลงแล้วเลือก "เพิ่มไปยังหน้าจอโฮม"',
