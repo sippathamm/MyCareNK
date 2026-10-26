@@ -7,6 +7,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_localizations.dart';
 import '../../../../core/l10n/locale_provider.dart';
 import '../../../../core/services/app_version_service.dart';
+import '../../../../core/web/pwa_install.dart';
 import '../../../../core/widgets/gradient_button.dart';
 import '../../../auth/presentation/pages/login_page.dart';
 import '../../../auth/presentation/pages/privacy_policy_page.dart';
@@ -14,6 +15,7 @@ import '../../../auth/presentation/pages/profile_edit_page.dart';
 import '../../../auth/presentation/pages/change_password_page.dart';
 import '../../../auth/presentation/pages/manage_recovery_codes_page.dart';
 import '../../../auth/presentation/pages/delete_account_page.dart';
+import '../../widgets/install_guide_sheet.dart';
 import '../../widgets/update_dialog.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -146,6 +148,12 @@ class _SettingsPageState extends State<SettingsPage> {
                 _buildLanguageTile(context, l10n),
                 _buildDivider(),
                 _buildSection(l10n.settingsAboutSection),
+                if (PwaInstall.isAvailable)
+                  _buildTile(
+                    icon: Icons.install_mobile_outlined,
+                    title: l10n.settingsInstallApp,
+                    onTap: () => InstallGuideSheet.show(context),
+                  ),
                 _buildTile(
                   icon: Icons.description_outlined,
                   title: l10n.privacyPolicyTitle,

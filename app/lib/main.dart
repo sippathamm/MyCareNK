@@ -1,10 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/app_colors.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/l10n/locale_provider.dart';
 import 'features/main/presentation/pages/main_page.dart';
+import 'features/scan/data/zxing_script.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +24,15 @@ Future<void> main() async {
   }
 
   await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+
+  // Must run before the first scanner start(): mobile_scanner keeps the first
+  // URL it is given. No-op on native platforms.
+  MobileScannerPlatform.instance.setBarcodeLibraryScriptUrl(kZxingScriptUrl);
+
+  LicenseRegistry.addLicense(() async* {
+    final ofl = await rootBundle.loadString('assets/fonts/noto_sans_thai/OFL.txt');
+    yield LicenseEntryWithLineBreaks(['NotoSansThai'], ofl);
+  });
 
   runApp(const MyCareNKApp());
 }
@@ -61,6 +74,8 @@ class _MyCareNKAppState extends State<MyCareNKApp> {
           ).apply(
             bodyColor: AppColors.textPrimary,
             displayColor: AppColors.textPrimary,
+            // Native platforms use the system Thai font.
+            fontFamilyFallback: kIsWeb ? const ['NotoSansThai'] : null,
           ),
         ),
         home: const MainScreen(),

@@ -60,16 +60,16 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     widget.isActive ? _startCamera() : _stopCamera();
   }
 
+  bool get _permissionDenied =>
+      _controller.value.error?.errorCode ==
+      MobileScannerErrorCode.permissionDenied;
+
   Future<void> _startCamera() async {
     if (_hasScanned) return;
     // Browsers can't re-prompt after a denial, and mobile_scanner's web
     // reader stays allocated after the failed start, so a retry only throws
     // "already running" over the permission message.
-    if (kIsWeb &&
-        _controller.value.error?.errorCode ==
-            MobileScannerErrorCode.permissionDenied) {
-      return;
-    }
+    if (kIsWeb && _permissionDenied) return;
     try {
       await _controller.start();
     } on MobileScannerException {
@@ -100,7 +100,12 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       setState(_stopCamera);
-    } else if (state == AppLifecycleState.resumed && widget.isActive) {
+    } else if (state == AppLifecycleState.resumed &&
+        widget.isActive &&
+        !_permissionDenied) {
+      // The system permission dialog itself pauses/resumes the app; retrying
+      // here after a denial loops when Android auto-denies ("Don't ask
+      // again"). Re-entering the สแกน tab still retries.
       _startCamera();
     }
   }
@@ -210,6 +215,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                 controller: _controller,
                 onDetect: _onDetect,
                 scanWindow: scanWindow,
+                errorBuilder: (context, error) =>
+                    _CameraErrorView(error: error),
               );
             },
           ),
@@ -331,6 +338,60 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     );
   }
 }
+/// Replaces mobile_scanner's raw English error (e.g. "NotAllowedError") with a
+/// localized explanation that points to the gallery fallback.
+class _CameraErrorView extends StatelessWidget {
+  final MobileScannerException error;
+
+  const _CameraErrorView({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: ConstrainedBox(
+          // Stay inside the scan frame so its corner marks don't cut the text.
+          constraints: const BoxConstraints(maxWidth: kScanFrameSize - 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                denied ? Icons.no_photography_outlined : Icons.videocam_off_outlined,
+                color: AppColors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                denied ? l10n.cameraPermissionDeniedTitle : l10n.cameraUnavailableTitle,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.googleSans(
+                  color: AppColors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                denied
+                    ? l10n.cameraPermissionDeniedBody(l10n.selectFromGallery)
+                    : l10n.cameraUnavailableBody(l10n.selectFromGallery),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.googleSans(
+                  color: AppColors.white.withValues(alpha: 0.7),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ScanResultSheet extends StatefulWidget {
   final String payload;
   final VoidCallback onRescan;

@@ -1224,6 +1224,30 @@ class AppLocalizations {
     'ဓာတ်ပုံမှ ရွေးချယ်',
     'Select from Gallery',
   );
+  String get cameraPermissionDeniedTitle => _t(
+    'ไม่ได้รับอนุญาตให้ใช้กล้อง',
+    'ບໍ່ໄດ້ຮັບອະນຸຍາດໃຫ້ໃຊ້ກ້ອງ',
+    'ကင်မရာ အသုံးပြုခွင့် မရပါ',
+    'Camera access is blocked',
+  );
+  String cameraPermissionDeniedBody(String galleryLabel) => _t(
+    'เปิดสิทธิ์การใช้กล้องให้ MyCareNK ในการตั้งค่าของเครื่องหรือเบราว์เซอร์ แล้วลองใหม่อีกครั้ง หรือแตะ "$galleryLabel" ด้านล่าง',
+    'ເປີດສິດການໃຊ້ກ້ອງໃຫ້ MyCareNK ໃນການຕັ້ງຄ່າຂອງເຄື່ອງ ຫຼື ບຣາວເຊີ ແລ້ວລອງໃໝ່ອີກຄັ້ງ ຫຼື ແຕະ "$galleryLabel" ຢູ່ລຸ່ມ',
+    'စက် သို့မဟုတ် ဘရောက်ဇာ ဆက်တင်တွင် MyCareNK အတွက် ကင်မရာခွင့်ပြုချက်ကို ဖွင့်ပြီး ထပ်မံကြိုးစားပါ သို့မဟုတ် အောက်ရှိ "$galleryLabel" ကို နှိပ်ပါ',
+    'Allow camera access for MyCareNK in your device or browser settings and try again, or tap "$galleryLabel" below.',
+  );
+  String get cameraUnavailableTitle => _t(
+    'ไม่สามารถเปิดกล้องได้',
+    'ບໍ່ສາມາດເປີດກ້ອງໄດ້',
+    'ကင်မရာကို ဖွင့်၍မရပါ',
+    "Can't open the camera",
+  );
+  String cameraUnavailableBody(String galleryLabel) => _t(
+    'อุปกรณ์หรือเบราว์เซอร์นี้อาจไม่รองรับกล้อง ลองแตะ "$galleryLabel" ด้านล่างแทน',
+    'ອຸປະກອນ ຫຼື ບຣາວເຊີນີ້ອາດບໍ່ຮອງຮັບກ້ອງ ລອງແຕະ "$galleryLabel" ຢູ່ລຸ່ມແທນ',
+    'ဤစက် သို့မဟုတ် ဘရောက်ဇာသည် ကင်မရာကို မပံ့ပိုးနိုင်ပါ။ အောက်ရှိ "$galleryLabel" ကို နှိပ်ကြည့်ပါ',
+    'This device or browser may not support the camera. Try "$galleryLabel" below instead.',
+  );
   String get scanChecking => _t(
     'กำลังตรวจสอบ QR Code...',
     'ກຳລັງກວດສອບ QR Code...',
@@ -2285,6 +2309,71 @@ class AppLocalizations {
   String get releaseNotesImprove =>
       _t('ปรับปรุง', 'ປັບປຸງ', 'တိုးတက်သည်', 'Improved');
   String get releaseNotesOther => _t('อื่น ๆ', 'ອື່ນໆ', 'အခြား', 'Others');
+
+  // ─── Install (web / PWA) ──────────────────────────────────────────────────
+  String get installAppTitle => _t(
+    'ติดตั้งแอป MyCareNK',
+    'ຕິດຕັ້ງແອັບ MyCareNK',
+    'MyCareNK အက်ပ်ကို ထည့်သွင်းပါ',
+    'Install MyCareNK',
+  );
+  String get installAppSubtitle => _t(
+    'เพิ่มไว้ที่หน้าจอโฮม เพื่อเปิดใช้งานได้เหมือนแอป และไม่ต้องเข้าสู่ระบบบ่อย',
+    'ເພີ່ມໃສ່ໜ້າຈໍຫຼັກ ເພື່ອເປີດໃຊ້ຄືແອັບ ແລະ ບໍ່ຕ້ອງເຂົ້າສູ່ລະບົບເລື້ອຍໆ',
+    'အက်ပ်ကဲ့သို့ ဖွင့်သုံးနိုင်ပြီး မကြာခဏ ဝင်ရောက်ရန် မလိုစေရန် ပင်မစခရင်တွင် ထည့်ပါ',
+    'Add it to your home screen to open it like an app and stay signed in.',
+  );
+  // iOS 26 moved Share into Safari's ••• menu; older versions show it directly.
+  String get installIosStep1 => _t(
+    'แตะปุ่ม "แชร์" ใน Safari (ถ้าไม่เห็น ให้แตะ ••• ก่อน)',
+    'ແຕະປຸ່ມ "ແບ່ງປັນ" (Share) ໃນ Safari (ຖ້າບໍ່ເຫັນ ໃຫ້ແຕະ ••• ກ່ອນ)',
+    'Safari တွင် "မျှဝေရန်" (Share) ခလုတ်ကို နှိပ်ပါ (မတွေ့ပါက ••• ကို အရင်နှိပ်ပါ)',
+    'Tap Safari\'s Share button (if you don\'t see it, tap ••• first)',
+  );
+  String get installIosStep2 => _t(
+    'เลือก "เพิ่มไปยังหน้าจอโฮม" (อาจต้องเลื่อนลงหรือแตะดูเพิ่มเติมก่อน)',
+    'ເລືອກ "Add to Home Screen" (ອາດຕ້ອງເລື່ອນລົງ ຫຼື ແຕະ "View More" ກ່ອນ)',
+    '"Add to Home Screen" ကို ရွေးပါ (အောက်သို့ဆွဲရန် သို့မဟုတ် "View More" ကို အရင်နှိပ်ရန် လိုနိုင်သည်)',
+    'Choose "Add to Home Screen" (you may need to scroll or tap "View More" first)',
+  );
+  String get installIosStep3 => _t(
+    'แตะ "เพิ่ม" ที่มุมขวาบน',
+    'ແຕະ "Add" ຢູ່ມຸມຂວາເທິງ',
+    'ညာဘက်အပေါ်ထောင့်ရှိ "Add" ကို နှိပ်ပါ',
+    'Tap "Add" in the top-right corner',
+  );
+  String get installAndroidStep1 => _t(
+    'แตะเมนู ⋮ ของ Chrome ที่มุมขวาบน',
+    'ແຕະເມນູ ⋮ ຂອງ Chrome ຢູ່ມຸມຂວາເທິງ',
+    'Chrome ၏ ညာဘက်အပေါ်ထောင့်ရှိ ⋮ မီနူးကို နှိပ်ပါ',
+    'Tap Chrome\'s ⋮ menu in the top-right corner',
+  );
+  String get installAndroidStep2 => _t(
+    'เลือก "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอหลัก"',
+    'ເລືອກ "Install app" ຫຼື "Add to Home screen"',
+    '"Install app" သို့မဟုတ် "Add to Home screen" ကို ရွေးပါ',
+    'Choose "Install app" or "Add to Home screen"',
+  );
+  String get installInAppBrowser => _t(
+    'คุณกำลังเปิดผ่านแอปอื่น (เช่น LINE) กรุณาเปิดลิงก์นี้ใน Safari หรือ Chrome ก่อน แล้วจึงเพิ่มไปยังหน้าจอโฮม',
+    'ທ່ານກຳລັງເປີດຜ່ານແອັບອື່ນ (ເຊັ່ນ LINE) ກະລຸນາເປີດລິ້ງນີ້ໃນ Safari ຫຼື Chrome ກ່ອນ ແລ້ວຈຶ່ງເພີ່ມໃສ່ໜ້າຈໍຫຼັກ',
+    'အခြားအက်ပ် (ဥပမာ LINE) မှတစ်ဆင့် ဖွင့်ထားပါသည်။ ဤလင့်ခ်ကို Safari သို့မဟုတ် Chrome တွင် အရင်ဖွင့်ပြီးမှ ပင်မစခရင်တွင် ထည့်ပါ',
+    'You opened this inside another app (such as LINE). Open this link in Safari or Chrome first, then add it to your home screen.',
+  );
+  String get installNow =>
+      _t('ติดตั้งเลย', 'ຕິດຕັ້ງເລີຍ', 'ယခု ထည့်သွင်းပါ', 'Install now');
+  String get installLater =>
+      _t('ไว้ภายหลัง', 'ໄວ້ພາຍຫຼັງ', 'နောက်မှ', 'Later');
+  String get webUpdateAvailable => _t(
+    'มี MyCareNK เวอร์ชันใหม่',
+    'ມີ MyCareNK ເວີຊັນໃໝ່',
+    'MyCareNK ဗားရှင်းအသစ် ရနိုင်ပါပြီ',
+    'A new version of MyCareNK is available',
+  );
+  String get webUpdateReload =>
+      _t('รีโหลด', 'ໂຫຼດໃໝ່', 'ပြန်ဖွင့်ရန်', 'Reload');
+  String get settingsInstallApp =>
+      _t('ติดตั้งแอป', 'ຕິດຕັ້ງແອັບ', 'အက်ပ်ထည့်သွင်းရန်', 'Install app');
 
   // ─── Register Steps ───────────────────────────────────────────────────────
   String get registerStep1 => _t(
