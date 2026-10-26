@@ -6,11 +6,13 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../../core/services/app_version_service.dart';
+import '../../../../../core/web/pwa_install.dart';
 import '../../../home/presentation/pages/home_navigator.dart';
 import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
 import '../../../service/presentation/pages/service_navigator.dart';
 import '../../../service/presentation/pages/request_history_page.dart';
+import '../../widgets/install_guide_sheet.dart';
 import '../../widgets/update_dialog.dart';
 import 'settings_page.dart';
 
@@ -51,7 +53,19 @@ class _MainScreenState extends State<MainScreen> {
         setState(() => _messagesRefreshKey++);
       }
     });
-    WidgetsBinding.instance.addPostFrameCallback((_) => _checkForUpdate());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkForUpdate();
+      _maybeShowInstallGuide();
+    });
+  }
+
+  // Shown once per browser on web; ตั้งค่า → ติดตั้งแอป reopens it.
+  Future<void> _maybeShowInstallGuide() async {
+    if (!PwaInstall.isAvailable || PwaInstall.guideDismissed) return;
+    await Future<void>.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    PwaInstall.dismissGuide();
+    await InstallGuideSheet.show(context);
   }
 
   Future<void> _checkForUpdate() async {

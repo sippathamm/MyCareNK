@@ -2286,6 +2286,62 @@ class AppLocalizations {
       _t('ปรับปรุง', 'ປັບປຸງ', 'တိုးတက်သည်', 'Improved');
   String get releaseNotesOther => _t('อื่น ๆ', 'ອື່ນໆ', 'အခြား', 'Others');
 
+  // ─── Install (web / PWA) ──────────────────────────────────────────────────
+  String get installAppTitle => _t(
+    'ติดตั้งแอป MyCareNK',
+    'ຕິດຕັ້ງແອັບ MyCareNK',
+    'MyCareNK အက်ပ်ကို ထည့်သွင်းပါ',
+    'Install MyCareNK',
+  );
+  String get installAppSubtitle => _t(
+    'เพิ่มไว้ที่หน้าจอโฮม เพื่อเปิดใช้งานได้เหมือนแอป และไม่ต้องเข้าสู่ระบบบ่อย',
+    'ເພີ່ມໃສ່ໜ້າຈໍຫຼັກ ເພື່ອເປີດໃຊ້ຄືແອັບ ແລະ ບໍ່ຕ້ອງເຂົ້າສູ່ລະບົບເລື້ອຍໆ',
+    'အက်ပ်ကဲ့သို့ ဖွင့်သုံးနိုင်ပြီး မကြာခဏ ဝင်ရောက်ရန် မလိုစေရန် ပင်မစခရင်တွင် ထည့်ပါ',
+    'Add it to your home screen to open it like an app and stay signed in.',
+  );
+  String get installIosStep1 => _t(
+    'แตะปุ่ม "แชร์" ที่แถบด้านล่างของ Safari',
+    'ແຕະປຸ່ມ "ແບ່ງປັນ" (Share) ຢູ່ແຖບລຸ່ມຂອງ Safari',
+    'Safari အောက်ခြေရှိ "မျှဝေရန်" (Share) ခလုတ်ကို နှိပ်ပါ',
+    'Tap the Share button in Safari\'s bottom bar',
+  );
+  String get installIosStep2 => _t(
+    'เลื่อนลงแล้วเลือก "เพิ่มไปยังหน้าจอโฮม"',
+    'ເລື່ອນລົງ ແລ້ວເລືອກ "Add to Home Screen"',
+    'အောက်သို့ဆွဲပြီး "Add to Home Screen" ကို ရွေးပါ',
+    'Scroll down and choose "Add to Home Screen"',
+  );
+  String get installIosStep3 => _t(
+    'แตะ "เพิ่ม" ที่มุมขวาบน',
+    'ແຕະ "Add" ຢູ່ມຸມຂວາເທິງ',
+    'ညာဘက်အပေါ်ထောင့်ရှိ "Add" ကို နှိပ်ပါ',
+    'Tap "Add" in the top-right corner',
+  );
+  String get installAndroidStep1 => _t(
+    'แตะเมนู ⋮ ของ Chrome ที่มุมขวาบน',
+    'ແຕະເມນູ ⋮ ຂອງ Chrome ຢູ່ມຸມຂວາເທິງ',
+    'Chrome ၏ ညာဘက်အပေါ်ထောင့်ရှိ ⋮ မီနူးကို နှိပ်ပါ',
+    'Tap Chrome\'s ⋮ menu in the top-right corner',
+  );
+  String get installAndroidStep2 => _t(
+    'เลือก "ติดตั้งแอป" หรือ "เพิ่มลงในหน้าจอหลัก"',
+    'ເລືອກ "Install app" ຫຼື "Add to Home screen"',
+    '"Install app" သို့မဟုတ် "Add to Home screen" ကို ရွေးပါ',
+    'Choose "Install app" or "Add to Home screen"',
+  );
+  String get installInAppBrowser => _t(
+    'คุณกำลังเปิดผ่านแอปอื่น (เช่น LINE) กรุณาเปิดลิงก์นี้ใน Safari หรือ Chrome ก่อน แล้วจึงเพิ่มไปยังหน้าจอโฮม',
+    'ທ່ານກຳລັງເປີດຜ່ານແອັບອື່ນ (ເຊັ່ນ LINE) ກະລຸນາເປີດລິ້ງນີ້ໃນ Safari ຫຼື Chrome ກ່ອນ ແລ້ວຈຶ່ງເພີ່ມໃສ່ໜ້າຈໍຫຼັກ',
+    'အခြားအက်ပ် (ဥပမာ LINE) မှတစ်ဆင့် ဖွင့်ထားပါသည်။ ဤလင့်ခ်ကို Safari သို့မဟုတ် Chrome တွင် အရင်ဖွင့်ပြီးမှ ပင်မစခရင်တွင် ထည့်ပါ',
+    'You opened this inside another app (such as LINE). Open this link in Safari or Chrome first, then add it to your home screen.',
+  );
+  String get installNow =>
+      _t('ติดตั้งเลย', 'ຕິດຕັ້ງເລີຍ', 'ယခု ထည့်သွင်းပါ', 'Install now');
+  String get installLater =>
+      _t('ไว้ภายหลัง', 'ໄວ້ພາຍຫຼັງ', 'နောက်မှ', 'Later');
+  String get settingsInstallApp =>
+      _t('ติดตั้งแอป', 'ຕິດຕັ້ງແອັບ', 'အက်ပ်ထည့်သွင်းရန်', 'Install app');
+
   // ─── Register Steps ───────────────────────────────────────────────────────
   String get registerStep1 => _t(
     'ชื่อผู้ใช้งานและรหัสผ่าน',
