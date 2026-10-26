@@ -2339,6 +2339,14 @@ class AppLocalizations {
       _t('ติดตั้งเลย', 'ຕິດຕັ້ງເລີຍ', 'ယခု ထည့်သွင်းပါ', 'Install now');
   String get installLater =>
       _t('ไว้ภายหลัง', 'ໄວ້ພາຍຫຼັງ', 'နောက်မှ', 'Later');
+  String get webUpdateAvailable => _t(
+    'มี MyCareNK เวอร์ชันใหม่',
+    'ມີ MyCareNK ເວີຊັນໃໝ່',
+    'MyCareNK ဗားရှင်းအသစ် ရနိုင်ပါပြီ',
+    'A new version of MyCareNK is available',
+  );
+  String get webUpdateReload =>
+      _t('รีโหลด', 'ໂຫຼດໃໝ່', 'ပြန်ဖွင့်ရန်', 'Reload');
   String get settingsInstallApp =>
       _t('ติดตั้งแอป', 'ຕິດຕັ້ງແອັບ', 'အက်ပ်ထည့်သွင်းရန်', 'Install app');
 

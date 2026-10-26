@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../../../../../core/services/app_version_service.dart';
 import '../../../../../core/web/pwa_install.dart';
+import '../../../../../core/web/web_update.dart';
 import '../../../home/presentation/pages/home_navigator.dart';
 import '../../../messages/presentation/pages/messages_page.dart';
 import '../../../scan/presentation/pages/scan_page.dart';
@@ -23,7 +25,7 @@ class MainScreen extends StatefulWidget {
   State<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   int _currentIndex = 0;
   final ValueNotifier<int> _homeVisibilityNotifier = ValueNotifier(0);
   int _messagesRefreshKey = 0;
@@ -36,6 +38,8 @@ class _MainScreenState extends State<MainScreen> {
 
   StreamSubscription<AuthState>? _authSubscription;
   bool _versionCheckDone = false;
+  Timer? _webUpdateTimer;
+  bool _webUpdateShown = false;
 
   @override
   void initState() {
@@ -57,6 +61,50 @@ class _MainScreenState extends State<MainScreen> {
       _checkForUpdate();
       _maybeShowInstallGuide();
     });
+    if (WebUpdate.isSupported) {
+      WidgetsBinding.instance.addObserver(this);
+      WebUpdate.init();
+      _webUpdateTimer = Timer.periodic(
+        const Duration(minutes: 30),
+        (_) => _checkWebUpdate(),
+      );
+    }
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _checkWebUpdate();
+  }
+
+  // The web build updates by redeploying; an open tab or installed PWA keeps
+  // running the old bundle until it reloads.
+  Future<void> _checkWebUpdate() async {
+    if (_webUpdateShown || !await WebUpdate.hasNewVersion() || !mounted) return;
+    _webUpdateShown = true;
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showMaterialBanner(
+      MaterialBanner(
+        backgroundColor: AppColors.primaryBackground,
+        leading: const Icon(Icons.system_update_outlined, color: AppColors.primaryDark),
+        content: Text(
+          l10n.webUpdateAvailable,
+          style: GoogleFonts.googleSans(fontSize: 14, color: AppColors.textPrimary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: WebUpdate.reload,
+            child: Text(
+              l10n.webUpdateReload,
+              style: GoogleFonts.googleSans(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: AppColors.primaryDark,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   // Shown once per browser on web; ตั้งค่า → ติดตั้งแอป reopens it.
@@ -82,6 +130,8 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _webUpdateTimer?.cancel();
     _authSubscription?.cancel();
     _homeVisibilityNotifier.dispose();
     _messagesUnreadNotifier.dispose();
