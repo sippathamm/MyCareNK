@@ -60,16 +60,16 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     widget.isActive ? _startCamera() : _stopCamera();
   }
 
+  bool get _permissionDenied =>
+      _controller.value.error?.errorCode ==
+      MobileScannerErrorCode.permissionDenied;
+
   Future<void> _startCamera() async {
     if (_hasScanned) return;
     // Browsers can't re-prompt after a denial, and mobile_scanner's web
     // reader stays allocated after the failed start, so a retry only throws
     // "already running" over the permission message.
-    if (kIsWeb &&
-        _controller.value.error?.errorCode ==
-            MobileScannerErrorCode.permissionDenied) {
-      return;
-    }
+    if (kIsWeb && _permissionDenied) return;
     try {
       await _controller.start();
     } on MobileScannerException {
@@ -100,7 +100,12 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
       setState(_stopCamera);
-    } else if (state == AppLifecycleState.resumed && widget.isActive) {
+    } else if (state == AppLifecycleState.resumed &&
+        widget.isActive &&
+        !_permissionDenied) {
+      // The system permission dialog itself pauses/resumes the app; retrying
+      // here after a denial loops when Android auto-denies ("Don't ask
+      // again"). Re-entering the สแกน tab still retries.
       _startCamera();
     }
   }
