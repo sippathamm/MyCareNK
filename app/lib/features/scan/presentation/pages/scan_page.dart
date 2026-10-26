@@ -210,6 +210,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                 controller: _controller,
                 onDetect: _onDetect,
                 scanWindow: scanWindow,
+                errorBuilder: (context, error) =>
+                    _CameraErrorView(error: error),
               );
             },
           ),
@@ -331,6 +333,59 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     );
   }
 }
+/// Replaces mobile_scanner's raw English error (e.g. "NotAllowedError") with a
+/// localized explanation that points to the gallery fallback.
+class _CameraErrorView extends StatelessWidget {
+  final MobileScannerException error;
+
+  const _CameraErrorView({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 72),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                denied ? Icons.no_photography_outlined : Icons.videocam_off_outlined,
+                color: AppColors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                denied ? l10n.cameraPermissionDeniedTitle : l10n.cameraUnavailableTitle,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.googleSans(
+                  color: AppColors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                denied
+                    ? l10n.cameraPermissionDeniedBody(l10n.selectFromGallery)
+                    : l10n.cameraUnavailableBody(l10n.selectFromGallery),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.googleSans(
+                  color: AppColors.white.withValues(alpha: 0.7),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ScanResultSheet extends StatefulWidget {
   final String payload;
   final VoidCallback onRescan;

@@ -1224,6 +1224,30 @@ class AppLocalizations {
     'ဓာတ်ပုံမှ ရွေးချယ်',
     'Select from Gallery',
   );
+  String get cameraPermissionDeniedTitle => _t(
+    'ไม่ได้รับอนุญาตให้ใช้กล้อง',
+    'ບໍ່ໄດ້ຮັບອະນຸຍາດໃຫ້ໃຊ້ກ້ອງ',
+    'ကင်မရာ အသုံးပြုခွင့် မရပါ',
+    'Camera access is blocked',
+  );
+  String cameraPermissionDeniedBody(String galleryLabel) => _t(
+    'เปิดสิทธิ์การใช้กล้องให้ MyCareNK ในการตั้งค่าของเครื่องหรือเบราว์เซอร์ แล้วลองใหม่อีกครั้ง หรือแตะ "$galleryLabel" ด้านล่าง',
+    'ເປີດສິດການໃຊ້ກ້ອງໃຫ້ MyCareNK ໃນການຕັ້ງຄ່າຂອງເຄື່ອງ ຫຼື ບຣາວເຊີ ແລ້ວລອງໃໝ່ອີກຄັ້ງ ຫຼື ແຕະ "$galleryLabel" ຢູ່ລຸ່ມ',
+    'စက် သို့မဟုတ် ဘရောက်ဇာ ဆက်တင်တွင် MyCareNK အတွက် ကင်မရာခွင့်ပြုချက်ကို ဖွင့်ပြီး ထပ်မံကြိုးစားပါ သို့မဟုတ် အောက်ရှိ "$galleryLabel" ကို နှိပ်ပါ',
+    'Allow camera access for MyCareNK in your device or browser settings and try again, or tap "$galleryLabel" below.',
+  );
+  String get cameraUnavailableTitle => _t(
+    'ไม่สามารถเปิดกล้องได้',
+    'ບໍ່ສາມາດເປີດກ້ອງໄດ້',
+    'ကင်မရာကို ဖွင့်၍မရပါ',
+    "Can't open the camera",
+  );
+  String cameraUnavailableBody(String galleryLabel) => _t(
+    'อุปกรณ์หรือเบราว์เซอร์นี้อาจไม่รองรับกล้อง ลองแตะ "$galleryLabel" ด้านล่างแทน',
+    'ອຸປະກອນ ຫຼື ບຣາວເຊີນີ້ອາດບໍ່ຮອງຮັບກ້ອງ ລອງແຕະ "$galleryLabel" ຢູ່ລຸ່ມແທນ',
+    'ဤစက် သို့မဟုတ် ဘရောက်ဇာသည် ကင်မရာကို မပံ့ပိုးနိုင်ပါ။ အောက်ရှိ "$galleryLabel" ကို နှိပ်ကြည့်ပါ',
+    'This device or browser may not support the camera. Try "$galleryLabel" below instead.',
+  );
   String get scanChecking => _t(
     'กำลังตรวจสอบ QR Code...',
     'ກຳລັງກວດສອບ QR Code...',
