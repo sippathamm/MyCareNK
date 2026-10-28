@@ -684,7 +684,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     if (_requestData != null) {
       final dt = _requestData!.updatedAt.toUtc().add(const Duration(hours: 7));
       receivedAt =
-          '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543} ${l10n.timeLabel} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
+          '${dt.day} ${l10n.monthsFull[dt.month]} ${dt.year + 543} ${l10n.timeLabel} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
       refNumber = _requestData!.referenceNumber;
     }
 

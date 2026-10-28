@@ -14,7 +14,7 @@ String _formatDateTime(String isoDate) {
   final l10n = AppLocalizations.current;
   final h = dt.hour.toString().padLeft(2, '0');
   final m = dt.minute.toString().padLeft(2, '0');
-  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
+  return '${dt.day} ${l10n.monthsShort[dt.month]} ${dt.year + 543} $h:$m ${l10n.timeWithUnit}';
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
