@@ -137,7 +137,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     // Format Date
     final formattedDate = _currentData.updatedAt.toUtc().add(const Duration(hours: 7));
     final l10n = AppLocalizations.of(context);
-    final dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month - 1]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
+    final dateStr = '${formattedDate.day} ${l10n.monthsFull[formattedDate.month]} ${formattedDate.year + 543} ${formattedDate.hour.toString().padLeft(2, '0')}:${formattedDate.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -455,7 +455,7 @@ class _RequestHistoryDetailPageState extends State<RequestHistoryDetailPage> {
     if (_currentData.selectedDate != null && _currentData.selectedDate!.contains('-')) {
       try {
         final parsedDate = DateTime.parse(_currentData.selectedDate!);
-        outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
+        outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = _currentData.selectedDate!;
       }

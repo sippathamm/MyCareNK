@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.0+1
+version: 1.1.0-preview+1
 
 environment:
   sdk: ^3.10.4
@@ -39,12 +39,12 @@ dependencies:
   google_fonts: ^8.0.1
   url_launcher: ^6.3.2
   supabase_flutter: ^2.12.0
-  flutter_dotenv: ^5.1.0
   mobile_scanner: ^7.0.0
   image_picker: ^1.1.2
   package_info_plus: ^8.0.0
   flutter_widget_from_html: ^0.17.2
   country_flags: ^3.0.0
+  web: ^1.1.1
 
 dev_dependencies:
   flutter_test:
@@ -71,8 +71,8 @@ flutter:
 
   # To add assets to your application, add an assets section, like this:
   assets:
-    - .env
     - assets/images/
+    - assets/fonts/noto_sans_thai/OFL.txt
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -85,6 +85,14 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  # Web-only Thai fallback (see main.dart): bundled so Thai renders on the first
+  # frame instead of tofu while CanvasKit fetches a fallback font at runtime.
+  fonts:
+    - family: NotoSansThai
+      fonts:
+        - asset: assets/fonts/noto_sans_thai/NotoSansThai-Regular.ttf
+        - asset: assets/fonts/noto_sans_thai/NotoSansThai-Bold.ttf
+          weight: 700
   # fonts:
   #   - family: Schyler
   #     fonts:

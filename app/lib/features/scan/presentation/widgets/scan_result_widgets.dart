@@ -179,7 +179,7 @@ class ScanPreviewHeader extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final dt = request.updatedAt.toUtc().add(const Duration(hours: 7));
     final dateStr =
-        '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
+        '${dt.day} ${l10n.monthsFull[dt.month]} ${dt.year + 543}  ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -399,7 +399,7 @@ class ScanLocationCard extends StatelessWidget {
     if (request.selectedDate != null && request.selectedDate!.contains('-')) {
       try {
         final d = DateTime.parse(request.selectedDate!);
-        outputDate = '${d.day} ${l10n.monthsFull[d.month - 1]} ${d.year + 543}';
+        outputDate = '${d.day} ${l10n.monthsFull[d.month]} ${d.year + 543}';
       } catch (_) {}
     }
 

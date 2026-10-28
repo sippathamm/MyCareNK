@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +9,7 @@ import '../../../../../core/constants/app_colors.dart';
 import '../../../../../core/widgets/gradient_button.dart';
 import '../../../../features/auth/presentation/pages/login_page.dart';
 import '../../../service/data/models/condom_request_model.dart';
+import '../../data/qr_image_decoder.dart';
 import '../../../../../core/l10n/app_localizations.dart';
 import '../widgets/scan_overlay.dart';
 import '../widgets/scan_result_widgets.dart';
@@ -24,7 +26,12 @@ enum _ScanResultType {
 }
 
 class ScanPage extends StatefulWidget {
-  const ScanPage({super.key});
+  /// Whether the สแกน tab is the visible tab. The page lives in an
+  /// `IndexedStack`, so the camera must only run while this is true —
+  /// otherwise the browser asks for camera permission on app launch.
+  final bool isActive;
+
+  const ScanPage({super.key, required this.isActive});
 
   @override
   State<ScanPage> createState() => _ScanPageState();
@@ -33,16 +40,48 @@ class ScanPage extends StatefulWidget {
 class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   final MobileScannerController _controller = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
   );
 
-  bool _torchOn = false;
   bool _hasScanned = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    if (widget.isActive) _startCamera();
   }
+
+  @override
+  void didUpdateWidget(covariant ScanPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive == oldWidget.isActive) return;
+    widget.isActive ? _startCamera() : _stopCamera();
+  }
+
+  bool get _permissionDenied =>
+      _controller.value.error?.errorCode ==
+      MobileScannerErrorCode.permissionDenied;
+
+  Future<void> _startCamera() async {
+    if (_hasScanned) return;
+    // Browsers can't re-prompt after a denial, and mobile_scanner's web
+    // reader stays allocated after the failed start, so a retry only throws
+    // "already running" over the permission message.
+    if (kIsWeb && _permissionDenied) return;
+    try {
+      await _controller.start();
+    } on MobileScannerException {
+      // A start already in flight (controllerInitializing) settles the state
+      // below; other errors are rendered by the MobileScanner widget.
+      return;
+    }
+    // stop() is a no-op until start() completes, so a tab switch during
+    // startup would otherwise leave the camera running on another tab.
+    if (mounted && !widget.isActive) await _controller.stop();
+  }
+
+  void _stopCamera() => _controller.stop();
 
   @override
   void dispose() {
@@ -54,9 +93,14 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      _controller.stop();
-    } else if (state == AppLifecycleState.resumed) {
-      _controller.start();
+      _stopCamera();
+    } else if (state == AppLifecycleState.resumed &&
+        widget.isActive &&
+        !_permissionDenied) {
+      // The system permission dialog itself pauses/resumes the app; retrying
+      // here after a denial loops when Android auto-denies ("Don't ask
+      // again"). Re-entering the สแกน tab still retries.
+      _startCamera();
     }
   }
 
@@ -76,10 +120,15 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     final image = await picker.pickImage(source: ImageSource.gallery);
     if (image == null) return;
 
-    final result = await _controller.analyzeImage(image.path);
+    String? rawValue;
+    try {
+      rawValue = await decodeQrFromImage(image, _controller);
+    } catch (_) {
+      rawValue = null;
+    }
     if (!mounted) return;
 
-    if (result == null || result.barcodes.isEmpty) {
+    if (rawValue == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(AppLocalizations.current.qrNotFoundInImage),
@@ -93,9 +142,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
       );
       return;
     }
-
-    final rawValue = result.barcodes.first.rawValue;
-    if (rawValue == null) return;
 
     setState(() => _hasScanned = true);
     _controller.stop();
@@ -134,14 +180,15 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     ).then((_) {
       if (mounted) {
         setState(() => _hasScanned = false);
-        _controller.start();
+        if (widget.isActive) _startCamera();
       }
     });
   }
 
   Future<void> _toggleTorch() async {
-    await _controller.toggleTorch();
-    setState(() => _torchOn = !_torchOn);
+    try {
+      await _controller.toggleTorch();
+    } catch (_) {}
   }
 
   @override
@@ -163,6 +210,8 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                 controller: _controller,
                 onDetect: _onDetect,
                 scanWindow: scanWindow,
+                errorBuilder: (context, error) =>
+                    _CameraErrorView(error: error),
               );
             },
           ),
@@ -181,22 +230,34 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _toggleTorch,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _torchOn
-                            ? AppColors.primary
-                            : AppColors.white.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _torchOn ? Icons.flashlight_on : Icons.flashlight_off,
-                        color: AppColors.white,
-                        size: 22,
-                      ),
-                    ),
+                  // The torch state comes from the controller: it is
+                  // unavailable on web (mobile_scanner has no torch there)
+                  // and on devices without a flash, so hide the button.
+                  ValueListenableBuilder<MobileScannerState>(
+                    valueListenable: _controller,
+                    builder: (context, state, _) {
+                      if (state.torchState == TorchState.unavailable) {
+                        return const SizedBox.shrink();
+                      }
+                      final torchOn = state.torchState == TorchState.on;
+                      return GestureDetector(
+                        onTap: _toggleTorch,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: torchOn
+                                ? AppColors.primary
+                                : AppColors.white.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            torchOn ? Icons.flashlight_on : Icons.flashlight_off,
+                            color: AppColors.white,
+                            size: 22,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
@@ -284,6 +345,60 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     );
   }
 }
+/// Replaces mobile_scanner's raw English error (e.g. "NotAllowedError") with a
+/// localized explanation that points to the gallery fallback.
+class _CameraErrorView extends StatelessWidget {
+  final MobileScannerException error;
+
+  const _CameraErrorView({required this.error});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final denied = error.errorCode == MobileScannerErrorCode.permissionDenied;
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: ConstrainedBox(
+          // Stay inside the scan frame so its corner marks don't cut the text.
+          constraints: const BoxConstraints(maxWidth: kScanFrameSize - 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                denied ? Icons.no_photography_outlined : Icons.videocam_off_outlined,
+                color: AppColors.white,
+                size: 40,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                denied ? l10n.cameraPermissionDeniedTitle : l10n.cameraUnavailableTitle,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.googleSans(
+                  color: AppColors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                denied
+                    ? l10n.cameraPermissionDeniedBody(l10n.selectFromGallery)
+                    : l10n.cameraUnavailableBody(l10n.selectFromGallery),
+                textAlign: TextAlign.center,
+                style: GoogleFonts.googleSans(
+                  color: AppColors.white.withValues(alpha: 0.7),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ScanResultSheet extends StatefulWidget {
   final String payload;
   final VoidCallback onRescan;
@@ -576,7 +691,7 @@ class _ScanResultSheetState extends State<_ScanResultSheet> {
     if (_requestData != null) {
       final dt = _requestData!.updatedAt.toUtc().add(const Duration(hours: 7));
       receivedAt =
-          '${dt.day} ${l10n.monthsFull[dt.month - 1]} ${dt.year + 543} ${l10n.timeLabel} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
+          '${dt.day} ${l10n.monthsFull[dt.month]} ${dt.year + 543} ${l10n.timeLabel} ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')} ${l10n.timeWithUnit}';
       refNumber = _requestData!.referenceNumber;
     }
 

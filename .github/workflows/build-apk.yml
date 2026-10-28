@@ -197,7 +197,7 @@ jobs:
       - name: Build debug APK
         if: needs.resolve.outputs.build_debug == 'true'
         working-directory: app
-        run: flutter build apk --debug
+        run: flutter build apk --debug --dart-define-from-file=.env
 
       - name: Decode keystore
         if: needs.resolve.outputs.build_release == 'true'
@@ -216,7 +216,7 @@ jobs:
       - name: Build release APK
         if: needs.resolve.outputs.build_release == 'true'
         working-directory: app
-        run: flutter build apk --release
+        run: flutter build apk --release --dart-define-from-file=.env
 
       - name: Rename APKs
         run: |

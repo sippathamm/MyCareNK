@@ -358,7 +358,7 @@ class _RequestHistoryPageState extends State<RequestHistoryPage> {
     if (data.selectedDate != null && data.selectedDate!.contains('-')) {
       try {
         final parsedDate = DateTime.parse(data.selectedDate!);
-        outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month - 1]} ${parsedDate.year + 543}';
+        outputDate = '${parsedDate.day} ${AppLocalizations.of(context).monthsFull[parsedDate.month]} ${parsedDate.year + 543}';
       } catch (e) {
         outputDate = data.selectedDate!;
       }
