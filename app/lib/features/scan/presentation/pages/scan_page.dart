@@ -43,7 +43,6 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     autoStart: false,
   );
 
-  bool _torchOn = false;
   bool _hasScanned = false;
 
   @override
@@ -82,12 +81,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
     if (mounted && !widget.isActive) await _controller.stop();
   }
 
-  // Callers outside build (lifecycle events) wrap this in setState; from
-  // didUpdateWidget the rebuild is already scheduled.
-  void _stopCamera() {
-    _controller.stop();
-    _torchOn = false;
-  }
+  void _stopCamera() => _controller.stop();
 
   @override
   void dispose() {
@@ -99,7 +93,7 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused) {
-      setState(_stopCamera);
+      _stopCamera();
     } else if (state == AppLifecycleState.resumed &&
         widget.isActive &&
         !_permissionDenied) {
@@ -192,8 +186,9 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
   }
 
   Future<void> _toggleTorch() async {
-    await _controller.toggleTorch();
-    setState(() => _torchOn = !_torchOn);
+    try {
+      await _controller.toggleTorch();
+    } catch (_) {}
   }
 
   @override
@@ -235,22 +230,34 @@ class _ScanPageState extends State<ScanPage> with WidgetsBindingObserver {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _toggleTorch,
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _torchOn
-                            ? AppColors.primary
-                            : AppColors.white.withValues(alpha: 0.15),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        _torchOn ? Icons.flashlight_on : Icons.flashlight_off,
-                        color: AppColors.white,
-                        size: 22,
-                      ),
-                    ),
+                  // The torch state comes from the controller: it is
+                  // unavailable on web (mobile_scanner has no torch there)
+                  // and on devices without a flash, so hide the button.
+                  ValueListenableBuilder<MobileScannerState>(
+                    valueListenable: _controller,
+                    builder: (context, state, _) {
+                      if (state.torchState == TorchState.unavailable) {
+                        return const SizedBox.shrink();
+                      }
+                      final torchOn = state.torchState == TorchState.on;
+                      return GestureDetector(
+                        onTap: _toggleTorch,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: torchOn
+                                ? AppColors.primary
+                                : AppColors.white.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            torchOn ? Icons.flashlight_on : Icons.flashlight_off,
+                            color: AppColors.white,
+                            size: 22,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
