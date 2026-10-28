@@ -74,7 +74,7 @@ class RequestGroup {
 String formatThaiDate(DateTime utc) {
   final dt = utc.add(const Duration(hours: 7));
   final l10n = AppLocalizations.current;
-  return '${dt.day} ${l10n.monthsShort[dt.month - 1]} ${dt.year + 543}';
+  return '${dt.day} ${l10n.monthsShort[dt.month]} ${dt.year + 543}';
 }
 
 String formatTime(DateTime utc) {
@@ -194,7 +194,7 @@ List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
       if (dateRaw.isNotEmpty) {
         try {
           final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
+          datePart = '${d.day} ${l10n.monthsShort[d.month]} ${d.year + 543}';
         } catch (_) {}
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
@@ -235,7 +235,7 @@ List<InlineSpan> _buildBoldSpans(String full, List<String> boldParts) {
       if (dateRaw.isNotEmpty) {
         try {
           final d = DateTime.parse(dateRaw);
-          datePart = '${d.day} ${l10n.monthsShort[d.month - 1]} ${d.year + 543}';
+          datePart = '${d.day} ${l10n.monthsShort[d.month]} ${d.year + 543}';
         } catch (_) {}
       }
       final timePart = timeRaw.length >= 5 ? timeRaw.substring(0, 5) : timeRaw;
