@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -70,6 +71,16 @@ class AppVersionService {
   static const int statusSuccessful = 8;
   static const int statusFailed = 16;
 
+  // In-app APK updates rely on Android DownloadManager via [_channel]; the web
+  // build updates by redeploying, so the whole flow is native-only.
+  static bool get isSupported => !kIsWeb;
+
+  static void _ensureSupported() {
+    if (!isSupported) {
+      throw UnsupportedError('In-app APK updates are not available on web.');
+    }
+  }
+
   // Strips pre-release suffix and returns [major, minor, patch].
   static List<int> _parseSemver(String version) {
     final clean = version.split('-').first;
@@ -133,6 +144,7 @@ class AppVersionService {
   // Enqueues the APK download via system DownloadManager.
   // Returns the DownloadManager download ID for progress tracking.
   Future<int> startDownload(String url) async {
+    _ensureSupported();
     final id = await _channel.invokeMethod<int>('downloadApk', {
       'url': url,
       'fileName': 'MyCareNK_update.apk',
@@ -143,6 +155,7 @@ class AppVersionService {
   // Polls the current progress of a download. Returns status, downloaded
   // bytes, and total bytes (all as int).
   Future<Map<String, int>> getDownloadProgress(int downloadId) async {
+    _ensureSupported();
     final result = await _channel.invokeMethod<Map<Object?, Object?>>(
       'getDownloadProgress',
       {'downloadId': downloadId},
@@ -156,11 +169,13 @@ class AppVersionService {
   }
 
   Future<void> cancelDownload(int downloadId) async {
+    _ensureSupported();
     await _channel.invokeMethod<void>('cancelDownload', {'downloadId': downloadId});
   }
 
   // Opens the system Downloads app so the user can tap the APK to install.
   Future<void> openDownloadsFolder() async {
+    _ensureSupported();
     await _channel.invokeMethod<void>('openDownloadsFolder');
   }
 }

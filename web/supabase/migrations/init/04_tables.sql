@@ -547,7 +547,7 @@ CREATE TRIGGER trigger_restore_quota_on_staff_cancel_pending
   AFTER UPDATE OF request_status ON public.condom_requests
   FOR EACH ROW WHEN (
     NEW.request_status = 'cancelled_by_staff'::public.request_status
-    AND OLD.request_status = 'pending'::public.request_status
+    AND OLD.request_status IN ('pending'::public.request_status, 'preparing'::public.request_status)
   ) EXECUTE FUNCTION restore_quota_on_staff_cancel_pending();
 
 CREATE TRIGGER trigger_handle_staff_request_notification

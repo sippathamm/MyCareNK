@@ -1,0 +1,127 @@
+name: Build Web
+
+# User-facing PWA (app/ built for web) → Vercel project "mycarenk-app".
+#
+#   event                       Vercel target   notes
+#   -------------------------   -------------   ------------------------------------
+#   push to main                production      --prod
+#   pull_request → dev / main   preview         URL posted as a PR comment
+#
+# Built against the `main` Environment's backend: it is the only channel with a
+# working Supabase project (see CLAUDE.md → Monorepo), so previews use
+# production data.
+#
+# The Vercel project is not linked to Git — Vercel has no Flutter toolchain, so
+# this workflow builds and uploads the static output. Requires the repo secret
+# VERCEL_TOKEN and the repo variables VERCEL_ORG_ID / VERCEL_APP_PROJECT_ID.
+#
+# --pwa-strategy=none: Flutter 3.38.5 still defaults to the deprecated
+# offline-first service worker, which would keep serving a stale bundle.
+# Cache headers live in app/web/vercel.json.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-web.yml'
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'app/**'
+      - '.github/workflows/build-web.yml'
+
+# Superseded PR previews can be cancelled; production deploys run to completion.
+concurrency:
+  group: build-web-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  FLUTTER_VERSION: '3.38.5'
+  VERCEL_CLI_VERSION: '63.1.2'
+
+jobs:
+  deploy:
+    name: Build and deploy web
+    runs-on: ubuntu-latest
+    environment: main
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_APP_PROJECT_ID }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check Vercel configuration
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          missing=0
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
+            if [ -z "${!name}" ]; then
+              echo "::error::$name is not set (secret VERCEL_TOKEN, variables VERCEL_ORG_ID / VERCEL_APP_PROJECT_ID)."
+              missing=1
+            fi
+          done
+          exit $missing
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Create .env
+        working-directory: app
+        run: |
+          if [ -z "${{ secrets.SUPABASE_URL }}" ]; then
+            echo "::error::SUPABASE_URL is not set on the 'main' environment."
+            exit 1
+          fi
+          echo "SUPABASE_URL=${{ secrets.SUPABASE_URL }}" > .env
+          echo "SUPABASE_ANON_KEY=${{ secrets.SUPABASE_ANON_KEY }}" >> .env
+
+      - name: Flutter pub get
+        working-directory: app
+        run: flutter pub get
+
+      - name: Build web
+        working-directory: app
+        run: flutter build web --release --pwa-strategy=none --dart-define-from-file=.env
+
+      - name: Deploy to Vercel
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          args=(deploy app/build/web --yes --token "$VERCEL_TOKEN")
+          # Always pass the target: Vercel promotes a project's first deployment
+          # to production when none is given (PR #285's first preview did).
+          if [ "${{ github.event_name }}" = "push" ]; then
+            args+=(--prod)
+          else
+            args+=(--target=preview)
+          fi
+          # stdout is only the deployment URL; progress goes to stderr.
+          url=$(npx --yes "vercel@${VERCEL_CLI_VERSION}" "${args[@]}")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "Deployed: $url" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment preview URL on PR
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          URL: ${{ steps.deploy.outputs.url }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          body="**Web preview** (Vercel, \`main\` backend): $URL
+
+          Built from ${SHA:0:7}. Previews are behind Vercel Authentication."
+          # Keep one comment per PR, updated on every push.
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --edit-last --body "$body" \
+            || gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" --body "$body"
