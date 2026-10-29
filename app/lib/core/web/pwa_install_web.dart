@@ -42,6 +42,9 @@ class PwaInstall {
     return PwaPlatform.other;
   }
 
+  /// The site's own origin, so links follow the domain and preview deployments.
+  static String get siteOrigin => web.window.location.origin;
+
   /// In-app browsers (LINE, Facebook, Instagram) cannot add to home screen.
   static bool get isInAppBrowser => RegExp(
     r'Line/|FBAN|FBAV|Instagram',
