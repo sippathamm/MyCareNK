@@ -7,6 +7,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/constants/app_colors.dart';
 import 'core/l10n/app_localizations.dart';
 import 'core/l10n/locale_provider.dart';
+import 'core/widgets/web_frame.dart';
 import 'features/main/presentation/pages/main_page.dart';
 import 'features/scan/data/zxing_script.dart';
 
@@ -79,6 +80,9 @@ class _MyCareNKAppState extends State<MyCareNKApp> {
           ),
         ),
         home: const MainScreen(),
+        builder: kIsWeb
+            ? (context, child) => WebFrame(child: child ?? const SizedBox())
+            : null,
         debugShowCheckedModeBanner: false,
       ),
     );
