@@ -2374,6 +2374,24 @@ class AppLocalizations {
       _t('รีโหลด', 'ໂຫຼດໃໝ່', 'ပြန်ဖွင့်ရန်', 'Reload');
   String get settingsInstallApp =>
       _t('ติดตั้งแอป', 'ຕິດຕັ້ງແອັບ', 'အက်ပ်ထည့်သွင်းရန်', 'Install app');
+  String get webDesktopTitle => _t(
+    'ใช้งานบนมือถือได้สะดวกกว่า',
+    'ໃຊ້ງານໃນມືຖືໄດ້ສະດວກກວ່າ',
+    'ဖုန်းတွင် အသုံးပြုရန် ပိုအဆင်ပြေသည်',
+    'Easier on your phone',
+  );
+  String get webDesktopBody => _t(
+    'สแกน QR Code ด้วยกล้องมือถือเพื่อเปิด MyCareNK แล้วติดตั้งไว้ที่หน้าจอโฮม',
+    'ສະແກນ QR Code ດ້ວຍກ້ອງມືຖື ເພື່ອເປີດ MyCareNK ແລ້ວຕິດຕັ້ງໄວ້ໃນໜ້າຈໍຫຼັກ',
+    'MyCareNK ကို ဖွင့်ရန် ဖုန်းကင်မရာဖြင့် QR Code ကို စကင်ဖတ်ပြီး ပင်မစခရင်တွင် ထည့်ပါ',
+    'Scan the QR code with your phone camera to open MyCareNK, then add it to your home screen.',
+  );
+  String get webDesktopContinue => _t(
+    'หรือใช้งานต่อบนคอมพิวเตอร์ได้เลย',
+    'ຫຼື ໃຊ້ງານຕໍ່ໃນຄອມພິວເຕີໄດ້ເລີຍ',
+    'သို့မဟုတ် ကွန်ပျူတာတွင် ဆက်လက်အသုံးပြုနိုင်သည်',
+    'Or keep using it on this computer.',
+  );
 
   // ─── Register Steps ───────────────────────────────────────────────────────
   String get registerStep1 => _t(
