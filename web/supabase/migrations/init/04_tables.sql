@@ -95,9 +95,9 @@ CREATE POLICY "Users can update their own profile"
   ON public.user_profiles FOR UPDATE
   TO authenticated USING ((SELECT auth.uid()) = user_id);
 
-CREATE POLICY "Staff can read all user profiles"
+CREATE POLICY "Staff can read profiles of users at their service centers"
   ON public.user_profiles FOR SELECT
-  TO authenticated USING (is_staff());
+  TO authenticated USING (can_read_user_contact(user_id));
 
 
 -- ── 3. user_monthly_quotas ─────────────────────────────────

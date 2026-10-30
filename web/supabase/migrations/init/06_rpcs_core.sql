@@ -474,4 +474,19 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.get_latest_app_version(text) TO anon, authenticated;
 
-
+-- Staff read only the contact fields of users at their own service centers
+CREATE OR REPLACE FUNCTION public.get_user_contacts(p_user_ids uuid[])
+RETURNS TABLE(user_id uuid, phone_number text, nickname text)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT up.user_id, up.phone_number, up.nickname
+  FROM public.user_profiles up
+  WHERE up.user_id = ANY(p_user_ids)
+    AND can_read_user_contact(up.user_id);
+END;
+$$;

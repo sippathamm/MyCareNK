@@ -52,9 +52,7 @@ export function useRequests() {
     let contactMap: Record<string, ContactInfo> = {};
     if (userIds.length > 0) {
       const { data: profiles } = await supabase
-        .from('user_profiles')
-        .select('user_id, phone_number, nickname')
-        .in('user_id', userIds);
+        .rpc('get_user_contacts', { p_user_ids: userIds });
       for (const p of profiles ?? []) {
         contactMap[p.user_id] = { phone_number: p.phone_number, nickname: p.nickname };
       }
@@ -96,10 +94,8 @@ export function useRequests() {
             const newRow = payload.new as unknown as RequestData;
             (newRow.user_id
               ? supabase
-                  .from('user_profiles')
-                  .select('user_id, phone_number, nickname')
-                  .eq('user_id', newRow.user_id)
-                  .single()
+                  .rpc('get_user_contacts', { p_user_ids: [newRow.user_id] })
+                  .maybeSingle()
               : Promise.resolve({ data: null })
             )
               .then(({ data: profile }) => {

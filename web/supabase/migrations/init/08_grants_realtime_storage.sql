@@ -34,6 +34,8 @@ REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC, anon, authenticate
 GRANT EXECUTE ON FUNCTION public.is_staff()                   TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_admin()                   TO authenticated;
 GRANT EXECUTE ON FUNCTION public.is_superadmin()              TO authenticated;
+GRANT EXECUTE ON FUNCTION public.can_read_user_contact(uuid)  TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_contacts(uuid[])    TO authenticated;
 GRANT EXECUTE ON FUNCTION public.update_updated_at_column()   TO authenticated;
 
 -- Recovery RPCs
