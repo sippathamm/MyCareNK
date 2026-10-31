@@ -80,4 +80,27 @@ BEGIN
 END;
 $$;
 
+-- True for superadmin, or staff/admin whose SC has a request or consultation from the user
+CREATE OR REPLACE FUNCTION public.can_read_user_contact(p_user_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+BEGIN
+  RETURN is_superadmin()
+    OR EXISTS (
+      SELECT 1 FROM public.condom_requests cr
+      WHERE cr.user_id = p_user_id
+        AND cr.selected_service_center = ANY(get_my_service_centers())
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.consultations c
+      WHERE c.user_id = p_user_id
+        AND c.selected_service_center = ANY(get_my_service_centers())
+    );
+END;
+$$;
+
 

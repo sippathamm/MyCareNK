@@ -508,9 +508,9 @@ $$;
 
 -- ── auth.users cascade ─────────────────────────────────────
 -- Fires BEFORE DELETE on auth.users.
--- Nullifies audit/history references so records are preserved.
--- condom_requests and consultations are NOT deleted here;
--- their user_id FKs use ON DELETE SET NULL, which fires after this trigger.
+-- Nullifies staff audit references so history survives staff removal.
+-- Deletes an end-user's data, including condom_requests and consultations;
+-- their status logs cascade and inventory_logs keep the stock movement.
 CREATE OR REPLACE FUNCTION public.handle_user_deleted()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -541,9 +541,17 @@ BEGIN
   DELETE FROM public.recovery_attempts       WHERE user_id = OLD.id;
   DELETE FROM public.user_monthly_quotas     WHERE user_id = OLD.id;
 
+  -- source_id has no FK, so remove these before their source rows
+  DELETE FROM public.staff_notifications
+   WHERE (source_type = 'condom_request'
+          AND source_id IN (SELECT id FROM public.condom_requests WHERE user_id = OLD.id))
+      OR (source_type = 'consultation'
+          AND source_id IN (SELECT id FROM public.consultations WHERE user_id = OLD.id));
+
+  DELETE FROM public.condom_requests WHERE user_id = OLD.id;
+  DELETE FROM public.consultations   WHERE user_id = OLD.id;
+
   -- Delete user profile
-  -- condom_requests, consultations and their logs are preserved;
-  -- user_id will be SET NULL by FK after this trigger returns.
   DELETE FROM public.user_profiles WHERE user_id = OLD.id;
 
   RETURN OLD;
