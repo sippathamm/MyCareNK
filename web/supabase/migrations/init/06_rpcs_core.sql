@@ -290,7 +290,7 @@ $function$;
 -- End-users (@mycarenk.local) delete their own account.
 -- Blocks deletion while the user still has unfinished condom requests
 -- (pending/preparing/ready) or consultations (pending/confirmed) so
--- staff are not left handling records whose user_id will be SET NULL.
+-- staff are not left handling records that the deletion removes.
 CREATE OR REPLACE FUNCTION public.delete_own_account()
 RETURNS void
 LANGUAGE plpgsql
