@@ -1,9 +1,12 @@
 package com.sippathamm.mycarenk.mycarenk
 
+import android.Manifest
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
@@ -13,7 +16,11 @@ class MainActivity : FlutterActivity() {
 
     companion object {
         private const val CHANNEL = "com.sippathamm.mycarenk/download"
+        private const val STORAGE_PERMISSION_REQUEST = 4101
     }
+
+    private var pendingDownload: (() -> Unit)? = null
+    private var pendingDownloadResult: MethodChannel.Result? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -26,10 +33,17 @@ class MainActivity : FlutterActivity() {
                             return@setMethodCallHandler
                         }
                         val fileName = call.argument<String>("fileName") ?: "MyCareNK_update.apk"
-                        try {
-                            result.success(startDownload(url, fileName))
-                        } catch (e: Exception) {
-                            result.error("DOWNLOAD_ERROR", e.message, null)
+                        val download = {
+                            try {
+                                result.success(startDownload(url, fileName))
+                            } catch (e: Exception) {
+                                result.error("DOWNLOAD_ERROR", e.message, null)
+                            }
+                        }
+                        if (needsStoragePermission()) {
+                            requestStoragePermission(download, result)
+                        } else {
+                            download()
                         }
                     }
                     "getDownloadProgress" -> {
@@ -69,6 +83,38 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+    }
+
+    private fun needsStoragePermission(): Boolean =
+        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+            checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+
+    private fun requestStoragePermission(download: () -> Unit, result: MethodChannel.Result) {
+        if (pendingDownload != null) {
+            result.error("DOWNLOAD_ERROR", "A storage permission request is already open", null)
+            return
+        }
+        pendingDownload = download
+        pendingDownloadResult = result
+        requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), STORAGE_PERMISSION_REQUEST)
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray,
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode != STORAGE_PERMISSION_REQUEST) return
+        val download = pendingDownload
+        val result = pendingDownloadResult
+        pendingDownload = null
+        pendingDownloadResult = null
+        if (grantResults.firstOrNull() == PackageManager.PERMISSION_GRANTED) {
+            download?.invoke()
+        } else {
+            result?.error("PERMISSION_DENIED", "Storage permission was denied", null)
+        }
     }
 
     private fun startDownload(url: String, fileName: String): Long {

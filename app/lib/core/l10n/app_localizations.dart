@@ -2289,6 +2289,12 @@ class AppLocalizations {
     'ဒေါင်းလုဒ် မအောင်မြင်ပါ ထပ်ကြိုးစားပါ',
     'Download failed. Please try again',
   );
+  String get updateStoragePermissionDenied => _t(
+    'ต้องอนุญาตการเข้าถึงพื้นที่จัดเก็บ ลองอีกครั้งหรือเปิดสิทธิ์ในการตั้งค่าของเครื่อง',
+    'ຕ້ອງອະນຸຍາດການເຂົ້າເຖິງບ່ອນຈັດເກັບ ລອງໃໝ່ ຫຼື ເປີດສິດໃນການຕັ້ງຄ່າຂອງເຄື່ອງ',
+    'သိုလှောင်မှုနေရာ အသုံးပြုခွင့် လိုအပ်ပါသည်။ ထပ်ကြိုးစားပါ သို့မဟုတ် ဖုန်းဆက်တင်တွင် ဖွင့်ပါ',
+    'Storage access is required. Try again or turn it on in your device settings',
+  );
   String get updateCannotOpenFolder => _t(
     'ไม่สามารถเปิดโฟลเดอร์ดาวน์โหลดได้',
     'ບໍ່ສາມາດເປີດໂຟນເດີດາວໂຫລດໄດ້',
