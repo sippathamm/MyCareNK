@@ -13,6 +13,12 @@ name: Build APK
 # pubspec suffix does not match its channel — that mismatch is what let a push
 # to `preview` overwrite the `main` v1.0.0 release on 2026-07-21.
 #
+# BUILD is the Android versionCode, and Android refuses to install a lower one
+# over a higher one whatever X.Y.Z says. preview and main share a package and
+# signing key, so BUILD must rise across both: `resolve` fails a PR or push whose
+# BUILD is not above every published release. A reset is what stopped
+# 1.1.1-preview+1 from updating 1.1.0-preview+2.
+#
 # Backend secrets live per-Environment (dev/preview/main), never repo-level, so
 # re-pointing one channel at a different Supabase project cannot silently leak
 # into another. Only the signing keystore is shared repo-level.
@@ -119,6 +125,25 @@ jobs:
           echo "apk=MyCareNK-${TAG}.apk" >> $GITHUB_OUTPUT
           echo "debug_apk=MyCareNK-${TAG}-debug.apk" >> $GITHUB_OUTPUT
           echo "$CHANNEL $RAW -> $TAG"
+
+      - name: Require a build above every published release
+        if: steps.channel.outputs.channel != 'dev' && github.event_name != 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: |
+          # Fetched on its own line so a gh failure stops the run instead of
+          # looking like a repository with no releases.
+          TAGS=$(gh release list --limit 1000 --json tagName --jq '.[].tagName')
+          HIGHEST=$(echo "$TAGS" | sed -nE 's/.*-build0*([0-9]+)$/\1/p' | sort -n | tail -1)
+          HIGHEST="${HIGHEST:-0}"
+          if [ "$BUILD" -le "$HIGHEST" ]; then
+            echo "::error::Build $BUILD must be above $HIGHEST, the highest build of any published release."
+            echo "::error::Android refuses to install a lower versionCode over a higher one."
+            echo "::error::Set the +BUILD part of app/pubspec.yaml to at least $((HIGHEST + 1))."
+            exit 1
+          fi
+          echo "Build $BUILD is above the highest published build ($HIGHEST)"
 
       - name: Plan outputs for this channel
         id: plan
