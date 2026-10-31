@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../../../core/constants/app_colors.dart';
@@ -67,11 +68,14 @@ class _UpdateDialogState extends State<UpdateDialog> {
       final id = await _service.startDownload(widget.versionInfo.downloadUrl);
       _downloadId = id;
       _startPolling(id);
-    } catch (_) {
+    } catch (e) {
       if (mounted) {
+        final denied = e is PlatformException && e.code == 'PERMISSION_DENIED';
         setState(() {
           _state = _DownloadState.error;
-          _errorMessage = AppLocalizations.current.updateDownloadFailed;
+          _errorMessage = denied
+              ? AppLocalizations.current.updateStoragePermissionDenied
+              : AppLocalizations.current.updateDownloadFailed;
         });
       }
     }
@@ -139,6 +143,7 @@ class _UpdateDialogState extends State<UpdateDialog> {
     return PopScope(
       canPop: canDismiss,
       child: AlertDialog(
+        scrollable: true,
         backgroundColor: AppColors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         insetPadding: const EdgeInsets.symmetric(horizontal: 40, vertical: 24),
