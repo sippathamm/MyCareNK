@@ -878,6 +878,7 @@ export type Database = {
     }
     Functions: {
       add_service_center: { Args: { p_name: string }; Returns: undefined }
+      can_read_user_contact: { Args: { p_user_id: string }; Returns: boolean }
       create_condom_request: {
         Args: {
           p_condom_quantities: Json
@@ -1170,6 +1171,14 @@ export type Database = {
           completed_count: number
           staff_user_id: string
           week_start: string
+        }[]
+      }
+      get_user_contacts: {
+        Args: { p_user_ids: string[] }
+        Returns: {
+          nickname: string
+          phone_number: string
+          user_id: string
         }[]
       }
       init_service_center_inventory: {
