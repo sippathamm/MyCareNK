@@ -95,10 +95,7 @@ CREATE POLICY "Users can update their own profile"
   ON public.user_profiles FOR UPDATE
   TO authenticated USING ((SELECT auth.uid()) = user_id);
 
-CREATE POLICY "Staff can read all user profiles"
-  ON public.user_profiles FOR SELECT
-  TO authenticated USING (is_staff());
-
+-- Staff read nickname and phone number through get_user_contacts only
 
 -- ── 3. user_monthly_quotas ─────────────────────────────────
 CREATE TABLE public.user_monthly_quotas (
